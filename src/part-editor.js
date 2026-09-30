@@ -112,6 +112,8 @@ function viewCard(card) {
   if (card.min > 2) meta.push('<span class="pill' + (kind === 'short' ? ' warn' : '') + '">' + card.min + '人以上</span>');
   if (card.dur) meta.push('<span class="pill">継続：' + esc(card.dur) + '</span>');
   if (card.fx) meta.push('<span class="pill app">連動：' + esc(fxName(card.fx)) + '</span>');
+  const tmr = timerOf(card);
+  if (tmr) meta.push('<span class="pill app">' + (tmr.stop ? fmtSec(tmr.sec) + 'ストップ対決' : 'タイマー ' + fmtSec(tmr.sec)) + '</span>');
   return '<article class="card' + (kind ? ' off' : '') + '" id="card-' + card.id + '" style="--c:' + colorVar(cat ? cat.color : 6) + '">' +
     '<div class="idx"><span class="k">' + esc(catMark(cat)) + '</span><span class="no">' + fmtNo(card.id) + '</span><span class="cat">' + esc(catName(cat)) + '</span>' +
     '<label class="sw" title="山札に入れる"><input type="checkbox" id="on-' + card.id + '" data-act="toggle" data-id="' + card.id + '"' + (card.on ? ' checked' : '') + '>' +
@@ -173,7 +175,7 @@ function fxOptions(sel) {
     (known ? '' : '<option value="' + esc(sel) + '" selected>' + esc(sel) + '（不明な効果）</option>');
 }
 function fxHint(k) {
-  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリは杯数の記録だけ行います。指示の判定はみんなで。';
+  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリは杯数の記録だけ行います。指示の判定はみんなで。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
 }
 function readForm() {
   return {
