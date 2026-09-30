@@ -606,6 +606,59 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .win .chal-stage > :not(.cg-result), .lose .chal-stage > :not(.cg-result){opacity:.35}
 .win .chal-stage > .cg-canvas, .lose .chal-stage > .cg-canvas{opacity:.8}
 .gc-dur.ch{background:var(--cyan); color:var(--ink); border:2px solid var(--ink)}
+.gc-dur.tm{background:var(--yellow); color:var(--ink); border:2px solid var(--ink)}
+
+/* card timer (「30秒」…) and 「N秒ストップ」 duel. Only transform / opacity animate; the stage never covers the buttons */
+.timer-ov{z-index:66; align-items:stretch; padding:0; overflow:hidden; background:radial-gradient(circle at 50% 46%, #1d62b8 0, #140a4c 60%, #080320 100%); transition:background .4s}
+.timer-ov::after{content:""; position:absolute; inset:0; pointer-events:none; opacity:0; background:radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(255,30,50,.75) 100%)}
+.timer-ov.hurry::after{--vig:.9; animation:bmVig .5s ease-in-out infinite}
+.timer-ov.over{background:radial-gradient(circle at 50% 46%, #b0001f 0, #3a000c 55%, #0b0003 100%)}
+.timer-ov.swmode{background:radial-gradient(circle at 50% 46%, #6b2bb8 0, #1d0b52 60%, #0a0425 100%)}
+.tm-box{position:relative; z-index:1; width:100%; max-width:520px; margin-inline:auto; height:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:10px; padding:14px 16px calc(14px + env(safe-area-inset-bottom, 0px))}
+.tm-box.shk{animation:shake 1s cubic-bezier(.36,.07,.19,.97)}
+.tm-head{flex:none; position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center}
+.tm-title{margin:0; display:flex; align-items:center; gap:8px; font-family:var(--f-display); font-weight:400; font-size:min(32px, 8vw); line-height:1.2; color:var(--yellow); transform:rotate(-3deg); animation:slam .55s cubic-bezier(.2,1.4,.4,1)}
+.tm-mark{display:grid; place-items:center; width:1.35em; height:1.35em; border-radius:50%; background:var(--c); border:3px solid var(--ink); color:var(--ink); font-size:.62em; text-shadow:none; flex:none}
+.tm-card{margin:0; max-width:440px; box-sizing:border-box; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink); padding:8px 14px; font-weight:800; font-size:min(15px, 3.9vw); line-height:1.65}
+.tm-stage{flex:1; min-height:0; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; container-type:size}
+.tm-ring{position:relative; width:min(70vw, 64cqh, 300px); aspect-ratio:1; flex:none}
+.tm-ring svg{position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); overflow:visible}
+.tm-track{fill:var(--ink); stroke:rgba(255,255,255,.14); stroke-width:16}
+.tm-arc{fill:none; stroke:var(--cyan); stroke-width:16; stroke-linecap:round; stroke-dasharray:100 100; stroke-dashoffset:0; transition:stroke .3s}
+.hurry .tm-arc{stroke:#ff3d4f}
+.over .tm-arc{opacity:0}
+.over .tm-num, .over .tm-unit{opacity:.22}
+.stopped .tm-arc{stroke:var(--yellow)}
+.tm-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; pointer-events:none}
+.tm-num{font-family:var(--f-display); font-weight:400; font-size:min(112px, 26vw, 22cqh); color:var(--white); font-variant-numeric:tabular-nums;
+  text-shadow:4px 0 0 var(--ink),-4px 0 0 var(--ink),0 4px 0 var(--ink),0 -4px 0 var(--ink),0 8px 0 var(--ink)}
+.hurry .tm-num, .over .tm-num{color:#ff5a6a}
+.stopped .tm-num{color:var(--yellow)}
+.tm-unit{font-weight:800; font-size:15px; color:var(--muted); margin-top:6px; min-height:1em}
+.tm-stamp{position:absolute; left:50%; top:50%; margin:0; transform:translate(-50%,-50%) rotate(-10deg); white-space:nowrap; pointer-events:none; font-family:var(--f-display); font-size:min(46px, 11vw); color:#ff3040; animation:tmStamp .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes tmStamp{from{transform:translate(-50%,-50%) rotate(-10deg) scale(3); opacity:0}}
+.tm-sub{margin:0; font-weight:800; font-size:15px; line-height:1.55; text-align:center; color:var(--white); min-height:1.55em}
+.tm-sub b{font-family:var(--f-display); font-weight:400; color:var(--yellow); font-size:1.15em}
+.tm-acts{flex:none; position:relative; z-index:3; display:flex; gap:10px}
+.tm-acts .pbtn{flex:1}
+.tm-acts .pbtn.main{flex:2}
+.tm-stage .cg-big{width:min(54vw, 28vh, 220px, 40cqh)}
+.sw-btn.run{background:var(--red)}
+.sw-row{display:flex; align-items:center; justify-content:center; gap:8px; width:100%}
+.sw-p{flex:1; max-width:200px; min-width:0; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; gap:4px; background:rgba(21,7,51,.65); border:3px solid var(--ink); border-radius:18px; padding:10px 8px; box-shadow:0 5px 0 var(--ink); transition:transform .2s, opacity .2s}
+.sw-name{max-width:100%; box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--p); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; padding:1px 12px; font-weight:800; font-size:14px}
+.sw-time{font-family:var(--f-display); font-weight:400; font-size:min(32px, 8vw); line-height:1.15; color:var(--white); font-variant-numeric:tabular-nums}
+.sw-time.show{animation:slam .45s cubic-bezier(.2,1.4,.4,1)}
+.sw-diff{font-weight:800; font-size:12px; color:var(--muted); min-height:1.4em}
+.sw-p.now{transform:scale(1.06); border-color:var(--yellow)}
+.sw-p.wait{opacity:.5}
+.sw-p.measuring .sw-time{color:var(--yellow); animation:pulse .8s ease-in-out infinite}
+.sw-p.win{border-color:var(--lime); background:rgba(80,140,20,.45)}
+.sw-p.win .sw-diff{color:var(--lime)}
+.sw-p.lose{border-color:#ff3d4f; background:rgba(150,10,30,.55); animation:tmLose .3s 2}
+.sw-p.lose .sw-diff{color:#ffb0b8}
+@keyframes tmLose{25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}}
+.sw-vs{font-family:var(--f-display); font-size:22px; color:var(--yellow); flex:none}
 
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
@@ -905,7 +958,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 @media (prefers-reduced-motion: reduce){
   .bomb-ov::before, .bomb-ov::after, .bm-hero, .bm-spk::before, .bm-spk svg, .flip.suspense, .chal-ov::before, .cg-roll, .w-rays, .w-beams span, .w-flames, .ember, .feather, .bat, .bat svg, .w-blur, .w-wing, .w-hub, .w-hub .halo, .w-hub-t, .w-tape span, .w-ribbon span, .w-vig, .z-rays, .zcard, .gc-zoom, .telop.devil, .wheel-box, .sl, .wheel-bulbs circle, .w-burst,
   .bg-burst, .tbl-felt::after, .deck, .tap-bubble, .t-card, .logo span, .pbtn.pulse, .seat.now, .seat.sel, .g-pend, .seat-flag{animation:none !important}
-  .app.shake, .app.shake-big, .bomb-box.shk{animation:none}
+  .app.shake, .app.shake-big, .bomb-box.shk, .tm-box.shk, .timer-ov.hurry::after, .sw-p.measuring .sw-time{animation:none}
 }
 </style>
 
@@ -1056,7 +1109,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
     <div class="dialog how" role="dialog" aria-modal="true" aria-labelledby="howTitle">
       <h2 id="howTitle">遊び方</h2>
       <ol>
-        <li>人数と名前を登録して、何周あそぶか決める</li>
+        <li>人数と名前を登録して、何周あそぶか決める（∞のときは、引いたカードも山札に戻って毎回ランダムに出る）</li>
         <li>自分の番になったら、真ん中の山からカードを引く（大きく表示されるので読み上げよう。テーブルのカードをタップすると、もう一度大きく見られる）</li>
         <li>飲む人の席をタップして、量を記録する</li>
         <li>継続カードや券は、引いた人の手札に入る</li>
@@ -1065,6 +1118,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div><dt>倍倍FIGHT！</dt><dd>自分の量を2倍にする代わりに、次に飲む人も2倍。受けて立てば4倍、8倍…と返せる。</dd></div>
         <div><dt>天国と地獄</dt><dd>ルーレットで天国なら回避、地獄なら2倍、大天国なら次の人に押し付け、大地獄なら3倍。ふつうは10秒で止まる。5秒後にデビルモードや大天使降臨が起きることも（そのときは切り替わってから8秒で止まる）。</dd></div>
         <div><dt>チャレンジ</dt><dd>「チャレンジ」のカードは、アプリのミニゲームに挑戦。クリアすれば回避、失敗したらカードの杯数を飲む。</dd></div>
+        <div><dt>タイマー</dt><dd>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが使える。「10秒ストップ」のカードは、画面を見ずに止めて10秒に近い方が勝ち。</dd></div>
         <div><dt>爆弾パス回し</dt><dd>お題に合うものを1つ言ってから、スマホを左隣へパス。爆発したときに持っていた人が飲む。</dd></div>
         <div><dt>コストパフォーマンス</dt><dd>カードを引く前に1杯飲むと、そのターン自分が飲む量が半分に。</dd></div>
       </dl>
@@ -1154,6 +1208,14 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       </div>
       <div class="chal-stage" id="chalStage" aria-live="polite"></div>
       <div class="chal-acts" id="chalActs"></div>
+    </div>
+  </div>
+
+  <div class="ov timer-ov" id="timerOv" hidden role="dialog" aria-modal="true" aria-labelledby="tmTitle">
+    <div class="tm-box">
+      <div class="tm-head" id="tmHead"></div>
+      <div class="tm-stage" id="tmStage" aria-live="polite"></div>
+      <div class="tm-acts" id="tmActs"></div>
     </div>
   </div>
 

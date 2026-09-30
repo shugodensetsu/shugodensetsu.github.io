@@ -64,6 +64,19 @@ const FX_INFO = {};
 FX_GROUPS.forEach(([group, list]) => list.forEach(([k, name, desc]) => { FX_INFO[k] = { name, desc, group }; }));
 const fxName = k => (FX_INFO[k] ? FX_INFO[k].name : 'アプリ連動');
 
+/* cards that name a time ("30秒", "10秒で", "1分") get an on-screen timer; "N秒ストップ" gets a hidden-stopwatch duel.
+   Cards whose own mini game already keeps time (challenges, bomb, tap duel) are left alone. */
+function timerOf(c) {
+  if (!c || /^ch_/.test(c.fx || '') || c.fx === 'bomb' || c.fx === 'tap') return null;
+  const s = String(c.text || '') + ' ' + String(c.note || '');
+  const m = /(\d+(?:\.\d+)?)\s*(秒|分)/.exec(s);
+  if (!m) return null;
+  const sec = Math.round(Number(m[1]) * (m[2] === '分' ? 60 : 1));
+  if (!(sec >= 3 && sec <= 600)) return null;
+  return { sec, stop: m[2] === '秒' && /^\s*ストップ/.test(s.slice(m.index + m[0].length)) };
+}
+function fmtSec(s) { return s >= 60 && s % 60 === 0 ? s / 60 + '分' : s + '秒'; }
+
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k] === undefined ? null : o[k]]));
 const fmtNo = id => 'No.' + String(id).padStart(3, '0');

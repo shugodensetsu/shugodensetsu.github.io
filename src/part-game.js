@@ -191,13 +191,21 @@ const SOUNDS = {
   hiss: (A, t) => { noise(A, t, { d: 0.5, g: 0.4, type: 'highpass', f: 4000, a: 0.03 }); noise(A, t, { d: 0.35, g: 0.25, type: 'bandpass', f: 2500, q: 3 }); },
   ignite: (A, t) => { noise(A, t, { d: 0.1, g: 0.55, type: 'bandpass', f: 3500, q: 1.5 }); noise(A, t + 0.08, { d: 0.9, g: 0.32, type: 'highpass', f: 3000, a: 0.15 }); tone(A, t + 0.05, { type: 'sine', f: 200, f2: 900, d: 0.4, g: 0.14 }); },
   pass: (A, t) => { noise(A, t, { d: 0.18, g: 0.25, type: 'bandpass', f: 800, f2: 4000, q: 1 }); tone(A, t + 0.06, { type: 'sine', f: 660, f2: 1320, bend: 0.08, d: 0.12, g: 0.16 }); },
+  /* card timer */
+  hurry: (A, t) => { tone(A, t, { type: 'square', f: 1568, d: 0.08, g: 0.1 }); tone(A, t, { type: 'sine', f: 784, d: 0.14, g: 0.12 }); },
+  timeup: (A, t) => {
+    [0, 0.15, 0.3].forEach(dt => tone(A, t + dt, { type: 'square', f: 988, d: 0.1, g: 0.1 }));
+    const t2 = t + 0.48;
+    [196, 207.65, 98].forEach(f => tone(A, t2, { type: 'sawtooth', f, d: 1.1, g: 0.14, lp: 1600, lp2: 420, sus: 1, rel: 0.2 }));
+    kick(A, t2, 1.1); snare(A, t2, 0.45); crash(A, t2, 0.45);
+  },
   boom: (A, t) => {
     noise(A, t, { d: 0.12, g: 1, type: 'highpass', f: 1500 }); noise(A, t, { d: 2.8, g: 0.9, type: 'lowpass', f: 4000, f2: 50, q: 0.5, rv: 0.4 });
     kick(A, t, 1.4); tone(A, t, { type: 'sine', f: 80, f2: 22, bend: 1.5, d: 2, g: 0.9 }); crash(A, t, 0.6);
     for (let i = 0; i < 14; i++) noise(A, t + 0.15 + Math.random() * 1.4, { d: 0.05, g: 0.1 + Math.random() * 0.25, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
   },
 };
-const NO_DUCK = new Set(['tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss']);
+const NO_DUCK = new Set(['tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
 const SE = {
   on: true, A: null,
   init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
@@ -529,6 +537,8 @@ function normalizeGame(g) {
   c.used = Array.isArray(c.used) ? c.used : [];
   c.drinks = Array.isArray(c.drinks) && c.drinks.every(e => typeof e.snap === 'string' && e.kind) ? c.drinks : [];
   if (c.pickDone === undefined) c.pickDone = null;
+  g.pile = Array.isArray(g.pile) ? g.pile : [];
+  g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
   return g;
 }
@@ -543,7 +553,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv'];
+const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -567,7 +577,8 @@ function closeAllOverlays() {
   if (wheel) { if (wheel.raf) cancelAnimationFrame(wheel.raf); (wheel.timers || []).forEach(clearTimeout); }
   if (chal) { if (chal.raf) cancelAnimationFrame(chal.raf); chal.timers.forEach(clearTimeout); }
   if (bomb) { if (bomb.raf) cancelAnimationFrame(bomb.raf); bomb.timers.forEach(clearTimeout); }
-  wheel = null; sheet = null; multi = null; zoom = null; chal = null; bomb = null;
+  if (timer) stopTimerWork(timer);
+  wheel = null; sheet = null; multi = null; zoom = null; chal = null; bomb = null; timer = null;
   document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
   syncCover();
 }
@@ -610,7 +621,7 @@ function renderSetup(full) {
   const info = $('setupInfo');
   info.classList.toggle('bad', pool === 0);
   info.innerHTML = pool
-    ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く')
+    ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）')
     : 'この人数で使えるカードがありません。カード編集でONにしてね';
   $('startGame').disabled = pool === 0;
 }
@@ -669,10 +680,23 @@ function drawCard() {
   const n = G.players.length;
   const pool = eligibleCards(n);
   if (!pool.length) return;
-  const byId = new Map(pool.map(c => [c.id, c]));
   let card = null;
-  while (!card && G.pile.length) card = byId.get(G.pile.pop()) || null;
-  if (!card) { G.pile = shuffle(pool.map(c => c.id)); card = byId.get(G.pile.pop()); }
+  if (!G.rounds) {
+    /* ∞: every card goes back into the deck, so each draw is random from the whole deck —
+       only the last few cards drawn are kept out, so the same card never comes twice in a row */
+    const recent = Array.isArray(G.recent) ? G.recent : [];
+    const keep = Math.min(3, Math.floor((pool.length - 1) / 2));
+    const out = new Set(keep ? recent.slice(-keep) : []);
+    const cand = pool.filter(c => !out.has(c.id));
+    const from = cand.length ? cand : pool;
+    card = from[Math.floor(Math.random() * from.length)];
+    G.recent = recent.concat(card.id).slice(-3);
+  } else {
+    /* a set number of rounds: go through a shuffled deck, so no card repeats until it runs out */
+    const byId = new Map(pool.map(c => [c.id, c]));
+    while (!card && G.pile.length) card = byId.get(G.pile.pop()) || null;
+    if (!card) { G.pile = shuffle(pool.map(c => c.id)); card = byId.get(G.pile.pop()); }
+  }
   const d = cur.drawer;
   let r = Math.floor(Math.random() * (n - 1)); if (r >= d) r++;
   const cat = catOf(card.cat);
@@ -715,7 +739,7 @@ function drawCard() {
 function cardInner(c) {
   return '<div class="gc-band"><span class="gc-mark">' + esc(c.mark) + '</span><span class="gc-cat">' + esc(c.catName) + '</span><span class="gc-no">' + fmtNo(c.id) + '</span></div>' +
     '<div class="gc-body"><p class="gc-text">' + fillGame(c.text) + '</p>' + (c.note ? '<p class="gc-note">' + fillGame(c.note) + '</p>' : '') + '</div>' +
-    '<div class="gc-foot"><span>' + (c.dur ? '<span class="gc-dur">継続 ' + esc(c.dur) + '</span>' : isChal(c.fx) ? '<span class="gc-dur ch">チャレンジ</span>' : '') + '</span>' + gameCups(c) + '</div>';
+    '<div class="gc-foot"><span>' + (c.dur ? '<span class="gc-dur">継続 ' + esc(c.dur) + '</span>' : isChal(c.fx) ? '<span class="gc-dur ch">チャレンジ</span>' : timerTag(c)) + '</span>' + gameCups(c) + '</div>';
 }
 function cardActs() {
   const cur = G.cur, fx = cur.card && cur.card.fx, acts = [];
@@ -727,6 +751,8 @@ function cardActs() {
   if (fx === 'swap' && !cur.swapDone) acts.push(['swap', '入れ替える相手を選ぶ', 'cyan']);
   if (fx === 'givesafe' && !cur.giveDone) acts.push(['give', 'セーフ券を渡す', 'lime']);
   if (fx === 'endrule' && anyDur()) acts.push(['endrule', 'ルールを終わらせる', 'lime']);
+  const tm = timerOf(cur.card);
+  if (tm) acts.push(['timer', tm.stop ? fmtSec(tm.sec) + 'ストップ対決！' : fmtSec(tm.sec) + 'タイマー スタート！', 'cyan']);
   return acts;
 }
 function afterZoom(fn) { if (zoom) zoom.after.push(fn); else fn(); }
@@ -1007,10 +1033,10 @@ function undoLast() {
   renderGame();
   SE.play('poof');
 }
-function openMulti() {
+function openMulti(only) {
   const cur = G.cur, c = cur.card;
   const excludeDrawer = c && /以外の全員/.test(c.text);
-  multi = { base: c && c.cups.length ? c.cups[0] : 1, sel: G.players.map((_, i) => !(excludeDrawer && i === cur.drawer)) };
+  multi = { base: c && c.cups.length ? c.cups[0] : 1, sel: G.players.map((_, i) => (Array.isArray(only) ? only.includes(i) : !(excludeDrawer && i === cur.drawer))) };
   renderMulti();
   openOv('multiOv');
   SE.play('pop');
@@ -1980,6 +2006,236 @@ function closeBomb(rec) {
   if (rec) openSheet(b.holder, { base: b.cups });
 }
 
+/* ---------- card timer: 「30秒」「10秒で」… get a countdown; 「10秒ストップ」 gets a hidden-stopwatch duel ---------- */
+let timer = null;
+function tmLater(fn, ms) { const T = timer; const id = setTimeout(() => { if (timer === T) fn(); }, ms); T.timers.push(id); return id; }
+function stopTimerWork(T) {
+  if (T.raf) cancelAnimationFrame(T.raf);
+  T.raf = 0;
+  T.timers.forEach(clearTimeout); T.timers = [];
+  if (T.anim) { try { T.anim.cancel(); } catch (_) { /* ignore */ } T.anim = null; }
+}
+function timerTag(c) {
+  const tm = timerOf(c);
+  return tm ? '<span class="gc-dur tm">' + (tm.stop ? 'ストップ対決' : 'タイマー ' + fmtSec(tm.sec)) + '</span>' : '';
+}
+/* the people the card names, in the order it names them (at most two); nobody named = the drawer */
+function timerPlayers(c) {
+  const out = [];
+  (String(c.text).match(TAG_RE) || []).forEach(t => { const i = G.cur.names[t.slice(1, -1)]; if (i != null && !out.includes(i)) out.push(i); });
+  if (!out.length) out.push(G.cur.drawer);
+  return out.slice(0, 2);
+}
+function openTimer() {
+  const c = G.cur.card, tm = timerOf(c);
+  if (timer || !tm) return;
+  timer = { mode: tm.stop ? 'stop' : 'count', sec: tm.sec, cups: c.cups.length ? c.cups[0] : 1, timers: [], raf: 0, anim: null, state: 'ready', guard: 0 };
+  $('tmHead').innerHTML = '<h2 class="tm-title ol" id="tmTitle"><span class="tm-mark" style="--c:' + colorVar(c.color) + '">' + esc(c.mark) + '</span>' +
+      (tm.stop ? fmtSec(tm.sec) + 'ストップ対決' : fmtSec(tm.sec) + 'タイマー') + '</h2>' +
+    '<p class="tm-card">' + fillGame(c.text) + '</p>';
+  openOv('timerOv');
+  BGM.play('tension'); BGM.level(0.6, 0.3);
+  SE.play('pop');
+  if (timer.mode === 'stop') swSetup(); else cdReady();
+}
+function closeTimer() {
+  const T = timer;
+  if (!T) return;
+  stopTimerWork(T);
+  timer = null;
+  closeOv('timerOv');
+  BGM.play('party'); BGM.level(1, 0.3);
+}
+function tmState(cls) { $('timerOv').className = 'ov timer-ov' + (timer && timer.mode === 'stop' ? ' swmode' : '') + (cls ? ' ' + cls : ''); }
+function tmActs(h, focus) {
+  const a = $('tmActs');
+  a.innerHTML = h;
+  const f = focus === false ? null : a.querySelector('.main') || a.querySelector('button');
+  if (f) f.focus({ preventScroll: true });
+}
+function tmPop(el) {
+  if (!el || !el.animate || reduceMotion) return;
+  try { el.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 280, easing: 'cubic-bezier(.2,1.4,.4,1)' }); } catch (_) { /* ignore */ }
+}
+const TM_DONE = '<button type="button" class="pbtn white small" data-tm="again">もう一回</button><button type="button" class="pbtn big main" data-tm="close">OK！</button>';
+
+/* countdown: 3-2-1, then a ring that empties, a clock tick every second, red "hurry" for the last seconds, a buzzer at 0 */
+function cdReady() {
+  const T = timer;
+  stopTimerWork(T);
+  T.state = 'ready'; T.hurry = false;
+  tmState('');
+  $('tmStage').innerHTML = '<div class="tm-ring"><svg viewBox="0 0 200 200" aria-hidden="true"><circle class="tm-track" cx="100" cy="100" r="84"/><circle class="tm-arc" id="tmArc" cx="100" cy="100" r="84" pathLength="100"/></svg>' +
+    '<div class="tm-center"><b class="tm-num" id="tmNum">' + T.sec + '</b><span class="tm-unit" id="tmUnit">秒</span></div></div>' +
+    '<p class="tm-sub" id="tmSub">準備ができたら <b>スタート</b>！</p>';
+  tmActs('<button type="button" class="pbtn white small" data-tm="close">閉じる</button><button type="button" class="pbtn big main pulse" data-tm="start">スタート！</button>');
+}
+function cdStart() {
+  const T = timer;
+  if (!T || T.state !== 'ready') return;
+  T.state = 'countin';
+  tmActs('<button type="button" class="pbtn white small" data-tm="cancel">やめる</button>', false);
+  $('tmSub').textContent = 'よーい…';
+  const num = $('tmNum');
+  $('tmUnit').textContent = '';
+  ['3', '2', '1'].forEach((s, i) => tmLater(() => { num.textContent = s; tmPop(num); SE.play('beep'); }, i * 650));
+  tmLater(cdRun, 3 * 650);
+}
+function cdRun() {
+  const T = timer;
+  T.state = 'run';
+  T.t0 = performance.now(); T.end = T.t0 + T.sec * 1000;
+  T.hurryAt = Math.min(5, Math.max(3, Math.round(T.sec * 0.3)));
+  tmState('run');
+  const num = $('tmNum'), arc = $('tmArc');
+  num.textContent = String(T.sec);
+  $('tmUnit').textContent = '秒';
+  $('tmSub').innerHTML = '<b>スタート！</b>';
+  tmActs('<button type="button" class="pbtn big white main" data-tm="stop">ストップ</button>');
+  SE.play('go'); flash('#35e0ff'); vibrate(60);
+  BGM.level(0.45, 0.3);
+  if (arc.animate) { try { T.anim = arc.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: 100 }], { duration: T.sec * 1000, easing: 'linear', fill: 'forwards' }); } catch (_) { T.anim = null; } }
+  let lastWhole = T.sec, shown = '';
+  const step = now => {
+    if (timer !== T || T.state !== 'run') return;
+    const left = Math.max(0, (T.end - now) / 1000);
+    if (left <= 0) { cdOver(); return; }
+    T.raf = requestAnimationFrame(step);
+    const s = left > 3 ? String(Math.ceil(left)) : left.toFixed(1);
+    if (s !== shown) { shown = s; num.textContent = s; }
+    if (!T.anim) arc.style.strokeDashoffset = (100 - left / T.sec * 100).toFixed(2);
+    const whole = Math.ceil(left);
+    if (whole < lastWhole) {
+      lastWhole = whole;
+      if (whole <= T.hurryAt) {
+        if (!T.hurry) { T.hurry = true; tmState('run hurry'); $('tmSub').innerHTML = 'のこり <b>' + T.hurryAt + '</b> 秒！'; BGM.level(0.2, 0.2); }
+        SE.play('hurry'); tmPop(num);
+        if (whole <= 3) vibrate(25);
+      } else SE.play(whole % 2 ? 'tock' : 'tick2');
+    }
+  };
+  T.raf = requestAnimationFrame(step);
+}
+function cdOver() {
+  const T = timer;
+  T.state = 'over';
+  if (T.raf) cancelAnimationFrame(T.raf);
+  T.guard = performance.now() + 600;   /* a late tap on ストップ must not land on the new buttons */
+  tmState('over');
+  $('tmNum').textContent = '0';
+  $('tmStage').querySelector('.tm-ring').insertAdjacentHTML('beforeend', '<p class="tm-stamp ol">タイムアップ！</p>');
+  $('tmSub').innerHTML = '<b>時間切れ！</b>';
+  SE.play('timeup'); flash('#ff1a3c'); vibrate([200, 80, 300]);
+  BGM.level(0.12, 0.05);
+  const box = $('timerOv').querySelector('.tm-box');
+  if (box && !reduceMotion) { box.classList.remove('shk'); void box.offsetWidth; box.classList.add('shk'); tmLater(() => box.classList.remove('shk'), 1050); }
+  tmActs(TM_DONE);
+}
+function cdStop() {
+  const T = timer;
+  if (!T || T.state !== 'run') return;
+  const now = performance.now(), left = Math.max(0, (T.end - now) / 1000), used = (now - T.t0) / 1000;
+  T.state = 'stopped';
+  if (T.raf) cancelAnimationFrame(T.raf);
+  if (T.anim) { try { T.anim.pause(); } catch (_) { /* ignore */ } }
+  T.guard = now + 500;
+  tmState('stopped');
+  $('tmNum').textContent = left.toFixed(1);
+  $('tmSub').innerHTML = 'ストップ！ <b>' + used.toFixed(1) + '</b>秒で止めた（のこり' + left.toFixed(1) + '秒）';
+  SE.play('ding'); BGM.level(0.6, 0.3);
+  tmActs(TM_DONE);
+}
+
+/* 「N秒ストップ」: each player starts and stops a stopwatch without seeing it; both times are revealed together, farthest from N drinks */
+function swSetup() {
+  const T = timer;
+  stopTimerWork(T);
+  T.ps = timerPlayers(G.cur.card); T.times = []; T.k = 0; T.loser = null; T.state = 'ready';
+  tmState('');
+  $('tmStage').innerHTML = '<div class="sw-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+      '<div class="sw-p" id="swP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="sw-time" id="swT' + i + '">--.--</b><span class="sw-diff" id="swD' + i + '"></span></div>').join('') + '</div>' +
+    '<p class="tm-sub" id="tmSub"></p><button type="button" class="cg-big sw-btn" id="swBtn">スタート</button>';
+  onPress($('swBtn'), swPress);
+  tmActs('<button type="button" class="pbtn white small" data-tm="close">やめる</button>', false);
+  swTurn();
+}
+function swTurn() {
+  const T = timer, i = T.k;
+  T.state = 'ready';
+  T.ps.forEach((_, j) => { const el = $('swP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('tmSub').innerHTML = '<b>' + esc(pname(T.ps[i])) + '</b> の番！<br>画面を見ずに、' + fmtSec(T.sec) + 'だと思ったらストップ';
+  const b = $('swBtn');
+  b.textContent = 'スタート'; b.classList.remove('run'); b.disabled = false;
+  b.focus({ preventScroll: true });
+}
+function swPress() {
+  const T = timer;
+  if (!T || T.mode !== 'stop') return;
+  const i = T.k, b = $('swBtn');
+  if (T.state === 'ready') {
+    T.state = 'run'; T.t0 = performance.now();
+    b.textContent = 'ストップ！'; b.classList.add('run');
+    $('swT' + i).textContent = '計測中'; $('swP' + i).classList.add('measuring');
+    $('tmSub').innerHTML = '画面を見ないで！<br>心の中でカウント…';
+    SE.play('select'); BGM.level(0, 0.15); vibrate(30);
+    T.cap = tmLater(swPress, (T.sec * 3 + 5) * 1000);
+    return;
+  }
+  if (T.state !== 'run') return;
+  T.times[i] = (performance.now() - T.t0) / 1000;
+  clearTimeout(T.cap);
+  T.state = 'gap';
+  $('swT' + i).textContent = '??.??';
+  $('swP' + i).classList.remove('measuring');
+  b.disabled = true;
+  SE.play('pop'); vibrate(30);
+  if (i + 1 < T.ps.length) { T.k++; $('tmSub').innerHTML = '記録OK！<br>次の人にスマホを渡して'; tmLater(swTurn, 900); }
+  else tmLater(swReveal, 600);
+}
+function swReveal() {
+  const T = timer;
+  T.state = 'reveal';
+  const b = $('swBtn'); if (b) b.remove();
+  T.ps.forEach((_, j) => $('swP' + j).classList.remove('now', 'wait'));
+  $('tmSub').innerHTML = '<b>結果発表…！</b>';
+  BGM.level(0.3, 0.2);
+  SE.play('roll');
+  const diffs = T.times.map(t => Math.abs(t - T.sec));
+  T.ps.forEach((_, j) => tmLater(() => {
+    const el = $('swT' + j);
+    el.textContent = T.times[j].toFixed(2); el.classList.add('show');
+    $('swD' + j).textContent = fmtSec(T.sec) + 'との差 ' + diffs[j].toFixed(2) + '秒';
+    SE.play('flip');
+  }, 800 + j * 450));
+  tmLater(() => swResult(diffs), 800 + T.ps.length * 450 + 300);
+}
+function swResult(diffs) {
+  const T = timer;
+  T.state = 'done';
+  T.guard = performance.now() + 500;
+  if (T.ps.length < 2) {
+    $('tmSub').innerHTML = fmtSec(T.sec) + 'との差 <b>' + diffs[0].toFixed(2) + '</b>秒';
+    SE.play(diffs[0] <= 0.3 ? 'bigheaven' : 'ding');
+    tmActs(TM_DONE);
+    return;
+  }
+  const d0 = Math.round(diffs[0] * 100), d1 = Math.round(diffs[1] * 100);
+  if (d0 === d1) {
+    T.ps.forEach((_, j) => $('swP' + j).classList.add('lose'));
+    $('tmSub').innerHTML = 'まさかの同じ差！ 2人とも <b>' + T.cups + '杯</b>';
+    SE.play('hell'); flash('#e8233f');
+    tmActs('<button type="button" class="pbtn white small" data-tm="close">閉じる</button><button type="button" class="pbtn big main" data-tm="multi">2人を記録へ</button>');
+    return;
+  }
+  const lose = d0 > d1 ? 0 : 1, win = 1 - lose;
+  T.loser = T.ps[lose];
+  $('swP' + lose).classList.add('lose'); $('swP' + win).classList.add('win');
+  $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + T.cups + '杯';
+  SE.play('bigheaven'); vibrate([60, 40, 60]);
+  const q = relPos($('swP' + win)); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 });
+  tmActs('<button type="button" class="pbtn white small" data-tm="close">閉じる</button><button type="button" class="pbtn big main" data-tm="rec">' + esc(pname(T.loser)) + 'の記録へ</button>');
+}
+
 /* ---------- tap duel ---------- */
 function openTap() {
   const a = G.cur.names['引いた人'], b = G.cur.names['ランダム'];
@@ -2281,6 +2537,7 @@ function wireGame() {
     if (g === 'draw') drawCard();
     else if (g === 'cospa') useCospa();
     else if (g === 'multi') openMulti();
+    else if (g === 'timer') openTimer();
     else if (g === 'undo') undoLast();
     else if (g === 'next') nextTurn();
     else if (g === 'pick') runPick();
@@ -2369,6 +2626,18 @@ function wireGame() {
     else if (a === 'rec') closeBomb(true);
     else closeBomb(false);
   });
+  $('timerOv').addEventListener('click', e => {
+    const b = e.target.closest('[data-tm]'); if (!b || !timer || b.disabled) return;
+    const a = b.dataset.tm, T = timer;
+    if (a !== 'start' && a !== 'stop' && a !== 'cancel' && performance.now() < T.guard) return;
+    if (a === 'start') cdStart();
+    else if (a === 'stop') cdStop();
+    else if (a === 'cancel') cdReady();
+    else if (a === 'again') { if (T.mode === 'stop') swSetup(); else cdReady(); }
+    else if (a === 'rec') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) openSheet(p, { base: cups }); }
+    else if (a === 'multi') { const ps = T.ps.slice(); closeTimer(); openMulti(ps); }
+    else closeTimer();
+  });
   $('chalActs').addEventListener('click', e => {
     const b = e.target.closest('[data-c]'); if (!b || !chal) return;
     const c = b.dataset.c;
@@ -2387,6 +2656,7 @@ function wireGame() {
     if (e.key !== 'Escape') return;
     if (zoom) { closeZoom(); return; }
     if (chal) { closeChallenge(false); return; }
+    if (timer) { closeTimer(); return; }
     if (bomb) { if (bomb.state !== 'play') closeBomb(false); return; }
     if (!$('tapOv').hidden) { closeTap(false); return; }
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
