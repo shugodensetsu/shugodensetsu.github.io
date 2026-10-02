@@ -506,7 +506,7 @@ const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
-const setup = { count: 4, names: [], rounds: 3, loaded: false };
+const setup = { count: 4, names: [], rounds: 3, loaded: false, coach: null };
 let sheet = null, multi = null, wheel = null, tap = null, picking = null, zoom = null;
 let wakeLock = null, lastFocus = null, spotRot = 0;
 
@@ -553,7 +553,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv'];
+const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'howOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -565,10 +565,12 @@ function openOv(id) {
   if (!document.querySelector('.ov:not([hidden])')) lastFocus = document.activeElement;
   $(id).hidden = false;
   syncCover();
+  coachQueue();
 }
 function closeOv(id) {
   $(id).hidden = true;
   syncCover();
+  coachQueue();
   if (!document.querySelector('.ov:not([hidden])') && lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
 }
 function closeAllOverlays() {
@@ -590,11 +592,15 @@ function showScreen(name) {
   else if (screen === 'game') renderGame();
   else if (screen === 'result') renderResult();
   else if (screen === 'editor') renderAll(true);
+  if (coach.on) coachQueue();
   sceneBGM();
 }
 
 /* ---------- title & setup ---------- */
-function renderTitle() { $('resumeBtn').hidden = !(validGame(G) && !G.done); }
+function renderTitle() {
+  $('resumeBtn').hidden = !(validGame(G) && !G.done);
+  $('howBtn').classList.toggle('first', !lsGet(GUIDE_SEEN_KEY));
+}
 function loadSetup() {
   if (setup.loaded) return;
   setup.loaded = true;
@@ -617,6 +623,8 @@ function renderSetup(full) {
       '<label class="nm-row" style="--p:' + pc(i) + '"><span class="nm-idx" aria-hidden="true">' + (i + 1) + '</span>' +
       '<input class="nm-in" id="pname-' + i + '" data-i="' + i + '" maxlength="8" autocomplete="off" enterkeyhint="next" placeholder="プレイヤー' + (i + 1) + '" value="' + esc(setup.names[i] || '') + '" aria-label="' + (i + 1) + '人目の名前"></label>').join('');
   }
+  if (setup.coach == null) setup.coach = lsGet(COACH_KEY) !== 'done';
+  $('coachOpt').checked = !!setup.coach;
   const pool = eligibleCards(setup.count).length;
   const info = $('setupInfo');
   info.classList.toggle('bad', pool === 0);
@@ -637,6 +645,7 @@ function beginGame() {
   };
   startTurn();
   saveGame();
+  if (setup.coach) coachStart(); else coachEnd(false);
   bgmDelay = 2.6;
   showScreen('game');
   SE.play('start');
@@ -872,6 +881,8 @@ function nextTurn() {
   if (!G || G.cur.phase !== 'drawn' || picking) return;
   const n = G.players.length;
   G.turn++;
+  /* the last tip (where help lives) comes once someone has been recorded, or after 3 turns at the latest */
+  if (coach.on) { coach.turns = (coach.turns || 0) + 1; if (coach.seen.has('sheet') || coach.turns >= 3) coach.moved = true; }
   let expired = 0;
   G.players.forEach(pl => { pl.hand = pl.hand.filter(h => { if (h.kind !== 'dur') return true; h.left--; if (h.left <= 0) { expired++; return false; } return true; }); });
   if (G.rounds && G.turn >= G.rounds * n) { finishGame(); return; }
@@ -882,6 +893,7 @@ function nextTurn() {
   if (expired) setTimeout(() => { telop('継続カードの効果が切れた！', 'cyan sm', 1200); SE.play('poof'); }, 1200);
 }
 function finishGame() {
+  if (coach.on) coachEnd(true);
   closeAllOverlays();
   G.done = true;
   saveGame();
@@ -963,8 +975,9 @@ function renderSheet() {
     '<div class="amt-row"><button type="button" class="stepper" data-s="minus" aria-label="1杯減らす"' + (s.locked || s.base <= 1 ? ' disabled' : '') + '>−</button>' +
       '<span class="amt-base"><b>' + s.base + '</b><small>もとの杯数</small></span>' +
       '<button type="button" class="stepper" data-s="plus" aria-label="1杯増やす"' + (s.locked || s.base >= 99 ? ' disabled' : '') + '>＋</button></div>' +
+    sheetHint(c, s) +
     (mods.length ? '<ul class="mods">' + mods.map(m => '<li>' + esc(m) + '</li>').join('') + '</ul>' : '') +
-    '<p class="sp-h">特殊ルール ' + (used ? '<span class="used">このターンは使用済み</span>' : '<span>1ターンに1つまで</span>') + '</p>' +
+    '<p class="sp-h">特殊ルール ' + (used ? '<span class="used">このターンは使用済み</span>' : '<span>1ターンに1つまで</span>') + '<button type="button" class="sp-help" data-s="help">？ 特殊ルールって？</button></p>' +
     '<div class="specials">' +
       '<button type="button" class="sp sp-dbl" data-s="dbl" aria-pressed="' + s.dbl + '"' + (dblDis ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分×2、次に飲む人も×2</span></button>' +
       '<button type="button" class="sp sp-hh" data-s="hh"' + (hhDis ? ' disabled' : '') + '><span class="sp-t">天国と地獄</span><span class="sp-d">回避か2倍か。回したら戻せない</span></button>' +
@@ -980,6 +993,13 @@ function renderSheet() {
     '<div class="sh-actions"><button type="button" class="pbtn white small" data-s="close"' + (s.locked ? ' disabled' : '') + '>やめる</button>' +
       '<button type="button" class="pbtn main" id="sheetRecord" data-s="record">記録する！</button></div>';
 }
+/* a line under the cups: always for range cards ("1〜3杯"), and for the first few records otherwise */
+function sheetHint(c, s) {
+  if (s.locked) return '';
+  if (c && c.cups.length > 1) return '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で実際の杯数に合わせてね</p>';
+  if ((Number(lsGet(RECS_KEY)) || 0) < 5) return '<p class="sh-hint">' + (c && c.cups.length ? 'カードの杯数が入っています。' : '') + 'ちがうときは −／＋ で直してから「記録する！」</p>';
+  return '';
+}
 function handRow(h) {
   const detail = h.kind === 'dur' ? 'あと' + h.left + 'ターン'
     : h.fx === 'heavenpass' ? 'ルーレットで地獄のとき使える'
@@ -993,6 +1013,7 @@ function recordSheet() {
   const s = sheet, p = s.p, cur = G.cur;
   const calc = computeAmount(s);
   const sn = snap();
+  lsSet(RECS_KEY, String((Number(lsGet(RECS_KEY)) || 0) + 1));
   const applied = pendingApplies(p);
   const incoming = applied ? G.pending.mult : 1;
   if (applied) G.pending = freshPending();
@@ -2296,6 +2317,232 @@ function closeTap(rec) {
   if (rec && loser != null) openSheet(loser);
 }
 
+/* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
+const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
+const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* ignore */ } };
+const CAT_DESC = {
+  hit: '書かれた人が、そのまま飲む', duel: '2人で勝負して、負けた方が飲む', name: '引いた人が、飲む人を指名する',
+  all: '全員参加。当てはまった人が飲む', topic: 'お題で遊ぶ。答えられなかった人が飲む', rule: 'しばらく続くルールが増える（継続カード）',
+  app: 'アプリの集計・ルーレット・早押しを使う', chal: 'アプリのミニゲームに挑戦。クリアで回避', safe: '飲まなくていい・助かる効果',
+  c1: 'サイコロ・トランプ・ダーツなど、道具を使う遊び',
+};
+/* look-alikes of the app's own parts, so the guide shows exactly what to look for (they are pictures, not buttons) */
+const gBtn = (t, cls) => '<span class="gd-b pbtn ' + (cls || 'small') + '">' + t + '</span>';
+const gSeat = (name, total, i, role, tap) => '<span class="gd-seat' + (tap ? ' tap' : '') + '" style="--p:' + pc(i) + '">' + (role ? '<span class="gd-role">' + role + '</span>' : '') + name + '<small>' + total + '杯</small></span>';
+const gTip = h => '<p class="gd-tip">' + h + '</p>';
+const gCard = (title, body, num) => '<section class="gd-card"><h3>' + (num ? '<span class="gd-num">' + num + '</span>' : '') + title + '</h3>' + body + '</section>';
+const GUIDE = [
+  { k: 'start', tab: 'はじめに', html: () =>
+    '<p class="gd-lead">スマホ1台をみんなで回して遊ぶカードゲームです。アプリは<b>「カードを出す係」</b>と<b>「飲んだ量を記録する係」</b>。ジャンケンなどの勝ち負けは、みんなで判定します。</p>' +
+    gCard('メンバーを登録', '<p>人数・名前・何周あそぶかを決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
+    gCard('カードを引く', '<div class="gd-mock">' + gBtn('カードを引く！', 'big') + '</div><p>自分の番の人がタップ。カードが大きく出るので<b>声に出して読み上げ</b>、書いてあるとおりに遊びます。</p>', 2) +
+    gCard('飲んだ人を記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + gSeat('サキ', 0, 1, 'ランダム', true) + '</div><p>飲む人が決まったら、<b>その人の席をタップ</b>して「記録する！」。<b>杯数はカードの数字が最初から入っています。</b></p>', 3) +
+    gCard('次の人へ', '<div class="gd-mock">' + gBtn('次へ ▶ サキ', 'big') + '</div><p>「次へ」で、登録順に次の人の番になります。これをくり返すだけ！</p>', 4) +
+    gTip('誰も飲まないカード（セーフなど）は、記録しないでそのまま「次へ」でOK。')
+  },
+  { k: 'record', tab: '記録のしかた', html: () =>
+    '<p class="gd-lead">アプリはジャンケンの結果までは分からないので、<b>飲む人だけ教えてあげて</b>ください。杯数は自動で入ります。</p>' +
+    gCard('飲む人の席をタップ', '<div class="gd-mock">' + gSeat('ケンタ', 2, 2, '左隣', true) + '</div><p>記録画面が開きます。カードに名前が出てくる人の席には、「引いた人」「ランダム」などの目印が付いています。</p>', 1) +
+    gCard('杯数を確かめる', '<div class="gd-mock paper"><span class="gd-amt"><span class="stepper">−</span><span class="amt-base"><b>2</b><small>もとの杯数</small></span><span class="stepper">＋</span></span></div>' +
+      '<p><b>カードの杯数が最初から入っています。</b>「1〜3杯」のような幅のあるカードや、ジャンケンで負けた回数ぶん飲むときだけ、−／＋で合わせます。</p>', 2) +
+    gCard('「記録する！」', '<p>下に出る<b>「飲む量」</b>が、実際に飲む量です。特殊ルールや券を使うと、ここが計算後の量（例：2杯 → ×2 → 4杯）に変わります。</p>', 3) +
+    gCard('こんなときは', '<ul class="gd-list">' +
+      '<li><b>何人も同じ量を飲む</b> → 画面下の「まとめて記録」で、まとめて記録</li>' +
+      '<li><b>記録をまちがえた</b> → 画面下の記録欄にある「取り消す」</li>' +
+      '<li><b>0.5杯と出た</b> → 半分の効果。半分くらい飲めばOK</li>' +
+      '<li><b>ミニゲームで負けた</b> → 結果画面の「〇〇の記録へ」で、杯数入りの記録画面が開く</li></ul>') +
+    gTip('記録した杯数は、最後の結果発表のランキングになります。')
+  },
+  { k: 'special', tab: '特殊ルール', html: () =>
+    '<p class="gd-lead">飲む量を変える切り札です。<b>使うかどうかは飲む人が決めます。</b>使わなくても遊べます。</p>' +
+    gTip('<b>1ターンに1人1つまで。</b>「倍倍FIGHT！」「天国と地獄」は記録画面のボタンから。「コストパフォーマンス」だけは、カードを引く前に使います。') +
+    gCard('<span class="gd-sp dbl">倍倍FIGHT！</span>', '<p>自分の量が<b>2倍</b>になるかわりに、<b>次に飲む人も2倍</b>にできる勝負の一手。</p>' +
+      '<div class="gd-flow"><span>2杯</span>→<span class="hot">倍倍FIGHT！で4杯</span>→<span>次に飲む人 ×2</span></div>' +
+      '<p class="sub">画面の上に「NEXT ×2」と出ている間に記録された人の量が2倍になります。その人も倍倍FIGHT！で受けて立てば、次は ×4、×8…と大きくなります。</p>') +
+    gCard('<span class="gd-sp hh">天国と地獄</span>', '<p>ルーレットで運命が決まる。<b>回したら取り消せません。</b></p><div class="gd-rows">' +
+      '<span class="gd-chip heaven">天国</span><span>飲まなくてOK</span>' +
+      '<span class="gd-chip hell">地獄</span><span>2倍</span>' +
+      '<span class="gd-chip bigheaven">大天国</span><span>自分は0杯。その量を次の人（左隣）に押し付け</span>' +
+      '<span class="gd-chip bighell">大地獄</span><span>3倍</span></div>' +
+      '<p class="sub">ふつうは10秒で止まります。たまに<b>デビルモード</b>（地獄だらけ）や<b>大天使降臨</b>（ほぼ天国、でも大地獄が2マス）が起きます。</p>') +
+    gCard('<span class="gd-sp cospa">コストパフォーマンス</span>', '<div class="gd-mock">' + gBtn('コスパ<span class="sub">先に1杯で半分に</span>', 'pink small') + '</div>' +
+      '<p>カードを引く<b>前</b>に押すと、先に1杯飲む（自動で記録）かわりに、<b>そのターン自分が飲む量が半分</b>になります。きついカードが来そうなときの保険。</p>')
+  },
+  { k: 'cards', tab: 'カードと手札', html: () =>
+    gCard('カードの種類', '<div class="gd-rows">' + deck.categories.map(c =>
+      '<span class="gd-mk" style="--c:' + colorVar(c.color) + '">' + esc(catMark(c)) + '</span><span><span class="gd-rn">' + esc(catName(c)) + '</span>' + esc(CAT_DESC[c.key] || 'カード編集で作った系統') + '</span>').join('') + '</div>') +
+    gCard('名前が入るところ', '<p>カードの <span class="tag">{引いた人}</span> などは、ゲーム中は実際の名前に変わります。</p><ul class="gd-list">' +
+      '<li><b>引いた人</b>：カードを引いた人</li><li><b>ランダム</b>：引いた人以外から、アプリが選んだ人</li><li><b>左隣・右隣</b>：登録順で次の人・前の人</li></ul>') +
+    gCard('継続カードと手札', '<p>「継続 2周」などと書かれたカードは<b>引いた人の手札</b>に入り、期間が終わると自動で消えます。席のすみの小さいカードが手札です。</p>' +
+      '<p class="sub">カードを引く前に席をタップすると、その人の手札とここまでの記録が見られます。</p>') +
+    gCard('券', '<div class="gd-rows">' +
+      '<span class="gd-chip plain">セーフ券・休憩券</span><span>飲む対象になったとき、1回だけ回避</span>' +
+      '<span class="gd-chip plain">押し付け券</span><span>飲む量を、書かれた人に押し付け</span>' +
+      '<span class="gd-chip plain">天国パス</span><span>天国と地獄で、地獄を1回だけ天国に</span>' +
+      '<span class="gd-chip plain">コスパ無料券</span><span>次のコスパの、前払い1杯が不要</span></div>' +
+      '<p class="sub">券は、記録画面に「〇〇を使う」ボタンとして出てきます（天国パスはルーレットの結果画面、コスパ無料券は自動で使われます）。</p>') +
+    gCard('次の人への効果', '<p>「次に飲む人は2倍」などのカードを引くと、画面の上に<b>NEXT ×2</b>と出ます。次に記録された人に自動でかかります。</p>')
+  },
+  { k: 'games', tab: 'ミニゲーム', html: () =>
+    '<p class="gd-lead">カードによっては、アプリで遊べるボタンが出ます。カードの下のボタンをタップしてスタート。</p>' +
+    gCard('チャレンジ', '<p>アプリのミニゲームに挑戦。<b>クリアすれば飲まなくてOK</b>、失敗したらカードの杯数。</p><div class="gd-rows">' +
+      [['ピタリストップ', '途中で見えなくなるタイマーを、目標の秒数で止める'], ['ジャストゲージ', '左右に動く針を、緑のゾーンで止める'], ['連打チャレンジ', '5秒で、指定の回数タップする'],
+        ['まんまる', '指で一筆、きれいなまるを描く'], ['色当て', '書いてある言葉ではなく、文字の色を答える'], ['数字タッチ', '1〜9を順番にタッチ。お手つきはアウト'], ['ハイ&ロー', '次のトランプが上か下かを3回連続で当てる']]
+        .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>') +
+    gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>が飲みます。爆発までの時間は毎回ちがいます。</p>') +
+    gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
+    gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、その人の記録画面を開きます。</p>') +
+    gTip('ミニゲームが終わったら「〇〇の記録へ」を押せば、そのまま記録できます。')
+  },
+  { k: 'more', tab: 'その他', html: () =>
+    gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
+    gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
+    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん飲んだ人は「酒豪！」、いちばん少ない人は「セーフ王」。</p>') +
+    gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>') +
+    gCard('音と案内', '<p>画面右上の「BGM」「効果音」で、それぞれON/OFF。メンバー登録画面の「操作の案内を出す」にチェックを入れると、1ターン目に操作の案内がもう一度出ます。</p>') +
+    (IS_APP && !(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) && !navigator.standalone
+      ? gCard('ホーム画面に追加', '<p>iPhoneなら、Safariの「共有」→「ホーム画面に追加」で、アプリのように全画面で使えます。一度開けばオフラインでも遊べます。</p>') : '') +
+    gTip('20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。お水もこまめに。')
+  },
+];
+let guidePage = 0;
+function openGuide(k) {
+  const i = GUIDE.findIndex(p => p.k === k);
+  guidePage = i >= 0 ? i : 0;
+  lsSet(GUIDE_SEEN_KEY, '1');
+  if (screen === 'title') renderTitle();
+  renderGuide();
+  if ($('howOv').hidden) { openOv('howOv'); SE.play('pop'); }
+  $('howClose').focus({ preventScroll: true });
+}
+function renderGuide() {
+  const tabs = $('gdTabs');
+  tabs.innerHTML = GUIDE.map((p, i) => '<button type="button" role="tab" data-gd="' + i + '" aria-selected="' + (i === guidePage) + '">' + p.tab + '</button>').join('');
+  $('gdBody').innerHTML = GUIDE[guidePage].html();
+  $('gdBody').scrollTop = 0;
+  $('gdDots').innerHTML = GUIDE.map((_, i) => '<i' + (i === guidePage ? ' class="on"' : '') + '></i>').join('');
+  $('gdPrev').disabled = guidePage === 0;
+  $('gdNext').textContent = guidePage === GUIDE.length - 1 ? 'とじる' : '次へ →';
+  const t = tabs.children[guidePage];
+  if (t) tabs.scrollLeft = t.offsetLeft - (tabs.clientWidth - t.offsetWidth) / 2;
+}
+function guideGo(d) {
+  const n = guidePage + d;
+  if (n < 0) return;
+  if (n >= GUIDE.length) { closeOv('howOv'); return; }
+  guidePage = n; renderGuide(); SE.play('tap');
+}
+
+/* ---------- はじめてガイド: step bubbles during the first game. They point at the next thing to press and never block a tap ---------- */
+const coach = { on: false, seen: new Set(), cur: null, t1: 0, t2: 0, moved: false };
+const noOv = () => !document.querySelector('.ov:not([hidden])');
+const onlyOv = id => { const open = Array.from(document.querySelectorAll('.ov:not([hidden])')); return open.length === 1 && open[0].id === id; };
+const COACH = [
+  { k: 'draw', when: () => noOv() && G.cur.phase === 'before' && !picking, at: '#dock [data-g="draw"]', above: '#gLog', html: () =>
+    '<span class="cb-step">はじめてガイド 1/5</span><p>自分の番の人が<b>「カードを引く！」</b>をタップ。</p>' +
+    (G.cur.cospa ? '' : '<p class="sub">左の「コスパ」は、先に1杯飲むとこのターン半分になる特殊ルール。使わなくてOK。</p>') },
+  { k: 'zoom', when: () => onlyOv('zoomOv') && !!zoom, place: 'top', html: () =>
+    '<span class="cb-step">2/5</span><p>カードを<b>声に出して読み上げよう！</b>書いてあるとおりに遊んだら「OK！ テーブルへ」。</p>' +
+    (cardActs().length ? '<p class="sub">ボタンが付いているカードは、そこからミニゲームやルーレットを始められます。</p>' : '') },
+  { k: 'seat', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.drinks.length && !G.cur.select && !picking && !!(G.cur.card && G.cur.card.cups.length),
+    at: '#center', seats: () => true, html: () =>
+    '<span class="cb-step">3/5</span><p>飲む人が決まったら、<b>その人の席をタップ</b>して記録しよう。</p><p class="sub">杯数はカードの数字が最初から入っています。誰も飲まなかったら、そのまま「次へ」でOK。</p>' },
+  { k: 'nodrink', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.drinks.length && !G.cur.select && !picking && !!(G.cur.card && !G.cur.card.cups.length),
+    at: '#dock [data-g="next"]', above: '#gLog', html: () =>
+    '<span class="cb-step">はじめてガイド</span><p>このカードは飲む人がいないので、<b>記録しないで「次へ」</b>でOK。</p>' },
+  { k: 'sheet', when: () => onlyOv('sheetOv') && !!sheet && !sheet.locked, at: '#sheetBox', point: '#sheetBox .amt-row', html: () =>
+    '<span class="cb-step">4/5</span><p>杯数は<b>カードの数字が入っています</b>。合っていればそのまま「記録する！」。ちがうときは −／＋ で直します。</p>' +
+    '<p class="sub">倍倍FIGHT！・天国と地獄は、飲む人が使いたいときだけ押す特殊ルールです。</p>', link: ['special', '特殊ルールって？'] },
+  { k: 'next', when: () => noOv() && G.cur.phase === 'drawn' && G.cur.drinks.length > 0 && !picking, at: '#dock [data-g="next"]', above: '#gLog', html: () =>
+    '<span class="cb-step">5/5</span><p>記録できたら<b>「次へ」</b>で次の人の番。</p><p class="sub">まちがえたときは、上の記録欄の「取り消す」で戻せます。</p>' },
+  { k: 'help', when: () => noOv() && coach.moved, at: '#helpBtn', last: true, html: () =>
+    '<p>これで基本はOK！ わからなくなったら、いつでも<b>右上の「？ 遊び方」</b>から使い方を見られます。</p>' },
+];
+function coachStart() { coach.on = true; coach.seen = new Set(); coach.cur = null; coach.moved = false; coach.turns = 0; coachQueue(); }
+function coachEnd(save) {
+  coach.on = false;
+  clearTimeout(coach.t1); clearTimeout(coach.t2);
+  coachHide();
+  if (save) { lsSet(COACH_KEY, 'done'); setup.coach = false; }
+}
+function coachHide() {
+  const el = $('coach');
+  el.hidden = true; el.innerHTML = '';
+  coach.cur = null;
+  document.querySelectorAll('.seat.coach-pick').forEach(s => s.classList.remove('coach-pick'));
+}
+/* positions are measured after the sheet / zoom has finished sliding in */
+function coachQueue() {
+  if (!coach.on) return;
+  clearTimeout(coach.t1); clearTimeout(coach.t2);
+  coach.t1 = setTimeout(coachSync, 60);
+  coach.t2 = setTimeout(coachSync, 480);
+}
+function coachSync() {
+  if (!coach.on) return;
+  if (screen !== 'game' || !validGame(G)) { coachHide(); return; }
+  if (!$('howOv').hidden) { coachHide(); return; }   /* reading the guide doesn't count as having seen the step */
+  if (coach.cur) {
+    const s = COACH.find(x => x.k === coach.cur);
+    if (s && !s.when()) { coach.seen.add(s.k); if (s.last) { coachEnd(true); return; } }
+  }
+  const step = COACH.find(s => !coach.seen.has(s.k) && s.when());
+  if (!step) { coachHide(); return; }
+  coachShow(step);
+}
+function coachShow(s) {
+  const el = $('coach'), shell = $('shell').getBoundingClientRect();
+  const sel = typeof s.at === 'function' ? s.at() : s.at;
+  const target = sel ? document.querySelector(sel) : null;
+  if (sel && !target) { coachHide(); return; }
+  if (coach.cur !== s.k) {
+    el.innerHTML = '<div class="coach-ring" id="coachRing" hidden></div><div class="coach-bub" id="coachBub">' + s.html() +
+      '<div class="cb-acts">' + (s.last ? '' : '<button type="button" class="skip" data-cb="end">案内を終わる</button>') +
+      (s.link ? '<button type="button" class="link" data-cb="guide" data-p="' + s.link[0] + '">' + s.link[1] + '</button>' : '') +
+      '<button type="button" data-cb="ok">' + (s.last ? 'OK！' : 'わかった') + '</button></div></div>';
+    coach.cur = s.k;
+  }
+  el.hidden = false;
+  const pick = s.seats ? s.seats() : false;
+  document.querySelectorAll('#seats .seat').forEach(x => x.classList.toggle('coach-pick', pick));
+  const ring = $('coachRing'), bub = $('coachBub'), H = shell.height;
+  bub.classList.remove('up', 'down', 'noarrow');
+  bub.style.top = ''; bub.style.bottom = '';
+  ring.hidden = true;
+  const atTop = () => { bub.classList.add('noarrow'); bub.style.top = '52px'; };
+  if (!target || s.place === 'top') { atTop(); return; }
+  const r = target.getBoundingClientRect(), y0 = r.top - shell.top;
+  const ringAt = rr => {
+    ring.hidden = false;
+    const l = Math.max(3, rr.left - shell.left - 6), rgt = Math.min(shell.width - 3, rr.right - shell.left + 6);
+    ring.style.left = l + 'px'; ring.style.top = (rr.top - shell.top - 6) + 'px';
+    ring.style.width = (rgt - l) + 'px'; ring.style.height = (rr.height + 12) + 'px';
+  };
+  let px = r.left + r.width / 2;
+  if (s.k === 'seat' && pick) {
+    /* seats are outlined; the bubble sits over the card in the middle of the table (the card is only a "show bigger" button) */
+    bub.classList.add('noarrow');
+    bub.style.top = Math.max(52, y0 + (r.height - bub.offsetHeight) / 2) + 'px';
+    return;
+  }
+  if (s.k === 'sheet') {
+    const pt = document.querySelector(s.point);
+    if (pt) { const pr = pt.getBoundingClientRect(); ringAt(pr); px = pr.left + pr.width / 2; }
+    if (y0 - 12 < bub.offsetHeight + 52) { atTop(); return; }
+    bub.classList.add('down'); bub.style.bottom = (H - y0 + 14) + 'px';
+  } else {
+    ringAt(r);
+    /* dock buttons: the bubble also clears the record strip above them (its 「取り消す」 stays tappable) */
+    const ab = s.above ? document.querySelector(s.above) : null;
+    const edge = ab ? Math.min(y0, ab.getBoundingClientRect().top - shell.top) : y0;
+    if (y0 + r.height / 2 > H / 2) { bub.classList.add('down'); bub.style.bottom = (H - edge + 12) + 'px'; }
+    else { bub.classList.add('up'); bub.style.top = (y0 + r.height + 14) + 'px'; }
+  }
+  const br = bub.getBoundingClientRect();
+  bub.style.setProperty('--ax', Math.max(22, Math.min(br.width - 22, px - br.left)) + 'px');
+}
+
 /* ---------- rendering: game ---------- */
 function gameCups(c) {
   if (!c.cups.length) return c.cat === 'safe' ? '<span class="gc-cups safe">SAFE</span>' : '<span class="gc-cups fx">効果カード</span>';
@@ -2394,6 +2641,7 @@ function renderGame(anim) {
   renderDock();
   renderLog();
   layoutTable();
+  coachQueue();
   void d;
 }
 function layoutTable() {
@@ -2504,7 +2752,30 @@ function wireGame() {
   $('goSetup').addEventListener('click', () => { loadSetup(); SE.play('tap'); showScreen('setup'); });
   $('resumeBtn').addEventListener('click', () => { if (validGame(G) && !G.done) { SE.play('tap'); showScreen('game'); requestWake(); } });
   $('goEditor').addEventListener('click', () => { SE.play('tap'); showScreen('editor'); });
-  $('howBtn').addEventListener('click', () => { SE.play('pop'); openOv('howOv'); $('howClose').focus({ preventScroll: true }); });
+  $('howBtn').addEventListener('click', () => openGuide('start'));
+  $('helpBtn').addEventListener('click', () => openGuide(G && G.cur && G.cur.phase === 'drawn' ? 'record' : 'start'));
+  $('gdTabs').addEventListener('click', e => { const b = e.target.closest('[data-gd]'); if (!b) return; guidePage = Number(b.dataset.gd); renderGuide(); SE.play('tap'); });
+  $('gdPrev').addEventListener('click', () => guideGo(-1));
+  $('gdNext').addEventListener('click', () => guideGo(1));
+  {
+    /* swipe left / right between pages (vertical scrolling stays normal) */
+    let sx = 0, sy = 0, on = false;
+    const body = $('gdBody');
+    body.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; on = e.touches.length === 1; }, { passive: true });
+    body.addEventListener('touchend', e => {
+      if (!on) return; on = false;
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { if (dx < 0 && guidePage < GUIDE.length - 1) guideGo(1); else if (dx > 0) guideGo(-1); }
+    }, { passive: true });
+  }
+  $('coach').addEventListener('click', e => {
+    const b = e.target.closest('[data-cb]'); if (!b || !coach.on) return;
+    const a = b.dataset.cb;
+    if (a === 'end') { coachEnd(true); telop('「？ 遊び方」でいつでも見られます', 'white sm', 1600); }
+    else if (a === 'guide') openGuide(b.dataset.p);
+    else { const s = COACH.find(x => x.k === coach.cur); if (coach.cur) coach.seen.add(coach.cur); if (s && s.last) coachEnd(true); else coachSync(); }
+  });
+  $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('editorBack').addEventListener('click', () => showScreen('title'));
 
@@ -2586,6 +2857,7 @@ function wireGame() {
     else if (s === 'ticket') { const u = Number(b.dataset.uid); sheet.ticket = sheet.ticket === u ? null : u; SE.play(sheet.ticket ? 'ticket' : 'tap'); renderSheet(); refocus('[data-uid="' + u + '"]'); }
     else if (s === 'close') closeSheet();
     else if (s === 'record') recordSheet();
+    else if (s === 'help') openGuide('special');
   });
   $('multiBox').addEventListener('click', e => {
     const b = e.target.closest('button[data-m]'); if (!b || !multi || b.disabled) return;
@@ -2670,7 +2942,7 @@ function wireGame() {
     if (document.visibilityState === 'visible') { if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
     else if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } }
   });
-  const onResize = () => { FXC.size(); if (screen === 'game') layoutTable(); if (zoom) sizeZoom(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') layoutTable(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) new ResizeObserver(onResize).observe($('tableWrap'));
 }
