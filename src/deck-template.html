@@ -207,6 +207,11 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .lg{flex:none; display:inline-flex; align-items:center; gap:5px; background:var(--chip-bg); border:2px solid var(--ink); border-radius:999px; padding:1px 10px 1px 5px; font-size:12.5px; font-weight:800; white-space:nowrap}
 .lg b{font-family:var(--f-display); font-weight:400; color:var(--yellow)}
 .lg-undo{flex:none; background:var(--white); color:var(--ink); border:2px solid var(--ink); border-radius:999px; font-size:12px; font-weight:800; padding:0 10px; line-height:1.7}
+.lg-undo.back{background:var(--cyan)}
+.dock-note.cospa{flex-direction:column; text-align:center; line-height:1.3}
+.dock-note.cospa small{display:block; font-size:11px; color:var(--muted); white-space:nowrap}
+.res-back{align-self:center; background:none; border:0; padding:4px 8px; color:var(--muted); font-size:12.5px; font-weight:800; text-decoration:underline}
+.back-card{background:var(--white); border:2.5px solid var(--ink); border-radius:12px; padding:8px 12px; font-size:13.5px !important; line-height:1.6}
 .lg-hint{font-size:12.5px; font-weight:800; color:var(--muted); white-space:nowrap}
 .dock{flex:none; display:flex; flex-direction:column; gap:8px}
 .dock-row{display:flex; gap:8px}
@@ -1123,6 +1128,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
           <button type="button" class="pbtn white small" id="changeBtn">メンバー変更</button>
           <button type="button" class="pbtn white small" id="titleBtn">タイトルへ</button>
         </div>
+        <button type="button" class="res-back" id="resBack" hidden>◀ 最後のターンに戻る（記録し忘れたとき）</button>
       </div>
     </section>
 
@@ -1292,6 +1298,8 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <div class="bomb-bottom" id="bombBottom"></div>
     </div>
   </div>
+
+  <div class="ov center" id="backOv" hidden><div class="dialog" id="backBox" role="dialog" aria-modal="true" aria-labelledby="backTitle"></div></div>
 
   <div class="ov center" id="confirmOv" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">

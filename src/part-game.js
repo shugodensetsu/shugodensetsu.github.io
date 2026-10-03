@@ -537,6 +537,7 @@ function normalizeGame(g) {
   c.used = Array.isArray(c.used) ? c.used : [];
   c.drinks = Array.isArray(c.drinks) && c.drinks.every(e => typeof e.snap === 'string' && e.kind) ? c.drinks : [];
   if (c.pickDone === undefined) c.pickDone = null;
+  g.hist = Array.isArray(g.hist) ? g.hist.filter(h => typeof h === 'string').slice(-HIST_MAX) : [];
   g.pile = Array.isArray(g.pile) ? g.pile : [];
   g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
@@ -639,7 +640,7 @@ function beginGame() {
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
   try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds })); } catch (_) { /* ignore */ }
   G = {
-    v: 2, rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1,
+    v: 2, rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [] })),
   };
@@ -874,12 +875,13 @@ function useCospa() {
   saveGame();
   renderGame();
   SE.play(free ? 'ticket' : 'coin');
-  telop(free ? 'コスパ無料！' : 'コスパ発動！', 'lime', 1300);
+  telop((free ? 'コスパ無料！' : 'コスパ発動！') + '<small>このターン、' + esc(pname(d)) + 'が飲む量は半分</small>', 'lime', 1700);
   floatAt(d, amt ? '+1杯' : 'FREE', !amt);
 }
 function nextTurn() {
   if (!G || G.cur.phase !== 'drawn' || picking) return;
   const n = G.players.length;
+  pushHist();
   G.turn++;
   /* the last tip (where help lives) comes once someone has been recorded, or after 3 turns at the latest */
   if (coach.on) { coach.turns = (coach.turns || 0) + 1; if (coach.seen.has('sheet') || coach.turns >= 3) coach.moved = true; }
@@ -891,6 +893,46 @@ function nextTurn() {
   renderGame();
   turnFx();
   if (expired) setTimeout(() => { telop('継続カードの効果が切れた！', 'cyan sm', 1200); SE.play('poof'); }, 1200);
+}
+/* ---------- going back: 「取り消す」 undoes the last record in this turn; 「◀ 前のターンに戻る」 restores the game exactly as it was
+   when 「次へ」 was pressed (card, records, special rules used, hands, NEXT ×2 …), so a forgotten record can still be made ---------- */
+const HIST_MAX = 8;
+function pushHist() {
+  const copy = Object.assign({}, G, { cur: Object.assign({}, G.cur, { select: null }) });
+  delete copy.hist;
+  G.hist = (G.hist || []).concat(JSON.stringify(copy)).slice(-HIST_MAX);
+}
+function canBack() { return !!(G && Array.isArray(G.hist) && G.hist.length); }
+function openBack() {
+  if (!canBack()) return;
+  const prev = JSON.parse(G.hist[G.hist.length - 1]), pc0 = prev.cur, cur = G.cur;
+  const who = prev.players[pc0.drawer] ? prev.players[pc0.drawer].name : '';
+  const cardText = pc0.card ? String(pc0.card.text).replace(TAG_RE, (_, k) => (prev.players[pc0.names[k]] || {}).name || k) : '';
+  const lost = [];
+  if (!G.done && cur.phase === 'drawn' && cur.card) lost.push('いま引いたカードは山札に戻ります');
+  if (!G.done && cur.drinks.length) lost.push('このターンの記録は消えます');
+  $('backBox').innerHTML = '<h2 id="backTitle">前のターンに戻る？</h2>' +
+    '<p><span class="sh-name" style="--p:' + pc(pc0.drawer) + '">' + esc(who) + '</span> のターンに戻ります。</p>' +
+    (cardText ? '<p class="back-card">' + esc(cardText) + '</p>' : '') +
+    '<p class="note-s">記録の続きや、特殊ルールの使い直しができます。' + (lost.length ? lost.join('。') + '。' : '') + '</p>' +
+    '<div class="dialog-acts"><button type="button" class="pbtn white small" data-back="no">やめる</button><button type="button" class="pbtn small" data-back="yes">戻る</button></div>';
+  openOv('backOv');
+  SE.play('pop');
+  const b = $('backBox').querySelector('[data-back="yes"]'); if (b) b.focus({ preventScroll: true });
+}
+function goBack() {
+  if (!canBack()) return;
+  const hist = G.hist.slice(), prev = JSON.parse(hist.pop());
+  prev.hist = hist;
+  const fromResult = screen === 'result';
+  closeAllOverlays();
+  G = normalizeGame(prev);
+  if (!G) return;
+  G.done = false;
+  saveGame();
+  if (fromResult) { showScreen('game'); requestWake(); } else renderGame();
+  SE.play('poof');
+  telop('◀ 前のターンに戻った', 'white sm', 1300);
 }
 function finishGame() {
   if (coach.on) coachEnd(true);
@@ -961,7 +1003,7 @@ function renderSheet() {
   const cardAmt = c && c.cups.length ? (c.cups.length > 1 ? c.cups[0] + '–' + c.cups[1] + '杯' : c.cups[0] + '杯') : 'なし';
   const mods = [];
   if (pendingApplies(p)) mods.push((G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '') + '（' + G.pending.src + '）');
-  if (cur.cospa && p === cur.drawer) mods.push('コスパ中：半分');
+  if (cur.cospa && p === cur.drawer) mods.push('コスパ中：この人が飲む量は半分');
   if (hasDur(p, 'half')) mods.push('手札：飲む量半分');
   if (immuneTo(p) && pendingActive()) mods.push('手札：倍倍無効');
   const hhLabel = { heaven: '天国！ 回避', hell: '地獄… 2倍', bigheaven: '大天国！ 次の人に押し付け', bighell: '大地獄…… 3倍' };
@@ -2349,7 +2391,8 @@ const GUIDE = [
     gCard('「記録する！」', '<p>下に出る<b>「飲む量」</b>が、実際に飲む量です。特殊ルールや券を使うと、ここが計算後の量（例：2杯 → ×2 → 4杯）に変わります。</p>', 3) +
     gCard('こんなときは', '<ul class="gd-list">' +
       '<li><b>何人も同じ量を飲む</b> → 画面下の「まとめて記録」で、まとめて記録</li>' +
-      '<li><b>記録をまちがえた</b> → 画面下の記録欄にある「取り消す」</li>' +
+      '<li><b>記録をまちがえた</b> → 画面下の記録欄にある「取り消す」で、1つ前に戻せる</li>' +
+      '<li><b>記録しないで「次へ」を押してしまった</b> → 記録欄の「◀ 前のターンに戻る」。カード・記録・特殊ルールがその時のまま戻るので、続きから記録できる（8ターン前まで。結果発表の画面からも戻れる）</li>' +
       '<li><b>0.5杯と出た</b> → 半分の効果。半分くらい飲めばOK</li>' +
       '<li><b>ミニゲームで負けた</b> → 結果画面の「〇〇の記録へ」で、杯数入りの記録画面が開く</li></ul>') +
     gTip('記録した杯数は、最後の結果発表のランキングになります。')
@@ -2367,7 +2410,13 @@ const GUIDE = [
       '<span class="gd-chip bighell">大地獄</span><span>3倍</span></div>' +
       '<p class="sub">ふつうは10秒で止まります。たまに<b>デビルモード</b>（地獄だらけ）や<b>大天使降臨</b>（ほぼ天国、でも大地獄が2マス）が起きます。</p>') +
     gCard('<span class="gd-sp cospa">コストパフォーマンス</span>', '<div class="gd-mock">' + gBtn('コスパ<span class="sub">先に1杯で半分に</span>', 'pink small') + '</div>' +
-      '<p>カードを引く<b>前</b>に押すと、先に1杯飲む（自動で記録）かわりに、<b>そのターン自分が飲む量が半分</b>になります。きついカードが来そうなときの保険。</p>')
+      '<p>自分の番で、カードを引く<b>前</b>に使います。先に<b>1杯飲んでおく</b>と、そのあと引いたカードで<b>自分が飲むことになったとき、その量が半分</b>になります。</p>' +
+      '<div class="gd-flow"><span>先に1杯飲む</span>→<span>カードで「4杯」</span>→<span class="hot">自分は2杯でOK</span></div>' +
+      '<ul class="gd-list">' +
+      '<li>半分になるのは<b>コスパを使った本人だけ</b>。ほかの人の量はそのまま</li>' +
+      '<li>効くのは<b>そのターンの間だけ</b>（ジャンケンで負けた・指名されたなど、自分が飲むことになったとき全部）</li>' +
+      '<li>先払いの1杯は、押した時点で自動で記録されます</li>' +
+      '<li>飲まずに済むカードが出たら、先に飲んだ1杯はそのまま。<b>きついカードが来そうなときの保険</b>です</li></ul>')
   },
   { k: 'cards', tab: 'カードと手札', html: () =>
     gCard('カードの種類', '<div class="gd-rows">' + deck.categories.map(c =>
@@ -2441,7 +2490,7 @@ const onlyOv = id => { const open = Array.from(document.querySelectorAll('.ov:no
 const COACH = [
   { k: 'draw', when: () => noOv() && G.cur.phase === 'before' && !picking, at: '#dock [data-g="draw"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド 1/5</span><p>自分の番の人が<b>「カードを引く！」</b>をタップ。</p>' +
-    (G.cur.cospa ? '' : '<p class="sub">左の「コスパ」は、先に1杯飲むとこのターン半分になる特殊ルール。使わなくてOK。</p>') },
+    (G.cur.cospa ? '' : '<p class="sub">左の「コスパ」は、先に1杯飲んでおくと、このターンで自分が飲むことになったときの量が半分になる特殊ルール。使わなくてOK。</p>') },
   { k: 'zoom', when: () => onlyOv('zoomOv') && !!zoom, place: 'top', html: () =>
     '<span class="cb-step">2/5</span><p>カードを<b>声に出して読み上げよう！</b>書いてあるとおりに遊んだら「OK！ テーブルへ」。</p>' +
     (cardActs().length ? '<p class="sub">ボタンが付いているカードは、そこからミニゲームやルーレットを始められます。</p>' : '') },
@@ -2455,7 +2504,7 @@ const COACH = [
     '<span class="cb-step">4/5</span><p>杯数は<b>カードの数字が入っています</b>。合っていればそのまま「記録する！」。ちがうときは −／＋ で直します。</p>' +
     '<p class="sub">倍倍FIGHT！・天国と地獄は、飲む人が使いたいときだけ押す特殊ルールです。</p>', link: ['special', '特殊ルールって？'] },
   { k: 'next', when: () => noOv() && G.cur.phase === 'drawn' && G.cur.drinks.length > 0 && !picking, at: '#dock [data-g="next"]', above: '#gLog', html: () =>
-    '<span class="cb-step">5/5</span><p>記録できたら<b>「次へ」</b>で次の人の番。</p><p class="sub">まちがえたときは、上の記録欄の「取り消す」で戻せます。</p>' },
+    '<span class="cb-step">5/5</span><p>記録できたら<b>「次へ」</b>で次の人の番。</p><p class="sub">まちがえたら上の「取り消す」。記録し忘れて次へ進んでも、「◀ 前のターンに戻る」で戻れます。</p>' },
   { k: 'help', when: () => noOv() && coach.moved, at: '#helpBtn', last: true, html: () =>
     '<p>これで基本はOK！ わからなくなったら、いつでも<b>右上の「？ 遊び方」</b>から使い方を見られます。</p>' },
 ];
@@ -2593,7 +2642,7 @@ function renderDock() {
   } else if (picking) {
     h = '<div class="dock-row"><div class="dock-note">ルーレット中…</div></div>';
   } else if (cur.phase === 'before') {
-    h = '<div class="dock-row">' + (cur.cospa ? '<div class="dock-note">コスパ中：このターン飲む量は半分</div>'
+    h = '<div class="dock-row">' + (cur.cospa ? '<div class="dock-note cospa"><span>コスパ中！<small>自分の飲む量は半分</small></span></div>'
       : '<button type="button" class="pbtn pink small" data-g="cospa">コスパ<span class="sub">先に1杯で半分に</span></button>') +
       '<button type="button" class="pbtn big main pulse" data-g="draw">カードを引く！</button></div>';
   } else {
@@ -2616,15 +2665,18 @@ function entryPills(e) {
 }
 function renderLog() {
   const cur = G.cur, es = cur.drinks;
-  let h = '';
-  if (!es.length) h = '<span class="lg-hint">' + (cur.phase === 'drawn' ? '飲む人の席をタップして記録！ 誰も飲まないならそのまま次へ' : '席をタップするとその人の手札が見られます') + '</span>';
+  const last = es[es.length - 1];
+  const undoable = !!last && !(last.kind === 'cospa' && cur.phase === 'drawn');
+  const back = !undoable && canBack() ? '<button type="button" class="lg-undo back" data-g="back">◀ 前のターンに戻る</button>' : '';
+  let h = back;
+  if (!es.length) h += '<span class="lg-hint">' + (cur.phase === 'drawn' ? '飲む人の席をタップして記録！ 誰も飲まないならそのまま次へ' : back ? '記録し忘れたら戻れます' : '席をタップするとその人の手札が見られます') + '</span>';
   else es.forEach((e, i) => {
     h += entryPills(e);
-    if (i === es.length - 1 && !(e.kind === 'cospa' && cur.phase === 'drawn')) h += '<button type="button" class="lg-undo" data-g="undo">取り消す</button>';
+    if (i === es.length - 1 && undoable) h += '<button type="button" class="lg-undo" data-g="undo">取り消す</button>';
   });
   const box = $('gLog');
   box.innerHTML = h;
-  box.scrollLeft = box.scrollWidth;
+  box.scrollLeft = back ? 0 : box.scrollWidth;
 }
 function renderGame(anim) {
   if (!validGame(G)) { showScreen('title'); return; }
@@ -2709,6 +2761,7 @@ function fitText(body, cw, start) {
 /* ---------- results ---------- */
 function renderResult() {
   if (!validGame(G)) { showScreen('title'); return; }
+  $('resBack').hidden = !canBack();
   const n = G.players.length;
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.total - a.total || a.i - b.i);
   const maxT = order[0].total, minT = order[order.length - 1].total, spread = maxT > minT;
@@ -2810,6 +2863,7 @@ function wireGame() {
     else if (g === 'multi') openMulti();
     else if (g === 'timer') openTimer();
     else if (g === 'undo') undoLast();
+    else if (g === 'back') openBack();
     else if (g === 'next') nextTurn();
     else if (g === 'pick') runPick();
     else if (g === 'tap') openTap();
@@ -2844,6 +2898,11 @@ function wireGame() {
   $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
   $('titleBtn').addEventListener('click', () => showScreen('title'));
+  $('resBack').addEventListener('click', openBack);
+  $('backBox').addEventListener('click', e => {
+    const b = e.target.closest('[data-back]'); if (!b) return;
+    if (b.dataset.back === 'yes') goBack(); else closeOv('backOv');
+  });
 
   $('sheetBox').addEventListener('click', e => {
     const b = e.target.closest('button[data-s]'); if (!b || !sheet || b.disabled) return;
@@ -2881,6 +2940,7 @@ function wireGame() {
   backdrop('howOv', () => closeOv('howOv'));
   backdrop('catOv', () => closeOv('catOv'));
   backdrop('confirmOv', () => closeOv('confirmOv'));
+  backdrop('backOv', () => closeOv('backOv'));
 
   $('wheelSpin').addEventListener('click', spinWheel);
   $('wheelOk').addEventListener('click', confirmWheel);
@@ -2932,7 +2992,7 @@ function wireGame() {
     if (bomb) { if (bomb.state !== 'play') closeBomb(false); return; }
     if (!$('tapOv').hidden) { closeTap(false); return; }
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
-    for (const id of ['confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
+    for (const id of ['backOv', 'confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('multiOv').hidden) { multi = null; closeOv('multiOv'); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
     if (G && G.cur && G.cur.select && screen === 'game') { G.cur.select = null; renderGame(); }
