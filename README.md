@@ -3,7 +3,7 @@
 飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。
 スマホ1台を2〜8人で回して遊びます。
 
-**遊ぶ：** https://tatsuyaishizukaai-hash.github.io/sakego-densetsu/
+**遊ぶ：** https://shugodensetsu.github.io/
 
 ## iPhoneのホーム画面に追加する
 
