@@ -342,6 +342,22 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dc-acts .pbtn.main{flex:1.6}
 .dc-none{align-self:center; background:none; border:0; color:var(--ink-muted); font-weight:800; font-size:13px; text-decoration:underline; padding:2px 8px}
 
+/* 「特殊ルールを使う？」 right after a drink is counted */
+.ask-step{flex:none; background:var(--ink); color:var(--yellow); border-radius:999px; padding:1px 10px; font-size:12px; font-weight:800}
+.ask-who{margin:0; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:800; font-size:16px}
+.ask-who .sh-name{font-family:var(--f-display); font-weight:400; font-size:21px}
+.ask-who b{font-family:var(--f-display); font-weight:400; font-size:32px; line-height:1; text-shadow:2px 2px 0 var(--pink)}
+.ask-who b small{font-family:var(--f-body); font-weight:800; font-size:13px; text-shadow:none; margin-left:1px}
+.ask-sp .sp{padding:11px 12px; min-height:74px}
+.ask-sp .sp-t{font-size:18px}
+.ask-sp .sp-d{font-size:11.5px}
+.ask-tk{justify-content:center}
+.ask-none{width:100%}
+.ask-order{display:flex; flex-direction:column; gap:9px; padding:4px 0 10px}
+.ask-o{display:flex; align-items:center; gap:10px; background:var(--p); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:7px 12px; font-weight:800; font-size:16px; color:var(--ink)}
+.ask-o b{flex:none; width:28px; height:28px; border-radius:50%; background:var(--ink); color:var(--yellow); display:grid; place-items:center; font-family:var(--f-display); font-weight:400}
+.ask-o.fin{animation:dcPop .5s var(--d, 0s) cubic-bezier(.2,1.6,.4,1) both}
+
 /* auto-record: "+1杯" tokens fly from the card to each drinker's seat, the seat's total counts up */
 .gulp-tok{position:absolute; left:0; top:0; z-index:8; pointer-events:none; font-family:var(--f-display); font-size:22px; line-height:1; color:var(--ink); background:var(--yellow); border:3px solid var(--ink); border-radius:999px;
   padding:5px 11px 4px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; will-change:transform, opacity}
@@ -1317,6 +1333,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   </main>
 
   <div class="ov" id="sheetOv" hidden><div class="sheet" id="sheetBox" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
+  <div class="ov" id="askOv" hidden><div class="sheet decide ask" id="askBox" role="dialog" aria-modal="true" aria-labelledby="askTitle"></div></div>
   <div class="ov" id="decideOv" hidden><div class="sheet decide" id="decideBox" role="dialog" aria-modal="true" aria-labelledby="decideTitle"></div></div>
   <div class="ov center" id="handOv" hidden><div class="dialog" id="handBox" role="dialog" aria-modal="true" aria-labelledby="handTitle"></div></div>
   <div class="ov center" id="endOv" hidden><div class="dialog" id="endBox" role="dialog" aria-modal="true" aria-labelledby="endTitle"></div></div>
