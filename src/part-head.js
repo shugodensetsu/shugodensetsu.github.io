@@ -39,6 +39,13 @@ const FX_GROUPS = [
     ['least', '一番少ない人に目印', '今いちばん飲んでいない人の席に目印を出す'],
     ['last', '直前に飲んだ人に目印', '直前に記録された人の席に目印を出す'],
   ]],
+  ['道具をアプリで（本物の道具で遊んでもOK）', [
+    ['chinchiro', 'チンチロ', '全員が順番にサイコロ3個を振り、いちばん弱い役の人がカードの杯数（同じなら全員）'],
+    ['dice', 'サイコロ勝負', '名前の出てくる2人がサイコロを振り、小さい方がカードの杯数（同じなら両方）'],
+    ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードの杯数（同じなら両方）'],
+    ['indian', 'インディアンポーカー', '2人にトランプを配り、せーので開いて低い方がカードの杯数。JOKERが出たら2人とも'],
+    ['darts', 'ダーツ勝負', '動く狙いを見て「投げる！」。得点の低い方がカードの杯数（同点なら両方）'],
+  ]],
   ['手札に入る券', [
     ['safe', 'セーフ券', '引いた人の手札へ。飲む対象になったとき1回だけ回避'],
     ['givesafe', 'セーフ券を渡す', '引いた人が選んだ人の手札にセーフ券を入れる'],
@@ -54,6 +61,7 @@ const FX_GROUPS = [
   ['継続中の効果（「継続」の入力が必要）', [
     ['half', '飲む量半分', '継続しているあいだ、引いた人の飲む量が半分'],
     ['nodouble', '倍倍無効', '継続しているあいだ、引いた人は倍倍FIGHT！で倍にされない'],
+    ['mate', 'インシュメイト（一緒に飲む）', '引いた人が1人を指名。継続しているあいだ、どちらかが飲むと、もう片方にも同じ量を自動で記録'],
   ]],
   ['その他', [
     ['swap', '記録の入れ替え', '引いた人と、選んだ人の杯数を入れ替える'],
@@ -101,6 +109,24 @@ function guessDrink(text) {
   if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|で)\\d+杯(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'auto';
   return 'judge';
 }
+/* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
+const TOOL_FX = ['chinchiro', 'dice', 'cards', 'indian', 'darts'];
+function toolOf(c) {
+  if (!c) return null;
+  if (TOOL_FX.includes(c.fx)) return c.fx;
+  if (c.fx || c.drink || !c.cups || !c.cups.length || c.dur) return null;
+  const t = String(c.text || '');
+  if (/チンチロ/.test(t)) return 'chinchiro';
+  if (/インディアンポーカー/.test(t)) return 'indian';
+  if (/ダーツ/.test(t)) return 'darts';
+  if (/サイコロ/.test(t)) return 'dice';
+  if (/トランプを?1枚ずつ引/.test(t)) return 'cards';
+  return null;
+}
+/* continuing cards that name someone (「インシュメイト」「執事」…); インシュメイト also links the two people's drinks */
+const durPickCard = c => !!(c && c.dur && /指名/.test(String(c.text || '')));
+const mateCard = c => !!(c && c.dur && (c.fx === 'mate' || (!c.fx && /インシュメイト|もう片方も同じ量/.test(String(c.text || '')))));
+const ruleTitle = text => { const m = /「([^」]{1,12})」/.exec(String(text || '')); return m ? m[1] : ''; };
 /* the mode the game uses: app-linked effects first, then the editor choice, then the text */
 function drinkOf(c) {
   const fx = (c && c.fx) || '';
