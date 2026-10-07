@@ -1,7 +1,7 @@
 /* 酒GO!!伝説 service worker — plays offline after the first visit.
    The page itself is fetched fresh when online (so updates arrive), falling back to the saved copy offline;
    icons and fonts come from the cache. Bump VERSION on every release. */
-const VERSION = 'sakego-202610030426';
+const VERSION = 'sakego-202610071716';
 const FONTS = 'sakego-fonts';
 const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 

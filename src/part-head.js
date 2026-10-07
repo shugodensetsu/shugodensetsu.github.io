@@ -10,7 +10,7 @@ const DRAFT_KEY = 'nomige-deck-draft';
 const TAGS = ['引いた人', 'ランダム', '左隣', '右隣'];
 const TAG_RE = /\{(引いた人|ランダム|左隣|右隣)\}/g;
 const CAT_KEYS = ['key', 'name', 'mark', 'color', 'on'];
-const CARD_KEYS = ['id', 'cat', 'text', 'cups', 'min', 'dur', 'note', 'on', 'fx'];
+const CARD_KEYS = ['id', 'cat', 'text', 'cups', 'min', 'dur', 'note', 'on', 'fx', 'drink'];
 const COLORS = 12;
 const SAMPLE = ['ユウキ', 'サキ', 'ケンタ', 'ミオ', 'ダイチ', 'アヤ', 'ショウ', 'ナナ'];
 const RO_CODES = ['not_writer', 'not_granted', 'consent_required', 'capability_disabled', 'capability_removed', 'not_declared'];
@@ -77,6 +77,49 @@ function timerOf(c) {
 }
 function fmtSec(s) { return s >= 60 && s % 60 === 0 ? s / 60 + '分' : s + '秒'; }
 
+/* who drinks when a card is drawn. Picked in the card editor (「飲む人の決め方」); empty = worked out from the text.
+   auto / all / others / least / last: the app knows who, and records it by itself when the card is closed.
+   pick: someone names people (指名画面). judge: decided by playing (「誰が飲む？」画面). app: the app's mini game decides. none: nobody now. */
+const DRINK_OPTS = [
+  ['auto', '書かれた人が飲む（自動で記録）'],
+  ['all', '全員が飲む（自動で記録）'],
+  ['others', '引いた人以外の全員（自動で記録）'],
+  ['pick', '指名して決める（指名画面が出る）'],
+  ['judge', '遊んだ結果で決まる（「誰が飲む？」画面が出る）'],
+  ['none', 'このカードでは飲まない'],
+];
+const DRINK_INFO = Object.fromEntries(DRINK_OPTS);
+const DRINK_SHORT = { auto: '自動で記録', all: '全員を自動で記録', others: '引いた人以外を自動で記録', least: '少ない人を自動で記録', last: '直前の人を自動で記録',
+  pick: '指名画面', judge: '誰が飲む？画面', app: 'ミニゲームの結果で記録', none: '飲まない' };
+const D_TAG = '\\{(?:引いた人|ランダム|左隣|右隣)\\}';
+const D_END = '(?:グイ|飲む|飲み)?[。！!]*$';
+function guessDrink(text) {
+  const t = String(text || '').replace(/\s+/g, '');
+  if (new RegExp('^全員で?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'all';
+  if (new RegExp('^' + D_TAG + '以外の全員[がは]?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t)) return 'others';
+  if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+杯(?:ずつ)?|し、一緒に\\d+杯ずつ)' + D_END).test(t)) return 'pick';
+  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|で)\\d+杯(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'auto';
+  return 'judge';
+}
+/* the mode the game uses: app-linked effects first, then the editor choice, then the text */
+function drinkOf(c) {
+  const fx = (c && c.fx) || '';
+  if (/^ch_/.test(fx) || fx === 'bomb' || fx === 'tap' || fx === 'pick' || fx === 'hh') return 'app';
+  if (fx === 'least' || fx === 'last') return fx;
+  if (!c || !c.cups || !c.cups.length) return 'none';
+  if (c.drink && DRINK_INFO[c.drink]) return c.drink;
+  if (c.dur) return 'none';
+  const tm = timerOf(c);
+  if (tm && tm.stop) return 'app';
+  return guessDrink(c.text);
+}
+/* 指名 details from the text: who names, how many, and whether the namer drinks too */
+function pickInfo(c) {
+  const t = String(c.text || '');
+  const m = /\{(引いた人|ランダム|左隣|右隣)\}が\s*([1-3１-３])\s*人を指名/.exec(t);
+  const n = m ? Number(String(m[2]).replace(/[１-３]/, d => '１２３'.indexOf(d) + 1)) : 1;
+  return { by: m ? m[1] : '引いた人', n, self: /一緒に/.test(t) };
+}
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k] === undefined ? null : o[k]]));
 const fmtNo = id => 'No.' + String(id).padStart(3, '0');
@@ -101,6 +144,7 @@ function normalize(d) {
       min: Math.min(8, Math.max(2, Number(c.min) || 2)),
       dur: c.dur ? String(c.dur) : null, note: c.note ? String(c.note) : null, on: c.on !== false,
       fx: c.fx ? String(c.fx) : null,
+      drink: DRINK_INFO[c.drink] ? String(c.drink) : null,
     })),
   };
 }

@@ -307,6 +307,50 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dialog p{margin:0; font-weight:800; font-size:14px}
 .dialog-acts{display:flex; gap:8px}
 .dialog-acts .pbtn{flex:1}
+.dialog-acts.col{flex-direction:column}
+
+/* ---------- 「誰が飲む？」「誰を指名する？」: choose the drinkers, then drink or use a special rule ---------- */
+.decide{gap:10px}
+.dc-head{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.dc-head h2{margin:0; font-family:var(--f-display); font-weight:400; font-size:23px; line-height:1.2}
+.dc-later{flex:none; border:2.5px solid var(--ink); border-radius:999px; background:var(--white); color:var(--ink); font-weight:800; font-size:12.5px; padding:3px 12px; box-shadow:0 2px 0 var(--ink)}
+.dc-card{margin:0; background:var(--white); border:2.5px solid var(--ink); border-radius:12px; padding:6px 10px; font-size:13px; font-weight:800; line-height:1.6; max-height:5.2em; overflow:auto}
+.dc-card .pn{background:var(--p); border-radius:4px; padding:0 3px}
+.dc-sub{margin:0; text-align:center; font-size:13px; font-weight:800; color:var(--ink-muted)}
+.dc-sub b{color:#c2187a}
+.dc-players{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px 9px; padding-top:6px}
+.dc-p{position:relative; display:flex; align-items:center; gap:7px; min-height:52px; box-sizing:border-box; background:var(--white); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink);
+  padding:6px 9px 6px 8px; color:var(--ink); text-align:left; font:inherit; transition:transform .15s cubic-bezier(.3,1.6,.5,1), background .15s}
+.dc-p .dot{flex:none; width:14px; height:14px; border-radius:50%; background:var(--p); border:2.5px solid var(--ink)}
+.dc-nm{flex:1; min-width:0; font-weight:800; font-size:15.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.dc-amt{flex:none; font-family:var(--f-display); font-size:17px; line-height:1}
+.dc-amt small{font-family:var(--f-body); font-weight:800; font-size:10.5px}
+.dc-role{position:absolute; top:-11px; left:9px; background:var(--ink); color:var(--yellow); font-size:10px; font-weight:800; border-radius:999px; padding:0 7px; line-height:1.75; white-space:nowrap; max-width:calc(100% - 18px); overflow:hidden; text-overflow:ellipsis}
+.dc-role.by{background:var(--yellow); color:var(--ink); border:2px solid var(--ink); line-height:1.4}
+.dc-tk{flex:none; background:var(--yellow); border:2px solid var(--ink); border-radius:6px; font-size:10px; font-weight:800; padding:0 4px; line-height:1.5}
+.dc-p.cand{outline:3px dashed var(--pink); outline-offset:3px}
+.dc-p[aria-pressed="true"]{background:var(--p); transform:translateY(-2px) scale(1.04); box-shadow:0 6px 0 var(--ink)}
+.dc-p[aria-pressed="true"] .dot{background:var(--white)}
+.dc-p.locked{opacity:.92}
+.dc-p.pop{animation:dcPop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dcPop{0%{transform:scale(.88)} 45%{transform:scale(1.14) rotate(-3deg)} 100%{transform:translateY(-2px) scale(1.04)}}
+.dc-stamp{position:absolute; right:-7px; top:-13px; background:var(--red); color:var(--white); font-family:var(--f-display); font-size:13px; line-height:1.3; border:2.5px solid var(--ink); border-radius:8px; padding:0 6px; transform:rotate(9deg); animation:slamIn .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes slamIn{from{transform:rotate(9deg) scale(2.4); opacity:0}}
+.dc-note{margin:0; text-align:center; font-size:12px; font-weight:800; color:var(--white); background:var(--ink); border-radius:9px; padding:3px 10px}
+.dc-acts{display:flex; gap:8px}
+.dc-acts .pbtn{flex:1; min-width:0}
+.dc-acts .pbtn.main{flex:1.6}
+.dc-none{align-self:center; background:none; border:0; color:var(--ink-muted); font-weight:800; font-size:13px; text-decoration:underline; padding:2px 8px}
+
+/* auto-record: "+1杯" tokens fly from the card to each drinker's seat, the seat's total counts up */
+.gulp-tok{position:absolute; left:0; top:0; z-index:8; pointer-events:none; font-family:var(--f-display); font-size:22px; line-height:1; color:var(--ink); background:var(--yellow); border:3px solid var(--ink); border-radius:999px;
+  padding:5px 11px 4px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; will-change:transform, opacity}
+.gulp-tok small{font-family:var(--f-body); font-weight:800; font-size:12px; margin-left:1px}
+.gulp-tok.safe{background:var(--mint)}
+.gulp-ring{position:absolute; z-index:7; pointer-events:none; box-sizing:border-box; border:4px solid var(--yellow); border-radius:20px; animation:gulpRing .65s ease-out forwards}
+@keyframes gulpRing{from{transform:translate(-50%,-50%) scale(.9); opacity:1} to{transform:translate(-50%,-50%) scale(1.5); opacity:0}}
+.telop.hint{top:66%; font-size:min(20px, 5.2vw); line-height:1.4; color:var(--white); white-space:normal; width:min(86%, 420px)}
+.telop.hint b{color:var(--yellow)}
 
 /* ---------- 遊び方ガイド (full-screen manual with tabs) ---------- */
 .guide-ov{z-index:86; align-items:stretch; padding:0; background:radial-gradient(circle at 50% 0, #3a1d88 0, var(--bg-deep) 70%)}
@@ -338,6 +382,13 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .gd-role{position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--yellow); font-size:10px; border-radius:999px; padding:0 7px; white-space:nowrap; line-height:1.7}
 .gd-seat.tap::after{content:""; position:absolute; right:-10px; bottom:-10px; width:26px; height:26px; border-radius:50%; border:3px solid var(--yellow); background:rgba(255,216,61,.35); animation:gdTap 1.2s ease-out infinite}
 @keyframes gdTap{0%{transform:scale(.5); opacity:1} 100%{transform:scale(1.5); opacity:0}}
+.gd-tok{font-family:var(--f-display); font-size:18px; line-height:1; color:var(--ink); background:var(--yellow); border:3px solid var(--ink); border-radius:999px; padding:4px 10px 3px; box-shadow:0 3px 0 var(--ink); transform:rotate(-8deg)}
+.gd-tok small{font-family:var(--f-body); font-weight:800; font-size:11px}
+.gd-pick{display:inline-flex; align-items:center; gap:8px; min-width:96px; box-sizing:border-box; background:var(--white); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:8px 12px; font-weight:800; font-size:14px; color:var(--ink)}
+.gd-pick::before{content:''; width:12px; height:12px; border-radius:50%; background:var(--p); border:2.5px solid var(--ink)}
+.gd-pick.on{background:var(--p); transform:translateY(-2px) scale(1.04)}
+.gd-pick.on::before{background:var(--white)}
+.gd-pick b{font-family:var(--f-display); font-weight:400; color:var(--ink) !important; margin-left:auto}
 .gd-amt{display:flex; align-items:center; gap:14px}
 .gd-amt .stepper{display:grid; place-items:center; pointer-events:none}
 .gd-flow{display:flex; flex-wrap:wrap; align-items:center; gap:6px; font-weight:800; font-size:13px}
@@ -385,6 +436,10 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .sp-help{margin-left:auto; border:2px solid var(--ink); border-radius:999px; background:var(--cyan); color:var(--ink); font-weight:800; font-size:11.5px; padding:1px 9px; line-height:1.5}
 .sh-hint{margin:-2px 0 0; text-align:center; font-size:12px; font-weight:800; color:var(--ink-muted)}
 .sh-hint b{color:#c2187a}
+.sh-ctx{margin:-3px 0 0; font-size:12.5px; font-weight:800; color:var(--ink-muted); line-height:1.6}
+.sh-ctx b{color:#c2187a}
+.sh-link{display:inline; background:none; border:0; padding:0 0 0 8px; color:#2f6fd6; font-weight:800; font-size:12.5px; text-decoration:underline}
+.sh-mini{display:inline-block; background:var(--p); border:2px solid var(--ink); border-radius:7px; padding:0 5px; margin-right:3px; color:var(--ink); font-size:12px; line-height:1.4}
 .coach-opt{flex:none; display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:800; color:var(--white); text-align:left}
 .coach-opt input{flex:none; width:20px; height:20px; accent-color:var(--yellow); margin:0}
 #howBtn.first{position:relative}
@@ -606,7 +661,9 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .z-acts .pbtn.big{min-width:62%}
 .zoom-ov.entry .z-acts, .zoom-ov.entry .z-hint{animation:fadeUp .4s .6s both}
 @keyframes fadeUp{from{opacity:0; transform:translateY(16px)}}
-.z-hint{position:relative; margin:0; font-size:11.5px; font-weight:800; color:var(--muted); flex:none}
+.z-hint{position:relative; margin:0; font-size:11.5px; font-weight:800; color:var(--muted); flex:none; text-align:center; line-height:1.45}
+.z-hint.auto{font-size:13.5px; color:var(--yellow)}
+.z-hint.auto b{display:inline-block; background:var(--yellow); color:var(--ink); border-radius:6px; padding:0 5px; margin:0 1px}
 .zoom-ov.closing{background:transparent}
 .zoom-ov.closing .z-stamp, .zoom-ov.closing .z-acts, .zoom-ov.closing .z-hint, .zoom-ov.closing .z-rays{opacity:0; transition:opacity .15s}
 
@@ -985,6 +1042,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .pill{font-size:11px; font-weight:800; border:2px solid var(--ink); border-radius:999px; padding:0 7px; color:var(--ink); background:var(--white); white-space:nowrap}
 .pill.warn{background:var(--orange)}
 .pill.app{background:var(--lime)}
+.pill.drink{background:var(--yellow)}
 .cups{font-family:var(--f-display); font-size:25px; line-height:1; white-space:nowrap; text-shadow:2px 2px 0 var(--c)}
 .cups small{font-family:var(--f-body); font-size:12px; font-weight:800; margin-left:2px; text-shadow:none}
 .cups.fx{font-family:var(--f-body); font-size:12.5px; font-weight:800; text-shadow:none}
@@ -1186,7 +1244,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   </main>
 
   <div class="ov" id="sheetOv" hidden><div class="sheet" id="sheetBox" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
-  <div class="ov" id="multiOv" hidden><div class="sheet" id="multiBox" role="dialog" aria-modal="true" aria-labelledby="multiTitle"></div></div>
+  <div class="ov" id="decideOv" hidden><div class="sheet decide" id="decideBox" role="dialog" aria-modal="true" aria-labelledby="decideTitle"></div></div>
   <div class="ov center" id="handOv" hidden><div class="dialog" id="handBox" role="dialog" aria-modal="true" aria-labelledby="handTitle"></div></div>
   <div class="ov center" id="endOv" hidden><div class="dialog" id="endBox" role="dialog" aria-modal="true" aria-labelledby="endTitle"></div></div>
 
@@ -1300,6 +1358,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   </div>
 
   <div class="ov center" id="backOv" hidden><div class="dialog" id="backBox" role="dialog" aria-modal="true" aria-labelledby="backTitle"></div></div>
+  <div class="ov center" id="nextOv" hidden><div class="dialog" id="nextBox" role="dialog" aria-modal="true" aria-labelledby="nextTitle"></div></div>
 
   <div class="ov center" id="confirmOv" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">

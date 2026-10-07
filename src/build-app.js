@@ -7,7 +7,7 @@ const dir = __dirname, out = path.join(dir, '..');
 const VERSION = process.argv[2] || new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 
 const CAT_KEYS = ['key', 'name', 'mark', 'color', 'on'];
-const CARD_KEYS = ['id', 'cat', 'text', 'cups', 'min', 'dur', 'note', 'on', 'fx'];
+const CARD_KEYS = ['id', 'cat', 'text', 'cups', 'min', 'dur', 'note', 'on', 'fx', 'drink'];
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k] === undefined ? null : o[k]]));
 const serialize = d => '{"version":1,\n"categories":[\n' + d.categories.map(c => JSON.stringify(pick(c, CAT_KEYS))).join(',\n') +
   '\n],\n"cards":[\n' + d.cards.map(c => JSON.stringify(pick(c, CARD_KEYS))).join(',\n') + '\n]}';
