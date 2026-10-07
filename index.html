@@ -358,6 +358,22 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dc-acts .pbtn.main{flex:1.6}
 .dc-none{align-self:center; background:none; border:0; color:var(--ink-muted); font-weight:800; font-size:13px; text-decoration:underline; padding:2px 8px}
 
+/* 「特殊ルールを使う？」 right after a drink is counted */
+.ask-step{flex:none; background:var(--ink); color:var(--yellow); border-radius:999px; padding:1px 10px; font-size:12px; font-weight:800}
+.ask-who{margin:0; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:800; font-size:16px}
+.ask-who .sh-name{font-family:var(--f-display); font-weight:400; font-size:21px}
+.ask-who b{font-family:var(--f-display); font-weight:400; font-size:32px; line-height:1; text-shadow:2px 2px 0 var(--pink)}
+.ask-who b small{font-family:var(--f-body); font-weight:800; font-size:13px; text-shadow:none; margin-left:1px}
+.ask-sp .sp{padding:11px 12px; min-height:74px}
+.ask-sp .sp-t{font-size:18px}
+.ask-sp .sp-d{font-size:11.5px}
+.ask-tk{justify-content:center}
+.ask-none{width:100%}
+.ask-order{display:flex; flex-direction:column; gap:9px; padding:4px 0 10px}
+.ask-o{display:flex; align-items:center; gap:10px; background:var(--p); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:7px 12px; font-weight:800; font-size:16px; color:var(--ink)}
+.ask-o b{flex:none; width:28px; height:28px; border-radius:50%; background:var(--ink); color:var(--yellow); display:grid; place-items:center; font-family:var(--f-display); font-weight:400}
+.ask-o.fin{animation:dcPop .5s var(--d, 0s) cubic-bezier(.2,1.6,.4,1) both}
+
 /* auto-record: "+1杯" tokens fly from the card to each drinker's seat, the seat's total counts up */
 .gulp-tok{position:absolute; left:0; top:0; z-index:8; pointer-events:none; font-family:var(--f-display); font-size:22px; line-height:1; color:var(--ink); background:var(--yellow); border:3px solid var(--ink); border-radius:999px;
   padding:5px 11px 4px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; will-change:transform, opacity}
@@ -1335,6 +1351,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   </main>
 
   <div class="ov" id="sheetOv" hidden><div class="sheet" id="sheetBox" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></div></div>
+  <div class="ov" id="askOv" hidden><div class="sheet decide ask" id="askBox" role="dialog" aria-modal="true" aria-labelledby="askTitle"></div></div>
   <div class="ov" id="decideOv" hidden><div class="sheet decide" id="decideBox" role="dialog" aria-modal="true" aria-labelledby="decideTitle"></div></div>
   <div class="ov center" id="handOv" hidden><div class="dialog" id="handBox" role="dialog" aria-modal="true" aria-labelledby="handTitle"></div></div>
   <div class="ov center" id="endOv" hidden><div class="dialog" id="endBox" role="dialog" aria-modal="true" aria-labelledby="endTitle"></div></div>
@@ -2998,7 +3015,7 @@ function closeAllOverlays() {
   if (bomb) { if (bomb.raf) cancelAnimationFrame(bomb.raf); bomb.timers.forEach(clearTimeout); }
   if (timer) stopTimerWork(timer);
   if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); }
-  wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null;
+  wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null; ask = null;
   document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
   syncCover();
 }
@@ -3429,6 +3446,13 @@ function computeAmount(s) {
    opts.batch: opened from 「誰が飲む？」 — {others, back}: the others are recorded together, やめる goes back to the choosing screen
    opts.owed: a mini game's loser — やめる (「使わずに記録」) records the drink as it is */
 function openSheet(p, opts) {
+  makeSheet(p, opts);
+  renderSheet();
+  openOv('sheetOv');
+  SE.play('pop');
+  const b = $('sheetRecord'); if (b) b.focus({ preventScroll: true });
+}
+function makeSheet(p, opts) {
   opts = opts || {};
   const cur = G.cur, c = cur.card;
   const def = c && c.cups.length ? c.cups[0] : 1;
@@ -3439,10 +3463,6 @@ function openSheet(p, opts) {
     const it = e.items.find(x => x.p === p);
     sheet.replace = opts.replace; sheet.base = Math.max(1, Math.min(99, e.base || def)); sheet.pend = e.pend || null; sheet.was = it ? it.amt : 0;
   }
-  renderSheet();
-  openOv('sheetOv');
-  SE.play('pop');
-  const b = $('sheetRecord'); if (b) b.focus({ preventScroll: true });
 }
 function renderSheet() {
   const s = sheet, p = s.p, cur = G.cur, n = G.players.length, pl = G.players[p];
@@ -3511,7 +3531,7 @@ function closeSheet() {
   const s = sheet;
   sheet = null; closeOv('sheetOv');
   if (!s || !G) return;
-  if (s.owed) autoRecord([s.p], s.base, { src: s.src || 'game' });
+  if (s.owed) autoRecord([s.p], s.base, { src: s.src || 'game', ask: false });
   else if (s.batch && s.batch.back) reopenDecide(s.batch.back);
 }
 function recordSheet() {
@@ -3588,7 +3608,6 @@ function undoLast() {
    drinkOf(card) (part-head) says how: auto / all / others / least / last = recorded when the card is closed;
    pick / judge = the 「誰を指名する？」「誰が飲む？」 screen; app = the mini game's result; none = nothing now */
 const AUTO_MODES = ['auto', 'all', 'others', 'least', 'last'];
-const AUTO_HINT_KEY = 'sakego-auto-hint';
 const BEER = ['#ffd83d', '#ffb627', '#fff3b8', '#ffffff'];
 const pcHex = i => getComputedStyle(document.documentElement).getPropertyValue('--p' + ((i % 8) + 1)).trim() || '#ffd83d';
 function cardPeople(c) {
@@ -3676,7 +3695,13 @@ function autoRecord(ps, base, o) {
   const e = { kind: 'auto', snap: sn, items, base, src: o.src || 'card', pend: used ? used0 : null };
   cur.drinks.push(e);
   if (o.decided) cur.decided = true;
-  if (!o.quiet) { saveGame(); renderGame(); drinkFx(items, before, o); }
+  if (!o.quiet) {
+    saveGame(); renderGame(); drinkFx(items, before, o);
+    if (o.ask !== false) {
+      const m = main.length, mates = items.length - m;
+      scheduleAsk(e, reduceMotion ? 400 : 1000 + Math.min(m - 1, 4) * 150 + (mates ? 1800 : 500));
+    }
+  }
   return { e, used };
 }
 /* "+1杯" tokens fly from the card to each seat; the seat's total counts up as each one lands.
@@ -3775,15 +3800,6 @@ function autoTelop(items, o) {
   else html = '<small>' + head + (drink.length <= 3 ? drink.map(it => nm(it.p)).join('・') : drink.length + '人') + '</small>' + (same ? fmtAmt(amts[0]) + '杯ずつ！' : 'グイ！');
   if (max >= 5) { SE.play('hell'); shake(true); telop(html, 'red sm', 1500); }
   else { SE.play('gulp'); telop(html, 'sm', 1300); }
-  /* a nudge: tickets in hand are worth knowing about; the special-rule tip only for the first few times */
-  const holder = drink.find(it => ticketsOf(it.p).some(h => h.fx === 'avoid' || h.fx === 'push'));
-  if (holder) {
-    const tk = ticketsOf(holder.p).find(h => h.fx === 'avoid' || h.fx === 'push');
-    setTimeout(() => telop('<b>' + esc(pname(holder.p)) + '</b> は' + esc(tk.label) + 'を持ってる！<br>使うなら その人の席をタップ', 'hint', 2800), 1400);
-  } else if (!coach.on && (Number(lsGet(AUTO_HINT_KEY)) || 0) < 3) {
-    lsSet(AUTO_HINT_KEY, String((Number(lsGet(AUTO_HINT_KEY)) || 0) + 1));
-    setTimeout(() => telop('特殊ルール・券を使う人は<br><b>その人の席をタップ</b>', 'hint', 2600), 1400);
-  }
 }
 /* people recorded automatically this turn who can still re-record with a special rule (latest record per person) */
 function replaceList() {
@@ -3907,7 +3923,7 @@ function renderDecide() {
   const names = d.sel.slice().sort((a, b) => a - b).map(i => pname(i)).join('・');
   const acts = who ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="back">' + (d.kind === 'who' ? 'とじる' : 'もどる') + '</button></div>'
     : naming ? '<div class="dc-acts"><button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '決定！<span class="sub">' + esc(names) + '</span>' : '指名してね') + '</button></div>'
-    : '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="special"' + (ready ? '' : ' disabled') + '>特殊ルール・券</button>' +
+    : '<div class="dc-acts">' +
       '<button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '飲む！<span class="sub">' + esc(names) + '</span>' : d.kind === 'pick' ? '指名してね' : '飲む人をタップ') + '</button></div>';
   const none = !who && d.kind === 'judge' ? '<button type="button" class="dc-none" data-d="none">誰も飲まなかった</button>' : '';
   $('decideBox').innerHTML = '<div class="dc-head"><h2 id="decideTitle">' + title + '</h2><button type="button" class="dc-later" data-d="later">' + (who && d.kind !== 'who' ? 'もどる' : who ? 'とじる' : 'あとで') + '</button></div>' +
@@ -3972,6 +3988,152 @@ function decideNone() {
   renderGame();
   SE.play('ticket');
   telop('セーフ！<small>誰も飲まなかった</small>', 'lime sm', 1300);
+}
+
+/* ---------- 「特殊ルールを使う？」: right after a drink is counted, the drinker chooses 倍倍FIGHT！ / 天国と地獄 / a ticket, or just drinks.
+   Several drinkers: first pick who uses one; two or more go in a random order, and a 倍倍FIGHT！ hits the next one in line ---------- */
+let ask = null, askWait = 0;   /* askWait: prompts scheduled but not shown yet (the coach waits for them) */
+const usableTickets = p => G.players[p].hand.filter(h => h.kind === 'ticket' && (h.fx === 'avoid' || h.fx === 'push'));
+const canSpecial = p => !G.cur.used.includes(p) || usableTickets(p).length > 0;
+function scheduleAsk(e, delay) {
+  const cur = G.cur;
+  const ps = e.items.filter(it => it.amt > 0 && it.mf == null).map(it => it.p).filter(canSpecial);
+  if (!ps.length) return;
+  let tries = 0, waiting = true;
+  askWait++;
+  const done = () => { if (waiting) { waiting = false; askWait = Math.max(0, askWait - 1); coachQueue(); } };
+  const go = () => {
+    if (!G || G.cur !== cur || screen !== 'game' || !cur.drinks.includes(e)) { done(); return; }
+    if (!noOv() || picking || ask || zoom) { if (++tries < 20) setTimeout(go, 400); else done(); return; }
+    const live = ps.filter(p => e.items.some(it => it.p === p && it.mf == null && it.amt > 0) && canSpecial(p));
+    done();
+    if (!live.length) return;
+    ask = { e, ps: live, sel: [], order: live.length > 1 ? null : live.slice(), k: 0, step: live.length > 1 ? 'choose' : 'person' };
+    renderAsk();
+    openOv('askOv');
+    SE.play('pop');
+  };
+  setTimeout(go, delay);
+}
+const askAmt = p => { const it = ask.e.items.find(x => x.p === p && x.mf == null); return it ? it.amt : 0; };
+/* the NEXT effect for the k-th person in line: a 倍倍FIGHT！ by someone earlier in line (undefined = use G.pending), else the one the record used */
+function askPend(k) {
+  if (pendOn(G.pending) && ask.order.slice(0, k).includes(G.pending.from)) return undefined;
+  return ask.e.pend || null;
+}
+const askChained = (k, p) => askPend(k) === undefined && pendHits(G.pending, p);
+function renderAsk() {
+  const A = ask, box = $('askBox');
+  if (A.step === 'choose') {
+    const btn = p => {
+      const on = A.sel.includes(p);
+      return '<button type="button" class="dc-p" data-a="sel" data-i="' + p + '" aria-pressed="' + on + '" style="--p:' + pc(p) + '"><span class="dot"></span><span class="dc-nm">' + esc(pname(p)) + '</span>' +
+        (usableTickets(p).length ? '<span class="dc-tk">券あり</span>' : '') + '<span class="dc-amt">' + fmtAmt(askAmt(p)) + '<small>杯</small></span>' +
+        (on ? '<span class="dc-stamp">使う！</span>' : '') + '</button>';
+    };
+    box.innerHTML = '<div class="dc-head"><h2 id="askTitle">特殊ルールを使う人はいる？</h2></div>' +
+      '<p class="dc-sub">倍倍FIGHT！・天国と地獄・券を使う人をタップ<br>2人以上なら、使う順番はランダムで決めます</p>' +
+      '<div class="dc-players">' + A.ps.map(btn).join('') + '</div>' +
+      (A.sel.length
+        ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-a="none">いない！<span class="sub">全員素直に飲む</span></button><button type="button" class="pbtn main" data-a="use">' + A.sel.length + '人が使う！</button></div>'
+        : '<div class="dc-acts"><button type="button" class="pbtn main" data-a="none">いない！ 全員素直に飲む</button></div>');
+    return;
+  }
+  if (A.step === 'order') {
+    box.innerHTML = '<div class="dc-head"><h2 id="askTitle">順番をランダムで決定！</h2></div><p class="dc-sub">倍倍FIGHT！は、次の順番の人に×2がかかります</p><div class="ask-order" id="askOrder"></div>';
+    return;
+  }
+  const p = A.order[A.k], used = G.cur.used.includes(p), amt = askAmt(p), P = askPend(A.k);
+  const calc = o => computeAmount(Object.assign({ p, base: A.e.base, pend: P }, o)).amt;
+  const chained = askChained(A.k, p), plain = chained ? calc({}) : amt;
+  const tks = usableTickets(p);
+  box.innerHTML = '<div class="dc-head"><h2 id="askTitle">特殊ルールを使う？</h2>' + (A.order.length > 1 ? '<span class="ask-step">' + (A.k + 1) + ' / ' + A.order.length + '人目</span>' : '') + '</div>' +
+    '<p class="ask-who"><span class="sh-name" style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>は<b>' + fmtAmt(amt) + '<small>杯</small></b></p>' +
+    (chained ? '<p class="dc-note">' + esc(pname(G.pending.from)) + 'の倍倍FIGHT！で ×' + G.pending.mult + ' がかかります</p>' : '') +
+    '<div class="specials ask-sp">' +
+      '<button type="button" class="sp sp-dbl" data-a="dbl"' + (used ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分は ' + fmtAmt(calc({ dbl: true })) + '杯、次に飲む人も×2</span></button>' +
+      '<button type="button" class="sp sp-hh" data-a="hh"' + (used ? ' disabled' : '') + '><span class="sp-t">天国と地獄</span><span class="sp-d">回避か2倍か、ルーレットで勝負</span></button></div>' +
+    (used ? '<p class="note-s">このターンは特殊ルールを使用済み（券は使えます）</p>' : '') +
+    (tks.length ? '<div class="pick-players ask-tk">' + tks.map(h => '<button type="button" class="tk" data-a="tk" data-uid="' + h.uid + '">' + esc(h.text) + 'を使う</button>').join('') + '</div>' : '') +
+    '<button type="button" class="pbtn big main ask-none" data-a="none">使わない！ 素直に' + fmtAmt(plain) + '杯</button>';
+  const b = box.querySelector('.ask-none'); if (b) b.focus({ preventScroll: true });
+}
+function askShuffle() {
+  const A = ask;
+  A.step = 'order';
+  A.order = shuffle(A.sel.slice());
+  renderAsk();
+  const box = $('askOrder');
+  const show = (arr, fin) => { box.innerHTML = arr.map((p, j) => '<span class="ask-o' + (fin ? ' fin' : '') + '" style="--p:' + pc(p) + (fin ? ';--d:' + (j * 0.12) + 's' : '') + '"><b>' + (j + 1) + '</b>' + esc(pname(p)) + '</span>').join(''); };
+  let n = 0;
+  const N = reduceMotion ? 1 : 14;
+  const step = () => {
+    if (ask !== A) return;
+    if (++n < N) { show(shuffle(A.sel.slice()), false); SE.play('tick'); setTimeout(step, 60 + n * 12); return; }
+    show(A.order, true);
+    SE.play('ding'); vibrate(40);
+    setTimeout(() => { if (ask !== A) return; A.step = 'person'; A.k = 0; renderAsk(); SE.play('pop'); }, 1500);
+  };
+  step();
+}
+/* re-record the person's drink straight away (no sheet on screen), with 倍倍FIGHT！ / a ticket / the chained ×2 */
+function specialRecord(p, o) {
+  const A = ask, idx = G.cur.drinks.indexOf(A.e);
+  if (idx < 0) return false;
+  makeSheet(p, { replace: idx });
+  if (sheet.replace == null) { sheet = null; return false; }
+  if (askPend(A.k) === undefined) delete sheet.pend;
+  sheet.direct = true;
+  Object.assign(sheet, o || {});
+  recordSheet();
+  return true;
+}
+function askNext() {
+  const A = ask;
+  if (!A) return;
+  A.k++;
+  if (A.k >= A.order.length) { endAsk(); return; }
+  renderAsk();
+  if ($('askOv').hidden) openOv('askOv');
+  SE.play('pop');
+  telop('次は <span style="color:' + pc(A.order[A.k]) + '">' + esc(pname(A.order[A.k])) + '</span>！', 'white sm', 1000);
+}
+function askNextLater(ms) { const A = ask; setTimeout(() => { if (ask === A) askNext(); }, ms); }
+function endAsk() { ask = null; if (!$('askOv').hidden) closeOv('askOv'); }
+function askAct(a, el) {
+  const A = ask;
+  if (!A) return;
+  if (A.step === 'choose') {
+    if (a === 'sel') {
+      const p = Number(el.dataset.i), k = A.sel.indexOf(p);
+      if (k >= 0) A.sel.splice(k, 1); else A.sel.push(p);
+      renderAsk();
+      const x = $('askBox').querySelector('[data-a="sel"][data-i="' + p + '"]');
+      if (x && k < 0 && !reduceMotion) { x.classList.add('pop'); const q = relPos(x); FXC.burst(q.x, q.y - 6, 20, { colors: [pcHex(p), '#ffffff', '#ffd83d'], speed: 7 }); }
+      SE.play(k >= 0 ? 'tap' : 'select');
+    } else if (a === 'none') { SE.play('gulp'); endAsk(); }
+    else if (a === 'use' && A.sel.length) {
+      if (A.sel.length === 1) { A.order = A.sel.slice(); A.k = 0; A.step = 'person'; renderAsk(); SE.play('pop'); }
+      else askShuffle();
+    }
+    return;
+  }
+  if (A.step !== 'person') return;
+  const p = A.order[A.k];
+  if (a === 'none') {
+    if (askChained(A.k, p)) { closeOv('askOv'); specialRecord(p, {}); askNextLater(1300); }
+    else { SE.play('gulp'); askNext(); }
+  } else if (a === 'dbl') { closeOv('askOv'); specialRecord(p, { dbl: true }); askNextLater(1700); }
+  else if (a === 'tk') { closeOv('askOv'); specialRecord(p, { ticket: Number(el.dataset.uid) }); askNextLater(1300); }
+  else if (a === 'hh') {
+    const idx = G.cur.drinks.indexOf(A.e);
+    if (idx < 0) return;
+    closeOv('askOv');
+    makeSheet(p, { replace: idx });
+    if (askPend(A.k) === undefined) delete sheet.pend;
+    sheet.direct = true;
+    openWheel(false);
+  }
 }
 
 /* ---------- 継続中: continuing cards in a strip under the top bar. Tap one to record who broke it (「違反したのは？」),
@@ -4453,12 +4615,14 @@ function confirmWheel() {
   if (!wheel || !wheel.done) return;
   sheet.hh = wheel.kind; sheet.hhFree = wheel.free; sheet.mode = wheel.mode === 'normal' ? null : wheel.mode; sheet.locked = true; sheet.pass = wheel.passUid;
   leaveWheel();
+  if (sheet.direct) { recordSheet(); if (ask) askNextLater(1500); return; }
   renderSheet();
   const b = $('sheetRecord'); if (b) b.focus({ preventScroll: true });
 }
 function cancelWheel() {
   if (!wheel || wheel.spinning || wheel.done) return;
   leaveWheel();
+  if (sheet && sheet.direct) { sheet = null; if (ask) { renderAsk(); openOv('askOv'); } }
 }
 
 /* ---------- challenges: app-judged mini games — clear = avoid the drink, fail = the card's cups ---------- */
@@ -4556,7 +4720,7 @@ function chalEnd(ok, detail) {
     '<p class="cg-detail">' + esc(detail || '') + '</p><p class="cg-verdict">' + (ok ? '回避成功！ 飲まなくてOK' : esc(pname(c.p)) + 'は ' + c.cups + '杯！') + '</p></div>');
   $('chalOv').classList.add(ok ? 'win' : 'lose');
   $('chalActs').innerHTML = ok ? '<button type="button" class="pbtn big main" data-c="close">OK！</button>'
-    : '<button type="button" class="pbtn white small" data-c="special">特殊ルール<span class="sub">・券を使う</span></button><button type="button" class="pbtn big main" data-c="rec">OK！ ' + c.cups + '杯を記録</button>';
+    : '<button type="button" class="pbtn big main" data-c="rec">OK！ ' + c.cups + '杯を記録</button>';
   BGM.level(0.15, 0.05);
   if (ok) {
     SE.play('bigheaven'); flash('#ffffff'); vibrate([60, 40, 60]);
@@ -4980,7 +5144,7 @@ function explodeBomb() {
   bombTimer(() => {
     $('bombTop').innerHTML = '<p class="bm-now">爆発したとき持っていたのは…</p><p class="bm-name loser" style="--p:' + pc(b.holder) + '">' + esc(pname(b.holder)) + '</p>' +
       '<p class="bm-verdict ol">' + b.cups + '杯！</p><p class="bm-meta"><span>パス ' + b.passes + '回</span><span>' + b.T.toFixed(1) + '秒で爆発</span></p>';
-    $('bombBottom').innerHTML = '<div class="bm-acts"><button type="button" class="pbtn white small" data-b="special">特殊ルール<span class="sub">・券を使う</span></button><button type="button" class="pbtn big main" data-b="rec">OK！ ' + b.cups + '杯を記録</button></div>';
+    $('bombBottom').innerHTML = '<div class="bm-acts"><button type="button" class="pbtn big main" data-b="rec">OK！ ' + b.cups + '杯を記録</button></div>';
     b.resultAt = performance.now();
     SE.play('hell');
   }, 1400);
@@ -5248,7 +5412,7 @@ function swResult(diffs) {
   $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + T.cups + '杯';
   SE.play('bigheaven'); vibrate([60, 40, 60]);
   const q = relPos($('swP' + win)); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 });
-  tmActs('<button type="button" class="pbtn white small" data-tm="special">特殊ルール<span class="sub">・券を使う</span></button><button type="button" class="pbtn big main" data-tm="rec">OK！ ' + T.cups + '杯を記録</button>');
+  tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + T.cups + '杯を記録</button>');
 }
 
 /* ---------- tap duel ---------- */
@@ -5299,7 +5463,7 @@ function tapHit(side) {
   const cups = G.cur.card && G.cur.card.cups.length ? G.cur.card.cups[0] : 1;
   $('tapCenter').innerHTML = '<p class="tap-res"><b>' + esc(pname(tap.loser)) + '</b> の負け！ ' + cups + '杯</p><div class="tap-acts">' +
     '<button type="button" class="pbtn small" data-t="rec">OK！ 記録する</button>' +
-    '<button type="button" class="pbtn white tiny" data-t="special">特殊ルール・券</button><button type="button" class="pbtn white tiny" data-t="again">もう一回</button></div>';
+    '<button type="button" class="pbtn white tiny" data-t="again">もう一回</button></div>';
   const b = $('tapCenter').querySelector('[data-t="rec"]'); if (b) b.focus({ preventScroll: true });
 }
 function closeTap(rec) {
@@ -5393,7 +5557,7 @@ function toolFinish(losers, msg, panel) {
   vibrate([60, 40, 120]);
   BGM.level(0.15, 0.05);
   toolActs(losers.length === 1
-    ? '<button type="button" class="pbtn white small" data-tl="special">特殊ルール<span class="sub">・券を使う</span></button><button type="button" class="pbtn big main" data-tl="rec">OK！ ' + T.cups + '杯を記録</button>'
+    ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + T.cups + '杯を記録</button>'
     : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + T.cups + '杯ずつ記録</button>');
 }
 const stakeLine = T => '<p class="tl-stake">' + TOOL_INFO[T.kind].stake + ' <b>' + T.cups + '杯</b></p>';
@@ -5666,7 +5830,8 @@ const GUIDE = [
     gCard('カードを引く', '<div class="gd-mock">' + gBtn('カードを引く！', 'big') + '</div><p>自分の番の人がタップ。カードが大きく出るので<b>声に出して読み上げ</b>、書いてあるとおりに遊びます。</p>', 2) +
     gCard('飲む人の記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + '<span class="gd-tok">+1<small>杯</small></span>' + gSeat('サキ', 1, 1, 'ランダム') + '</div>' +
       '<p>「左隣は1杯」のように<b>飲む人が決まっているカードは、閉じると自動で記録</b>されます。</p>' +
-      '<p>ジャンケンや指名のカードは<b>「誰が飲む？」画面</b>が出るので、飲む人をタップして「飲む！」。</p>', 3) +
+      '<p>ジャンケンや指名のカードは<b>「誰が飲む？」画面</b>が出るので、飲む人をタップして「飲む！」。</p>' +
+      '<p>記録されたら<b>「特殊ルールを使う？」</b>と聞かれるので、使うか「素直に飲む」かを選ぶだけ。</p>', 3) +
     gCard('次の人へ', '<div class="gd-mock">' + gBtn('次へ ▶ サキ', 'big') + '</div><p>「次へ」で、登録順に次の人の番になります。これをくり返すだけ！</p>', 4) +
     gTip('誰も飲まないカード（セーフなど）は、そのまま「次へ」でOK。飲む人を選ばずに「次へ」を押すと、アプリが確認してくれます。')
   },
@@ -5678,10 +5843,11 @@ const GUIDE = [
       '<p>ジャンケン・指名・お題など、遊んでみないと分からないカードでは、この画面が出ます。<b>飲む人をタップ</b>して「飲む！」。</p>' +
       '<ul class="gd-list"><li>指名のカードは<b>「誰を指名する？」</b>。指名する人に選んでもらおう</li><li>まだ遊んでいる途中なら「あとで」。画面下の「誰が飲む？」から開き直せます</li>' +
       '<li>誰も飲まなかったら「誰も飲まなかった」</li><li>「1〜3杯」のようなカードや、負けた回数ぶん飲むときは −／＋ で杯数を合わせます</li></ul>', 2) +
-    gCard('特殊ルール・券を使うとき', '<p>飲む人は、<b>倍倍FIGHT！・天国と地獄・券</b>を使えます。</p><ul class="gd-list">' +
-      '<li><b>自動で記録されたあと</b> → <b>その人の席</b>をタップ（画面下の「特殊ルール」でもOK）。記録画面で使い直せます</li>' +
-      '<li><b>「誰が飲む？」画面</b> → 選んだあと「特殊ルール・券」</li><li><b>ミニゲームで負けた</b> → 結果画面の「特殊ルール・券」</li></ul>' +
-      '<p class="sub">記録画面の下の<b>「飲む量」</b>が、実際に飲む量です（例：2杯 → ×2 → 4杯）。</p>', 3) +
+    gCard('特殊ルール・券を使うとき', '<p>飲む人が記録されると、すぐに<b>「特殊ルールを使う？」</b>と聞かれます。</p><ul class="gd-list">' +
+      '<li><b>1人のとき</b> → 「倍倍FIGHT！」「天国と地獄」（券を持っていれば「〇〇券を使う」）を押すか、「素直に飲む」</li>' +
+      '<li><b>何人もいるとき</b> → まず使う人をタップ。2人以上なら<b>順番をランダムで決めて</b>、1人ずつ選びます。先の人の倍倍FIGHT！は、次の順番の人に×2がかかります</li>' +
+      '<li><b>あとから使いたくなった</b> → その人の席をタップ（画面下の「特殊ルール」でもOK）</li></ul>' +
+      '<p class="sub">倍倍FIGHT！は押した時点で2倍にして記録し直します。天国と地獄はそのままルーレットが回ります。</p>', 3) +
     gCard('こんなときは', '<ul class="gd-list">' +
       '<li><b>ルール違反などで、カード以外で飲む</b> → その人の席をタップ（何人もいるなら画面下の「追加で記録」）</li>' +
       '<li><b>記録をまちがえた</b> → 記録欄の「取り消す」で、1つ前に戻せる</li>' +
@@ -5691,7 +5857,7 @@ const GUIDE = [
   },
   { k: 'special', tab: '特殊ルール', html: () =>
     '<p class="gd-lead">飲む量を変える切り札です。<b>使うかどうかは飲む人が決めます。</b>使わなくても遊べます。</p>' +
-    gTip('<b>1ターンに1人1つまで。</b>「倍倍FIGHT！」「天国と地獄」は記録画面のボタンから（自動で記録されたあとは、その人の席をタップ）。「コストパフォーマンス」だけは、カードを引く前に使います。') +
+    gTip('<b>1ターンに1人1つまで。</b>「倍倍FIGHT！」「天国と地獄」は、飲む人が決まったときにアプリが「使う？」と聞いてくれます。「コストパフォーマンス」だけは、カードを引く前に使います。') +
     gCard('<span class="gd-sp dbl">倍倍FIGHT！</span>', '<p>自分の量が<b>2倍</b>になるかわりに、<b>次に飲む人も2倍</b>にできる勝負の一手。</p>' +
       '<div class="gd-flow"><span>2杯</span>→<span class="hot">倍倍FIGHT！で4杯</span>→<span>次に飲む人 ×2</span></div>' +
       '<p class="sub">画面の上に「NEXT ×2」と出ている間に記録された人の量が2倍になります。その人も倍倍FIGHT！で受けて立てば、次は ×4、×8…と大きくなります。</p>') +
@@ -5726,7 +5892,7 @@ const GUIDE = [
       '<span class="gd-chip plain">押し付け券</span><span>飲む量を、書かれた人に押し付け</span>' +
       '<span class="gd-chip plain">天国パス</span><span>天国と地獄で、地獄を1回だけ天国に</span>' +
       '<span class="gd-chip plain">コスパ無料券</span><span>次のコスパの、前払い1杯が不要</span></div>' +
-      '<p class="sub">券は、記録画面に「〇〇を使う」ボタンとして出てきます（天国パスはルーレットの結果画面、コスパ無料券は自動で使われます）。券を持っている人が自動で記録されたときは、アプリが教えてくれます。</p>') +
+      '<p class="sub">券は、記録画面に「〇〇を使う」ボタンとして出てきます（天国パスはルーレットの結果画面、コスパ無料券は自動で使われます）。「特殊ルールを使う？」の画面にも出ます。</p>') +
     gCard('次の人への効果', '<p>「次に飲む人は2倍」などのカードを引くと、画面の上に<b>NEXT ×2</b>と出ます。次に記録された人に自動でかかります。</p>')
   },
   { k: 'games', tab: 'ミニゲーム', html: () =>
@@ -5743,7 +5909,7 @@ const GUIDE = [
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
-    gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>されます。特殊ルールや券を使うなら「特殊ルール・券」。')
+    gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
@@ -5797,11 +5963,11 @@ const COACH = [
     '<span class="cb-step">2/4</span><p>カードを<b>声に出して読み上げよう！</b>書いてあるとおりに遊んだら「OK！ テーブルへ」。</p>' +
     (zoomHint().auto ? '<p class="sub">下の黄色い文字は、閉じたあとアプリがすること。飲む人が決まっているカードは<b>自動で記録</b>されます。</p>' : '') +
     (cardActs().length ? '<p class="sub">ボタンが付いているカードは、そこからミニゲームやルーレットを始められます。</p>' : '') },
-  { k: 'auto', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.select && !picking && replaceList().length > 0,
-    at: '#center', mid: '#dock [data-g="special"]', seats: () => replaceList().map(x => x.p), html: () =>
-    '<span class="cb-step">3/4</span><p>' + (G.cur.drinks.some(e => e.kind === 'auto' && e.src === 'card') ? '飲む人は<b>自動で記録</b>しました！' : '<b>記録</b>しました！') + '</p><p class="sub">倍倍FIGHT！などの特殊ルールや券を使う人がいたら、このボタンか、<b>その人の席</b>をタップ。使わないなら何もしなくてOK。</p>' },
+  { k: 'ask', when: () => onlyOv('askOv') && !!ask && ask.step !== 'order', at: '#askBox', point: '#askBox .specials, #askBox .dc-players', html: () =>
+    '<span class="cb-step">はじめてガイド</span><p>飲む人が決まると、<b>特殊ルールを使うか</b>聞かれます。</p><p class="sub">倍倍FIGHT！か天国と地獄を押すと、その場で記録し直します。使わないなら「素直に飲む」。</p>',
+    link: ['special', '特殊ルールって？'] },
   { k: 'decide', when: () => onlyOv('decideOv') && !!decide && decide.kind !== 'who' && !decide.step, at: '#decideBox', point: '#decideBox .dc-players', html: () =>
-    '<span class="cb-step">3/4</span><p>飲む人を<b>タップして選び</b>、「飲む！」で記録。</p><p class="sub">倍倍FIGHT！などの特殊ルールや券を使うなら「特殊ルール・券」。まだ遊んでいる途中なら「あとで」。</p>',
+    '<span class="cb-step">3/4</span><p>飲む人を<b>タップして選び</b>、「飲む！」で記録。</p><p class="sub">特殊ルールを使うかは、このあと聞かれます。まだ遊んでいる途中なら「あとで」。</p>',
     link: ['special', '特殊ルールって？'] },
   { k: 'later', when: () => noOv() && !picking && needsPick(), at: '#dock [data-g="decide"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド</span><p>飲む人が決まったら<b>「誰が飲む？」</b>から選んで記録しよう。</p>' },
@@ -5813,7 +5979,7 @@ const COACH = [
   { k: 'sheet', when: () => onlyOv('sheetOv') && !!sheet && !sheet.locked, at: '#sheetBox', point: '#sheetBox .specials', html: () =>
     '<span class="cb-step">記録画面</span><p>特殊ルールは<b>使いたいときだけ</b>押す切り札。下の「飲む量」を確かめて「記録する！」。</p>' +
     '<p class="sub">券を持っている人は「〇〇を使う」ボタンも出ます。</p>', link: ['special', '特殊ルールって？'] },
-  { k: 'next', when: () => noOv() && G.cur.phase === 'drawn' && recordedThisTurn() && !picking, at: '#dock [data-g="next"]', above: '#gLog', html: () =>
+  { k: 'next', when: () => noOv() && G.cur.phase === 'drawn' && recordedThisTurn() && !picking && !ask && !askWait, at: '#dock [data-g="next"]', above: '#gLog', html: () =>
     '<span class="cb-step">4/4</span><p>終わったら<b>「次へ」</b>で次の人の番。</p><p class="sub">まちがえたら上の「取り消す」。記録し忘れて次へ進んでも、「◀ 前のターンに戻る」で戻れます。</p>' },
   { k: 'help', when: () => noOv() && coach.moved, at: '#helpBtn', last: true, html: () =>
     '<p>これで基本はOK！ わからなくなったら、いつでも<b>右上の「？ 遊び方」</b>から使い方を見られます。</p>' },
@@ -6262,6 +6428,7 @@ function wireGame() {
     else if (a === 'back') { if (d.kind === 'who') closeDecide(); else { d.step = null; renderDecide(); SE.play('tap'); } }
     else if (a === 'later') decideLater();
   });
+  $('askBox').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) askAct(b.dataset.a, b); });
   $('gRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (b) ruleTap(Number(b.dataset.rule)); });
   $('infoBox').addEventListener('click', e => { if (e.target.closest('[data-if="close"]')) closeOv('infoOv'); });
   $('toolActs').addEventListener('click', e => {
@@ -6285,6 +6452,7 @@ function wireGame() {
   backdrop('decideOv', decideLater);
   backdrop('nextOv', () => closeOv('nextOv'));
   backdrop('infoOv', () => closeOv('infoOv'));
+  backdrop('askOv', () => { if (ask && ask.step !== 'order') askAct('none'); });
   backdrop('handOv', () => closeOv('handOv'));
   backdrop('endOv', () => closeOv('endOv'));
   backdrop('howOv', () => closeOv('howOv'));
@@ -6344,6 +6512,7 @@ function wireGame() {
     if (!$('tapOv').hidden) { closeTap(false); return; }
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
     if (tool) { closeTool(false); return; }
+    if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
     for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
