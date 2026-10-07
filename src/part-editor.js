@@ -112,6 +112,8 @@ function viewCard(card) {
   if (card.min > 2) meta.push('<span class="pill' + (kind === 'short' ? ' warn' : '') + '">' + card.min + '人以上</span>');
   if (card.dur) meta.push('<span class="pill">継続：' + esc(card.dur) + '</span>');
   if (card.fx) meta.push('<span class="pill app">連動：' + esc(fxName(card.fx)) + '</span>');
+  const tl = !card.fx && toolOf(card);
+  if (tl) meta.push('<span class="pill app">アプリで' + esc(FX_INFO[tl].name) + '</span>');
   const dm = drinkOf(card);
   if (dm !== 'none') meta.push('<span class="pill drink">' + esc(DRINK_SHORT[dm]) + '</span>');
   const tmr = timerOf(card);
@@ -295,7 +297,7 @@ function validate(f) {
   }
   if (!catOf(f.cat)) return { err: '系統を選んでください。', field: 'ed-cat' };
   const fx = f.fx || null;
-  if ((fx === 'half' || fx === 'nodouble') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」に期間（例：次のターンまで）を入れてください。', field: 'ed-dur' };
+  if ((fx === 'half' || fx === 'nodouble' || fx === 'mate') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」に期間（例：次のターンまで）を入れてください。', field: 'ed-dur' };
   return { card: { cat: f.cat, text, cups, min: Math.min(8, Math.max(2, Number(f.min) || 2)), dur: f.dur.trim() || null, note: f.note.replace(/\s+/g, ' ').trim() || null, fx, drink: DRINK_INFO[f.drink] ? f.drink : null } };
 }
 function showFormError(msg, field) {

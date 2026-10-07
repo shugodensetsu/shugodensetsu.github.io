@@ -561,7 +561,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'howOv'];
+const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -588,7 +588,8 @@ function closeAllOverlays() {
   if (chal) { if (chal.raf) cancelAnimationFrame(chal.raf); chal.timers.forEach(clearTimeout); }
   if (bomb) { if (bomb.raf) cancelAnimationFrame(bomb.raf); bomb.timers.forEach(clearTimeout); }
   if (timer) stopTimerWork(timer);
-  wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null;
+  if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); }
+  wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null;
   document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
   syncCover();
 }
@@ -725,7 +726,14 @@ function drawCard() {
   const fx = card.fx, gifts = [];
   if (fx === 'x2next') { G.pending.mult = Math.min(64, G.pending.mult * 2); G.pending.from = null; G.pending.src = 'カードの効果'; }
   if (fx === 'halfnext') { G.pending.half = true; if (!G.pending.src) G.pending.src = 'カードの効果'; }
-  if (card.dur) gifts.push([d, giveItem(d, { kind: 'dur', fx: fx === 'half' || fx === 'nodouble' ? fx : null, label: '継続', text: plainFill(card.text), left: ruleTurns(card.dur, n), mark: cur.card.mark, color: cur.card.color })]);
+  if (card.dur) {
+    /* a continuing card goes to the drawer's hand and shows in the 「継続中」 strip; cups = what breaking the rule costs */
+    const item = { kind: 'dur', fx: fx === 'half' || fx === 'nodouble' ? fx : null, label: '継続', text: plainFill(card.text), left: ruleTurns(card.dur, n), mark: cur.card.mark, color: cur.card.color,
+      cups: card.cups.slice(), turn: G.turn };
+    if (durPickCard(card)) Object.assign(item, { pick: true, who: null, title: ruleTitle(card.text) || '指名', mate: mateCard(card) });
+    else G.players.forEach(pl => { pl.hand = pl.hand.filter(h => !(h.kind === 'dur' && !h.pick && h.text === item.text)); });   /* the same rule again = it starts over */
+    gifts.push([d, giveItem(d, item)]);
+  }
   if (fx === 'safe') gifts.push([d, giveItem(d, ticket('avoid', 'セーフ券'))]);
   if (fx === 'push') gifts.push([d, giveItem(d, ticket('push', '押し付け券', { target: r, text: '押し付け券（→' + pname(r) + '）' }))]);
   if (fx === 'heavenpass') gifts.push([d, giveItem(d, ticket('heavenpass', '天国パス'))]);
@@ -771,6 +779,8 @@ function cardActs() {
   if (fx === 'swap' && !cur.swapDone) acts.push(['swap', '入れ替える相手を選ぶ', 'cyan']);
   if (fx === 'givesafe' && !cur.giveDone) acts.push(['give', 'セーフ券を渡す', 'lime']);
   if (fx === 'endrule' && anyDur()) acts.push(['endrule', 'ルールを終わらせる', 'lime']);
+  const tk = cur.phase === 'drawn' ? toolOf(cur.card) : null;
+  if (tk && !recordedThisTurn()) acts.push(['tool', TOOL_INFO[tk].act, 'cyan']);
   const tm = timerOf(cur.card);
   if (tm) acts.push(['timer', tm.stop ? fmtSec(tm.sec) + 'ストップ対決！' : fmtSec(tm.sec) + 'タイマー スタート！', 'cyan']);
   return acts;
@@ -869,7 +879,7 @@ function flyGifts(gifts) {
       const s2 = document.querySelector('.seat[data-seat="' + p + '"]');
       if (s2) { s2.classList.add('bump'); const q = relPos(s2); FXC.burst(q.x, q.y, 18, { colors: GOLD, speed: 6, star: true }); }
       SE.play('ticket');
-      if (k === gifts.length - 1) telop(item.kind === 'ticket' ? esc(item.label) + ' GET！' : '手札に追加！', 'lime sm', 1100);
+      if (k === gifts.length - 1) telop(item.kind === 'ticket' ? esc(item.label) + ' GET！' : item.kind === 'dur' ? (item.pick ? '指名カード！' : ruleCups(item) ? 'ルール追加！' : '効果スタート！') : '手札に追加！', 'lime sm', 1100);
     };
   });
 }
@@ -884,9 +894,12 @@ function useCospa() {
   let amt = 1;
   if (free) { G.players[d].hand = G.players[d].hand.filter(h => h !== free); amt = 0; }
   addDrink(d, amt);
-  cur.drinks.push({ kind: 'cospa', snap: s, items: [{ p: d, amt }], note: free ? 'コスパ無料券' : 'コスパ前払い' });
+  const mx = mateExtras([{ p: d, amt }]);
+  mx.forEach(x => addDrink(x.p, x.amt));
+  cur.drinks.push({ kind: 'cospa', snap: s, items: [{ p: d, amt }].concat(mx), note: free ? 'コスパ無料券' : 'コスパ前払い' });
   saveGame();
   renderGame();
+  if (mx.length) mateFx(mx, 900);
   SE.play(free ? 'ticket' : 'coin');
   telop((free ? 'コスパ無料！' : 'コスパ発動！') + '<small>このターン、' + esc(pname(d)) + 'が飲む量は半分</small>', 'lime', 1700);
   floatAt(d, amt ? '+1杯' : 'FREE', !amt);
@@ -900,14 +913,18 @@ function nextTurn(force) {
   G.turn++;
   /* the last tip (where help lives) comes once a turn has been finished with a record, or after 3 turns at the latest */
   if (coach.on) { coach.turns = (coach.turns || 0) + 1; if (coach.seen.has('next') || coach.cur === 'next' || coach.turns >= 3) coach.moved = true; }
-  let expired = 0;
-  G.players.forEach(pl => { pl.hand = pl.hand.filter(h => { if (h.kind !== 'dur') return true; h.left--; if (h.left <= 0) { expired++; return false; } return true; }); });
+  const expired = [];
+  G.players.forEach((pl, i) => { pl.hand = pl.hand.filter(h => { if (h.kind !== 'dur') return true; h.left--; if (h.left <= 0) { expired.push(ruleLabel(i, h)); return false; } return true; }); });
   if (G.rounds && G.turn >= G.rounds * n) { finishGame(); return; }
   startTurn();
   saveGame();
   renderGame();
   turnFx();
-  if (expired) setTimeout(() => { telop('継続カードの効果が切れた！', 'cyan sm', 1200); SE.play('poof'); }, 1200);
+  if (expired.length) setTimeout(() => {
+    const one = expired[0].length > 15 ? expired[0].slice(0, 14) + '…' : expired[0];
+    telop((expired.length > 1 ? expired.length + 'つのルールが終了！' : 'ルール終了！') + '<small>' + esc(expired.length > 1 ? one + ' など' : one) + '</small>', 'cyan sm', 1500);
+    SE.play('poof');
+  }, 1300);
 }
 /* ---------- going back: 「取り消す」 undoes the last record in this turn; 「◀ 前のターンに戻る」 restores the game exactly as it was
    when 「次へ」 was pressed (card, records, special rules used, hands, NEXT ×2 …), so a forgotten record can still be made ---------- */
@@ -1093,7 +1110,7 @@ function recordSheet() {
   /* from 「誰が飲む？」 with several people: the others drink the plain amount, recorded first (NEXT ×2 hits them too) */
   let extra = [], fix = null;
   if (s.batch && s.batch.others && s.batch.others.length) {
-    const r = autoRecord(s.batch.others, s.base, { src: s.batch.src || 'decide', quiet: true, keepPending: true });
+    const r = autoRecord(s.batch.others, s.base, { src: s.batch.src || 'decide', quiet: true, keepPending: true, mateSkip: [p] });
     extra = r.e.items; s.batchUsed = r.used;
   }
   const sn = snap();
@@ -1101,9 +1118,10 @@ function recordSheet() {
   if (s.replace != null && cur.drinks[s.replace]) {
     const e = cur.drinks[s.replace];
     fix = { i: s.replace, items: e.items.map(x => Object.assign({}, x)) };
-    const it = e.items.find(x => x.p === p);
-    if (it && it.amt) { G.players[p].total = Math.max(0, G.players[p].total - it.amt); G.players[p].times = Math.max(0, G.players[p].times - 1); }
-    e.items = e.items.filter(x => x.p !== p);
+    /* that person's drink and the インシュメイト drink that followed it */
+    e.items.filter(x => x.p === p || x.mf === p).forEach(x => { if (x.amt) { G.players[x.p].total = Math.max(0, G.players[x.p].total - x.amt); G.players[x.p].times = Math.max(0, G.players[x.p].times - 1); } });
+    e.items = e.items.filter(x => !(x.p === p || x.mf === p));
+    s.together = e.items.map(x => x.p);
   }
   const calc = computeAmount(s);
   lsSet(RECS_KEY, String((Number(lsGet(RECS_KEY)) || 0) + 1));
@@ -1124,16 +1142,21 @@ function recordSheet() {
   if (s.pass) G.players[p].hand = G.players[p].hand.filter(h => h.uid !== s.pass);
   addDrink(p, calc.amt);
   calc.pushes.forEach(x => addDrink(x.to, x.amt));
-  const items = [{ p, amt: calc.amt }].concat(calc.pushes.map(x => ({ p: x.to, amt: x.amt })));
+  const own = [{ p, amt: calc.amt }].concat(calc.pushes.map(x => ({ p: x.to, amt: x.amt })));
+  const mx = mateExtras(own, (s.together || []).concat(s.batch && s.batch.others ? s.batch.others : []));
+  mx.forEach(x => addDrink(x.p, x.amt));
+  const items = own.concat(mx);
   const entry = { kind: 'drink', snap: sn, items, note: calc.steps.slice(1).join(' → ') };
   if (fix) entry.fix = fix;
+  if (s.batch && s.batch.src) entry.src = s.batch.src; else if (s.owed && s.src) entry.src = s.src;
   cur.drinks.push(entry);
   if (s.batch) cur.decided = true;
   sheet = null;
   closeOv('sheetOv');
   saveGame();
   renderGame();
-  items.concat(extra).forEach((it, k) => setTimeout(() => floatAt(it.p, !it.amt ? 'SAFE!' : fix && it.p === p ? fmtAmt(it.amt) + '杯に！' : '+' + fmtAmt(it.amt) + '杯', !it.amt), k * 250));
+  own.concat(extra).forEach((it, k) => setTimeout(() => floatAt(it.p, !it.amt ? 'SAFE!' : fix && it.p === p ? fmtAmt(it.amt) + '杯に！' : '+' + fmtAmt(it.amt) + '杯', !it.amt), k * 250));
+  if (mx.length) mateFx(mx, 700);
   if (s.dbl) {
     SE.play('double'); flash('#ff8b2b'); shake(false);
     telop('倍倍FIGHT！<small>次の人は×' + G.pending.mult + '</small>', 'pink', 1600);
@@ -1182,6 +1205,7 @@ function zoomHint() {
   const cur = G.cur, c = cur.card, n = G.players.length;
   const plain = { html: 'どこをタップしてもテーブルに戻ります' };
   if (!c || cur.autoDone) return plain;
+  if (c.dur) return { auto: true, html: durPickCard(c) ? '閉じると、指名する人を選びます' : '閉じると、上の<b>「継続中」</b>に表示されます（' + esc(c.dur) + '）' };
   const pl = drinkPlan();
   if (AUTO_MODES.includes(pl.mode)) {
     if (!pl.ps.length) return { auto: true, html: '該当する人がいないので、今回はセーフ' };
@@ -1190,6 +1214,7 @@ function zoomHint() {
     return { auto: true, html: '閉じると ' + who + ' に' + pl.base + '杯' + (pl.ps.length > 1 ? 'ずつ' : '') + '、自動で記録します' };
   }
   if (pl.mode === 'pick') return { auto: true, html: '閉じると「誰を指名する？」画面になります' };
+  if (pl.mode === 'judge' && toolOf(c)) return { auto: true, html: '下のボタンならアプリで遊んで、負けた人を自動で記録。<br>本物の道具で遊ぶなら、閉じると「誰が飲む？」画面' };
   if (pl.mode === 'judge') return { auto: true, html: timerOf(c) ? 'タイマーのあと「誰が飲む？」画面になります' : '閉じると「誰が飲む？」画面になります' };
   if (pl.mode === 'app') {
     const fx = c.fx || '';
@@ -1214,7 +1239,9 @@ function afterDraw() {
   }
   saveGame();
   renderGame();
-  if ((pl.mode === 'pick' || pl.mode === 'judge') && !timerOf(cur.card) && !timer && !chal && !bomb && !tap) {
+  if (durWaiting(true)) { setTimeout(() => { if (screen === 'game' && G && G.cur === cur && durWaiting(true) && noOv()) openDecide('durpick'); }, 380); return; }
+  if (durNew()) ruleHint();
+  if ((pl.mode === 'pick' || pl.mode === 'judge') && !timerOf(cur.card) && !timer && !chal && !bomb && !tap && !tool) {
     setTimeout(() => { if (screen === 'game' && G && G.cur === cur && needsPick() && noOv()) openDecide(); }, 380);
   }
 }
@@ -1231,10 +1258,11 @@ function autoRecord(ps, base, o) {
   if (o.mark) cur[o.mark] = true;
   const P0 = o.pend !== undefined ? o.pend : G.pending;
   const used0 = pendOn(P0) ? Object.assign({}, P0) : null;
-  const before = ps.map(p => G.players[p].total);
-  const items = ps.map(p => ({ p, amt: computeAmount({ p, base, pend: o.pend }).amt }));
+  const main = ps.map(p => ({ p, amt: computeAmount({ p, base, pend: o.pend }).amt }));
+  const items = main.concat(mateExtras(main, o.mateSkip));
+  const before = items.map(it => G.players[it.p].total);
   let used = false;
-  items.forEach(it => { if (pendHits(P0, it.p)) used = true; addDrink(it.p, it.amt); });
+  items.forEach(it => { if (it.mf == null && pendHits(P0, it.p)) used = true; addDrink(it.p, it.amt); });
   if (used && !o.keepPending && o.pend === undefined) G.pending = freshPending();
   const e = { kind: 'auto', snap: sn, items, base, src: o.src || 'card', pend: used ? used0 : null };
   cur.drinks.push(e);
@@ -1242,62 +1270,80 @@ function autoRecord(ps, base, o) {
   if (!o.quiet) { saveGame(); renderGame(); drinkFx(items, before, o); }
   return { e, used };
 }
-/* "+1杯" tokens fly from the card to each seat; the seat's total counts up as each one lands */
+/* "+1杯" tokens fly from the card to each seat; the seat's total counts up as each one lands.
+   Drinks that follow an インシュメイト fly afterwards, from the partner's seat */
+function flyDrink(it, src, delay, from0, cls) {
+  const seatOf = p => document.querySelector('.seat[data-seat="' + p + '"]');
+  const seat = seatOf(it.p);
+  if (!seat) return;
+  const tot = seat.querySelector('.seat-total');
+  if (tot && !reduceMotion) tot.innerHTML = fmtAmt(from0) + '<small>杯</small>';
+  let landed = false;
+  const land = () => {
+    if (landed) return;
+    landed = true;
+    const s2 = seatOf(it.p);
+    if (!s2) return;
+    countUp(s2, from0, from0 + it.amt);
+    s2.classList.remove('bump'); void s2.offsetWidth; s2.classList.add('bump');
+    const q = relPos(s2);
+    if (!reduceMotion) {
+      const r = document.createElement('div');
+      r.className = 'gulp-ring';
+      r.style.left = q.x + 'px'; r.style.top = q.y + 'px'; r.style.width = (q.w + 10) + 'px'; r.style.height = (q.h + 10) + 'px';
+      r.style.borderColor = cls === 'mate' ? 'var(--pink)' : it.amt ? 'var(--yellow)' : 'var(--mint)';
+      $('shell').appendChild(r);
+      setTimeout(() => r.remove(), 700);
+    }
+    FXC.burst(q.x, q.y - 4, it.amt ? 26 : 18, { colors: cls === 'mate' ? ['#ff4fa3', '#ff7cbd', '#ffffff'] : it.amt ? BEER : ['#3df5b5', '#ffffff', '#a8f03a'], speed: 7, star: !it.amt || cls === 'mate' });
+    SE.play(it.amt ? 'coin' : 'ticket');
+    vibrate(it.amt >= 5 ? [80, 40, 120] : 30);
+  };
+  if (reduceMotion) { setTimeout(land, 80 + delay / 10); return; }
+  const to = relPos(seat);
+  const el = document.createElement('div');
+  el.className = 'gulp-tok' + (it.amt ? '' : ' safe') + (cls ? ' ' + cls : '');
+  el.innerHTML = it.amt ? '+' + fmtAmt(it.amt) + '<small>杯</small>' : 'SAFE';
+  el.style.opacity = '0';
+  $('shell').appendChild(el);
+  const w = el.offsetWidth, h = el.offsetHeight, x0 = src.x - w / 2, y0 = src.y - h / 2;
+  const dx = to.x - src.x, dy = to.y - src.y, lift = Math.min(130, 50 + Math.hypot(dx, dy) * 0.3);
+  const T = (x, y, sc) => 'translate(' + (x0 + x).toFixed(1) + 'px,' + (y0 + y).toFixed(1) + 'px) scale(' + sc + ')';
+  el.style.transform = T(0, 0, 0.3);
+  const an = el.animate([
+    { transform: T(0, 0, 0.3), opacity: 0 },
+    { transform: T(0, -12, 1.35), opacity: 1, offset: 0.2 },
+    { transform: T(dx * 0.5, dy * 0.5 - lift, 1.12), opacity: 1, offset: 0.6 },
+    { transform: T(dx, dy, 0.6), opacity: 1 },
+  ], { duration: 880, delay, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'both' });
+  const done = () => { el.remove(); land(); };
+  an.onfinish = done;
+  setTimeout(() => { if (!landed) done(); }, delay + 880 + 600);
+}
 function drinkFx(items, before, o) {
   o = o || {};
-  const fromEl = document.querySelector('#center .gcard') || $('center');
+  const fromEl = (o.from && document.querySelector(o.from)) || document.querySelector('#center .gcard') || $('center');
   const src = relPos(fromEl);
-  const seatOf = p => document.querySelector('.seat[data-seat="' + p + '"]');
-  items.forEach((it, k) => {
-    const seat = seatOf(it.p);
-    if (!seat) return;
-    const tot = seat.querySelector('.seat-total');
-    if (tot && !reduceMotion) tot.innerHTML = fmtAmt(before[k]) + '<small>杯</small>';
-    let landed = false;
-    const land = () => {
-      if (landed) return;
-      landed = true;
-      const s2 = seatOf(it.p);
-      if (!s2) return;
-      countUp(s2, before[k], before[k] + it.amt);
-      s2.classList.remove('bump'); void s2.offsetWidth; s2.classList.add('bump');
-      const q = relPos(s2);
-      if (!reduceMotion) {
-        const r = document.createElement('div');
-        r.className = 'gulp-ring';
-        r.style.left = q.x + 'px'; r.style.top = q.y + 'px'; r.style.width = (q.w + 10) + 'px'; r.style.height = (q.h + 10) + 'px';
-        r.style.borderColor = it.amt ? 'var(--yellow)' : 'var(--mint)';
-        $('shell').appendChild(r);
-        setTimeout(() => r.remove(), 700);
-      }
-      FXC.burst(q.x, q.y - 4, it.amt ? 26 : 18, { colors: it.amt ? BEER : ['#3df5b5', '#ffffff', '#a8f03a'], speed: 7, star: !it.amt });
-      SE.play(it.amt ? 'coin' : 'ticket');
-      if (k === items.length - 1) vibrate(it.amt >= 5 ? [80, 40, 120] : 40);
-    };
-    if (reduceMotion) { setTimeout(land, 80 + k * 60); return; }
-    const to = relPos(seat);
-    const el = document.createElement('div');
-    el.className = 'gulp-tok' + (it.amt ? '' : ' safe');
-    el.innerHTML = it.amt ? '+' + fmtAmt(it.amt) + '<small>杯</small>' : 'SAFE';
-    el.style.opacity = '0';
-    $('shell').appendChild(el);
-    const w = el.offsetWidth, h = el.offsetHeight, x0 = src.x - w / 2, y0 = src.y - h / 2;
-    const dx = to.x - src.x, dy = to.y - src.y, lift = Math.min(130, 50 + Math.hypot(dx, dy) * 0.3);
-    const T = (x, y, sc) => 'translate(' + (x0 + x).toFixed(1) + 'px,' + (y0 + y).toFixed(1) + 'px) scale(' + sc + ')';
-    el.style.transform = T(0, 0, 0.3);
-    const delay = 120 + k * 150;
-    const an = el.animate([
-      { transform: T(0, 0, 0.3), opacity: 0 },
-      { transform: T(0, -12, 1.35), opacity: 1, offset: 0.2 },
-      { transform: T(dx * 0.5, dy * 0.5 - lift, 1.12), opacity: 1, offset: 0.6 },
-      { transform: T(dx, dy, 0.6), opacity: 1 },
-    ], { duration: 880, delay, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'both' });
-    const done = () => { el.remove(); land(); };
-    an.onfinish = done;
-    setTimeout(() => { if (!landed) done(); }, delay + 880 + 600);
-  });
+  const main = [], mates = [];
+  items.forEach((it, k) => (it.mf != null ? mates : main).push([it, before[k]]));
+  main.forEach(([it, b], k) => flyDrink(it, src, 120 + k * 150, b, ''));
   if (!reduceMotion) SE.play('swoosh');
-  setTimeout(() => { if (screen === 'game') autoTelop(items); }, reduceMotion ? 120 : 1000 + Math.min(items.length - 1, 4) * 150);
+  const t1 = reduceMotion ? 120 : 1000 + Math.min(main.length - 1, 4) * 150;
+  setTimeout(() => { if (screen === 'game') autoTelop(main.map(x => x[0]), o); }, t1);
+  if (mates.length) mateFx(mates.map(x => x[0]), t1 + 500, mates.map(x => x[1]));
+}
+function mateFx(extra, delay, befores) {
+  if (!extra.length) return;
+  extra.forEach((it, k) => {
+    const from = document.querySelector('.seat[data-seat="' + it.from + '"]');
+    flyDrink(it, relPos(from || $('center')), delay + k * 150, befores ? befores[k] : G.players[it.p].total - it.amt, 'mate');
+  });
+  const names = extra.map(it => pname(it.p)).join('・'), amts = extra.map(it => it.amt);
+  setTimeout(() => {
+    if (screen !== 'game') return;
+    telop('インシュメイト！<small>' + esc(names) + 'も' + (amts.every(a => a === amts[0]) ? fmtAmt(amts[0]) + '杯' : '一緒に') + '</small>', 'pink sm', 1400);
+    SE.play('double');
+  }, (reduceMotion ? 200 : delay + 900));
 }
 function countUp(seat, from, to) {
   const t = seat.querySelector('.seat-total');
@@ -1308,15 +1354,16 @@ function countUp(seat, from, to) {
   const steps = Math.min(12, Math.max(1, Math.round((to - from) / unit)));
   for (let i = 1; i <= steps; i++) setTimeout(() => { if (t.isConnected) show(i === steps ? to : from + unit * Math.round((to - from) * i / steps / unit)); }, i * Math.min(110, 480 / steps));
 }
-function autoTelop(items) {
+function autoTelop(items, o) {
+  const head = o && o.src === 'rule' ? '違反！ ' : '';
   const n = G.players.length, drink = items.filter(it => it.amt > 0);
   if (!drink.length) { telop('SAFE！', 'lime sm', 1200); return; }
   const amts = drink.map(it => it.amt), same = amts.every(a => a === amts[0]), max = Math.max.apply(null, amts);
   const nm = p => '<span style="color:' + pc(p) + '">' + esc(pname(p)) + '</span>';
   let html;
   if (drink.length === n && n > 2) { html = '全員' + (same ? fmtAmt(amts[0]) + '杯！' : 'グイ！') + '<small>カンパーイ！</small>'; FXC.rain(70); SE.play('cat_all', 0.05); }
-  else if (drink.length === 1) html = '<small>' + nm(drink[0].p) + '</small>' + fmtAmt(amts[0]) + '杯！';
-  else html = '<small>' + (drink.length <= 3 ? drink.map(it => nm(it.p)).join('・') : drink.length + '人') + '</small>' + (same ? fmtAmt(amts[0]) + '杯ずつ！' : 'グイ！');
+  else if (drink.length === 1) html = '<small>' + head + nm(drink[0].p) + '</small>' + fmtAmt(amts[0]) + '杯！';
+  else html = '<small>' + head + (drink.length <= 3 ? drink.map(it => nm(it.p)).join('・') : drink.length + '人') + '</small>' + (same ? fmtAmt(amts[0]) + '杯ずつ！' : 'グイ！');
   if (max >= 5) { SE.play('hell'); shake(true); telop(html, 'red sm', 1500); }
   else { SE.play('gulp'); telop(html, 'sm', 1300); }
   /* a nudge: tickets in hand are worth knowing about; the special-rule tip only for the first few times */
@@ -1334,7 +1381,7 @@ function replaceList() {
   const out = [], es = G.cur.drinks;
   for (let k = es.length - 1; k >= 0; k--) {
     const e = es[k];
-    if (e.kind === 'auto') e.items.forEach(it => { if (it.amt > 0 && !out.some(x => x.p === it.p)) out.push({ p: it.p, i: k }); });
+    if (e.kind === 'auto') e.items.forEach(it => { if (it.amt > 0 && it.mf == null && !out.some(x => x.p === it.p)) out.push({ p: it.p, i: k }); });
   }
   return out.sort((a, b) => a.p - b.p);
 }
@@ -1344,7 +1391,8 @@ function openSpecial() {
   if (list.length === 1) openSheet(list[0].p, { replace: list[0].i });
   else openDecide('who', { list });
 }
-const recordedThisTurn = () => G.cur.drinks.some(e => e.kind !== 'cospa');
+/* a drink for the card itself (not コスパ, not naming someone, not a rule break) */
+const recordedThisTurn = () => G.cur.drinks.some(e => e.kind !== 'cospa' && e.kind !== 'name' && e.src !== 'rule');
 /* the card's drinkers still have to be chosen */
 function needsPick() {
   const cur = G && G.cur;
@@ -1353,9 +1401,11 @@ function needsPick() {
   return m === 'pick' || m === 'judge';
 }
 /* 「次へ」 check: nobody chosen yet, or the card's mini game not played */
-const GAME_NAMES = { chal: 'チャレンジ', bomb: '爆弾パス回し', pick: 'ルーレット', tap: '早押し対決', hhfree: '天国と地獄', timer: 'ストップ対決' };
+const GAME_NAMES = { chal: 'チャレンジ', bomb: '爆弾パス回し', pick: 'ルーレット', tap: '早押し対決', hhfree: '天国と地獄', timer: 'ストップ対決' };  /* 道具ゲーム are optional, so not asked for */
 function turnTask() {
   const cur = G.cur;
+  const dw = durWaiting(true);
+  if (dw) return { title: 'まだ「' + (dw[1].title || '指名') + '」を指名していません', text: '指名しないで次の人へ進む？（あとで上の帯からも選べます）', go: 'durpick', goLabel: '指名する', skip: '指名しないで次へ' };
   if (!cur.card || recordedThisTurn()) return null;
   if (needsPick()) return { title: 'まだ飲む人を記録していません', text: 'このカードで飲んだ人は、いなかった？', go: 'decide', goLabel: '飲む人を選ぶ', skip: '誰も飲まなかった' };
   if (drinkOf(cur.card) === 'app') {
@@ -1386,6 +1436,13 @@ function openDecide(kind, o) {
   if (kind === 'judge') d.cands = pl.cands || [];
   if (kind === 'free' && Array.isArray(o.sel)) d.sel = o.sel.slice();
   if (kind === 'who') { d.list = o.list || []; d.step = 'who'; }
+  if (kind === 'rule' || kind === 'durpick') {
+    const row = o.uid != null ? durRows().find(([, h]) => h.uid === o.uid) : durWaiting(false);
+    if (!row) return;
+    d.owner = row[0]; d.item = row[1];
+    if (kind === 'rule') { d.base = ruleCups(d.item) || 1; d.cands = d.item.who != null ? [d.item.who] : []; }
+    else { d.need = 1; d.by = row[0]; }
+  }
   decide = d;
   renderDecide();
   if ($('decideOv').hidden) openOv('decideOv');
@@ -1403,7 +1460,7 @@ function closeDecide() {
   if (G && screen === 'game') { renderDock(); renderLog(); }
 }
 const decidePicks = d => d.sel.filter(p => !d.lock.includes(p)).length;
-const decideReady = d => (d.kind === 'pick' ? decidePicks(d) === d.need : d.sel.length > 0);
+const decideReady = d => (d.kind === 'pick' || d.kind === 'durpick' ? decidePicks(d) === d.need : d.sel.length > 0);
 function renderDecide() {
   const d = decide, cur = G.cur, c = cur.card;
   const who = d.step === 'who';
@@ -1415,32 +1472,37 @@ function renderDecide() {
     title = '誰を指名する？';
     sub = '<b>' + esc(pname(d.by)) + '</b> が指名した人をタップ' + (d.need > 1 ? '（' + d.need + '人）' : '') + (d.self ? '<br>' + esc(pname(d.by)) + 'も一緒に飲みます' : '');
   } else if (d.kind === 'judge') { title = '誰が飲む？'; sub = '負けた人・当てはまった人をタップ（何人でもOK）'; }
+  else if (d.kind === 'rule') { title = '違反したのは？'; sub = '違反した人をタップ（何人でもOK） ・ このルールはあと<b>' + d.item.left + '</b>ターン'; }
+  else if (d.kind === 'durpick') { title = '誰を指名する？'; sub = '<b>' + esc(pname(d.by)) + '</b> が「' + esc(d.item.title || '指名') + '」に指名した人をタップ'; }
   else { title = '追加で記録'; sub = 'ルール違反などで飲む人をタップ（何人でもOK）'; }
   const roleOf = i => (c && cur.names ? ROLE_ORDER.filter(k => cur.names[k] === i) : []);
   const btn = i => {
     const on = !who && d.sel.includes(i), r = roleOf(i);
-    const isBy = !who && d.kind === 'pick' && i === d.by;
+    const isBy = !who && (d.kind === 'pick' || d.kind === 'durpick') && i === d.by;
+    const off = d.kind === 'durpick' && i === d.by;
     const tag = isBy ? '<span class="dc-role by">指名する人</span>' : r.length ? '<span class="dc-role">' + r.join('・') + '</span>' : '';
     const amt = on ? computeAmount({ p: i, base: d.base }).amt : null;
     const tk = ticketsOf(i).some(h => h.fx === 'avoid' || h.fx === 'push') ? '<span class="dc-tk">券あり</span>' : '';
-    const cand = !who && d.kind === 'judge' && (d.cands || []).includes(i);
-    return '<button type="button" class="dc-p' + (cand ? ' cand' : '') + (d.lock.includes(i) ? ' locked' : '') + '" data-d="' + (who ? 'who' : 'sel') + '" data-i="' + i + '" aria-pressed="' + on + '" style="--p:' + pc(i) + '">' + tag +
+    const cand = !who && (d.kind === 'judge' || d.kind === 'rule') && (d.cands || []).includes(i);
+    return '<button type="button" class="dc-p' + (cand ? ' cand' : '') + (d.lock.includes(i) ? ' locked' : '') + '" data-d="' + (who ? 'who' : 'sel') + '" data-i="' + i + '" aria-pressed="' + on + '" style="--p:' + pc(i) + '"' + (off ? ' disabled' : '') + '>' + tag +
       '<span class="dot"></span><span class="dc-nm">' + esc(pname(i)) + '</span>' + tk +
-      (on ? '<span class="dc-amt">' + (amt ? fmtAmt(amt) + '<small>杯</small>' : 'SAFE') + '</span>' : '') +
-      (on && d.kind === 'pick' && !d.lock.includes(i) ? '<span class="dc-stamp">指名！</span>' : '') + '</button>';
+      (on && d.kind !== 'durpick' ? '<span class="dc-amt">' + (amt ? fmtAmt(amt) + '<small>杯</small>' : 'SAFE') + '</span>' : '') +
+      (on && (d.kind === 'pick' || d.kind === 'durpick') && !d.lock.includes(i) ? '<span class="dc-stamp">指名！</span>' : on && d.kind === 'rule' ? '<span class="dc-stamp">違反！</span>' : '') + '</button>';
   };
   const pend = !who && pendingActive() ? '<p class="dc-note">NEXT ' + (G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '') + ' は、選んだ人全員にかかります</p>' : '';
-  const amtRow = who ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1杯減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
+  const naming = d.kind === 'durpick';
+  const amtRow = who || naming ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1杯減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
     '<span class="amt-base"><b>' + d.base + '</b><small>1人あたりの杯数</small></span>' +
     '<button type="button" class="stepper" data-d="plus" aria-label="1杯増やす"' + (d.base >= 99 ? ' disabled' : '') + '>＋</button></div>';
-  const range = !who && c && c.cups.length > 1 && d.kind !== 'free' ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で合わせてね</p>' : '';
+  const range = !who && c && c.cups.length > 1 && (d.kind === 'pick' || d.kind === 'judge') ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で合わせてね</p>' : '';
   const names = d.sel.slice().sort((a, b) => a - b).map(i => pname(i)).join('・');
   const acts = who ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="back">' + (d.kind === 'who' ? 'とじる' : 'もどる') + '</button></div>'
+    : naming ? '<div class="dc-acts"><button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '決定！<span class="sub">' + esc(names) + '</span>' : '指名してね') + '</button></div>'
     : '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="special"' + (ready ? '' : ' disabled') + '>特殊ルール・券</button>' +
       '<button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '飲む！<span class="sub">' + esc(names) + '</span>' : d.kind === 'pick' ? '指名してね' : '飲む人をタップ') + '</button></div>';
   const none = !who && d.kind === 'judge' ? '<button type="button" class="dc-none" data-d="none">誰も飲まなかった</button>' : '';
   $('decideBox').innerHTML = '<div class="dc-head"><h2 id="decideTitle">' + title + '</h2><button type="button" class="dc-later" data-d="later">' + (who && d.kind !== 'who' ? 'もどる' : who ? 'とじる' : 'あとで') + '</button></div>' +
-    (c && !who && d.kind !== 'free' ? '<p class="dc-card">' + fillGame(c.text) + '</p>' : '') +
+    (d.item && !who ? '<p class="dc-card">' + esc(d.item.text) + '</p>' : c && !who && d.kind !== 'free' ? '<p class="dc-card">' + fillGame(c.text) + '</p>' : '') +
     '<p class="dc-sub">' + sub + '</p><div class="dc-players">' + list.map(btn).join('') + '</div>' + pend + amtRow + range + acts + none;
 }
 function decideSel(i) {
@@ -1448,7 +1510,7 @@ function decideSel(i) {
   if (d.lock.includes(i)) { SE.play('tap'); return; }
   const k = d.sel.indexOf(i);
   if (k >= 0) { d.sel.splice(k, 1); SE.play('tap'); renderDecide(); const x = $('decideBox').querySelector('[data-d="sel"][data-i="' + i + '"]'); if (x) x.focus({ preventScroll: true }); return; }
-  if (d.kind === 'pick') {
+  if (d.kind === 'pick' || d.kind === 'durpick') {
     const picks = d.sel.filter(p => !d.lock.includes(p));
     if (picks.length >= d.need) d.sel.splice(d.sel.indexOf(picks[0]), 1);
   }
@@ -1457,10 +1519,12 @@ function decideSel(i) {
   const el = $('decideBox').querySelector('[data-d="sel"][data-i="' + i + '"]');
   if (el) {
     el.focus({ preventScroll: true });
-    if (!reduceMotion) { el.classList.add('pop'); const q = relPos(el); FXC.burst(q.x, q.y - 6, d.kind === 'pick' ? 34 : 14, { colors: [pcHex(i), '#ffffff', '#ffd83d'], speed: d.kind === 'pick' ? 10 : 6, star: d.kind === 'pick' }); }
+    const big = d.kind === 'pick' || d.kind === 'durpick';
+    if (!reduceMotion) { el.classList.add('pop'); const q = relPos(el); FXC.burst(q.x, q.y - 6, big ? 34 : 14, { colors: [pcHex(i), '#ffffff', '#ffd83d'], speed: big ? 10 : 6, star: big }); }
   }
-  SE.play(d.kind === 'pick' ? 'select' : 'pop');
-  if (d.kind === 'pick' && decideReady(d)) { SE.play('ding', 0.12); vibrate(40); } else vibrate(15);
+  const naming = d.kind === 'pick' || d.kind === 'durpick';
+  SE.play(naming ? 'select' : 'pop');
+  if (naming && decideReady(d)) { SE.play('ding', 0.12); vibrate(40); } else vibrate(15);
 }
 function decideGo() {
   const d = decide;
@@ -1468,6 +1532,8 @@ function decideGo() {
   const ps = d.sel.slice().sort((a, b) => a - b);
   decide = null;
   closeOv('decideOv');
+  if (d.kind === 'durpick') { setDurPick(d.owner, d.item, ps[0]); return; }
+  if (d.kind === 'rule') { autoRecord(ps, d.base, { src: 'rule', from: '#gRules [data-rule="' + d.item.uid + '"]' }); return; }
   autoRecord(ps, d.base, { src: d.kind === 'free' ? 'add' : d.kind, decided: d.kind !== 'free' });
 }
 function decideSpecial() {
@@ -1497,6 +1563,109 @@ function decideNone() {
   renderGame();
   SE.play('ticket');
   telop('セーフ！<small>誰も飲まなかった</small>', 'lime sm', 1300);
+}
+
+/* ---------- 継続中: continuing cards in a strip under the top bar. Tap one to record who broke it (「違反したのは？」),
+   or to see what it does. Cards that name someone (インシュメイト・執事) ask for that person first ---------- */
+const RULE_HINT_KEY = 'sakego-rule-hint';
+const rulesShown = new Set();
+function durRows() {
+  const rows = [];
+  if (G) G.players.forEach((pl, i) => pl.hand.forEach(h => { if (h.kind === 'dur') rows.push([i, h]); }));
+  return rows;
+}
+const ruleCups = h => (Array.isArray(h.cups) && h.cups.length ? h.cups[0] : 0);
+function ruleLabel(i, h) {
+  if (h.pick) {
+    if (h.who == null) return (h.title || '指名') + '：まだ選んでいません';
+    return (h.title || '指名') + '：' + (h.mate ? pname(i) + '⇄' + pname(h.who) : pname(h.who));
+  }
+  return String(h.text).split('。')[0].trim() || String(h.text);
+}
+/* a naming card that still needs its person (thisTurn: only the one drawn this turn) */
+function durWaiting(thisTurn) {
+  const r = durRows().find(([, h]) => h.pick && h.who == null && (!thisTurn || h.turn === G.turn));
+  return r || null;
+}
+const durNew = () => durRows().some(([, h]) => h.turn === G.turn);
+function ruleHint() {
+  if (coach.on || (Number(lsGet(RULE_HINT_KEY)) || 0) >= 3) return;
+  lsSet(RULE_HINT_KEY, String((Number(lsGet(RULE_HINT_KEY)) || 0) + 1));
+  setTimeout(() => { if (screen === 'game') telop('続くルールは<b>上の帯</b>に表示！<br>違反した人がいたら、帯をタップ', 'hint', 3000); }, 1500);
+}
+function renderRules() {
+  const el = $('gRules'), rows = durRows();
+  el.hidden = !rows.length;
+  if (!rows.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<span class="gr-l">継続中</span>' + rows.map(([i, h]) => {
+    const cls = ['gr-chip'];
+    if (h.left <= 1) cls.push('last');
+    if (h.pick && h.who == null) cls.push('wait');
+    if (!rulesShown.has(h.uid)) { cls.push('in'); rulesShown.add(h.uid); }
+    const cups = ruleCups(h);
+    return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（あと' + h.left + 'ターン）' + (cups ? '。タップで違反を記録' : '') + '">' +
+      '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + esc(ruleLabel(i, h)) + '</span>' +
+      (cups ? '<span class="gr-cup">' + cups + '杯</span>' : '') +
+      '<span class="gr-left">' + (h.left <= 1 ? 'ラスト' : 'あと' + h.left) + '</span></button>';
+  }).join('');
+}
+function ruleTap(uid) {
+  if (!G || picking || G.cur.select) return;
+  const row = durRows().find(([, h]) => h.uid === uid);
+  if (!row) return;
+  const [i, h] = row;
+  if (h.pick && h.who == null) openDecide('durpick', { uid });
+  else if (ruleCups(h)) openDecide('rule', { uid });
+  else openRuleInfo(i, h);
+}
+function openRuleInfo(i, h) {
+  const extra = h.mate ? 'どちらかが飲むと、もう片方にも<b>同じ量が自動で記録</b>されます。'
+    : h.fx === 'half' ? '<b>' + esc(pname(i)) + '</b>の飲む量は、記録するとき自動で半分になります。'
+    : h.fx === 'nodouble' ? '<b>' + esc(pname(i)) + '</b>は、倍倍FIGHT！の「次の人×2」がかかりません（自動）。'
+    : h.pick && h.who != null ? '「' + esc(h.title) + '」は <b>' + esc(pname(h.who)) + '</b>。' : '';
+  $('infoBox').innerHTML = '<h2 id="infoTitle">継続中のルール</h2><p class="back-card">' + esc(h.text) + '</p>' +
+    (extra ? '<p class="note-s">' + extra + '</p>' : '') +
+    '<p class="note-s"><span class="sh-mini" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>が引いたカード ・ あと<b>' + h.left + '</b>ターン</p>' +
+    '<div class="dialog-acts"><button type="button" class="pbtn small" data-if="close">閉じる</button></div>';
+  openOv('infoOv');
+  SE.play('pop');
+}
+function setDurPick(i, h, p) {
+  const cur = G.cur, sn = snap();
+  h.who = p;
+  if (h.mate) h.text = h.text + '（' + pname(i) + '⇄' + pname(p) + '）';
+  cur.drinks.push({ kind: 'name', snap: sn, p, label: h.title || '指名' });
+  saveGame();
+  renderGame();
+  [i, p].forEach((q, k) => { const seat = document.querySelector('.seat[data-seat="' + q + '"]'); if (seat) { const r = relPos(seat); setTimeout(() => FXC.burst(r.x, r.y, 40, { colors: [pcHex(q), '#ffffff', '#ff4fa3'], star: true, speed: 10 }), k * 160); } });
+  SE.play('bigheaven');
+  if (h.mate) telop('<small>' + esc(pname(i)) + ' ⇄ ' + esc(pname(p)) + '</small>' + esc(h.title) + '結成！', 'pink sm', 1600);
+  else telop('<small>' + esc(pname(p)) + '</small>「' + esc(h.title) + '」に決定！', 'pink sm', 1500);
+  if (h.mate) setTimeout(() => { if (screen === 'game') telop('どちらかが飲むと<br><b>もう片方にも自動で記録</b>されます', 'hint', 2600); }, 1700);
+}
+
+/* ---------- インシュメイト: whenever one of a linked pair drinks, the other gets the same amount (once per record; chains follow) ---------- */
+function mateLinks() {
+  const out = [];
+  durRows().forEach(([i, h]) => { if (h.mate && h.who != null && h.who !== i) out.push([i, h.who]); });
+  return out;
+}
+function mateExtras(items, also) {
+  const links = mateLinks();
+  if (!links.length) return [];
+  const has = new Set(items.map(it => it.p).concat(also || [])), extra = [];
+  const queue = items.filter(it => it.amt > 0).map(it => ({ p: it.p, amt: it.amt, root: it.mf != null ? it.mf : it.p }));
+  while (queue.length) {
+    const x = queue.shift();
+    links.forEach(([a, b]) => {
+      const o = x.p === a ? b : x.p === b ? a : null;
+      if (o == null || has.has(o)) return;
+      has.add(o);
+      extra.push({ p: o, amt: x.amt, mf: x.root, from: x.p });
+      queue.push({ p: o, amt: x.amt, root: x.root });
+    });
+  }
+  return extra;
 }
 
 /* ---------- selection actions (swap / give) and rule ending ---------- */
@@ -2737,6 +2906,335 @@ function closeTap(rec) {
   else autoRecord([loser], cups, { src: 'tap' });
 }
 
+/* ---------- 道具ゲーム: チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツ in the app. The loser is recorded automatically.
+   (Playing with real tools still works: close the card and choose in 「誰が飲む？」) ---------- */
+const TOOL_INFO = {
+  chinchiro: { title: 'チンチロ', act: 'アプリでチンチロ！', cls: 'chin', stake: 'いちばん弱い役の人が' },
+  dice: { title: 'サイコロ勝負', act: 'アプリでサイコロ！', cls: 'dice', stake: '小さい方が' },
+  cards: { title: 'トランプ勝負', act: 'アプリでトランプ！', cls: 'casino', stake: '低い方（A=1）が' },
+  indian: { title: 'インディアンポーカー', act: 'アプリでインディアンポーカー！', cls: 'casino', stake: '低い方が（JOKERは2人とも）' },
+  darts: { title: 'ダーツ勝負', act: 'アプリでダーツ！', cls: 'darts', stake: '得点の低い方が' },
+};
+const TOOL_CLOSE = '<button type="button" class="pbtn white small" data-tl="close">やめる</button>';
+let tool = null;
+function toolLater(fn, ms) { const T = tool; const id = setTimeout(() => { if (tool === T) fn(); }, ms); T.timers.push(id); return id; }
+function toolActs(h, focus) {
+  const a = $('toolActs');
+  a.innerHTML = h;
+  const f = focus === false ? null : a.querySelector('.main') || a.querySelector('button');
+  if (f) f.focus({ preventScroll: true });
+}
+function openTool() {
+  const cur = G.cur, c = cur.card, kind = toolOf(c);
+  if (tool || !kind || cur.phase !== 'drawn') return;
+  const n = G.players.length;
+  let ps;
+  if (kind === 'chinchiro') ps = Array.from({ length: n }, (_, k) => (cur.drawer + k) % n);
+  else {
+    ps = cardPeople(c).slice(0, 2);
+    const a = ps.length ? ps[0] : cur.drawer;
+    if (ps.length < 2) { const r = cur.names['ランダム']; ps = [a, r != null && r !== a ? r : (a + 1) % n]; }
+  }
+  tool = { kind, ps, cups: c.cups.length ? c.cups[0] : 1, k: 0, res: [], state: 'play', timers: [], raf: 0, guard: 0, losers: null, busy: false };
+  $('toolOv').className = 'ov timer-ov tool-ov ' + TOOL_INFO[kind].cls;
+  $('toolHead').innerHTML = '<h2 class="tm-title ol" id="toolTitle">' + TOOL_INFO[kind].title + '</h2><p class="tm-card">' + fillGame(c.text) + '</p>';
+  openOv('toolOv');
+  BGM.play('tension'); BGM.level(0.7, 0.3);
+  SE.play('pop');
+  if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else duelSetup();
+}
+function closeTool(mode) {
+  const T = tool;
+  if (!T) return;
+  T.timers.forEach(clearTimeout);
+  if (T.raf) cancelAnimationFrame(T.raf);
+  tool = null;
+  closeOv('toolOv');
+  BGM.play('party'); BGM.level(1, 0.3);
+  if (T.state !== 'done' || !T.losers || !T.losers.length) return;
+  renderGame();
+  if (mode === 'special' && T.losers.length === 1) openSheet(T.losers[0], { base: T.cups, owed: true, src: 'tool' });
+  else autoRecord(T.losers, T.cups, { src: 'tool', decided: true });
+}
+function toolAct(a) {
+  const T = tool;
+  if (a === 'close') { closeTool(false); return; }
+  if (a === 'rec' || a === 'special') { closeTool(a); return; }
+  if (T.kind === 'chinchiro') { if (a === 'go') chinRoll(); else if (a === 'next') { T.k++; chinTurn(); } }
+  else if (T.kind === 'darts') { if (a === 'go') dartsThrow(); }
+  else if (a === 'go') duelDraw();
+  else if (a === 'open') indianOpen();
+}
+/* the result: losers drink the card's cups (OK), or one loser goes through the sheet for a special rule / ticket */
+function toolFinish(losers, msg, panel) {
+  const T = tool;
+  T.state = 'done'; T.losers = losers; T.guard = performance.now() + 500;
+  T.ps.forEach((p, j) => {
+    const el = panel(j);
+    if (!el) return;
+    const lose = losers.includes(p);
+    el.classList.remove('now', 'wait');
+    el.classList.add(lose ? 'lose' : 'win');
+    const f = el.querySelector('.flip'); if (f) f.classList.add(lose ? 'lose' : 'win');
+    if (!lose && !reduceMotion) { const q = relPos(el); FXC.burst(q.x, q.y, 40, { colors: GOLD, star: true, speed: 10 }); }
+  });
+  $('toolSub').innerHTML = msg;
+  if (losers.length === T.ps.length) { SE.play('hell'); flash('#e8233f'); shake(false); }
+  else { SE.play('bigheaven'); setTimeout(() => SE.play('hell'), 350); }
+  vibrate([60, 40, 120]);
+  BGM.level(0.15, 0.05);
+  toolActs(losers.length === 1
+    ? '<button type="button" class="pbtn white small" data-tl="special">特殊ルール<span class="sub">・券を使う</span></button><button type="button" class="pbtn big main" data-tl="rec">OK！ ' + T.cups + '杯を記録</button>'
+    : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + T.cups + '杯ずつ記録</button>');
+}
+const stakeLine = T => '<p class="tl-stake">' + TOOL_INFO[T.kind].stake + ' <b>' + T.cups + '杯</b></p>';
+
+/* dice faces */
+const PIPS = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[28, 28], [50, 50], [72, 72]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]], 6: [[28, 26], [72, 26], [28, 50], [72, 50], [28, 74], [72, 74]] };
+function dieSVG(v) {
+  return '<svg class="die" viewBox="0 0 100 100" aria-label="' + (v ? v : '?') + '"><rect x="5" y="5" width="90" height="90" rx="18" class="die-b"/>' +
+    (v ? PIPS[v].map(([x, y]) => '<circle cx="' + x + '" cy="' + y + '" r="' + (v === 1 ? 14 : 9) + '" class="die-p' + (v === 1 ? ' red' : '') + '"/>').join('') : '<text x="50" y="66" class="die-q">?</text>') + '</svg>';
+}
+function rollDie(slot, v, frames, done) {
+  slot.classList.add('rolling');
+  let k = 0;
+  const N = reduceMotion ? 1 : frames;
+  const step = () => {
+    if (++k < N) { slot.innerHTML = dieSVG(1 + Math.floor(Math.random() * 6)); toolLater(step, 45 + k * 9); return; }
+    slot.innerHTML = dieSVG(v);
+    slot.classList.remove('rolling'); slot.classList.add('land');
+    toolLater(() => slot.classList.remove('land'), 460);
+    done();
+  };
+  step();
+}
+const jokerFace = () => '<div class="pc-face joker"><span class="pc-mid"><svg class="jk-s" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 5l13 30 32 3-24 21 7 32-28-17-28 17 7-32L5 38l32-3z"/></svg><b class="jk">JOKER</b></span></div>';
+
+/* サイコロ・トランプ・インディアンポーカー: two people, one draw each, the lower one drinks (a tie = both) */
+function duelSetup() {
+  const T = tool;
+  T.deck = shuffle([].concat(...['s', 'h', 'd', 'c'].map(s => RANKS.map((_, i) => ({ r: i + 1, s })))).concat(T.kind === 'indian' ? [{ joker: true }] : []));
+  $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span>' +
+    '<div class="tl-slot ' + (T.kind === 'dice' ? 'die-slot' : 'card-slot') + '" id="tlS' + i + '">' + (T.kind === 'dice' ? dieSVG(0) : flipCard('tlC' + i, null, false)) + '</div>' +
+    '<b class="tl-val" id="tlV' + i + '">&nbsp;</b></div>').join('') + '</div><p class="tm-sub" id="toolSub"></p>';
+  duelTurn();
+}
+function duelTurn() {
+  const T = tool, i = T.k;
+  if (T.kind === 'indian') {
+    $('toolSub').innerHTML = '2人にカードを1枚ずつ配ります';
+    toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">カードを配る！</button>');
+    return;
+  }
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">' + (T.kind === 'dice' ? 'サイコロを振る！' : 'カードを引く！') + '</button>');
+}
+function duelDraw() {
+  const T = tool;
+  if (T.busy) return;
+  T.busy = true;
+  toolActs('', false);
+  if (T.kind === 'indian') {
+    T.ps.forEach((_, j) => { T.res[j] = T.deck.pop(); toolLater(() => { const box = $('tlS' + j); box.innerHTML = flipCard('tlC' + j, null, false); box.firstElementChild.classList.add('deal'); SE.play('deal'); }, j * 380); });
+    toolLater(() => {
+      T.busy = false;
+      $('toolSub').innerHTML = 'カードは伏せたまま…<br>おでこに当てるつもりで、<b>せーので開こう！</b>';
+      toolActs('<button type="button" class="pbtn big main pulse" data-tl="open">せーので オープン！</button>');
+    }, 1000);
+    return;
+  }
+  const i = T.k;
+  const after = () => { T.busy = false; if (i + 1 < T.ps.length) { T.k++; toolLater(duelTurn, 700); } else toolLater(duelResult, 750); };
+  if (T.kind === 'dice') {
+    const v = 1 + Math.floor(Math.random() * 6);
+    SE.play('roll');
+    rollDie($('tlS' + i), v, 13, () => { T.res[i] = v; const el = $('tlV' + i); el.textContent = v; tmPop(el); SE.play('ding'); after(); });
+    return;
+  }
+  const c = T.deck.pop(), box = $('tlC' + i);
+  T.res[i] = c;
+  box.classList.add('suspense'); SE.play('roll');
+  toolLater(() => {
+    box.classList.remove('suspense');
+    box.querySelector('.flip-f').innerHTML = pcardFace(c);
+    box.classList.add('open'); SE.play('flip');
+    const el = $('tlV' + i); el.textContent = rankName(c); tmPop(el);
+    after();
+  }, 850);
+}
+function indianOpen() {
+  const T = tool;
+  if (T.busy || T.opened) return;
+  T.opened = true; T.busy = true;
+  toolActs('', false);
+  $('toolSub').innerHTML = '<b>せーの…！</b>';
+  SE.play('roll');
+  T.ps.forEach((_, j) => $('tlC' + j).classList.add('suspense'));
+  toolLater(() => {
+    T.ps.forEach((_, j) => {
+      const box = $('tlC' + j), c = T.res[j];
+      box.classList.remove('suspense');
+      box.querySelector('.flip-f').innerHTML = c.joker ? jokerFace() : pcardFace(c);
+      box.classList.add('open');
+      $('tlV' + j).textContent = c.joker ? 'JOKER' : rankName(c);
+    });
+    SE.play('flip');
+    if (T.res.some(c => c.joker)) { flash('#b17cff'); telop('JOKER!!', 'devil', 1500); SE.play('devil'); }
+    toolLater(duelResult, T.res.some(c => c.joker) ? 1500 : 900);
+  }, 1200);
+}
+function duelResult() {
+  const T = tool;
+  let losers, msg;
+  if (T.kind === 'indian' && T.res.some(c => c.joker)) { losers = T.ps.slice(); msg = 'JOKERが出た！ 2人とも <b>' + T.cups + '杯</b>'; }
+  else {
+    const vals = T.res.map(x => (typeof x === 'number' ? x : x.r)), mn = Math.min.apply(null, vals);
+    losers = T.ps.filter((_, j) => vals[j] === mn);
+    msg = losers.length > 1 ? '同じ数！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯';
+  }
+  toolFinish(losers, msg, j => $('tlP' + j));
+}
+
+/* ダーツ: an aim drifts over the board; 「投げる！」 lands the dart near it. Rings: BULL 50 / 25 / 20 / 15 / 10 / 5 / MISS */
+const DART_RINGS = [[8, 50], [18, 25], [40, 20], [62, 15], [84, 10], [100, 5]];
+function dartBoardSVG() {
+  const fills = ['#c8102e', '#1f8a4c', '#f1e2b8', '#c8102e', '#f1e2b8', '#16161c'];
+  let h = '<svg class="dt-svg" viewBox="-110 -110 220 220" aria-hidden="true"><circle r="108" fill="#3a2414" stroke="#150733" stroke-width="4"/>';
+  for (let k = DART_RINGS.length - 1; k >= 0; k--) h += '<circle r="' + DART_RINGS[k][0] + '" fill="' + fills[k] + '" stroke="#150733" stroke-width="1.5"/>';
+  for (let a = 0; a < 20; a++) { const t = (a * 18 + 9) * Math.PI / 180; h += '<line x1="' + (Math.cos(t) * 18).toFixed(1) + '" y1="' + (Math.sin(t) * 18).toFixed(1) + '" x2="' + (Math.cos(t) * 100).toFixed(1) + '" y2="' + (Math.sin(t) * 100).toFixed(1) + '" stroke="rgba(21,7,51,.35)" stroke-width="1"/>'; }
+  [[29, 20], [51, 15], [73, 10], [92, 5]].forEach(([r, sc]) => { h += '<text x="0" y="' + (-r + 3.5) + '" class="dt-lb">' + sc + '</text>'; });
+  return h + '</svg>';
+}
+function dartsSetup() {
+  const T = tool;
+  $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>' +
+    '<div class="dt-board" id="dtBoard">' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div><p class="tm-sub" id="toolSub"></p>';
+  dartsTurn();
+}
+function dartsTurn() {
+  const T = tool, i = T.k;
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ 狙いが真ん中に来たら「投げる！」';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main" data-tl="go">投げる！</button>');
+  const aim = $('dtAim');
+  aim.hidden = false;
+  T.aimOn = true;
+  const t0 = performance.now(), ph = Math.random() * 6.28, sp = 0.95 + Math.random() * 0.3;
+  const step = now => {
+    if (tool !== T || !T.aimOn) return;
+    const t = (now - t0) / 1000 * sp;
+    T.ax = 0.66 * Math.sin(t * 2.2 + ph) + 0.17 * Math.sin(t * 5.7 + 1);
+    T.ay = 0.66 * Math.sin(t * 2.9 + ph * 1.7) + 0.17 * Math.cos(t * 6.3);
+    aim.style.left = (50 + T.ax * 45.45).toFixed(2) + '%'; aim.style.top = (50 + T.ay * 45.45).toFixed(2) + '%';
+    T.raf = requestAnimationFrame(step);
+  };
+  T.raf = requestAnimationFrame(step);
+}
+function dartsThrow() {
+  const T = tool, i = T.k;
+  if (!T.aimOn) return;
+  T.aimOn = false;
+  if (T.raf) cancelAnimationFrame(T.raf);
+  T.raf = 0;
+  toolActs('', false);
+  const ex = T.ax + (Math.random() - 0.5) * 0.12, ey = T.ay + (Math.random() - 0.5) * 0.12;
+  const ring = DART_RINGS.find(([R]) => Math.hypot(ex, ey) * 100 <= R);
+  const score = ring ? ring[1] : 0;
+  T.res[i] = score;
+  SE.play('swoosh');
+  toolLater(() => {
+    $('dtAim').hidden = true;
+    const x = (50 + ex * 45.45).toFixed(2) + '%', y = (50 + ey * 45.45).toFixed(2) + '%';
+    $('dtHits').insertAdjacentHTML('beforeend', '<i class="dt-hit" style="left:' + x + ';top:' + y + ';--p:' + pc(T.ps[i]) + '"></i><span class="dt-pop" style="left:' + x + ';top:' + y + '">' + (score === 50 ? 'BULL!!' : score ? score + '点' : 'MISS') + '</span>');
+    const el = $('tlV' + i); el.textContent = score ? score + '点' : 'MISS'; tmPop(el);
+    if (score >= 25) { SE.play('bigheaven'); const q = relPos($('dtBoard')); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 }); }
+    else if (!score) SE.play('buzz');
+    else { SE.play('pop'); SE.play('ding', 0.08); }
+    vibrate(40);
+    if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1200); }
+    else toolLater(() => {
+      const mn = Math.min.apply(null, T.res), losers = T.ps.filter((_, j) => T.res[j] === mn);
+      toolFinish(losers, losers.length > 1 ? '同点！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯', j => $('tlP' + j));
+    }, 1200);
+  }, 260);
+}
+
+/* チンチロ: everyone rolls three dice (up to 3 tries for a hand). Strong → weak:
+   ピンゾロ > ゾロ目 > シゴロ > 目（6〜1） > 目なし > ヒフミ. The weakest drinks (a tie = all of them) */
+function chinHand(d) {
+  const s = d.slice().sort((a, b) => a - b);
+  if (s[0] === 1 && s[2] === 1) return { rank: 100, name: 'ピンゾロ' };
+  if (s[0] === s[2]) return { rank: 90 + s[0], name: s[0] + 'のゾロ目' };
+  if (s[0] === 4 && s[1] === 5 && s[2] === 6) return { rank: 80, name: 'シゴロ' };
+  if (s[0] === 1 && s[1] === 2 && s[2] === 3) return { rank: -10, name: 'ヒフミ' };
+  if (s[0] === s[1]) return { rank: s[2], name: s[2] + 'の目' };
+  if (s[1] === s[2]) return { rank: s[0], name: s[0] + 'の目' };
+  return null;
+}
+function chinSetup() {
+  const T = tool;
+  T.hands = [];
+  $('toolStage').innerHTML = stakeLine(T) + '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
+    '<div class="cc-row" id="ccR' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand" id="ccH' + j + '">—</b></div>').join('') + '</div>' +
+    '<div class="cc-bowl" id="ccBowl">' + [0, 1, 2].map(j => '<span class="cc-die" id="ccD' + j + '">' + dieSVG(0) + '</span>').join('') + '</div><p class="tm-sub" id="toolSub"></p>';
+  chinTurn();
+}
+function chinTurn() {
+  const T = tool, i = T.k;
+  T.tries = 0;
+  T.ps.forEach((_, j) => $('ccR' + j).classList.toggle('now', j === i));
+  [0, 1, 2].forEach(j => { $('ccD' + j).innerHTML = dieSVG(0); });
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">サイコロを振る！</button>');
+}
+function chinRoll() {
+  const T = tool;
+  if (T.busy) return;
+  T.busy = true;
+  T.tries++;
+  toolActs('', false);
+  const d = [0, 1, 2].map(() => 1 + Math.floor(Math.random() * 6));
+  SE.play('roll');
+  const bowl = $('ccBowl');
+  if (!reduceMotion) bowl.classList.add('shake');
+  let left = 3;
+  d.forEach((v, j) => rollDie($('ccD' + j), v, 10 + j * 4, () => { SE.play('tick'); if (--left === 0) { bowl.classList.remove('shake'); toolLater(() => chinJudge(d), 250); } }));
+}
+function chinJudge(d) {
+  const T = tool, i = T.k, p = T.ps[i];
+  T.busy = false;
+  const h = chinHand(d);
+  if (!h && T.tries < 3) {
+    $('toolSub').innerHTML = '目なし…！ あと<b>' + (3 - T.tries) + '</b>回振れる';
+    SE.play('poof');
+    toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>');
+    return;
+  }
+  const hand = h || { rank: 0, name: '目なし' };
+  T.hands[i] = hand;
+  const el = $('ccH' + i);
+  el.textContent = hand.name;
+  el.className = 'cc-hand' + (hand.rank >= 80 ? ' great' : hand.rank <= 0 ? ' bad' : '');
+  tmPop(el);
+  $('toolSub').innerHTML = '<b>' + esc(pname(p)) + '</b>：' + hand.name + (hand.rank >= 80 ? '！！' : hand.rank <= 0 ? '…' : '');
+  if (hand.rank >= 80) {
+    SE.play('bigheaven');
+    const q = relPos($('ccBowl')); FXC.burst(q.x, q.y, 70, { colors: GOLD, star: true, speed: 12 });
+    if (hand.rank === 100) telop('ピンゾロ！！', 'angel', 1500);
+  } else if (hand.rank <= 0) { SE.play('hell'); flash('#e8233f'); if (hand.rank < 0) telop('ヒフミ……', 'devil', 1400); }
+  else SE.play('ding');
+  if (i + 1 < T.ps.length) toolActs('<button type="button" class="pbtn big main" data-tl="next">次は ' + esc(pname(T.ps[i + 1])) + ' ▶</button>');
+  else toolLater(() => {
+    const ranks = T.hands.map(x => x.rank), mn = Math.min.apply(null, ranks);
+    const losers = T.ps.filter((_, j) => ranks[j] === mn);
+    toolFinish(losers, losers.length > 1 ? losers.map(q => '<b>' + esc(pname(q)) + '</b>').join('・') + ' が同じ役で負け！ ' + T.cups + '杯ずつ'
+      : '<b>' + esc(pname(losers[0])) + '</b> の負け！（' + T.hands[T.ps.indexOf(losers[0])].name + '） ' + T.cups + '杯', j => $('ccR' + j));
+  }, 1200);
+}
+
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
 const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
@@ -2808,8 +3306,12 @@ const GUIDE = [
       '<span class="gd-mk" style="--c:' + colorVar(c.color) + '">' + esc(catMark(c)) + '</span><span><span class="gd-rn">' + esc(catName(c)) + '</span>' + esc(CAT_DESC[c.key] || 'カード編集で作った系統') + '</span>').join('') + '</div>') +
     gCard('名前が入るところ', '<p>カードの <span class="tag">{引いた人}</span> などは、ゲーム中は実際の名前に変わります。</p><ul class="gd-list">' +
       '<li><b>引いた人</b>：カードを引いた人</li><li><b>ランダム</b>：引いた人以外から、アプリが選んだ人</li><li><b>左隣・右隣</b>：登録順で次の人・前の人</li></ul>') +
-    gCard('継続カードと手札', '<p>「継続 2周」などと書かれたカードは<b>引いた人の手札</b>に入り、期間が終わると自動で消えます。席のすみの小さいカードが手札です。</p>' +
-      '<p class="sub">カードを引く前に席をタップすると、その人の手札とここまでの記録が見られます。</p>') +
+    gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-cup">1杯</span><span class="gr-left">あと3</span></span></div>' +
+      '<p>「継続 2周」などと書かれたカードは、<b>画面の上の「継続中」の帯</b>に並びます。あと何ターン続くかが出て、最後のターンは赤く光ります。期間が終わると自動で消えます。</p>' +
+      '<ul class="gd-list"><li><b>違反した人がいたら</b> → 帯のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。杯数は自動</li>' +
+      '<li><b>インシュメイト</b> → カードを閉じたら相手を指名。そのあとは、どちらかが飲むと<b>もう片方にも同じ量が自動で記録</b>されます</li>' +
+      '<li><b>執事</b>など人を指名するカード → 指名した人が帯に表示されます</li></ul>' +
+      '<p class="sub">カードを引く前に席をタップすると、その人の手札（継続カード・券）とここまでの記録が見られます。</p>') +
     gCard('券', '<div class="gd-rows">' +
       '<span class="gd-chip plain">セーフ券・休憩券</span><span>飲む対象になったとき、1回だけ回避</span>' +
       '<span class="gd-chip plain">押し付け券</span><span>飲む量を、書かれた人に押し付け</span>' +
@@ -2826,6 +3328,11 @@ const GUIDE = [
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>') +
     gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>が飲みます。爆発までの時間は毎回ちがいます。</p>') +
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
+    gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
+      [['チンチロ', '全員が順番にサイコロ3個。目なしは3回まで振り直し。いちばん弱い役の人が負け'], ['サイコロ', '2人が1回ずつ。小さい方が負け（同じなら2人とも）'],
+        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', '動く狙いを見て「投げる！」。得点の低い方が負け']]
+        .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
+      '<p class="sub">本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>されます。特殊ルールや券を使うなら「特殊ルール・券」。')
   },
@@ -2889,6 +3396,8 @@ const COACH = [
     link: ['special', '特殊ルールって？'] },
   { k: 'later', when: () => noOv() && !picking && needsPick(), at: '#dock [data-g="decide"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド</span><p>飲む人が決まったら<b>「誰が飲む？」</b>から選んで記録しよう。</p>' },
+  { k: 'rules', when: () => noOv() && !picking && !G.cur.select && durRows().length > 0 && !durWaiting(false), at: '#gRules', html: () =>
+    '<span class="cb-step">はじめてガイド</span><p>続くルールは<b>ここに表示</b>されます（あと何ターン続くかも）。</p><p class="sub">違反した人がいたら、<b>ルールをタップ</b>して選ぶだけで記録できます。</p>' },
   { k: 'nodrink', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.drinks.length && !G.cur.select && !picking && !!G.cur.card && drinkOf(G.cur.card) === 'none',
     at: '#dock [data-g="next"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド</span><p>このカードは飲む人がいないので、そのまま<b>「次へ」</b>でOK。</p>' },
@@ -3044,7 +3553,9 @@ function renderDock() {
     const acts = cardActs();
     if (acts.length) h += '<div class="dock-row">' + acts.map(a => '<button type="button" class="pbtn ' + a[2] + ' small" data-g="' + a[0] + '">' + a[1] + '</button>').join('') + '</div>';
     const last = G.rounds && G.turn + 1 >= G.rounds * n;
+    const dw = durWaiting(false);
     const left = needsPick() ? '<button type="button" class="pbtn pink small pulse" data-g="decide">誰が飲む？<span class="sub">タップして選ぶ</span></button>'
+      : dw ? '<button type="button" class="pbtn pink small pulse" data-g="durpick">指名する<span class="sub">' + esc(dw[1].title || '') + '</span></button>'
       : replaceList().length ? '<button type="button" class="pbtn cyan small" data-g="special">特殊ルール<span class="sub">・券を使う</span></button>'
       : '<button type="button" class="pbtn white small" data-g="add">追加で記録<span class="sub">ルール違反など</span></button>';
     h += '<div class="dock-row">' + left +
@@ -3060,7 +3571,8 @@ function entryPills(e) {
   if (e.kind === 'chal') return pill(e.p, e.ok ? 'クリア' : '失敗');
   if (e.kind === 'bomb') return pill(e.p, 'ドカーン');
   if (e.kind === 'safe') return '<span class="lg">誰も<b>飲まず</b></span>';
-  return (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + '杯' : 'SAFE')).join('');
+  if (e.kind === 'name') return pill(e.p, e.label);
+  return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + '杯' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
 }
 function renderLog() {
   const cur = G.cur, es = cur.drinks;
@@ -3089,6 +3601,7 @@ function renderGame(anim) {
     pe.hidden = false;
     pe.textContent = 'NEXT ' + (G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '');
   } else pe.hidden = true;
+  renderRules();
   renderSeats();
   renderCenter(anim);
   renderDock();
@@ -3264,6 +3777,8 @@ function wireGame() {
     else if (g === 'decide') openDecide();
     else if (g === 'special') openSpecial();
     else if (g === 'add') openDecide('free');
+    else if (g === 'durpick') openDecide('durpick');
+    else if (g === 'tool') openTool();
     else if (g === 'plain') { if (!G.cur.chalDone && G.cur.card) autoRecord([G.cur.drawer], G.cur.card.cups[0] || 1, { src: 'card', mark: 'chalDone' }); }
     else if (g === 'timer') openTimer();
     else if (g === 'undo') undoLast();
@@ -3338,6 +3853,13 @@ function wireGame() {
     else if (a === 'back') { if (d.kind === 'who') closeDecide(); else { d.step = null; renderDecide(); SE.play('tap'); } }
     else if (a === 'later') decideLater();
   });
+  $('gRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (b) ruleTap(Number(b.dataset.rule)); });
+  $('infoBox').addEventListener('click', e => { if (e.target.closest('[data-if="close"]')) closeOv('infoOv'); });
+  $('toolActs').addEventListener('click', e => {
+    const b = e.target.closest('[data-tl]'); if (!b || !tool || b.disabled) return;
+    if (performance.now() < (tool.guard || 0)) return;
+    toolAct(b.dataset.tl);
+  });
   $('nextBox').addEventListener('click', e => {
     const b = e.target.closest('[data-nx]'); if (!b) return;
     closeOv('nextOv');
@@ -3353,6 +3875,7 @@ function wireGame() {
   backdrop('sheetOv', closeSheet);
   backdrop('decideOv', decideLater);
   backdrop('nextOv', () => closeOv('nextOv'));
+  backdrop('infoOv', () => closeOv('infoOv'));
   backdrop('handOv', () => closeOv('handOv'));
   backdrop('endOv', () => closeOv('endOv'));
   backdrop('howOv', () => closeOv('howOv'));
@@ -3411,7 +3934,8 @@ function wireGame() {
     if (bomb) { if (bomb.state !== 'play') closeBomb(false); return; }
     if (!$('tapOv').hidden) { closeTap(false); return; }
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
-    for (const id of ['nextOv', 'backOv', 'confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
+    if (tool) { closeTool(false); return; }
+    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
     if (G && G.cur && G.cur.select && screen === 'game') { G.cur.select = null; renderGame(); }

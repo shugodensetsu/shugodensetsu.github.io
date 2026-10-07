@@ -347,6 +347,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
   padding:5px 11px 4px; box-shadow:0 3px 0 var(--ink); white-space:nowrap; will-change:transform, opacity}
 .gulp-tok small{font-family:var(--f-body); font-weight:800; font-size:12px; margin-left:1px}
 .gulp-tok.safe{background:var(--mint)}
+.gulp-tok.mate{background:var(--pink); color:var(--white)}
 .gulp-ring{position:absolute; z-index:7; pointer-events:none; box-sizing:border-box; border:4px solid var(--yellow); border-radius:20px; animation:gulpRing .65s ease-out forwards}
 @keyframes gulpRing{from{transform:translate(-50%,-50%) scale(.9); opacity:1} to{transform:translate(-50%,-50%) scale(1.5); opacity:0}}
 .telop.hint{top:66%; font-size:min(20px, 5.2vw); line-height:1.4; color:var(--white); white-space:normal; width:min(86%, 420px)}
@@ -433,6 +434,22 @@ button:disabled{cursor:not-allowed; opacity:.5}
 
 /* ---------- small helps ---------- */
 .g-top-r{display:flex; align-items:center; gap:6px}
+/* 継続中: a thin strip of the rules still running (tap = record a rule break / see what it does) */
+.g-rules{flex:none; display:flex; align-items:center; gap:6px; height:30px; margin:-2px -10px 0; padding:0 10px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
+.g-rules::-webkit-scrollbar{display:none}
+.gr-l{flex:none; font-size:11px; font-weight:800; color:var(--muted); writing-mode:horizontal-tb; letter-spacing:.05em}
+.gr-chip{flex:none; display:inline-flex; align-items:center; gap:5px; max-width:min(320px, 80vw); height:26px; box-sizing:border-box; background:var(--chip-bg); color:var(--white); border:2px solid var(--c); border-radius:999px;
+  padding:0 4px 0 3px; font-weight:800; font-size:12px; box-shadow:0 2px 0 var(--ink)}
+.gr-chip.in{animation:grIn .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes grIn{from{transform:scale(.3); opacity:0}}
+.gr-mk{flex:none; width:18px; height:18px; border-radius:50%; background:var(--c); color:var(--ink); border:1.5px solid var(--ink); display:grid; place-items:center; font-family:var(--f-display); font-size:10px; line-height:1}
+.gr-t{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.gr-cup{flex:none; font-size:10px; color:var(--pink-2)}
+.gr-left{flex:none; background:var(--yellow); color:var(--ink); border-radius:999px; padding:0 6px; font-size:10.5px; line-height:1.6}
+.gr-chip.last{border-color:var(--red)}
+.gr-chip.last .gr-left{background:var(--red); color:var(--white); animation:throb 1s ease-in-out infinite}
+.gr-chip.wait{border-style:dashed; border-color:var(--pink); animation:pulse 1.4s ease-in-out infinite}
+.lg.vio{background:var(--red); color:var(--white); padding:1px 8px}
 .sp-help{margin-left:auto; border:2px solid var(--ink); border-radius:999px; background:var(--cyan); color:var(--ink); font-weight:800; font-size:11.5px; padding:1px 9px; line-height:1.5}
 .sh-hint{margin:-2px 0 0; text-align:center; font-size:12px; font-weight:800; color:var(--ink-muted)}
 .sh-hint b{color:#c2187a}
@@ -800,6 +817,61 @@ button:disabled{cursor:not-allowed; opacity:.5}
 @keyframes tmLose{25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}}
 .sw-vs{font-family:var(--f-display); font-size:22px; color:var(--yellow); flex:none}
 
+/* ---------- 道具ゲーム (チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツ) ---------- */
+.tool-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
+.tool-ov.dice{background:radial-gradient(circle at 50% 46%, #9b5a2a 0, #4a2410 60%, #1e0d05 100%)}
+.tool-ov.chin{background:radial-gradient(circle at 50% 50%, #b0001f 0, #4a0010 60%, #160006 100%)}
+.tool-ov.darts{background:radial-gradient(circle at 50% 46%, #2e2e52 0, #12122a 60%, #06060f 100%)}
+.tl-stake{margin:0; flex:none; font-weight:800; font-size:13px; color:var(--white); background:rgba(21,7,51,.6); border:2px solid var(--ink); border-radius:999px; padding:2px 14px}
+.tl-stake b{color:var(--yellow)}
+.tl-row .sw-p{max-width:180px}
+.tl-slot{display:grid; place-items:center}
+.die-slot{width:min(24vw, 13vh, 96px); aspect-ratio:1}
+.card-slot{width:min(27vw, 17vh, 120px); aspect-ratio:5 / 7; perspective:700px}
+.tl-val{font-family:var(--f-display); font-weight:400; font-size:min(24px, 6vw); line-height:1.2; color:var(--white); min-height:1.2em}
+.sw-p.lose .tl-val{color:#ffb0b8}
+.sw-p.win .tl-val{color:var(--lime)}
+.die{width:100%; height:100%; display:block; overflow:visible; filter:drop-shadow(0 5px 0 var(--ink))}
+.die-b{fill:#fffdf6; stroke:var(--ink); stroke-width:5}
+.die-p{fill:var(--ink)}
+.die-p.red{fill:#e8233f}
+.die-q{fill:#b9aee0; font-family:var(--f-display); font-size:46px; text-anchor:middle}
+.rolling .die{animation:dieRoll .18s linear infinite}
+@keyframes dieRoll{0%{transform:rotate(-16deg) translateY(-5px)} 50%{transform:rotate(14deg) translateY(3px)} 100%{transform:rotate(-16deg) translateY(-5px)}}
+.land .die{animation:dieLand .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dieLand{from{transform:scale(1.4)}}
+.pc-face.joker{background:linear-gradient(160deg, #c69bff 0, #6d2bd6 100%); color:var(--white)}
+.pc-face.joker .pc-mid{gap:4cqw}
+.jk-s{width:40cqw; height:40cqw; fill:var(--yellow); stroke:var(--ink); stroke-width:5}
+.pc-face.joker .jk{font-family:var(--f-display); font-weight:400; font-size:20cqw; line-height:1; text-shadow:2px 2px 0 var(--ink)}
+.cc-list{width:100%; max-width:440px; display:grid; grid-template-columns:1fr; gap:5px; flex:none}
+.cc-list.two{grid-template-columns:1fr 1fr}
+.cc-row{display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; background:rgba(21,7,51,.6); border:2.5px solid var(--ink); border-radius:12px; padding:3px 8px 3px 4px; transition:transform .2s}
+.cc-nm{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--p); color:var(--ink); border:2px solid var(--ink); border-radius:999px; padding:0 9px; font-weight:800; font-size:12.5px}
+.cc-hand{flex:none; font-family:var(--f-display); font-weight:400; font-size:15px; color:var(--white)}
+.cc-hand.great{color:var(--yellow)}
+.cc-hand.bad{color:#ff8b98}
+.cc-row.now{border-color:var(--yellow); transform:scale(1.03)}
+.cc-row.lose{border-color:#ff3d4f; background:rgba(150,10,30,.7); animation:tmLose .3s 2}
+.cc-row.win{border-color:var(--lime)}
+.cc-bowl{flex:none; display:flex; gap:min(4vw, 16px); align-items:center; justify-content:center; width:min(80vw, 300px); aspect-ratio:2.1; border-radius:50%;
+  background:radial-gradient(ellipse at 50% 40%, #fff7e0 0, #e8d7a8 55%, #a8895a 100%); border:4px solid var(--ink); box-shadow:inset 0 10px 18px rgba(0,0,0,.35), 0 6px 0 var(--ink)}
+.cc-bowl.shake{animation:bowlShake .26s infinite}
+@keyframes bowlShake{25%{transform:translateX(-5px) rotate(-2deg)} 75%{transform:translateX(5px) rotate(2deg)}}
+.cc-die{width:min(16vw, 9vh, 62px); aspect-ratio:1; display:block}
+.dt-board{position:relative; flex:none; width:min(70vw, 34vh, 300px); aspect-ratio:1}
+.dt-svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 var(--ink))}
+.dt-lb{font-size:9px; font-weight:800; fill:#fff; stroke:#150733; stroke-width:2.5px; paint-order:stroke; text-anchor:middle}
+.dt-row .sw-p{padding:6px 8px}
+.dt-aim{position:absolute; left:50%; top:50%; width:15%; aspect-ratio:1; margin:-7.5% 0 0 -7.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
+.dt-aim::before, .dt-aim::after{content:''; position:absolute; left:50%; top:50%; background:var(--yellow); transform:translate(-50%,-50%)}
+.dt-aim::before{width:2px; height:140%}
+.dt-aim::after{width:140%; height:2px}
+.dt-hits{position:absolute; inset:0; pointer-events:none}
+.dt-hit{position:absolute; width:6%; aspect-ratio:1; margin:-3% 0 0 -3%; box-sizing:border-box; border-radius:50%; background:var(--p); border:2px solid var(--ink); box-shadow:0 0 0 2px #fff; animation:dtHit .3s cubic-bezier(.2,1.6,.4,1)}
+@keyframes dtHit{from{transform:scale(3.2); opacity:0}}
+.dt-pop{position:absolute; font-family:var(--f-display); font-size:20px; color:var(--yellow); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.5s ease-out forwards}
+
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
 .chal-ov.casino::before{background:repeating-conic-gradient(from 0deg, transparent 0deg 8deg, rgba(255,216,61,.1) 8deg 16deg)}
@@ -1098,7 +1170,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 }
 @media (prefers-reduced-motion: reduce){
   .bomb-ov::before, .bomb-ov::after, .bm-hero, .bm-spk::before, .bm-spk svg, .flip.suspense, .chal-ov::before, .cg-roll, .w-rays, .w-beams span, .w-flames, .ember, .feather, .bat, .bat svg, .w-blur, .w-wing, .w-hub, .w-hub .halo, .w-hub-t, .w-tape span, .w-ribbon span, .w-vig, .z-rays, .zcard, .gc-zoom, .telop.devil, .wheel-box, .sl, .wheel-bulbs circle, .w-burst,
-  .bg-burst, .tbl-felt::after, .deck, .tap-bubble, .t-card, .logo span, .pbtn.pulse, .seat.now, .seat.sel, .g-pend, .seat-flag{animation:none !important}
+  .bg-burst, .tbl-felt::after, .deck, .tap-bubble, .t-card, .logo span, .pbtn.pulse, .seat.now, .seat.sel, .g-pend, .seat-flag, .gr-chip, .gr-left{animation:none !important}
   .app.shake, .app.shake-big, .bomb-box.shk, .tm-box.shk, .timer-ov.hurry::after, .sw-p.measuring .sw-time, .coach-ring, .gd-seat.tap::after{animation:none}
 }
 </style>
@@ -1166,6 +1238,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="g-pend" id="gPending" hidden></div>
         <div class="g-top-r"><button type="button" class="pbtn cyan tiny" id="helpBtn" aria-label="遊び方ガイドを開く">？ 遊び方</button><button type="button" class="pbtn white tiny" id="endBtn">終了</button></div>
       </div>
+      <div class="g-rules" id="gRules" hidden></div>
       <div class="tbl" id="tableWrap">
         <div class="tbl-felt" id="tblFelt"><div class="spot" id="spot"></div></div>
         <div class="center" id="center"></div>
@@ -1358,6 +1431,8 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   </div>
 
   <div class="ov center" id="backOv" hidden><div class="dialog" id="backBox" role="dialog" aria-modal="true" aria-labelledby="backTitle"></div></div>
+  <div class="ov center" id="infoOv" hidden><div class="dialog" id="infoBox" role="dialog" aria-modal="true" aria-labelledby="infoTitle"></div></div>
+  <div class="ov timer-ov tool-ov" id="toolOv" hidden><div class="tm-box" role="dialog" aria-modal="true" aria-labelledby="toolTitle"><div class="tm-head" id="toolHead"></div><div class="tm-stage" id="toolStage"></div><div class="tm-acts" id="toolActs"></div></div></div>
   <div class="ov center" id="nextOv" hidden><div class="dialog" id="nextBox" role="dialog" aria-modal="true" aria-labelledby="nextTitle"></div></div>
 
   <div class="ov center" id="confirmOv" hidden>
