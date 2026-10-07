@@ -112,6 +112,8 @@ function viewCard(card) {
   if (card.min > 2) meta.push('<span class="pill' + (kind === 'short' ? ' warn' : '') + '">' + card.min + '人以上</span>');
   if (card.dur) meta.push('<span class="pill">継続：' + esc(card.dur) + '</span>');
   if (card.fx) meta.push('<span class="pill app">連動：' + esc(fxName(card.fx)) + '</span>');
+  const dm = drinkOf(card);
+  if (dm !== 'none') meta.push('<span class="pill drink">' + esc(DRINK_SHORT[dm]) + '</span>');
   const tmr = timerOf(card);
   if (tmr) meta.push('<span class="pill app">' + (tmr.stop ? fmtSec(tmr.sec) + 'ストップ対決' : 'タイマー ' + fmtSec(tmr.sec)) + '</span>');
   return '<article class="card' + (kind ? ' off' : '') + '" id="card-' + card.id + '" style="--c:' + colorVar(cat ? cat.color : 6) + '">' +
@@ -127,7 +129,7 @@ function formCard(card, isNew) {
   const d = editing.draft || {
     text: card.text, cat: card.cat,
     cmin: card.cups[0] != null ? String(card.cups[0]) : '', cmax: card.cups[1] != null ? String(card.cups[1]) : '',
-    min: String(card.min), dur: card.dur || '', note: card.note || '', fx: card.fx || '',
+    min: String(card.min), dur: card.dur || '', note: card.note || '', fx: card.fx || '', drink: card.drink || '',
   };
   const cat = catOf(d.cat) || deck.categories[0];
   const catOpts = deck.categories.map(c => '<option value="' + esc(c.key) + '"' + (cat && c.key === cat.key ? ' selected' : '') + '>' + esc(catName(c)) + (c.on ? '' : '（OFF）') + '</option>').join('');
@@ -161,6 +163,8 @@ function formCard(card, isNew) {
           '<datalist id="dur-list"><option value="1周"></option><option value="2周"></option><option value="3周"></option><option value="次のターンまで"></option></datalist></div>' +
         '<div class="fld"><label class="lbl" for="ed-fx">アプリ連動</label><select class="field" id="ed-fx">' + fxOptions(d.fx) + '</select>' +
           '<span class="hint" id="ed-fx-hint">' + esc(fxHint(d.fx)) + '</span></div>' +
+        '<div class="fld"><label class="lbl" for="ed-drink">飲む人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
+          '<span class="hint" id="ed-drink-hint">' + esc(drinkHint(d)) + '</span></div>' +
       '</div>' +
       '<p class="ed-err" id="ed-err" role="alert"' + (editing.err ? '' : ' hidden') + '>' + esc(editing.err || '') + '</p>' +
       '<div class="ed-actions"><button type="submit" class="btn">' + (isNew ? '追加する' : '決定') + '</button>' +
@@ -169,18 +173,41 @@ function formCard(card, isNew) {
 }
 function fxOptions(sel) {
   const known = !sel || FX_INFO[sel];
-  return '<option value=""' + (sel ? '' : ' selected') + '>なし（杯数の記録だけ）</option>' +
+  return '<option value=""' + (sel ? '' : ' selected') + '>なし</option>' +
     FX_GROUPS.map(([g, list]) => '<optgroup label="' + esc(g) + '">' +
       list.map(([k, name]) => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + esc(name) + '</option>').join('') + '</optgroup>').join('') +
     (known ? '' : '<option value="' + esc(sel) + '" selected>' + esc(sel) + '（不明な効果）</option>');
 }
 function fxHint(k) {
-  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリは杯数の記録だけ行います。指示の判定はみんなで。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
+  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリの効果はなし（飲む人の記録は、下の「飲む人の決め方」のとおり）。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
+}
+function drinkOptions(sel) {
+  return '<option value=""' + (sel ? '' : ' selected') + '>自動で判定（おすすめ）</option>' +
+    DRINK_OPTS.map(([k, name]) => '<option value="' + k + '"' + (sel === k ? ' selected' : '') + '>' + esc(name) + '</option>').join('');
+}
+const DRINK_DESC = {
+  auto: 'カードを閉じると、文章に出てくる人（{引いた人}など）に自動で記録します',
+  all: 'カードを閉じると、全員に自動で記録します', others: 'カードを閉じると、引いた人以外の全員に自動で記録します',
+  least: 'いちばん少ない人に自動で記録します（アプリ連動）', last: '直前に飲んだ人に自動で記録します（アプリ連動）',
+  pick: '「誰を指名する？」画面が出ます。人数は文章の「2人を指名」などから読み取ります',
+  judge: '「誰が飲む？」画面が出て、負けた人などをタップして記録します',
+  app: 'アプリ連動のミニゲーム・ルーレットの結果で、自動で記録します',
+  none: '飲む人の画面は出ません（ルール違反などは、その人の席をタップして記録）',
+};
+/* what the game will do with the card as it is in the form right now */
+function drinkHint(f) {
+  const cups = String(f.cmin || '').trim() ? [1] : [];
+  const fx = f.fx || null;
+  const mode = drinkOf({ text: f.text, note: f.note, cups, dur: String(f.dur || '').trim() || null, fx, drink: null });
+  if (fx && (mode === 'app' || mode === 'least' || mode === 'last')) return 'アプリ連動で決まります：' + DRINK_DESC[mode];
+  if (!cups.length) return '杯数なしのカードなので、飲む人は記録しません';
+  if (f.drink) return DRINK_DESC[f.drink] || '';
+  return '文章から判定：' + DRINK_DESC[mode];
 }
 function readForm() {
   return {
     text: $('ed-text').value, cat: $('ed-cat').value, cmin: $('ed-cmin').value.trim(), cmax: $('ed-cmax').value.trim(),
-    min: $('ed-min').value, dur: $('ed-dur').value, note: $('ed-note').value, fx: $('ed-fx').value,
+    min: $('ed-min').value, dur: $('ed-dur').value, note: $('ed-note').value, fx: $('ed-fx').value, drink: $('ed-drink').value,
   };
 }
 function renderGrid() {
@@ -269,7 +296,7 @@ function validate(f) {
   if (!catOf(f.cat)) return { err: '系統を選んでください。', field: 'ed-cat' };
   const fx = f.fx || null;
   if ((fx === 'half' || fx === 'nodouble') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」に期間（例：次のターンまで）を入れてください。', field: 'ed-dur' };
-  return { card: { cat: f.cat, text, cups, min: Math.min(8, Math.max(2, Number(f.min) || 2)), dur: f.dur.trim() || null, note: f.note.replace(/\s+/g, ' ').trim() || null, fx } };
+  return { card: { cat: f.cat, text, cups, min: Math.min(8, Math.max(2, Number(f.min) || 2)), dur: f.dur.trim() || null, note: f.note.replace(/\s+/g, ' ').trim() || null, fx, drink: DRINK_INFO[f.drink] ? f.drink : null } };
 }
 function showFormError(msg, field) {
   editing.err = msg;
@@ -283,7 +310,7 @@ function commitEdit() {
   const r = validate(readForm());
   if (r.err) { showFormError(r.err, r.field); return false; }
   if (editing.isNew) {
-    const card = Object.assign({ id: editing.card.id, on: true, fx: null }, r.card);
+    const card = Object.assign({ id: editing.card.id, on: true, fx: null, drink: null }, r.card);
     deck.cards.push(card);
     lastAction = fmtNo(card.id) + 'を追加しました';
   } else {
@@ -334,7 +361,7 @@ function addCard() {
   const cat = ui.filter !== 'all' && catOf(ui.filter) ? ui.filter : (deck.categories[0] ? deck.categories[0].key : null);
   if (!cat) { addCategory(); return; }
   const id = nextId();
-  editing = { id, isNew: true, card: { id, cat, text: '', cups: [1], min: 2, dur: null, note: null, on: true, fx: null } };
+  editing = { id, isNew: true, card: { id, cat, text: '', cups: [1], min: 2, dur: null, note: null, on: true, fx: null, drink: null } };
   lastField = 'ed-text';
   renderAll();
   focusEditor();
@@ -515,12 +542,17 @@ function wireEditor() {
       lastAction = fmtNo(card.id) + (card.on ? 'を山札に入れました' : 'を山札から外しました');
       changed();
       const again = $('on-' + card.id); if (again) again.focus({ preventScroll: true });
-    } else if (t.id === 'ed-fx') {
-      const h = $('ed-fx-hint'); if (h) h.textContent = fxHint(t.value);
+    } else if (t.id === 'ed-fx' || t.id === 'ed-drink' || t.id === 'ed-dur' || t.id === 'ed-cmin') {
+      if (t.id === 'ed-fx') { const h = $('ed-fx-hint'); if (h) h.textContent = fxHint(t.value); }
+      const dh = $('ed-drink-hint'); if (dh) dh.textContent = drinkHint(readForm());
     } else if (t.id === 'ed-cat') {
       const cat = catOf(t.value), box = $('card-edit');
       if (cat && box) { box.style.setProperty('--c', colorVar(cat.color)); $('ed-mark').textContent = catMark(cat); }
     }
+  });
+  grid.addEventListener('input', e => {
+    const id = e.target.id;
+    if (id === 'ed-text' || id === 'ed-cmin' || id === 'ed-dur') { const dh = $('ed-drink-hint'); if (dh) dh.textContent = drinkHint(readForm()); }
   });
   grid.addEventListener('submit', e => {
     e.preventDefault();
