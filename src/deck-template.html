@@ -905,7 +905,15 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dt-row .sw-vs{font-size:16px}
 .dt-wrap{flex:1 1 0; min-height:0; align-self:stretch; display:grid; place-items:center; container-type:size}
 .dt-sub{font-size:14px; line-height:1.4; min-height:2.8em}
-.dt-sub small{display:block; font-size:11.5px; color:var(--muted)}
+.tool-ov .tm-sub small{display:block; font-size:12px; line-height:1.45; color:var(--muted); margin-top:2px}
+.dt-sub small{font-size:11.5px; margin-top:0}
+/* インディアンポーカー */
+.ip-act{display:flex; align-items:center; justify-content:center; min-height:34px}
+.ip-btn{font-size:14px; padding:4px 14px; border-radius:12px}
+.ip-done{font-size:12px; font-weight:800; color:var(--muted)}
+.sw-p.peek{border-color:var(--cyan); box-shadow:0 5px 0 var(--ink), 0 0 18px 4px rgba(53,224,255,.55)}
+.flip.toss{animation:ipToss .42s ease-in forwards}
+@keyframes ipToss{to{transform:translate(-130%, -70%) rotate(-50deg); opacity:0}}
 @media (max-height: 740px){.tool-ov.darts .tm-card{display:none}} /* small phones: the players and the stake line already say it all */
 .dt-svg{position:relative; width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
 .dt-n{font-family:var(--f-body); font-size:10.5px; font-weight:800; fill:#f4f4f6; text-anchor:middle}
@@ -919,9 +927,14 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dt-aim::before{width:2px; height:140%}
 .dt-aim::after{width:140%; height:2px}
 .dt-hits{position:absolute; inset:0; pointer-events:none}
-.dt-dart{position:absolute; width:15%; aspect-ratio:1; margin-top:-15%; transform-origin:0 100%; animation:dtIn .23s cubic-bezier(.5,0,.9,.6) both; filter:drop-shadow(2px 3px 1px rgba(0,0,0,.55))}
-.dt-dart svg{display:block; width:100%; height:100%}
-@keyframes dtIn{from{transform:translate(60%, 140%) scale(2.8); opacity:0} 60%{opacity:1} to{transform:none}}
+/* a stuck dart seen from the front: its tip (50%, 6.7% of the box) sits exactly on the hit spot */
+.dt-dart{position:absolute; width:14%; aspect-ratio:2 / 3; margin:-1.4% 0 0 -7%; transform-origin:50% 6.67%; transform:rotate(var(--rot, 0deg)); pointer-events:none;
+  filter:drop-shadow(3px 6px 2px rgba(0,0,0,.5)); animation:dtFly .3s cubic-bezier(.3,.1,.6,1) both, dtWob .55s .3s ease-out}
+.dt-dart svg{display:block; width:100%; height:100%; overflow:visible}
+@keyframes dtFly{from{transform:translate(var(--fx, 0), var(--fy, 0)) rotate(var(--rot, 0deg)) scale(3.2); opacity:0} 30%{opacity:1} to{transform:rotate(var(--rot, 0deg)) scale(1)}}
+@keyframes dtWob{0%{transform:rotate(calc(var(--rot, 0deg) + 8deg))} 30%{transform:rotate(calc(var(--rot, 0deg) - 5deg))} 62%{transform:rotate(calc(var(--rot, 0deg) + 2.5deg))} 100%{transform:rotate(var(--rot, 0deg))}}
+.dt-mark{position:absolute; width:7%; aspect-ratio:1; margin:-3.5% 0 0 -3.5%; box-sizing:border-box; border-radius:50%; border:2px solid #fff; box-shadow:0 0 8px 2px rgba(255,255,255,.8); opacity:0; pointer-events:none; animation:dtMark .7s .27s ease-out}
+@keyframes dtMark{0%{opacity:1; transform:scale(.2)} 100%{opacity:0; transform:scale(1.7)}}
 .dt-pop{position:absolute; transform:translate(-50%,-50%); font-family:var(--f-display); font-size:20px; color:var(--white); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.6s ease-out forwards}
 .dt-pop.triple{color:var(--cyan); font-size:24px}
 .dt-pop.double{color:var(--lime); font-size:22px}
