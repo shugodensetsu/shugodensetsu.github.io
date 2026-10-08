@@ -733,7 +733,11 @@ function drawCard() {
     const item = { kind: 'dur', fx: fx === 'half' || fx === 'nodouble' ? fx : null, label: '継続', text: plainFill(card.text), left: ruleTurns(card.dur, n), mark: cur.card.mark, color: cur.card.color,
       cups: card.cups.slice(), turn: G.turn };
     if (durPickCard(card)) Object.assign(item, { pick: true, who: null, title: ruleTitle(card.text) || '指名', mate: mateCard(card) });
-    else G.players.forEach(pl => { pl.hand = pl.hand.filter(h => !(h.kind === 'dur' && !h.pick && h.text === item.text)); });   /* the same rule again = it starts over */
+    else {
+      G.players.forEach(pl => { pl.hand = pl.hand.filter(h => !(h.kind === 'dur' && !h.pick && h.text === item.text)); });   /* the same rule again = it starts over */
+      const tg = card.text.match(/\{(引いた人|ランダム|左隣|右隣)\}は/), badge = tg && ruleBadge(card.text, fx);
+      if (badge) Object.assign(item, { tgt: cur.names[tg[1]], badge });   /* 「王様」「クエスチョンマスター」… worn on that person's seat */
+    }
     gifts.push([d, giveItem(d, item)]);
   }
   if (fx === 'safe') gifts.push([d, giveItem(d, ticket('avoid', 'セーフ券'))]);
@@ -1722,6 +1726,35 @@ function durRows() {
   return rows;
 }
 const ruleCups = h => (Array.isArray(h.cups) && h.cups.length ? h.cups[0] : 0);
+/* a rule about one person ({引いた人}は… / {ランダム}は…) gets a short role name for their seat:
+   the quoted name if there is one (「王様」→王様, 語尾に「にゃん」→語尾にゃん), else a short form of what it says */
+function ruleBadge(text, fx) {
+  const m = String(text).match(/\{(?:引いた人|ランダム|左隣|右隣)\}は([^。]*)/);
+  if (!m) return null;
+  const ph = m[1].trim(), q = ph.match(/^(.*?)「([^」]+)」/);
+  if (q) return (q[1].replace(/[にをがはで]$/, '').slice(-3)) + q[2];
+  if (fx === 'half') return '飲む量半分';
+  if (fx === 'nodouble') return '倍倍なし';
+  if (/ソフトドリンク/.test(ph)) return 'ソフドリ';
+  return ph.length <= 8 ? ph : ph.slice(0, 7) + '…';
+}
+const seatBadgeText = b => { const t = b.replace('クエスチョン', 'Q'); return t.length > 7 ? t.slice(0, 6) + '…' : t; };
+/* the roles each seat is wearing right now: [label, color] */
+function seatBadges(p) {
+  const out = [];
+  durRows().forEach(([i, h]) => {
+    if (h.pick) { if (h.who != null && (h.who === p || (h.mate && i === p))) out.push([h.title || '指名', h.color]); }
+    else if (h.badge && h.tgt === p) out.push([h.badge, h.color]);
+  });
+  return out;
+}
+/* the strip's own text (HTML): role rules as 「role / who」 on two lines, else the rule's first sentence */
+function chipLabel(i, h) {
+  const two = (a, b) => '<b class="gr-r">' + esc(a) + '</b><small class="gr-w">' + esc(b) + '</small>';
+  if (h.pick) return h.who == null ? two(h.title || '指名', 'まだ選んでいません') : two(h.title || '指名', h.mate ? pname(i) + '⇄' + pname(h.who) : pname(h.who));
+  if (h.badge && h.tgt != null && G.players[h.tgt]) return two(h.badge, pname(h.tgt));
+  return esc(ruleLabel(i, h));
+}
 function ruleLabel(i, h) {
   if (h.pick) {
     if (h.who == null) return (h.title || '指名') + '：まだ選んでいません';
@@ -1740,21 +1773,23 @@ function ruleHint() {
   lsSet(RULE_HINT_KEY, String((Number(lsGet(RULE_HINT_KEY)) || 0) + 1));
   setTimeout(() => { if (screen === 'game') telop('続くルールは<b>上の帯</b>に表示！<br>違反した人がいたら、帯をタップ', 'hint', 3000); }, 1500);
 }
+/* every running rule stays in view: the chips wrap into 2 columns (3 when there are lots), never a sideways scroll */
 function renderRules() {
   const el = $('gRules'), rows = durRows();
   el.hidden = !rows.length;
   if (!rows.length) { el.innerHTML = ''; return; }
-  el.innerHTML = '<span class="gr-l">継続中</span>' + rows.map(([i, h]) => {
+  const cols = rows.length === 1 ? 'one' : rows.length >= 7 ? 'dense' : '';
+  el.innerHTML = '<span class="gr-l">継続中</span><div class="gr-grid ' + cols + '">' + rows.map(([i, h]) => {
     const cls = ['gr-chip'];
     if (h.left <= 1) cls.push('last');
     if (h.pick && h.who == null) cls.push('wait');
     if (!rulesShown.has(h.uid)) { cls.push('in'); rulesShown.add(h.uid); }
     const cups = ruleCups(h);
     return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（あと' + h.left + 'ターン）' + (cups ? '。タップで違反を記録' : '') + '">' +
-      '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + esc(ruleLabel(i, h)) + '</span>' +
-      (cups ? '<span class="gr-cup">' + cups + '杯</span>' : '') +
+      '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + chipLabel(i, h) + '</span>' +
+      (cups > 1 ? '<span class="gr-cup">' + cups + '杯</span>' : '') +
       '<span class="gr-left">' + (h.left <= 1 ? 'ラスト' : 'あと' + h.left) + '</span></button>';
-  }).join('');
+  }).join('') + '</div>';
 }
 function ruleTap(uid) {
   if (!G || picking || G.cur.select) return;
@@ -3913,11 +3948,14 @@ const GUIDE = [
       '<span class="gd-mk" style="--c:' + colorVar(c.color) + '">' + esc(catMark(c)) + '</span><span><span class="gd-rn">' + esc(catName(c)) + '</span>' + esc(CAT_DESC[c.key] || 'カード編集で作った系統') + '</span>').join('') + '</div>') +
     gCard('名前が入るところ', '<p>カードの <span class="tag">{引いた人}</span> などは、ゲーム中は実際の名前に変わります。</p><ul class="gd-list">' +
       '<li><b>引いた人</b>：カードを引いた人</li><li><b>ランダム</b>：引いた人以外から、アプリが選んだ人</li><li><b>左隣・右隣</b>：登録順で次の人・前の人</li></ul>') +
-    gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-cup">1杯</span><span class="gr-left">あと3</span></span></div>' +
-      '<p>「継続 2周」などと書かれたカードは、<b>画面の上の「継続中」の帯</b>に並びます。あと何ターン続くかが出て、最後のターンは赤く光ります。期間が終わると自動で消えます。</p>' +
-      '<ul class="gd-list"><li><b>違反した人がいたら</b> → 帯のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。杯数は自動</li>' +
+    gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-left">あと3</span></span>' +
+      '<span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t"><b class="gr-r">王様</b><small class="gr-w">ユウキ</small></span><span class="gr-left">あと4</span></span>' +
+      '<span class="gd-seat" style="--p:' + pc(0) + '"><span class="seat-badges"><span class="sb" style="--c:var(--c8)">王様</span></span>ユウキ<small>2杯</small></span></div>' +
+      '<p>「継続 2周」などと書かれたカードは、<b>画面の上の「継続中」</b>に並びます。増えても折り返して<b>全部が1画面に</b>収まります。あと何ターン続くかが出て、最後のターンは赤く光ります。期間が終わると自動で消えます。</p>' +
+      '<p><b>王様・クエスチョンマスター・インシュメイト・執事</b>のように人につくルールは、<b>その人の席の上に★付きで</b>表示されます。</p>' +
+      '<ul class="gd-list"><li><b>違反した人がいたら</b> → 「継続中」のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。杯数は自動</li>' +
       '<li><b>インシュメイト</b> → カードを閉じたら相手を指名。そのあとは、どちらかが飲むと<b>もう片方にも同じ量が自動で記録</b>されます</li>' +
-      '<li><b>執事</b>など人を指名するカード → 指名した人が帯に表示されます</li></ul>' +
+      '<li><b>執事</b>など人を指名するカード → 指名した人の席に「執事」と付きます</li></ul>' +
       '<p class="sub">カードを引く前に席をタップすると、その人の手札（継続カード・券）とここまでの記録が見られます。</p>') +
     gCard('券', '<div class="gd-rows">' +
       '<span class="gd-chip plain">セーフ券・休憩券</span><span>飲む対象になったとき、1回だけ回避</span>' +
@@ -4139,13 +4177,15 @@ function seatHTML(i) {
   const hs = pl.hand, shown = hs.slice(-3);
   const minis = shown.map((h, k) => '<span class="mini' + (h.kind === 'ticket' ? ' ticket' : '') + '" style="--c:' + colorVar(h.color) + ';--r:' + ((k - (shown.length - 1) / 2) * 12) + 'deg' + (h.fresh ? ';opacity:0' : '') + '">' + esc(h.mark) + '</span>').join('') +
     (hs.length > 3 ? '<span class="mini more">+' + (hs.length - 3) + '</span>' : '');
-  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯' + (hs.length ? '・手札' + hs.length + '枚' : '') + '">' +
+  const badges = seatBadges(i);
+  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯' + (hs.length ? '・手札' + hs.length + '枚' : '') + (badges.length ? '・' + badges.map(b => b[0]).join('・') : '') + '">' +
     (roleText ? '<span class="seat-role">' + roleText + '</span>' : '') +
+    (badges.length ? '<span class="seat-badges">' + badges.map(([b, c]) => '<span class="sb" style="--c:' + colorVar(c) + '">' + esc(seatBadgeText(b)) + '</span>').join('') + '</span>' : '') +
     '<span class="seat-name">' + esc(pl.name) + '</span><span class="seat-total">' + fmtAmt(pl.total) + '<small>杯</small></span>' +
     (hs.length ? '<span class="hand" aria-hidden="true">' + minis + '</span>' : '') +
     (flag ? '<span class="seat-flag">' + flag + '</span>' : '') + '</button>';
 }
-function renderSeats() { $('seats').innerHTML = G.players.map((_, i) => seatHTML(i)).join(''); }
+function renderSeats() { const el = $('seats'); el.classList.toggle('narrow', G.players.length >= 6); el.innerHTML = G.players.map((_, i) => seatHTML(i)).join(''); }
 function renderDock() {
   const cur = G.cur, d = cur.drawer, n = G.players.length;
   let h = '';
