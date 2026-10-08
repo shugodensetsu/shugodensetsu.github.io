@@ -69,16 +69,22 @@ const manifest = {
 
 const sw = `/* 酒GO!!伝説 service worker — plays offline after the first visit.
    The page itself is fetched fresh when online (so updates arrive), falling back to the saved copy offline;
-   icons and fonts come from the cache. Bump VERSION on every release. */
+   icons and fonts come from the cache. Bump VERSION on every release.
+   The 3D dice libraries (vendor/) live in their own cache, kept across releases (rename VENDOR when they change). */
 const VERSION = 'sakego-${VERSION}';
 const FONTS = 'sakego-fonts';
+const VENDOR = 'sakego-vendor-three160-cannon020';
+const VENDOR_FILES = ['./vendor/three.module.min.js', './vendor/cannon-es.min.js'];
 const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(Promise.all([
+    caches.open(VERSION).then(c => c.addAll(SHELL)),
+    caches.open(VENDOR).then(c => Promise.all(VENDOR_FILES.map(f => c.match(f).then(hit => hit || c.add(f))))).catch(() => {}),
+  ]).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS && k !== VENDOR).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 const timeout = (ms, p) => new Promise((ok, ng) => { const t = setTimeout(() => ng(new Error('timeout')), ms); p.then(v => { clearTimeout(t); ok(v); }, e => { clearTimeout(t); ng(e); }); });
 self.addEventListener('fetch', e => {

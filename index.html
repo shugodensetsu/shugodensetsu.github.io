@@ -891,6 +891,17 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .cc-bowl.shake{animation:bowlShake .26s infinite}
 @keyframes bowlShake{25%{transform:translateX(-5px) rotate(-2deg)} 75%{transform:translateX(5px) rotate(2deg)}}
 .cc-die{width:min(16vw, 9vh, 62px); aspect-ratio:1; display:block}
+/* 3D bowl (チンチロ・サイコロ勝負) */
+.dice3d{position:relative; flex:none; width:min(100%, 430px, calc(48cqh * 1.4)); aspect-ratio:1.4; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent}
+.d3-cv{position:absolute; inset:0; width:100%; height:100%; display:block}
+.d3-load{margin:0; font-weight:800; font-size:13px; color:var(--muted); animation:pulse 1.2s ease-in-out infinite}
+.flat-die{width:min(30vw, 120px)}
+.tl-stake small{display:block; font-size:11px; color:#ffd0d6; text-align:center}
+.tl-val.big{font-size:min(40px, 10vw); line-height:1.1}
+.dc3-row .sw-p{padding:6px 8px 4px}
+.big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
+.cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
+.cc-mult b{color:var(--yellow); font-size:1.15em}
 .dt-board{position:relative; flex:none; width:min(70vw, 34vh, 300px); aspect-ratio:1}
 .dt-svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 var(--ink))}
 .dt-lb{font-size:9px; font-weight:800; fill:#fff; stroke:#150733; stroke-width:2.5px; paint-order:stroke; text-anchor:middle}
@@ -1645,8 +1656,8 @@ const FX_GROUPS = [
     ['last', '直前に飲んだ人に目印', '直前に記録された人の席に目印を出す'],
   ]],
   ['道具をアプリで（本物の道具で遊んでもOK）', [
-    ['chinchiro', 'チンチロ', '全員が順番にサイコロ3個を振り、いちばん弱い役の人がカードの杯数（同じなら全員）'],
-    ['dice', 'サイコロ勝負', '名前の出てくる2人がサイコロを振り、小さい方がカードの杯数（同じなら両方）'],
+    ['chinchiro', 'チンチロ', '全員が順番にお椀へサイコロ3個を振り、いちばん弱い役の人がカードの杯数（同じなら全員）。シゴロかヒフミが出たら×2、両方なら×4'],
+    ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードの杯数（同じなら両方）'],
     ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードの杯数（同じなら両方）'],
     ['indian', 'インディアンポーカー', '2人にトランプを配り、せーので開いて低い方がカードの杯数。JOKERが出たら2人とも'],
     ['darts', 'ダーツ勝負', '動く狙いを見て「投げる！」。得点の低い方がカードの杯数（同点なら両方）'],
@@ -2610,6 +2621,8 @@ const SOUNDS = {
   flip: (A, t) => { noise(A, t, { d: 0.09, g: 0.35, type: 'bandpass', f: 2200, f2: 6000, q: 0.9 }); noise(A, t + 0.07, { d: 0.04, g: 0.35, type: 'highpass', f: 2500 }); },
   deal: (A, t) => noise(A, t, { d: 0.18, g: 0.25, type: 'bandpass', f: 900, f2: 4200, q: 0.8 }),
   ding: (A, t) => { bellHit(A, t, 1318.5, 1.1, 0.16); bellHit(A, t + 0.09, 1975.5, 1.1, 0.12); sparkle(A, t + 0.05, 6); },
+  clink: (A, t) => { const f = 2300 + Math.random() * 1500; bellHit(A, t, f, 0.16, 0.09); noise(A, t, { d: 0.025, g: 0.12, type: 'highpass', f: 3500 }); },
+  clinks: (A, t) => { const f = 2600 + Math.random() * 1600; bellHit(A, t, f, 0.1, 0.04); noise(A, t, { d: 0.018, g: 0.06, type: 'highpass', f: 4000 }); },
   roll: (A, t) => { for (let i = 0; i < 22; i++) snare(A, t + i * 0.034, 0.05 + 0.22 * i / 22); },
   /* bomb */
   tick2: (A, t) => { tone(A, t, { type: 'square', f: 2200, d: 0.03, g: 0.09 }); noise(A, t, { d: 0.03, g: 0.14, type: 'bandpass', f: 3000, q: 2 }); },
@@ -2631,7 +2644,7 @@ const SOUNDS = {
     for (let i = 0; i < 14; i++) noise(A, t + 0.15 + Math.random() * 1.4, { d: 0.05, g: 0.1 + Math.random() * 0.25, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
   },
 };
-const NO_DUCK = new Set(['tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
+const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
 const SE = {
   on: true, A: null,
   init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
@@ -3014,7 +3027,7 @@ function closeAllOverlays() {
   if (chal) { if (chal.raf) cancelAnimationFrame(chal.raf); chal.timers.forEach(clearTimeout); }
   if (bomb) { if (bomb.raf) cancelAnimationFrame(bomb.raf); bomb.timers.forEach(clearTimeout); }
   if (timer) stopTimerWork(timer);
-  if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); }
+  if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); if (tool.bowl) tool.bowl.dispose(); }
   wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null; ask = null;
   document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
   syncCover();
@@ -5479,11 +5492,222 @@ function closeTap(rec) {
   else autoRecord([loser], cups, { src: 'tap' });
 }
 
+/* ---------- 3D dice: thrown into a bowl and settled by real physics (three.js + cannon-es, loaded on demand from ./vendor).
+   The result is whatever face ends up on top. If WebGL or the libraries are not available, the flat 2D dice are used ---------- */
+const DICE_SRC = [['./vendor/three.module.min.js', './vendor/cannon-es.min.js'],
+  ['https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js', 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js']];
+let diceLibs = null;
+function loadDiceLibs() {
+  const get = k => Promise.all(DICE_SRC[k].map(u => import(u))).then(([THREE, CANNON]) => ({ THREE, CANNON }));
+  if (!diceLibs) diceLibs = get(0).catch(() => get(1)).catch(e => { diceLibs = null; throw e; });
+  return diceLibs;
+}
+/* bowl: flat bottom, then a quarter-circle wall up to the rim. Units: a die is 0.62 */
+const BW = { s: 0.62, R: 2.7, H: 1.75, rb: 1.25, base: 0.22, K: 7, N: 28, g: 34, thick: 0.16 };
+const DIE_FACES = [[1, 0, 0, 2], [-1, 0, 0, 5], [0, 1, 0, 1], [0, -1, 0, 6], [0, 0, 1, 3], [0, 0, -1, 4]];
+function makeDiceBowl(host, L) {
+  const { THREE, CANNON } = L, B = BW;
+  const prof = [];
+  for (let k = 0; k <= B.K; k++) { const t = k / B.K * Math.PI / 2; prof.push([B.rb + (B.R - B.rb) * Math.sin(t), B.base + B.H * (1 - Math.cos(t))]); }
+
+  /* --- view --- */
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.className = 'd3-cv';
+  host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 60);
+  const camBase = new THREE.Vector3(0, 6.3, 6.5), look = new THREE.Vector3(0, 0.85, -0.35);
+  camera.position.copy(camBase); camera.lookAt(look);
+  scene.add(new THREE.HemisphereLight(0xfff4e6, 0x3a2030, 1.15));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.3);
+  sun.position.set(2.6, 9, 3.2); sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 22 });
+  sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+  const disposables = [];
+  const keep = x => { disposables.push(x); return x; };
+  const table = new THREE.Mesh(keep(new THREE.CircleGeometry(7, 48)), keep(new THREE.ShadowMaterial({ opacity: 0.4 })));
+  table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
+  /* the bowl: glazed white inside, indigo outside, a red rim */
+  const inner = [new THREE.Vector2(0.001, B.base)].concat(prof.map(([r, y]) => new THREE.Vector2(r, y)));
+  const innerMesh = new THREE.Mesh(keep(new THREE.LatheGeometry(inner, 80)), keep(new THREE.MeshStandardMaterial({ color: 0xf7f2e8, roughness: 0.22, metalness: 0, side: THREE.DoubleSide })));
+  innerMesh.receiveShadow = true; scene.add(innerMesh);
+  const outer = [new THREE.Vector2(0.001, 0.01), new THREE.Vector2(B.rb * 0.86, 0.01), new THREE.Vector2(B.rb * 0.9, B.base * 0.6)]
+    .concat(prof.slice(1).map(([r, y]) => new THREE.Vector2(r + 0.17, Math.max(B.base * 0.6, y - 0.04))));
+  const outerMesh = new THREE.Mesh(keep(new THREE.LatheGeometry(outer, 80)), keep(new THREE.MeshStandardMaterial({ color: 0x23357e, roughness: 0.3, metalness: 0, side: THREE.DoubleSide })));
+  outerMesh.castShadow = true; scene.add(outerMesh);
+  const rim = new THREE.Mesh(keep(new THREE.TorusGeometry(B.R + 0.085, 0.095, 12, 96)), keep(new THREE.MeshStandardMaterial({ color: 0xc8102e, roughness: 0.3 })));
+  rim.rotation.x = Math.PI / 2; rim.position.y = B.base + B.H; scene.add(rim);
+  const band = new THREE.Mesh(keep(new THREE.TorusGeometry(B.R + 0.1, 0.035, 8, 96)), keep(new THREE.MeshStandardMaterial({ color: 0xf2e6c9, roughness: 0.4 })));
+  band.rotation.x = Math.PI / 2; band.position.y = B.base + B.H - 0.32; band.scale.set(0.985, 0.985, 1); scene.add(band);
+
+  /* dice: rounded cubes with pips (the 1 is big and red) */
+  const geo = keep(new THREE.BoxGeometry(B.s, B.s, B.s, 6, 6, 6));
+  {
+    const pos = geo.attributes.position, nor = geo.attributes.normal, h = B.s / 2, rr = B.s * 0.15;
+    const v = new THREE.Vector3(), inn = new THREE.Vector3(), d = new THREE.Vector3();
+    const cl = x => Math.max(-h + rr, Math.min(h - rr, x));
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      inn.set(cl(v.x), cl(v.y), cl(v.z));
+      d.copy(v).sub(inn);
+      if (d.lengthSq() < 1e-12) continue;
+      d.normalize();
+      v.copy(inn).addScaledVector(d, rr);
+      pos.setXYZ(i, v.x, v.y, v.z); nor.setXYZ(i, d.x, d.y, d.z);
+    }
+  }
+  const faceMat = val => {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fbf8f1'; x.fillRect(0, 0, 128, 128);
+    x.fillStyle = val === 1 ? '#d40d22' : '#16161d';
+    PIPS[val].forEach(([px, py]) => { x.beginPath(); x.arc(px * 1.28, py * 1.28, val === 1 ? 23 : 12.5, 0, Math.PI * 2); x.fill(); });
+    const t = keep(new THREE.CanvasTexture(c)); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    return keep(new THREE.MeshStandardMaterial({ map: t, roughness: 0.35, metalness: 0 }));
+  };
+  const mats = DIE_FACES.map(f => faceMat(f[3]));
+
+  /* --- physics: the bowl as a ring of thin tilted boxes, the table as a plane --- */
+  const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -B.g, 0) });
+  world.broadphase = new CANNON.SAPBroadphase(world);
+  world.solver.iterations = 14;
+  const mBowl = new CANNON.Material('bowl'), mDie = new CANNON.Material('die');
+  world.addContactMaterial(new CANNON.ContactMaterial(mBowl, mDie, { friction: 0.18, restitution: 0.32 }));
+  world.addContactMaterial(new CANNON.ContactMaterial(mDie, mDie, { friction: 0.22, restitution: 0.38 }));
+  const ground = new CANNON.Body({ mass: 0, material: mBowl, shape: new CANNON.Plane() });
+  ground.quaternion.setFromEuler(-Math.PI / 2, 0, 0); world.addBody(ground);
+  const floor = new CANNON.Body({ mass: 0, material: mBowl });
+  floor.addShape(new CANNON.Cylinder(B.rb + 0.25, B.rb + 0.25, 0.3, 24), new CANNON.Vec3(0, B.base - 0.15, 0));
+  world.addBody(floor);
+  const wall = new CANNON.Body({ mass: 0, material: mBowl });
+  for (let k = 0; k < prof.length - 1; k++) {
+    const [r1, y1] = prof[k], [r2, y2] = prof[k + 1];
+    const len = Math.hypot(r2 - r1, y2 - y1), th = Math.atan2(y2 - y1, r2 - r1), rm = (r1 + r2) / 2, ym = (y1 + y2) / 2;
+    const arc = 2 * Math.PI * rm / B.N * 1.12, nr = -Math.sin(th), ny = Math.cos(th);
+    for (let j = 0; j < B.N; j++) {
+      const ph = j / B.N * Math.PI * 2, cr = rm - nr * B.thick / 2, cy = ym - ny * B.thick / 2;
+      const q = new CANNON.Quaternion().setFromEuler(0, -ph, 0).mult(new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(0, 0, 1), th));
+      wall.addShape(new CANNON.Box(new CANNON.Vec3(len / 2 + 0.02, B.thick / 2, arc / 2)), new CANNON.Vec3(cr * Math.cos(ph), cy, cr * Math.sin(ph)), q);
+    }
+  }
+  world.addBody(wall);
+
+  let dice = [], job = null, raf = 0, last = 0, dead = false, shakeT = 0, lastClink = 0;
+  const up = new CANNON.Vec3(), tmp = new CANNON.Vec3();
+  function readDie(b) {
+    let best = -2, val = 0;
+    DIE_FACES.forEach(([x, y, z, v]) => { tmp.set(x, y, z); b.quaternion.vmult(tmp, up); if (up.y > best) { best = up.y; val = v; } });
+    const rr = Math.hypot(b.position.x, b.position.z);
+    return { val, flat: best, out: (rr > B.R - 0.05 && b.position.y < B.base + B.H - 0.2) || rr > B.R + 0.12 };
+  }
+  function clear() { dice.forEach(d => { world.removeBody(d.body); scene.remove(d.mesh); }); dice = []; }
+  function clink(e) {
+    const v = Math.abs(e.contact.getImpactVelocityAlongNormal()), now = performance.now();
+    if (v < 1.6 || now - lastClink < 45) return;
+    lastClink = now;
+    SE.play(v > 5 ? 'clink' : 'clinks');
+  }
+  function resize() {
+    const w = host.clientWidth || 300, h = host.clientHeight || 220;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    /* keep the whole bowl in view on narrow / short boxes */
+    camera.fov = w / h < 1.3 ? 34 * 1.3 / Math.max(0.8, w / h) : 34;
+    camera.updateProjectionMatrix();
+  }
+  const ro = window.ResizeObserver ? new ResizeObserver(resize) : null;
+  if (ro) ro.observe(host);
+  resize();
+  function frame(now) {
+    if (dead) return;
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(0.05, ((now - (last || now)) / 1000) || 0);
+    last = now;
+    if (dice.length) world.step(1 / 60, dt, 4);
+    dice.forEach(d => { d.mesh.position.copy(d.body.position); d.mesh.quaternion.copy(d.body.quaternion); });
+    if (shakeT > 0) { shakeT -= dt; const a = Math.max(0, shakeT) * 0.25; camera.position.set(camBase.x + (Math.random() - 0.5) * a, camBase.y + (Math.random() - 0.5) * a, camBase.z); camera.lookAt(look); }
+    if (job) watch(dt);
+    renderer.render(scene, camera);
+  }
+  /* settled = everything still for a moment. A die leaning on the wall or on another die gets a little tap (like knocking the bowl) */
+  function watch(dt) {
+    const J = job;
+    J.time += dt;
+    const still = dice.every(d => d.body.velocity.length() < 0.08 && d.body.angularVelocity.length() < 0.18);
+    J.calm = still ? J.calm + dt : 0;
+    if (J.time < 0.6 || (J.calm < 0.3 && J.time < 7)) return;
+    const reads = dice.map(d => readDie(d.body));
+    const bad = dice.filter((d, i) => !reads[i].out && reads[i].flat < 0.78);
+    if (bad.length && J.nudges < 4 && J.time < 7) {
+      J.nudges++; J.calm = 0;
+      bad.forEach(d => {
+        d.body.wakeUp();
+        d.body.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 1.6, 2.4, (Math.random() - 0.5) * 1.6), new CANNON.Vec3((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.2));
+        d.body.angularVelocity.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+      });
+      shakeT = 0.25; SE.play('clink');
+      return;
+    }
+    job = null;
+    J.resolve({ values: reads.map(r => r.val), out: reads.map(r => r.out) });
+  }
+  function throwDice(n) {
+    clear();
+    const swirl = (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 2.2);
+    for (let i = 0; i < n; i++) {
+      const body = new CANNON.Body({ mass: 1, material: mDie, shape: new CANNON.Box(new CANNON.Vec3(B.s / 2, B.s / 2, B.s / 2)), linearDamping: 0.08, angularDamping: 0.12 });
+      const x = (i - (n - 1) / 2) * (B.s * 1.25) + (Math.random() - 0.5) * 0.3;
+      body.position.set(x, B.base + B.H + 0.9 + Math.random() * 0.5, B.R * 0.55 + Math.random() * 0.3);
+      body.quaternion.setFromEuler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+      body.velocity.set(swirl - x * 1.2 + (Math.random() - 0.5) * 1.5, -1.5 - Math.random() * 2, -(3.6 + Math.random() * 2.4));
+      body.angularVelocity.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30);
+      body.addEventListener('collide', clink);
+      world.addBody(body);
+      const mesh = new THREE.Mesh(geo, mats);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      scene.add(mesh);
+      dice.push({ body, mesh });
+    }
+    return new Promise(resolve => { job = { resolve, time: 0, calm: 0, nudges: 0 }; });
+  }
+  function dispose() {
+    dead = true; job = null;
+    cancelAnimationFrame(raf);
+    if (ro) ro.disconnect();
+    clear();
+    disposables.forEach(x => { try { x.dispose(); } catch (_) { /* ignore */ } });
+    try { renderer.dispose(); renderer.forceContextLoss(); } catch (_) { /* ignore */ }
+    renderer.domElement.remove();
+  }
+  raf = requestAnimationFrame(frame);
+  return { throwDice, clear, dispose };
+}
+/* the tool games' bowl: 3D when it can load (within a few seconds), the flat dice otherwise */
+function toolBowl(T) {
+  const host = $('tlBowl');
+  host.innerHTML = '<p class="d3-load">サイコロを準備中…</p>';
+  T.bowlReady = new Promise(res => {
+    let settled = false;
+    const flat = () => { if (settled) return; settled = true; T.flat = true; res(); };
+    setTimeout(flat, 6000);
+    loadDiceLibs().then(L => {
+      if (settled || tool !== T) return;
+      try { host.innerHTML = ''; T.bowl = makeDiceBowl(host, L); settled = true; res(); } catch (_) { host.innerHTML = ''; flat(); }
+    }).catch(flat);
+  });
+  return T.bowlReady;
+}
+
 /* ---------- 道具ゲーム: チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツ in the app. The loser is recorded automatically.
    (Playing with real tools still works: close the card and choose in 「誰が飲む？」) ---------- */
 const TOOL_INFO = {
   chinchiro: { title: 'チンチロ', act: 'アプリでチンチロ！', cls: 'chin', stake: 'いちばん弱い役の人が' },
-  dice: { title: 'サイコロ勝負', act: 'アプリでサイコロ！', cls: 'dice', stake: '小さい方が' },
+  dice: { title: 'サイコロ勝負', act: 'アプリでサイコロ！', cls: 'dice', stake: '小さい目の方が' },
   cards: { title: 'トランプ勝負', act: 'アプリでトランプ！', cls: 'casino', stake: '低い方（A=1）が' },
   indian: { title: 'インディアンポーカー', act: 'アプリでインディアンポーカー！', cls: 'casino', stake: '低い方が（JOKERは2人とも）' },
   darts: { title: 'ダーツ勝負', act: 'アプリでダーツ！', cls: 'darts', stake: '得点の低い方が' },
@@ -5508,13 +5732,14 @@ function openTool() {
     const a = ps.length ? ps[0] : cur.drawer;
     if (ps.length < 2) { const r = cur.names['ランダム']; ps = [a, r != null && r !== a ? r : (a + 1) % n]; }
   }
-  tool = { kind, ps, cups: c.cups.length ? c.cups[0] : 1, k: 0, res: [], state: 'play', timers: [], raf: 0, guard: 0, losers: null, busy: false };
+  const base = c.cups.length ? c.cups[0] : 1;
+  tool = { kind, ps, base, cups: base, k: 0, res: [], state: 'play', timers: [], raf: 0, guard: 0, losers: null, busy: false, bowl: null, flat: false };
   $('toolOv').className = 'ov timer-ov tool-ov ' + TOOL_INFO[kind].cls;
   $('toolHead').innerHTML = '<h2 class="tm-title ol" id="toolTitle">' + TOOL_INFO[kind].title + '</h2><p class="tm-card">' + fillGame(c.text) + '</p>';
   openOv('toolOv');
   BGM.play('tension'); BGM.level(0.7, 0.3);
   SE.play('pop');
-  if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else duelSetup();
+  if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else duelSetup();
 }
 function closeTool(mode) {
   const T = tool;
@@ -5522,6 +5747,7 @@ function closeTool(mode) {
   T.timers.forEach(clearTimeout);
   if (T.raf) cancelAnimationFrame(T.raf);
   tool = null;
+  if (T.bowl) { T.bowl.dispose(); T.bowl = null; }
   closeOv('toolOv');
   BGM.play('party'); BGM.level(1, 0.3);
   if (T.state !== 'done' || !T.losers || !T.losers.length) return;
@@ -5535,6 +5761,7 @@ function toolAct(a) {
   if (a === 'rec' || a === 'special') { closeTool(a); return; }
   if (T.kind === 'chinchiro') { if (a === 'go') chinRoll(); else if (a === 'next') { T.k++; chinTurn(); } }
   else if (T.kind === 'darts') { if (a === 'go') dartsThrow(); }
+  else if (T.kind === 'dice') { if (a === 'go') diceThrow(); }
   else if (a === 'go') duelDraw();
   else if (a === 'open') indianOpen();
 }
@@ -5583,7 +5810,7 @@ function rollDie(slot, v, frames, done) {
 }
 const jokerFace = () => '<div class="pc-face joker"><span class="pc-mid"><svg class="jk-s" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 5l13 30 32 3-24 21 7 32-28-17-28 17 7-32L5 38l32-3z"/></svg><b class="jk">JOKER</b></span></div>';
 
-/* サイコロ・トランプ・インディアンポーカー: two people, one draw each, the lower one drinks (a tie = both) */
+/* トランプ・インディアンポーカー: two people, one card each, the lower one drinks (a tie = both) */
 function duelSetup() {
   const T = tool;
   T.deck = shuffle([].concat(...['s', 'h', 'd', 'c'].map(s => RANKS.map((_, i) => ({ r: i + 1, s })))).concat(T.kind === 'indian' ? [{ joker: true }] : []));
@@ -5735,8 +5962,60 @@ function dartsThrow() {
   }, 260);
 }
 
-/* チンチロ: everyone rolls three dice (up to 3 tries for a hand). Strong → weak:
-   ピンゾロ > ゾロ目 > シゴロ > 目（6〜1） > 目なし > ヒフミ. The weakest drinks (a tie = all of them) */
+/* サイコロ勝負: each of the two throws one die into the bowl; the smaller number drinks (same number = both) */
+function diceSetup() {
+  const T = tool;
+  $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row dc3-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val big" id="tlV' + i + '">?</b></div>').join('') + '</div>' +
+    '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
+  toolBowl(T).then(() => { if (tool === T && T.flat) $('tlBowl').innerHTML = '<div class="tl-slot die-slot flat-die" id="tlDie">' + dieSVG(0) + '</div>'; });
+  diceTurn();
+}
+function diceTurn() {
+  const T = tool, i = T.k;
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ お椀にサイコロを振ろう';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">サイコロを振る！</button>');
+}
+function diceThrow() {
+  const T = tool, i = T.k;
+  if (T.busy) return;
+  T.busy = true;
+  toolActs('', false);
+  const done = v => {
+    T.res[i] = v;
+    const el = $('tlV' + i); el.textContent = v; tmPop(el);
+    SE.play('ding');
+    $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[i])) + '</b>：<b class="big-v">' + v + '</b>！';
+    T.busy = false;
+    if (i + 1 < T.ps.length) { T.k++; toolLater(diceTurn, 1300); } else toolLater(diceResult, 1100);
+  };
+  $('toolSub').innerHTML = T.bowl || T.flat ? 'カラカラ…' : 'サイコロを準備中…';
+  T.bowlReady.then(() => {
+    if (tool !== T) return;
+    if (T.bowl) {
+      SE.play('swoosh');
+      T.bowl.throwDice(1).then(res => {
+        if (tool !== T) return;
+        if (res.out[0]) { T.busy = false; $('toolSub').innerHTML = '<b>お椀の外に出た！</b> もう一回振ってね'; SE.play('buzz'); toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>'); return; }
+        done(res.values[0]);
+      });
+    } else {
+      const v = 1 + Math.floor(Math.random() * 6);
+      SE.play('roll');
+      rollDie($('tlDie'), v, 13, () => done(v));
+    }
+  });
+}
+function diceResult() {
+  const T = tool, mn = Math.min.apply(null, T.res);
+  const losers = T.ps.filter((_, j) => T.res[j] === mn);
+  toolFinish(losers, losers.length > 1 ? '同じ目！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯', j => $('tlP' + j));
+}
+
+/* チンチロ: everyone throws three dice into the bowl (up to 3 tries for a hand). Strong → weak:
+   ピンゾロ > ゾロ目 > シゴロ > 目（6〜1） > 目なし・ションベン（お椀の外） > ヒフミ.
+   The weakest drinks (a tie = all of them). A シゴロ or a ヒフミ anywhere in the round doubles it (both = ×4) */
 function chinHand(d) {
   const s = d.slice().sort((a, b) => a - b);
   if (s[0] === 1 && s[2] === 1) return { rank: 100, name: 'ピンゾロ' };
@@ -5750,16 +6029,20 @@ function chinHand(d) {
 function chinSetup() {
   const T = tool;
   T.hands = [];
-  $('toolStage').innerHTML = stakeLine(T) + '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
+  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + T.base + '杯</b><small>シゴロかヒフミが出たら×2（両方なら×4）</small></p>' +
+    '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
     '<div class="cc-row" id="ccR' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand" id="ccH' + j + '">—</b></div>').join('') + '</div>' +
-    '<div class="cc-bowl" id="ccBowl">' + [0, 1, 2].map(j => '<span class="cc-die" id="ccD' + j + '">' + dieSVG(0) + '</span>').join('') + '</div><p class="tm-sub" id="toolSub"></p>';
+    '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
+  toolBowl(T).then(() => {
+    if (tool !== T || !T.flat) return;
+    $('tlBowl').innerHTML = '<div class="cc-bowl" id="ccBowl">' + [0, 1, 2].map(j => '<span class="cc-die" id="ccD' + j + '">' + dieSVG(0) + '</span>').join('') + '</div>';
+  });
   chinTurn();
 }
 function chinTurn() {
   const T = tool, i = T.k;
   T.tries = 0;
   T.ps.forEach((_, j) => $('ccR' + j).classList.toggle('now', j === i));
-  [0, 1, 2].forEach(j => { $('ccD' + j).innerHTML = dieSVG(0); });
   $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">サイコロを振る！</button>');
 }
@@ -5769,19 +6052,30 @@ function chinRoll() {
   T.busy = true;
   T.tries++;
   toolActs('', false);
-  const d = [0, 1, 2].map(() => 1 + Math.floor(Math.random() * 6));
-  SE.play('roll');
-  const bowl = $('ccBowl');
-  if (!reduceMotion) bowl.classList.add('shake');
-  let left = 3;
-  d.forEach((v, j) => rollDie($('ccD' + j), v, 10 + j * 4, () => { SE.play('tick'); if (--left === 0) { bowl.classList.remove('shake'); toolLater(() => chinJudge(d), 250); } }));
+  $('toolSub').innerHTML = T.bowl || T.flat ? 'チンチロリン…' : 'サイコロを準備中…';
+  T.bowlReady.then(() => {
+    if (tool !== T) return;
+    if (T.bowl) {
+      SE.play('swoosh');
+      T.bowl.throwDice(3).then(res => { if (tool === T) chinJudge(res.values, res.out); });
+      return;
+    }
+    const d = [0, 1, 2].map(() => 1 + Math.floor(Math.random() * 6));
+    SE.play('roll');
+    const bowl = $('ccBowl');
+    if (bowl && !reduceMotion) bowl.classList.add('shake');
+    let left = 3;
+    d.forEach((v, j) => rollDie($('ccD' + j), v, 10 + j * 4, () => { SE.play('tick'); if (--left === 0) { if (bowl) bowl.classList.remove('shake'); toolLater(() => chinJudge(d, null), 250); } }));
+  });
 }
-function chinJudge(d) {
+function chinJudge(d, out) {
   const T = tool, i = T.k, p = T.ps[i];
   T.busy = false;
-  const h = chinHand(d);
+  const sho = !!(out && out.some(Boolean));
+  const h = sho ? { rank: 0, name: 'ションベン' } : chinHand(d);
+  const shown = sho ? '' : '（' + d.join('・') + '）';
   if (!h && T.tries < 3) {
-    $('toolSub').innerHTML = '目なし…！ あと<b>' + (3 - T.tries) + '</b>回振れる';
+    $('toolSub').innerHTML = d.join('・') + ' は<b>目なし</b>…！ あと<b>' + (3 - T.tries) + '</b>回振れる';
     SE.play('poof');
     toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>');
     return;
@@ -5789,23 +6083,34 @@ function chinJudge(d) {
   const hand = h || { rank: 0, name: '目なし' };
   T.hands[i] = hand;
   const el = $('ccH' + i);
-  el.textContent = hand.name;
+  el.textContent = hand.name + shown;
   el.className = 'cc-hand' + (hand.rank >= 80 ? ' great' : hand.rank <= 0 ? ' bad' : '');
   tmPop(el);
-  $('toolSub').innerHTML = '<b>' + esc(pname(p)) + '</b>：' + hand.name + (hand.rank >= 80 ? '！！' : hand.rank <= 0 ? '…' : '');
+  $('toolSub').innerHTML = '<b>' + esc(pname(p)) + '</b>：' + (sho ? 'サイコロがお椀の外へ！ <b>ションベン</b>…' : d.join('・') + ' → <b>' + hand.name + '</b>' + (hand.rank >= 80 ? '！！' : hand.rank <= 0 ? '…' : ''));
   if (hand.rank >= 80) {
     SE.play('bigheaven');
-    const q = relPos($('ccBowl')); FXC.burst(q.x, q.y, 70, { colors: GOLD, star: true, speed: 12 });
-    if (hand.rank === 100) telop('ピンゾロ！！', 'angel', 1500);
-  } else if (hand.rank <= 0) { SE.play('hell'); flash('#e8233f'); if (hand.rank < 0) telop('ヒフミ……', 'devil', 1400); }
-  else SE.play('ding');
+    const q = relPos($('tlBowl')); FXC.burst(q.x, q.y, 70, { colors: GOLD, star: true, speed: 12 });
+    telop(hand.rank === 100 ? 'ピンゾロ！！' : hand.name === 'シゴロ' ? 'シゴロ！<small>負けた人は×2</small>' : hand.name + '！', hand.rank === 100 ? 'angel' : 'sm', 1500);
+  } else if (hand.rank <= 0) {
+    SE.play('hell'); flash('#e8233f');
+    if (hand.rank < 0) telop('ヒフミ……<small>負けたら×2</small>', 'devil', 1500);
+    else if (sho) telop('ションベン！', 'red sm', 1300);
+  } else SE.play('ding');
   if (i + 1 < T.ps.length) toolActs('<button type="button" class="pbtn big main" data-tl="next">次は ' + esc(pname(T.ps[i + 1])) + ' ▶</button>');
-  else toolLater(() => {
-    const ranks = T.hands.map(x => x.rank), mn = Math.min.apply(null, ranks);
-    const losers = T.ps.filter((_, j) => ranks[j] === mn);
-    toolFinish(losers, losers.length > 1 ? losers.map(q => '<b>' + esc(pname(q)) + '</b>').join('・') + ' が同じ役で負け！ ' + T.cups + '杯ずつ'
-      : '<b>' + esc(pname(losers[0])) + '</b> の負け！（' + T.hands[T.ps.indexOf(losers[0])].name + '） ' + T.cups + '杯', j => $('ccR' + j));
-  }, 1200);
+  else toolLater(chinResult, 1300);
+}
+function chinResult() {
+  const T = tool, ranks = T.hands.map(x => x.rank), mn = Math.min.apply(null, ranks);
+  const losers = T.ps.filter((_, j) => ranks[j] === mn);
+  const shi = T.hands.some(x => x.name === 'シゴロ'), hif = T.hands.some(x => x.name === 'ヒフミ');
+  const mult = (shi ? 2 : 1) * (hif ? 2 : 1);
+  T.cups = T.base * mult;
+  const who = losers.length > 1 ? losers.map(q => '<b>' + esc(pname(q)) + '</b>').join('・') + ' が同じ役で負け！' : '<b>' + esc(pname(losers[0])) + '</b> の負け！（' + T.hands[T.ps.indexOf(losers[0])].name + '）';
+  const msg = who + (mult > 1
+    ? '<br><span class="cc-mult">' + [shi ? 'シゴロ ×2' : '', hif ? 'ヒフミ ×2' : ''].filter(Boolean).join(' ・ ') + ' → ' + T.base + '杯 × ' + mult + ' = <b>' + T.cups + '杯</b></span>'
+    : ' ' + T.cups + '杯' + (losers.length > 1 ? 'ずつ' : ''));
+  toolFinish(losers, msg, j => $('ccR' + j));
+  if (mult > 1) setTimeout(() => { if (screen === 'game') { telop('×' + mult + '！！<small>' + T.cups + '杯</small>', 'red', 1500); shake(true); } }, 450);
 }
 
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
@@ -5904,10 +6209,11 @@ const GUIDE = [
     gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>が飲みます。爆発までの時間は毎回ちがいます。</p>') +
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
-      [['チンチロ', '全員が順番にサイコロ3個。目なしは3回まで振り直し。いちばん弱い役の人が負け'], ['サイコロ', '2人が1回ずつ。小さい方が負け（同じなら2人とも）'],
+      [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。シゴロかヒフミが出たら負けた人は×2（両方なら×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
         ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', '動く狙いを見て「投げる！」。得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
-      '<p class="sub">本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>') +
+      '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
+      gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },
@@ -6431,6 +6737,11 @@ function wireGame() {
   $('askBox').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) askAct(b.dataset.a, b); });
   $('gRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (b) ruleTap(Number(b.dataset.rule)); });
   $('infoBox').addEventListener('click', e => { if (e.target.closest('[data-if="close"]')) closeOv('infoOv'); });
+  $('toolStage').addEventListener('click', e => {
+    if (!tool || !e.target.closest('#tlBowl')) return;
+    const go = $('toolActs').querySelector('[data-tl="go"]');
+    if (go && !go.disabled) toolAct('go');
+  });
   $('toolActs').addEventListener('click', e => {
     const b = e.target.closest('[data-tl]'); if (!b || !tool || b.disabled) return;
     if (performance.now() < (tool.guard || 0)) return;

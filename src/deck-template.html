@@ -875,6 +875,17 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .cc-bowl.shake{animation:bowlShake .26s infinite}
 @keyframes bowlShake{25%{transform:translateX(-5px) rotate(-2deg)} 75%{transform:translateX(5px) rotate(2deg)}}
 .cc-die{width:min(16vw, 9vh, 62px); aspect-ratio:1; display:block}
+/* 3D bowl (チンチロ・サイコロ勝負) */
+.dice3d{position:relative; flex:none; width:min(100%, 430px, calc(48cqh * 1.4)); aspect-ratio:1.4; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent}
+.d3-cv{position:absolute; inset:0; width:100%; height:100%; display:block}
+.d3-load{margin:0; font-weight:800; font-size:13px; color:var(--muted); animation:pulse 1.2s ease-in-out infinite}
+.flat-die{width:min(30vw, 120px)}
+.tl-stake small{display:block; font-size:11px; color:#ffd0d6; text-align:center}
+.tl-val.big{font-size:min(40px, 10vw); line-height:1.1}
+.dc3-row .sw-p{padding:6px 8px 4px}
+.big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
+.cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
+.cc-mult b{color:var(--yellow); font-size:1.15em}
 .dt-board{position:relative; flex:none; width:min(70vw, 34vh, 300px); aspect-ratio:1}
 .dt-svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 var(--ink))}
 .dt-lb{font-size:9px; font-weight:800; fill:#fff; stroke:#150733; stroke-width:2.5px; paint-order:stroke; text-anchor:middle}
