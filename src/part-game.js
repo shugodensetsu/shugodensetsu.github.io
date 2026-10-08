@@ -3065,8 +3065,10 @@ function loadDiceLibs() {
   if (!diceLibs) diceLibs = get(0).catch(() => get(1)).catch(e => { diceLibs = null; throw e; });
   return diceLibs;
 }
-/* bowl: flat bottom, then a quarter-circle wall up to the rim. Units: a die is 0.62 */
-const BW = { s: 0.62, R: 2.7, H: 1.75, rb: 1.25, base: 0.22, K: 7, N: 28, g: 26, thick: 0.16 };
+/* bowl: flat bottom, then a quarter-circle wall up to the rim. Units: a die is 0.62.
+   ts: the physics runs 1.5x faster than the clock (snappier, like real dice). Tuned with a node simulation of thousands of throws:
+   spin after a bounce about 2-3x the old one, about 2s of clatter, settled in about 2.7s, ションベン 0.2% (one die) / 0.4% (three dice) */
+const BW = { s: 0.62, R: 2.7, H: 1.75, rb: 1.25, base: 0.22, K: 7, N: 28, g: 26, thick: 0.16, ts: 1.5, rest: [0.72, 0.7] };
 const DIE_FACES = [[1, 0, 0, 2], [-1, 0, 0, 5], [0, 1, 0, 1], [0, -1, 0, 6], [0, 0, 1, 3], [0, 0, -1, 4]];
 function makeDiceBowl(host, L) {
   const { THREE, CANNON } = L, B = BW;
@@ -3140,9 +3142,10 @@ function makeDiceBowl(host, L) {
   world.broadphase = new CANNON.SAPBroadphase(world);
   world.solver.iterations = 14;
   const mBowl = new CANNON.Material('bowl'), mDie = new CANNON.Material('die');
-  /* glazed bowl: slippery and springy, so the dice bounce and run round the wall (カラカラ) before they settle */
-  world.addContactMaterial(new CANNON.ContactMaterial(mBowl, mDie, { friction: 0.08, restitution: 0.6 }));
-  world.addContactMaterial(new CANNON.ContactMaterial(mDie, mDie, { friction: 0.2, restitution: 0.65 }));
+  /* glazed bowl: springy, so the dice bounce and run round the wall (カラカラ) before they settle */
+  const cmBowl = new CANNON.ContactMaterial(mBowl, mDie, { friction: 0.2, restitution: B.rest[0] });
+  const cmDie = new CANNON.ContactMaterial(mDie, mDie, { friction: 0.2, restitution: B.rest[1] });
+  world.addContactMaterial(cmBowl); world.addContactMaterial(cmDie);
   const ground = new CANNON.Body({ mass: 0, material: mBowl, shape: new CANNON.Plane() });
   ground.quaternion.setFromEuler(-Math.PI / 2, 0, 0); world.addBody(ground);
   const floor = new CANNON.Body({ mass: 0, material: mBowl });
@@ -3170,11 +3173,37 @@ function makeDiceBowl(host, L) {
     return { val, flat: best, out: (rr > B.R - 0.05 && b.position.y < B.base + B.H - 0.2) || rr > B.R + 0.12 };
   }
   function clear() { dice.forEach(d => { world.removeBody(d.body); scene.remove(d.mesh); }); dice = []; }
+  /* a bounce off the bowl sets the die tumbling the way it is going, like a real die scraping the glaze.
+     (the physics library's friction is far too weak during a hit, so the dice used to bounce without spinning up)
+     It fades out after the first moments so the dice still come to rest */
+  const kn = new CANNON.Vec3(), kt = new CANNON.Vec3(), kx = new CANNON.Vec3();
+  function spinUp(e, vn) {
+    const c = e.contact, die = e.target, other = c.bi === die ? c.bj : c.bi;
+    if (other.type === CANNON.Body.DYNAMIC || vn < 1.5 || !job) return;
+    const fade = Math.max(0, Math.min(1, 1.8 - job.time));
+    if (!fade) return;
+    c.ni.scale(c.bi === die ? -1 : 1, kn);
+    die.velocity.vsub(kn.scale(die.velocity.dot(kn), kx), kt);
+    const sp = kt.length();
+    if (sp < 0.3) return;
+    kn.cross(kt, kt); kt.scale(1 / sp, kt);
+    const cur = die.angularVelocity.dot(kt), want = Math.min(40, Math.max(cur, 1.2 * fade * sp / (B.s / 2)));
+    if (want > cur) die.angularVelocity.vadd(kt.scale(want - cur, kx), die.angularVelocity);
+  }
   function clink(e) {
     const v = Math.abs(e.contact.getImpactVelocityAlongNormal()), now = performance.now();
+    spinUp(e, v);
     if (v < 1.6 || now - lastClink < 45) return;
     lastClink = now;
     SE.play(v > 5 ? 'clink' : 'clinks');
+  }
+  /* a good throw: near the rim, a die heading out loses most of its outward speed (like the bowl's lip catching it),
+     so ションベン stays rare. One die is caught fully, three dice can still now and then fly out */
+  function lip(b) {
+    const rr = Math.hypot(b.position.x, b.position.z);
+    if (b.position.y < B.base + B.H - 0.35 || rr < B.R - 0.75) return;
+    const ux = b.position.x / rr, uz = b.position.z / rr, vo = b.velocity.x * ux + b.velocity.z * uz;
+    if (vo > 0) { const k = vo * (dice.length === 1 ? 1 : 0.7); b.velocity.x -= ux * k; b.velocity.z -= uz * k; }
   }
   function resize() {
     const w = host.clientWidth || 300, h = host.clientHeight || 220;
@@ -3192,24 +3221,30 @@ function makeDiceBowl(host, L) {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.05, ((now - (last || now)) / 1000) || 0);
     last = now;
-    if (dice.length) world.step(1 / 60, dt, 4);
-    dice.forEach(d => { d.mesh.position.copy(d.body.position); d.mesh.quaternion.copy(d.body.quaternion); });
+    if (dice.length) { world.step(1 / 60, dt * B.ts, 6); if (job) dice.forEach(d => lip(d.body)); }
+    dice.forEach(d => { d.mesh.position.copy(d.body.interpolatedPosition); d.mesh.quaternion.copy(d.body.interpolatedQuaternion); });
     if (shakeT > 0) { shakeT -= dt; const a = Math.max(0, shakeT) * 0.25; camera.position.set(camBase.x + (Math.random() - 0.5) * a, camBase.y + (Math.random() - 0.5) * a, camBase.z); camera.lookAt(look); }
     if (job) watch(dt);
     renderer.render(scene, camera);
   }
-  /* settled = everything still for a moment. A die leaning on the wall or on another die gets a little tap (like knocking the bowl) */
+  /* settled = every die has been (nearly) still for a moment. After the lively part the bounces go dead, as real dice do,
+     so dice resting against each other don't jitter forever. A die leaning on the wall or on another die gets a little tap (like knocking the bowl) */
   function watch(dt) {
     const J = job;
     J.time += dt;
-    const still = dice.every(d => d.body.velocity.length() < 0.08 && d.body.angularVelocity.length() < 0.18);
-    J.calm = still ? J.calm + dt : 0;
-    if (J.time < 0.6 || (J.calm < 0.3 && J.time < 7)) return;
+    if (J.time > 2.2 && !J.late) {
+      J.late = true;
+      cmBowl.restitution = cmDie.restitution = 0.15;
+      dice.forEach(d => { d.body.linearDamping = d.body.angularDamping = 0.4; });
+    }
+    dice.forEach(d => { d.rest = d.body.velocity.length() < 0.3 && d.body.angularVelocity.length() < 0.8 ? d.rest + dt : 0; });
+    if (J.time < 0.6 || (Math.min.apply(null, dice.map(d => d.rest)) < 0.35 && J.time < 7)) return;
     const reads = dice.map(d => readDie(d.body));
     const bad = dice.filter((d, i) => !reads[i].out && reads[i].flat < 0.78);
     if (bad.length && J.nudges < 4 && J.time < 7) {
-      J.nudges++; J.calm = 0;
+      J.nudges++;
       bad.forEach(d => {
+        d.rest = 0;
         d.body.wakeUp();
         d.body.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 1.6, 2.4, (Math.random() - 0.5) * 1.6), new CANNON.Vec3((Math.random() - 0.5) * 0.2, 0, (Math.random() - 0.5) * 0.2));
         d.body.angularVelocity.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
@@ -3218,26 +3253,30 @@ function makeDiceBowl(host, L) {
       return;
     }
     job = null;
+    dice.forEach(d => { const b = d.body; b.sleep(); b.previousPosition.copy(b.position); b.previousQuaternion.copy(b.quaternion); });
     J.resolve({ values: reads.map(r => r.val), out: reads.map(r => r.out) });
   }
   function throwDice(n) {
     clear();
+    cmBowl.restitution = B.rest[0]; cmDie.restitution = B.rest[1];
     const swirl = (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 2.2) * 1.4, spin = Math.random() < 0.5 ? -18 : 18;
     for (let i = 0; i < n; i++) {
       const body = new CANNON.Body({ mass: 1, material: mDie, shape: new CANNON.Box(new CANNON.Vec3(B.s / 2, B.s / 2, B.s / 2)), linearDamping: 0.01, angularDamping: 0.03 });
-      const x = (i - (n - 1) / 2) * (B.s * 1.25) + (Math.random() - 0.5) * 0.3;
+      const x = (i - (n - 1) / 2) * (B.s * 1.8) + (Math.random() - 0.5) * 0.3; /* far enough apart not to knock each other in the air */
       body.position.set(x, B.base + B.H + 0.9 + Math.random() * 0.5, B.R * 0.55 + Math.random() * 0.3);
       body.quaternion.setFromEuler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
       body.velocity.set(swirl - x * 1.2 + (Math.random() - 0.5) * 1.5, -1.5 - Math.random() * 2, -(3.6 + Math.random() * 2.4) * 1.4);
       body.angularVelocity.set((Math.random() - 0.5) * 44, (Math.random() - 0.5) * 44 + spin, (Math.random() - 0.5) * 44);
+      body.previousPosition.copy(body.position); body.interpolatedPosition.copy(body.position);
+      body.previousQuaternion.copy(body.quaternion); body.interpolatedQuaternion.copy(body.quaternion);
       body.addEventListener('collide', clink);
       world.addBody(body);
       const mesh = new THREE.Mesh(geo, mats);
       mesh.castShadow = true; mesh.receiveShadow = true;
       scene.add(mesh);
-      dice.push({ body, mesh });
+      dice.push({ body, mesh, rest: 0 });
     }
-    return new Promise(resolve => { job = { resolve, time: 0, calm: 0, nudges: 0 }; });
+    return new Promise(resolve => { job = { resolve, time: 0, nudges: 0, late: false }; });
   }
   function dispose() {
     dead = true; job = null;
@@ -3465,7 +3504,7 @@ function duelResult() {
    numbers round the edge). An aim drifts over it; 「投げる！」 lands the dart near the aim.
    Score: single = the number, double ×2, triple ×3, bull 50 (inner and outer alike), off the board = 0 */
 const DART_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
-const DB = { ib: 4.6, ob: 11, ti: 55, to: 62, di: 92, do: 100, num: 115, vb: 124 };
+const DB = { ib: 4.6, ob: 11, ti: 55, to: 62, di: 92, do: 100, num: 115, vb: 120 };
 function dartScore(x, y) {
   const r = Math.hypot(x, y);
   if (r > DB.do) return { score: 0, label: 'MISS', kind: 'miss' };
@@ -3504,26 +3543,27 @@ const DART_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M1 39 L9 
 const dartPct = v => (50 + v / (DB.vb * 2) * 100).toFixed(2) + '%';
 function dartsSetup() {
   const T = tool;
-  $('toolStage').innerHTML = '<p class="tl-stake">得点の低い方が <b>' + T.cups + '杯</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake dt-stake">得点の低い方が <b>' + T.cups + '杯</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
     '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
     '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>' +
-    '<div class="dt-board" id="dtBoard"><i class="dt-led" aria-hidden="true"></i>' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div><p class="tm-sub" id="toolSub"></p>';
+    '<div class="dt-wrap"><div class="dt-board" id="dtBoard"><i class="dt-led" aria-hidden="true"></i>' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div></div><p class="tm-sub dt-sub" id="toolSub"></p>';
   dartsTurn();
 }
 function dartsTurn() {
   const T = tool, i = T.k;
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
-  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ 狙いがいいところに来たら「投げる！」';
+  $('toolSub').innerHTML = (i ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！<small>狙いが来たらボードか「投げる！」をタップ</small>';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main" data-tl="go">投げる！</button>');
   const aim = $('dtAim');
   aim.hidden = false;
   T.aimOn = true;
-  const t0 = performance.now(), ph = Math.random() * 6.28, sp = 0.95 + Math.random() * 0.3;
+  const t0 = performance.now(), ph = Math.random() * 6.28, sp = 0.85 + Math.random() * 0.25;
   const step = now => {
     if (tool !== T || !T.aimOn) return;
     const t = (now - t0) / 1000 * sp;
-    T.ax = 70 * Math.sin(t * 2.2 + ph) + 17 * Math.sin(t * 5.7 + 1);
-    T.ay = 70 * Math.sin(t * 2.9 + ph * 1.7) + 17 * Math.cos(t * 6.3);
+    /* drifts over the whole board, now and then just past the edge */
+    T.ax = 82 * Math.sin(t * 2.2 + ph) + 18 * Math.sin(t * 5.7 + 1);
+    T.ay = 82 * Math.sin(t * 2.9 + ph * 1.7) + 18 * Math.cos(t * 6.3);
     aim.style.left = dartPct(T.ax); aim.style.top = dartPct(T.ay);
     T.raf = requestAnimationFrame(step);
   };
@@ -3536,7 +3576,10 @@ function dartsThrow() {
   if (T.raf) cancelAnimationFrame(T.raf);
   T.raf = 0;
   toolActs('', false);
-  const ex = T.ax + (Math.random() - 0.5) * 12, ey = T.ay + (Math.random() - 0.5) * 12;
+  /* the dart flies to where the aim was the moment the finger touched (not where it drifted to by the time the tap ended) */
+  const at = T.snap && performance.now() - T.snap.t < 600 ? T.snap : { x: T.ax, y: T.ay };
+  T.snap = null;
+  const ex = at.x + (Math.random() - 0.5) * 12, ey = at.y + (Math.random() - 0.5) * 12;
   const hit = dartScore(ex, ey);
   T.res[i] = hit.score;
   SE.play('swoosh');
@@ -3547,7 +3590,7 @@ function dartsThrow() {
     const big = hit.kind === 'bull' ? 'BULL!!' : hit.kind === 'miss' ? 'MISS' : hit.label + ' ' + hit.score;
     $('dtHits').insertAdjacentHTML('beforeend', '<span class="dt-pop ' + hit.kind + '" style="left:' + x + ';top:' + y + '">' + big + '</span>');
     const el = $('tlV' + i);
-    el.innerHTML = hit.kind === 'miss' ? 'MISS<small>0点</small>' : hit.score + '<small>' + (hit.kind === 'bull' ? (hit.inner ? 'インブル' : 'アウターブル') : hit.label) + '</small>';
+    el.innerHTML = hit.kind === 'miss' ? 'MISS' : hit.score + (hit.kind === 'single' ? '' : '<small>' + (hit.kind === 'bull' ? (hit.inner ? 'インブル' : 'アウターブル') : hit.label) + '</small>');
     tmPop(el);
     const board = $('dtBoard'), q = relPos(board);
     if (hit.kind === 'bull') {
@@ -3821,7 +3864,7 @@ const GUIDE = [
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。シゴロかヒフミが出たら負けた人は×2（両方なら×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
-        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て「投げる！」。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
+        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て、ボードか「投げる！」をタップ。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
@@ -4348,8 +4391,12 @@ function wireGame() {
   $('askBox').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) askAct(b.dataset.a, b); });
   $('gRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (b) ruleTap(Number(b.dataset.rule)); });
   $('infoBox').addEventListener('click', e => { if (e.target.closest('[data-if="close"]')) closeOv('infoOv'); });
+  /* darts: remember the aim at the touch itself */
+  $('toolOv').addEventListener('pointerdown', e => {
+    if (tool && tool.kind === 'darts' && tool.aimOn && e.target.closest('#dtBoard, [data-tl="go"]')) tool.snap = { x: tool.ax, y: tool.ay, t: performance.now() };
+  }, true);
   $('toolStage').addEventListener('click', e => {
-    if (!tool || !e.target.closest('#tlBowl')) return;
+    if (!tool || !e.target.closest('#tlBowl, #dtBoard')) return;
     const go = $('toolActs').querySelector('[data-tl="go"]');
     if (go && !go.disabled) toolAct('go');
   });
