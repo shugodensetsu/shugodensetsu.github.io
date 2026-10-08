@@ -884,7 +884,11 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .tl-val.big{font-size:min(40px, 10vw); line-height:1.1}
 .dc3-row .sw-p{padding:6px 8px 4px}
 .big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
-.cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
+.cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px; line-height:1.45}
+/* the bowl takes whatever room is left (never the text): grows up to its normal size, shrinks on short screens */
+.tool-ov .dice3d{flex:1 1 0; width:100%; max-width:430px; aspect-ratio:auto; min-height:120px; max-height:min(48cqh, 307px)}
+.tool-ov.chin .dice3d{max-height:min(42cqh, 307px)}
+.tool-ov .tm-sub{flex:none}
 .cc-mult b{color:var(--yellow); font-size:1.15em}
 .dt-board{position:relative; flex:none; width:min(94cqw, 97cqh); aspect-ratio:1; cursor:crosshair; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
 /* darts: everything else kept compact so the board gets all the room it can */
@@ -914,7 +918,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .sw-p.peek{border-color:var(--cyan); box-shadow:0 5px 0 var(--ink), 0 0 18px 4px rgba(53,224,255,.55)}
 .flip.toss{animation:ipToss .42s ease-in forwards}
 @keyframes ipToss{to{transform:translate(-130%, -70%) rotate(-50deg); opacity:0}}
-@media (max-height: 740px){.tool-ov.darts .tm-card{display:none}} /* small phones: the players and the stake line already say it all */
+@media (max-height: 740px){.tool-ov.darts .tm-card, .tool-ov.chin .tm-card{display:none}} /* small phones: the players and the stake line already say it all */
 .dt-svg{position:relative; width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
 .dt-n{font-family:var(--f-body); font-size:10.5px; font-weight:800; fill:#f4f4f6; text-anchor:middle}
 /* the LED ring round a DARTSLIVE-style board */
