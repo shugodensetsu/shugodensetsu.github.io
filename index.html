@@ -902,18 +902,28 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
 .cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
 .cc-mult b{color:var(--yellow); font-size:1.15em}
-.dt-board{position:relative; flex:none; width:min(70vw, 34vh, 300px); aspect-ratio:1}
-.dt-svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 var(--ink))}
-.dt-lb{font-size:9px; font-weight:800; fill:#fff; stroke:#150733; stroke-width:2.5px; paint-order:stroke; text-anchor:middle}
-.dt-row .sw-p{padding:6px 8px}
-.dt-aim{position:absolute; left:50%; top:50%; width:15%; aspect-ratio:1; margin:-7.5% 0 0 -7.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
+.dt-board{position:relative; flex:none; width:min(86vw, 42cqh, 330px); aspect-ratio:1}
+.dt-svg{position:relative; width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
+.dt-n{font-family:var(--f-body); font-size:10.5px; font-weight:800; fill:#f4f4f6; text-anchor:middle}
+/* the LED ring round a DARTSLIVE-style board */
+.dt-led{position:absolute; inset:-3%; border-radius:50%; background:conic-gradient(from 0deg, #35e0ff, #b17cff, #ff4fa3, #ffd83d, #a8f03a, #35e0ff); filter:blur(6px); opacity:.85;
+  -webkit-mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); animation:spin 6s linear infinite}
+.dt-board.lit .dt-led{animation:spin 1s linear infinite, ledFlash .9s ease-out}
+@keyframes ledFlash{0%{opacity:1; filter:blur(2px) brightness(2)} 100%{opacity:.85; filter:blur(6px)}}
+.dt-aim{position:absolute; left:50%; top:50%; width:13%; aspect-ratio:1; margin:-6.5% 0 0 -6.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
 .dt-aim::before, .dt-aim::after{content:''; position:absolute; left:50%; top:50%; background:var(--yellow); transform:translate(-50%,-50%)}
 .dt-aim::before{width:2px; height:140%}
 .dt-aim::after{width:140%; height:2px}
 .dt-hits{position:absolute; inset:0; pointer-events:none}
-.dt-hit{position:absolute; width:6%; aspect-ratio:1; margin:-3% 0 0 -3%; box-sizing:border-box; border-radius:50%; background:var(--p); border:2px solid var(--ink); box-shadow:0 0 0 2px #fff; animation:dtHit .3s cubic-bezier(.2,1.6,.4,1)}
-@keyframes dtHit{from{transform:scale(3.2); opacity:0}}
-.dt-pop{position:absolute; font-family:var(--f-display); font-size:20px; color:var(--yellow); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.5s ease-out forwards}
+.dt-dart{position:absolute; width:15%; aspect-ratio:1; margin-top:-15%; transform-origin:0 100%; animation:dtIn .23s cubic-bezier(.5,0,.9,.6) both; filter:drop-shadow(2px 3px 1px rgba(0,0,0,.55))}
+.dt-dart svg{display:block; width:100%; height:100%}
+@keyframes dtIn{from{transform:translate(60%, 140%) scale(2.8); opacity:0} 60%{opacity:1} to{transform:none}}
+.dt-pop{position:absolute; transform:translate(-50%,-50%); font-family:var(--f-display); font-size:20px; color:var(--white); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.6s ease-out forwards}
+.dt-pop.triple{color:var(--cyan); font-size:24px}
+.dt-pop.double{color:var(--lime); font-size:22px}
+.dt-pop.bull{color:var(--yellow); font-size:28px}
+.dt-pop.miss{color:#ff8b98}
+.tl-val small{display:block; font-family:var(--f-body); font-weight:800; font-size:11px; color:var(--muted)}
 
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
@@ -1660,7 +1670,7 @@ const FX_GROUPS = [
     ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードの杯数（同じなら両方）'],
     ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードの杯数（同じなら両方）'],
     ['indian', 'インディアンポーカー', '2人にトランプを配り、せーので開いて低い方がカードの杯数。JOKERが出たら2人とも'],
-    ['darts', 'ダーツ勝負', '動く狙いを見て「投げる！」。得点の低い方がカードの杯数（同点なら両方）'],
+    ['darts', 'ダーツ勝負', '本物そっくりのダーツボードに1本ずつ投げ、得点の低い方がカードの杯数（トリプル3倍・ダブル2倍・ブル50点、同点なら両方）'],
   ]],
   ['手札に入る券', [
     ['safe', 'セーフ券', '引いた人の手札へ。飲む対象になったとき1回だけ回避'],
@@ -5503,7 +5513,7 @@ function loadDiceLibs() {
   return diceLibs;
 }
 /* bowl: flat bottom, then a quarter-circle wall up to the rim. Units: a die is 0.62 */
-const BW = { s: 0.62, R: 2.7, H: 1.75, rb: 1.25, base: 0.22, K: 7, N: 28, g: 34, thick: 0.16 };
+const BW = { s: 0.62, R: 2.7, H: 1.75, rb: 1.25, base: 0.22, K: 7, N: 28, g: 26, thick: 0.16 };
 const DIE_FACES = [[1, 0, 0, 2], [-1, 0, 0, 5], [0, 1, 0, 1], [0, -1, 0, 6], [0, 0, 1, 3], [0, 0, -1, 4]];
 function makeDiceBowl(host, L) {
   const { THREE, CANNON } = L, B = BW;
@@ -5577,8 +5587,9 @@ function makeDiceBowl(host, L) {
   world.broadphase = new CANNON.SAPBroadphase(world);
   world.solver.iterations = 14;
   const mBowl = new CANNON.Material('bowl'), mDie = new CANNON.Material('die');
-  world.addContactMaterial(new CANNON.ContactMaterial(mBowl, mDie, { friction: 0.18, restitution: 0.32 }));
-  world.addContactMaterial(new CANNON.ContactMaterial(mDie, mDie, { friction: 0.22, restitution: 0.38 }));
+  /* glazed bowl: slippery and springy, so the dice bounce and run round the wall (カラカラ) before they settle */
+  world.addContactMaterial(new CANNON.ContactMaterial(mBowl, mDie, { friction: 0.08, restitution: 0.6 }));
+  world.addContactMaterial(new CANNON.ContactMaterial(mDie, mDie, { friction: 0.2, restitution: 0.65 }));
   const ground = new CANNON.Body({ mass: 0, material: mBowl, shape: new CANNON.Plane() });
   ground.quaternion.setFromEuler(-Math.PI / 2, 0, 0); world.addBody(ground);
   const floor = new CANNON.Body({ mass: 0, material: mBowl });
@@ -5658,14 +5669,14 @@ function makeDiceBowl(host, L) {
   }
   function throwDice(n) {
     clear();
-    const swirl = (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 2.2);
+    const swirl = (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 2.2) * 1.4, spin = Math.random() < 0.5 ? -18 : 18;
     for (let i = 0; i < n; i++) {
-      const body = new CANNON.Body({ mass: 1, material: mDie, shape: new CANNON.Box(new CANNON.Vec3(B.s / 2, B.s / 2, B.s / 2)), linearDamping: 0.08, angularDamping: 0.12 });
+      const body = new CANNON.Body({ mass: 1, material: mDie, shape: new CANNON.Box(new CANNON.Vec3(B.s / 2, B.s / 2, B.s / 2)), linearDamping: 0.01, angularDamping: 0.03 });
       const x = (i - (n - 1) / 2) * (B.s * 1.25) + (Math.random() - 0.5) * 0.3;
       body.position.set(x, B.base + B.H + 0.9 + Math.random() * 0.5, B.R * 0.55 + Math.random() * 0.3);
       body.quaternion.setFromEuler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
-      body.velocity.set(swirl - x * 1.2 + (Math.random() - 0.5) * 1.5, -1.5 - Math.random() * 2, -(3.6 + Math.random() * 2.4));
-      body.angularVelocity.set((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30);
+      body.velocity.set(swirl - x * 1.2 + (Math.random() - 0.5) * 1.5, -1.5 - Math.random() * 2, -(3.6 + Math.random() * 2.4) * 1.4);
+      body.angularVelocity.set((Math.random() - 0.5) * 44, (Math.random() - 0.5) * 44 + spin, (Math.random() - 0.5) * 44);
       body.addEventListener('collide', clink);
       world.addBody(body);
       const mesh = new THREE.Mesh(geo, mats);
@@ -5897,27 +5908,59 @@ function duelResult() {
   toolFinish(losers, msg, j => $('tlP' + j));
 }
 
-/* ダーツ: an aim drifts over the board; 「投げる！」 lands the dart near it. Rings: BULL 50 / 25 / 20 / 15 / 10 / 5 / MISS */
-const DART_RINGS = [[8, 50], [18, 25], [40, 20], [62, 15], [84, 10], [100, 5]];
+/* ダーツ: a soft-tip board like DARTSLIVE (black/white singles, red/blue doubles and triples, red outer bull, black inner bull,
+   numbers round the edge). An aim drifts over it; 「投げる！」 lands the dart near the aim.
+   Score: single = the number, double ×2, triple ×3, bull 50 (inner and outer alike), off the board = 0 */
+const DART_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+const DB = { ib: 4.6, ob: 11, ti: 55, to: 62, di: 92, do: 100, num: 115, vb: 124 };
+function dartScore(x, y) {
+  const r = Math.hypot(x, y);
+  if (r > DB.do) return { score: 0, label: 'MISS', kind: 'miss' };
+  if (r <= DB.ob) return { score: 50, label: 'BULL', kind: 'bull', inner: r <= DB.ib };
+  let a = Math.atan2(x, -y) * 180 / Math.PI;
+  if (a < 0) a += 360;
+  const n = DART_NUMS[Math.floor(((a + 9) % 360) / 18)];
+  if (r >= DB.di) return { score: n * 2, label: 'D' + n, kind: 'double', n };
+  if (r >= DB.ti && r <= DB.to) return { score: n * 3, label: 'T' + n, kind: 'triple', n };
+  return { score: n, label: 'S' + n, kind: 'single', n };
+}
 function dartBoardSVG() {
-  const fills = ['#c8102e', '#1f8a4c', '#f1e2b8', '#c8102e', '#f1e2b8', '#16161c'];
-  let h = '<svg class="dt-svg" viewBox="-110 -110 220 220" aria-hidden="true"><circle r="108" fill="#3a2414" stroke="#150733" stroke-width="4"/>';
-  for (let k = DART_RINGS.length - 1; k >= 0; k--) h += '<circle r="' + DART_RINGS[k][0] + '" fill="' + fills[k] + '" stroke="#150733" stroke-width="1.5"/>';
-  for (let a = 0; a < 20; a++) { const t = (a * 18 + 9) * Math.PI / 180; h += '<line x1="' + (Math.cos(t) * 18).toFixed(1) + '" y1="' + (Math.sin(t) * 18).toFixed(1) + '" x2="' + (Math.cos(t) * 100).toFixed(1) + '" y2="' + (Math.sin(t) * 100).toFixed(1) + '" stroke="rgba(21,7,51,.35)" stroke-width="1"/>'; }
-  [[29, 20], [51, 15], [73, 10], [92, 5]].forEach(([r, sc]) => { h += '<text x="0" y="' + (-r + 3.5) + '" class="dt-lb">' + sc + '</text>'; });
+  const pt = (r, deg) => { const t = deg * Math.PI / 180; return (r * Math.sin(t)).toFixed(2) + ' ' + (-r * Math.cos(t)).toFixed(2); };
+  const sector = (r1, r2, a0, a1, fill) => '<path d="M' + pt(r1, a0) + ' L' + pt(r2, a0) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + pt(r2, a1) + ' L' + pt(r1, a1) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + pt(r1, a0) + 'Z" fill="' + fill + '"/>';
+  let h = '<svg class="dt-svg" viewBox="' + -DB.vb + ' ' + -DB.vb + ' ' + DB.vb * 2 + ' ' + DB.vb * 2 + '" aria-hidden="true">' +
+    '<defs><pattern id="dtHoles" width="3.6" height="6.235" patternUnits="userSpaceOnUse"><circle cx="1.8" cy="1.56" r="0.95" fill="rgba(0,0,0,.42)"/><circle cx="0" cy="4.68" r="0.95" fill="rgba(0,0,0,.42)"/><circle cx="3.6" cy="4.68" r="0.95" fill="rgba(0,0,0,.42)"/></pattern>' +
+    '<radialGradient id="dtShine" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>' +
+    '<circle r="' + (DB.num + 4) + '" fill="#2b2d33"/><circle r="' + DB.num + '" fill="#111114"/>';
+  DART_NUMS.forEach((n, i) => {
+    const a0 = i * 18 - 9, a1 = i * 18 + 9, dark = i % 2 === 0;
+    const single = dark ? '#18181c' : '#ece5d3', ring = dark ? '#d61f2c' : '#1f62c4';
+    h += sector(DB.ob, DB.ti, a0, a1, single) + sector(DB.ti, DB.to, a0, a1, ring) + sector(DB.to, DB.di, a0, a1, single) + sector(DB.di, DB.do, a0, a1, ring);
+  });
+  h += '<circle r="' + DB.ob + '" fill="#d61f2c"/><circle r="' + DB.ib + '" fill="#141416"/>';
+  h += '<circle r="' + DB.do + '" fill="url(#dtHoles)"/>';
+  /* the plastic spider between the segments */
+  DART_NUMS.forEach((_, i) => { h += '<path d="M' + pt(DB.ob, i * 18 - 9) + ' L' + pt(DB.do, i * 18 - 9) + '" stroke="#c3c8d0" stroke-width=".55"/>'; });
+  [DB.ib, DB.ob, DB.ti, DB.to, DB.di, DB.do].forEach(r => { h += '<circle r="' + r + '" fill="none" stroke="#c3c8d0" stroke-width=".55"/>'; });
+  DART_NUMS.forEach((n, i) => { const t = i * 18 * Math.PI / 180, r = (DB.do + DB.num) / 2 + 0.5; h += '<text x="' + (r * Math.sin(t)).toFixed(2) + '" y="' + (-r * Math.cos(t) + 3.6).toFixed(2) + '" class="dt-n">' + n + '</text>'; });
+  h += '<circle r="' + DB.do + '" fill="url(#dtShine)"/>';
   return h + '</svg>';
 }
+const DART_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M1 39 L9 31" stroke="#d9dde3" stroke-width="1.6" stroke-linecap="round"/><path d="M9 31 L20 20" stroke="#5b616c" stroke-width="3.6" stroke-linecap="round"/>' +
+  '<path d="M9 31 L20 20" stroke="#c9ced6" stroke-width="1.2" stroke-dasharray="1.4 1.2"/><path d="M20 20 L25 15" stroke="#1d1d22" stroke-width="2"/>' +
+  '<path d="M25 15 L38 3 L33 15 Z" fill="var(--p)" stroke="#150733" stroke-width="1"/><path d="M25 15 L37 2 L25 7 Z" fill="var(--p)" stroke="#150733" stroke-width="1" opacity=".8"/></svg>';
+const dartPct = v => (50 + v / (DB.vb * 2) * 100).toFixed(2) + '%';
 function dartsSetup() {
   const T = tool;
-  $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+  $('toolStage').innerHTML = '<p class="tl-stake">得点の低い方が <b>' + T.cups + '杯</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
+    '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
     '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>' +
-    '<div class="dt-board" id="dtBoard">' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div><p class="tm-sub" id="toolSub"></p>';
+    '<div class="dt-board" id="dtBoard"><i class="dt-led" aria-hidden="true"></i>' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div><p class="tm-sub" id="toolSub"></p>';
   dartsTurn();
 }
 function dartsTurn() {
   const T = tool, i = T.k;
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
-  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ 狙いが真ん中に来たら「投げる！」';
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ 狙いがいいところに来たら「投げる！」';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main" data-tl="go">投げる！</button>');
   const aim = $('dtAim');
   aim.hidden = false;
@@ -5926,9 +5969,9 @@ function dartsTurn() {
   const step = now => {
     if (tool !== T || !T.aimOn) return;
     const t = (now - t0) / 1000 * sp;
-    T.ax = 0.66 * Math.sin(t * 2.2 + ph) + 0.17 * Math.sin(t * 5.7 + 1);
-    T.ay = 0.66 * Math.sin(t * 2.9 + ph * 1.7) + 0.17 * Math.cos(t * 6.3);
-    aim.style.left = (50 + T.ax * 45.45).toFixed(2) + '%'; aim.style.top = (50 + T.ay * 45.45).toFixed(2) + '%';
+    T.ax = 70 * Math.sin(t * 2.2 + ph) + 17 * Math.sin(t * 5.7 + 1);
+    T.ay = 70 * Math.sin(t * 2.9 + ph * 1.7) + 17 * Math.cos(t * 6.3);
+    aim.style.left = dartPct(T.ax); aim.style.top = dartPct(T.ay);
     T.raf = requestAnimationFrame(step);
   };
   T.raf = requestAnimationFrame(step);
@@ -5940,26 +5983,41 @@ function dartsThrow() {
   if (T.raf) cancelAnimationFrame(T.raf);
   T.raf = 0;
   toolActs('', false);
-  const ex = T.ax + (Math.random() - 0.5) * 0.12, ey = T.ay + (Math.random() - 0.5) * 0.12;
-  const ring = DART_RINGS.find(([R]) => Math.hypot(ex, ey) * 100 <= R);
-  const score = ring ? ring[1] : 0;
-  T.res[i] = score;
+  const ex = T.ax + (Math.random() - 0.5) * 12, ey = T.ay + (Math.random() - 0.5) * 12;
+  const hit = dartScore(ex, ey);
+  T.res[i] = hit.score;
   SE.play('swoosh');
+  $('dtAim').hidden = true;
+  const x = dartPct(ex), y = dartPct(ey);
+  $('dtHits').insertAdjacentHTML('beforeend', '<i class="dt-dart" style="left:' + x + ';top:' + y + ';--p:' + pc(T.ps[i]) + '">' + DART_SVG + '</i>');
   toolLater(() => {
-    $('dtAim').hidden = true;
-    const x = (50 + ex * 45.45).toFixed(2) + '%', y = (50 + ey * 45.45).toFixed(2) + '%';
-    $('dtHits').insertAdjacentHTML('beforeend', '<i class="dt-hit" style="left:' + x + ';top:' + y + ';--p:' + pc(T.ps[i]) + '"></i><span class="dt-pop" style="left:' + x + ';top:' + y + '">' + (score === 50 ? 'BULL!!' : score ? score + '点' : 'MISS') + '</span>');
-    const el = $('tlV' + i); el.textContent = score ? score + '点' : 'MISS'; tmPop(el);
-    if (score >= 25) { SE.play('bigheaven'); const q = relPos($('dtBoard')); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 }); }
-    else if (!score) SE.play('buzz');
-    else { SE.play('pop'); SE.play('ding', 0.08); }
-    vibrate(40);
-    if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1200); }
+    const big = hit.kind === 'bull' ? 'BULL!!' : hit.kind === 'miss' ? 'MISS' : hit.label + ' ' + hit.score;
+    $('dtHits').insertAdjacentHTML('beforeend', '<span class="dt-pop ' + hit.kind + '" style="left:' + x + ';top:' + y + '">' + big + '</span>');
+    const el = $('tlV' + i);
+    el.innerHTML = hit.kind === 'miss' ? 'MISS<small>0点</small>' : hit.score + '<small>' + (hit.kind === 'bull' ? (hit.inner ? 'インブル' : 'アウターブル') : hit.label) + '</small>';
+    tmPop(el);
+    const board = $('dtBoard'), q = relPos(board);
+    if (hit.kind === 'bull') {
+      SE.play('bigheaven'); flash('#ffd83d');
+      board.classList.remove('lit'); void board.offsetWidth; board.classList.add('lit');
+      FXC.burst(q.x, q.y, 90, { colors: GOLD, star: true, speed: 13 });
+      telop('BULL!!', 'angel', 1400);
+    } else if (hit.kind === 'triple') {
+      SE.play('ding'); SE.play('coin', 0.1);
+      FXC.burst(q.x, q.y, 40, { colors: ['#35e0ff', '#ffffff', '#ff4fa3'], star: true, speed: 9 });
+      telop('TRIPLE!<small>' + hit.label + ' ' + hit.score + '点</small>', 'cyan sm', 1200);
+    } else if (hit.kind === 'double') {
+      SE.play('ding');
+      telop('DOUBLE!<small>' + hit.label + ' ' + hit.score + '点</small>', 'lime sm', 1200);
+    } else if (hit.kind === 'miss') SE.play('buzz');
+    else { SE.play('pop'); SE.play('tick', 0.05); }
+    vibrate(hit.kind === 'bull' ? [60, 40, 90] : 40);
+    if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1400); }
     else toolLater(() => {
       const mn = Math.min.apply(null, T.res), losers = T.ps.filter((_, j) => T.res[j] === mn);
       toolFinish(losers, losers.length > 1 ? '同点！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯', j => $('tlP' + j));
-    }, 1200);
-  }, 260);
+    }, 1400);
+  }, 230);
 }
 
 /* サイコロ勝負: each of the two throws one die into the bowl; the smaller number drinks (same number = both) */
@@ -6210,7 +6268,7 @@ const GUIDE = [
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。シゴロかヒフミが出たら負けた人は×2（両方なら×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
-        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', '動く狙いを見て「投げる！」。得点の低い方が負け']]
+        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て「投げる！」。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
