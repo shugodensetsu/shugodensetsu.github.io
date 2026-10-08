@@ -886,18 +886,28 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
 .cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
 .cc-mult b{color:var(--yellow); font-size:1.15em}
-.dt-board{position:relative; flex:none; width:min(70vw, 34vh, 300px); aspect-ratio:1}
-.dt-svg{width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 var(--ink))}
-.dt-lb{font-size:9px; font-weight:800; fill:#fff; stroke:#150733; stroke-width:2.5px; paint-order:stroke; text-anchor:middle}
-.dt-row .sw-p{padding:6px 8px}
-.dt-aim{position:absolute; left:50%; top:50%; width:15%; aspect-ratio:1; margin:-7.5% 0 0 -7.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
+.dt-board{position:relative; flex:none; width:min(86vw, 42cqh, 330px); aspect-ratio:1}
+.dt-svg{position:relative; width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
+.dt-n{font-family:var(--f-body); font-size:10.5px; font-weight:800; fill:#f4f4f6; text-anchor:middle}
+/* the LED ring round a DARTSLIVE-style board */
+.dt-led{position:absolute; inset:-3%; border-radius:50%; background:conic-gradient(from 0deg, #35e0ff, #b17cff, #ff4fa3, #ffd83d, #a8f03a, #35e0ff); filter:blur(6px); opacity:.85;
+  -webkit-mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); animation:spin 6s linear infinite}
+.dt-board.lit .dt-led{animation:spin 1s linear infinite, ledFlash .9s ease-out}
+@keyframes ledFlash{0%{opacity:1; filter:blur(2px) brightness(2)} 100%{opacity:.85; filter:blur(6px)}}
+.dt-aim{position:absolute; left:50%; top:50%; width:13%; aspect-ratio:1; margin:-6.5% 0 0 -6.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
 .dt-aim::before, .dt-aim::after{content:''; position:absolute; left:50%; top:50%; background:var(--yellow); transform:translate(-50%,-50%)}
 .dt-aim::before{width:2px; height:140%}
 .dt-aim::after{width:140%; height:2px}
 .dt-hits{position:absolute; inset:0; pointer-events:none}
-.dt-hit{position:absolute; width:6%; aspect-ratio:1; margin:-3% 0 0 -3%; box-sizing:border-box; border-radius:50%; background:var(--p); border:2px solid var(--ink); box-shadow:0 0 0 2px #fff; animation:dtHit .3s cubic-bezier(.2,1.6,.4,1)}
-@keyframes dtHit{from{transform:scale(3.2); opacity:0}}
-.dt-pop{position:absolute; font-family:var(--f-display); font-size:20px; color:var(--yellow); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.5s ease-out forwards}
+.dt-dart{position:absolute; width:15%; aspect-ratio:1; margin-top:-15%; transform-origin:0 100%; animation:dtIn .23s cubic-bezier(.5,0,.9,.6) both; filter:drop-shadow(2px 3px 1px rgba(0,0,0,.55))}
+.dt-dart svg{display:block; width:100%; height:100%}
+@keyframes dtIn{from{transform:translate(60%, 140%) scale(2.8); opacity:0} 60%{opacity:1} to{transform:none}}
+.dt-pop{position:absolute; transform:translate(-50%,-50%); font-family:var(--f-display); font-size:20px; color:var(--white); white-space:nowrap; text-shadow:2px 2px 0 var(--ink), -1px -1px 0 var(--ink); pointer-events:none; animation:floatUp 1.6s ease-out forwards}
+.dt-pop.triple{color:var(--cyan); font-size:24px}
+.dt-pop.double{color:var(--lime); font-size:22px}
+.dt-pop.bull{color:var(--yellow); font-size:28px}
+.dt-pop.miss{color:#ff8b98}
+.tl-val small{display:block; font-family:var(--f-body); font-weight:800; font-size:11px; color:var(--muted)}
 
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
