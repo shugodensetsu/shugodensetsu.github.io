@@ -3358,10 +3358,13 @@ function closeTool(mode) {
   if (mode === 'special' && T.losers.length === 1) openSheet(T.losers[0], { base: T.cups, owed: true, src: 'tool' });
   else autoRecord(T.losers, T.cups, { src: 'tool', decided: true });
 }
-function toolAct(a) {
+function toolAct(a, el) {
   const T = tool;
   if (a === 'close') { closeTool(false); return; }
   if (a === 'rec' || a === 'special') { closeTool(a); return; }
+  if (T.kind === 'indian' && a === 'peek') { indianPeek(); return; }
+  if (T.kind === 'indian' && a === 'hide') { indianHide(); return; }
+  if (T.kind === 'indian' && a === 'redraw') { indianRedraw(+el.dataset.j); return; }
   if (T.kind === 'chinchiro') { if (a === 'go') chinRoll(); else if (a === 'next') { T.k++; chinTurn(); } }
   else if (T.kind === 'darts') { if (a === 'go') dartsThrow(); }
   else if (T.kind === 'dice') { if (a === 'go') diceThrow(); }
@@ -3420,7 +3423,8 @@ function duelSetup() {
   $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
     '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span>' +
     '<div class="tl-slot ' + (T.kind === 'dice' ? 'die-slot' : 'card-slot') + '" id="tlS' + i + '">' + (T.kind === 'dice' ? dieSVG(0) : flipCard('tlC' + i, null, false)) + '</div>' +
-    '<b class="tl-val" id="tlV' + i + '">&nbsp;</b></div>').join('') + '</div><p class="tm-sub" id="toolSub"></p>';
+    '<b class="tl-val" id="tlV' + i + '">&nbsp;</b>' + (T.kind === 'indian' ? '<span class="ip-act" id="tlA' + i + '"></span>' : '') + '</div>').join('') + '</div><p class="tm-sub" id="toolSub"></p>';
+  if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = [false, false]; }
   duelTurn();
 }
 function duelTurn() {
@@ -3441,11 +3445,7 @@ function duelDraw() {
   toolActs('', false);
   if (T.kind === 'indian') {
     T.ps.forEach((_, j) => { T.res[j] = T.deck.pop(); toolLater(() => { const box = $('tlS' + j); box.innerHTML = flipCard('tlC' + j, null, false); box.firstElementChild.classList.add('deal'); SE.play('deal'); }, j * 380); });
-    toolLater(() => {
-      T.busy = false;
-      $('toolSub').innerHTML = 'カードは伏せたまま…<br>おでこに当てるつもりで、<b>せーので開こう！</b>';
-      toolActs('<button type="button" class="pbtn big main pulse" data-tl="open">せーので オープン！</button>');
-    }, 1000);
+    toolLater(() => { T.busy = false; T.k = 0; indianPeekTurn(); }, 1000);
     return;
   }
   const i = T.k;
@@ -3467,10 +3467,70 @@ function duelDraw() {
     after();
   }, 850);
 }
+/* each player in turn looks at the OTHER one's card (never their own — it is "on their forehead") */
+const ipName = j => '<b>' + esc(pname(tool.ps[j])) + '</b>';
+function indianPeekTurn() {
+  const T = tool, i = T.k, o = 1 - i;
+  T.phase = 'peek';
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.remove('wait', 'peek'); });
+  $('toolSub').innerHTML = (i ? 'スマホを渡して… ' : '') + ipName(i) + ' の番！ ' + ipName(o) + ' のカードを見よう' +
+    '<small>' + esc(pname(T.ps[o])) + ' は画面を見ないで！ 自分のカードは見えないよ</small>';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="peek">' + esc(pname(T.ps[o])) + ' のカードを見る</button>');
+}
+function indianPeek() {
+  const T = tool, i = T.k, o = 1 - i, c = T.res[o], box = $('tlC' + o);
+  if (T.phase !== 'peek' || T.busy) return;
+  T.phase = 'peeking';
+  box.querySelector('.flip-f').innerHTML = c.joker ? jokerFace() : pcardFace(c);
+  box.classList.add('open'); $('tlP' + o).classList.add('peek');
+  SE.play('flip');
+  $('toolSub').innerHTML = ipName(o) + ' のカードはこれ！<small>覚えたら閉じて' + (i ? '、引き直すか決めよう' : '、スマホを ' + esc(pname(T.ps[o])) + ' に渡そう') + '</small>';
+  toolActs('<button type="button" class="pbtn big main" data-tl="hide">' + (i ? '見た！ 次へ' : '見た！ ' + esc(pname(T.ps[o])) + ' に渡す') + '</button>');
+}
+function indianHide() {
+  const T = tool, i = T.k, o = 1 - i;
+  if (T.phase !== 'peeking') return;
+  $('tlC' + o).classList.remove('open'); $('tlP' + o).classList.remove('peek');
+  SE.play('swoosh');
+  toolActs('', false);
+  /* wait for the card to turn back over before the next person sees the screen */
+  toolLater(() => { $('tlC' + o).querySelector('.flip-f').innerHTML = ''; if (i === 0) { T.k = 1; indianPeekTurn(); } else indianRedrawPhase(); }, 520);
+}
+/* both have seen the other's card: each may swap their own (still unseen) card once, then the showdown */
+function indianRedrawPhase() {
+  const T = tool;
+  T.phase = 'redraw';
+  T.ps.forEach((_, j) => { $('tlP' + j).classList.remove('now', 'wait'); ipRedrawBtn(j); });
+  $('toolSub').innerHTML = '自分のカード、<b>引き直す？</b><small>自分のカードは見えないまま。相手の顔色を読んで決めよう（1人1回まで）</small>';
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="open">勝負！ オープン</button>');
+}
+function ipRedrawBtn(j) {
+  const T = tool, a = $('tlA' + j);
+  a.innerHTML = T.redrawn[j] ? '<span class="ip-done">引き直した</span>' : '<button type="button" class="pbtn white small ip-btn" data-tl="redraw" data-j="' + j + '">引き直す</button>';
+}
+function indianRedraw(j) {
+  const T = tool;
+  if (T.phase !== 'redraw' || T.busy || T.redrawn[j]) return;
+  T.redrawn[j] = true; T.busy = true;
+  T.deck.unshift(T.res[j]);
+  T.res[j] = T.deck.pop();
+  $('tlA' + j).innerHTML = '';
+  const box = $('tlS' + j);
+  box.firstElementChild.classList.add('toss');
+  SE.play('swoosh');
+  toolLater(() => {
+    box.innerHTML = flipCard('tlC' + j, null, false);
+    box.firstElementChild.classList.add('deal'); SE.play('deal');
+    ipRedrawBtn(j);
+    T.busy = false;
+    $('toolSub').innerHTML = ipName(j) + ' が引き直した！<small>' + (T.redrawn.every(Boolean) ? '2人とも引き直したら、いざ勝負！' : 'もう1人も引き直す？ このままでよければ「勝負！」') + '</small>';
+  }, 420);
+}
 function indianOpen() {
   const T = tool;
-  if (T.busy || T.opened) return;
-  T.opened = true; T.busy = true;
+  if (T.busy || T.opened || T.phase !== 'redraw') return;
+  T.opened = true; T.busy = true; T.phase = 'open';
+  T.ps.forEach((_, j) => { $('tlA' + j).innerHTML = ''; });
   toolActs('', false);
   $('toolSub').innerHTML = '<b>せーの…！</b>';
   SE.play('roll');
@@ -3537,9 +3597,18 @@ function dartBoardSVG() {
   h += '<circle r="' + DB.do + '" fill="url(#dtShine)"/>';
   return h + '</svg>';
 }
-const DART_SVG = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M1 39 L9 31" stroke="#d9dde3" stroke-width="1.6" stroke-linecap="round"/><path d="M9 31 L20 20" stroke="#5b616c" stroke-width="3.6" stroke-linecap="round"/>' +
-  '<path d="M9 31 L20 20" stroke="#c9ced6" stroke-width="1.2" stroke-dasharray="1.4 1.2"/><path d="M20 20 L25 15" stroke="#1d1d22" stroke-width="2"/>' +
-  '<path d="M25 15 L38 3 L33 15 Z" fill="var(--p)" stroke="#150733" stroke-width="1"/><path d="M25 15 L37 2 L25 7 Z" fill="var(--p)" stroke="#150733" stroke-width="1" opacity=".8"/></svg>';
+/* a dart as you see it stuck in a board from the front: the tip pinned at the hit spot (top of the picture),
+   the barrel coming towards you and dropping a little, the flights nearest you as a small X.
+   The tip sits at (30, 6) of the 60x90 box, so the element is placed with that point on the hit */
+const DART_SVG = '<svg viewBox="0 0 60 90" aria-hidden="true"><defs><linearGradient id="dtBar" x1="0" x2="1"><stop offset="0" stop-color="#6c7480"/><stop offset=".45" stop-color="#eef1f5"/><stop offset="1" stop-color="#5a616c"/></linearGradient></defs>' +
+  '<circle cx="30" cy="6" r="2" fill="#0c0c10" stroke="#fff" stroke-width=".7"/><path d="M30 6 L31.6 15 L28.9 15.4 Z" fill="#f4f4f6" stroke="#150733" stroke-width=".9" stroke-linejoin="round"/>' +
+  '<path d="M28.9 15.4 L31.6 15 L35.6 37 L30.2 38 Z" fill="url(#dtBar)" stroke="#150733" stroke-width="1"/>' +
+  '<path d="M29.8 21 L32.6 20.6 M30.3 25 L33.4 24.5 M30.8 29 L34.1 28.5 M31.2 33 L34.8 32.4" stroke="#3a3f48" stroke-width=".9"/>' +
+  '<path d="M30.2 38 L35.6 37 L37.4 50 L32.4 50.8 Z" fill="var(--p)" stroke="#150733" stroke-width="1"/>' +
+  '<g transform="translate(35 56) scale(1 .82)" stroke="#150733" stroke-width="1.2" stroke-linejoin="round">' +
+  '<path d="M0 0 L-19 -16 L-12 -19 Z" fill="var(--p)"/><path d="M0 0 L19 -16 L12 -19 Z" fill="var(--p)"/>' +
+  '<path d="M0 0 L-19 17 L-12 21 Z" fill="var(--p)" opacity=".92"/><path d="M0 0 L19 17 L12 21 Z" fill="var(--p)" opacity=".92"/>' +
+  '<circle r="2.6" fill="#1d1d22"/></g></svg>';
 const dartPct = v => (50 + v / (DB.vb * 2) * 100).toFixed(2) + '%';
 function dartsSetup() {
   const T = tool;
@@ -3585,7 +3654,10 @@ function dartsThrow() {
   SE.play('swoosh');
   $('dtAim').hidden = true;
   const x = dartPct(ex), y = dartPct(ey);
-  $('dtHits').insertAdjacentHTML('beforeend', '<i class="dt-dart" style="left:' + x + ';top:' + y + ';--p:' + pc(T.ps[i]) + '">' + DART_SVG + '</i>');
+  /* it flies in from the thrower (below the board, big and close), shrinks onto the spot and sticks with a little wobble */
+  const bw = $('dtBoard').clientWidth / (DB.vb * 2), rot = (Math.random() - 0.5) * 34;
+  const fly = '--fx:' + Math.round((0 - ex) * 0.45 * bw) + 'px;--fy:' + Math.round((175 - ey) * 0.45 * bw) + 'px;--rot:' + rot.toFixed(1) + 'deg';
+  $('dtHits').insertAdjacentHTML('beforeend', '<i class="dt-mark" style="left:' + x + ';top:' + y + '"></i><i class="dt-dart" style="left:' + x + ';top:' + y + ';--p:' + pc(T.ps[i]) + ';' + fly + '">' + DART_SVG + '</i>');
   toolLater(() => {
     const big = hit.kind === 'bull' ? 'BULL!!' : hit.kind === 'miss' ? 'MISS' : hit.label + ' ' + hit.score;
     $('dtHits').insertAdjacentHTML('beforeend', '<span class="dt-pop ' + hit.kind + '" style="left:' + x + ';top:' + y + '">' + big + '</span>');
@@ -3864,7 +3936,7 @@ const GUIDE = [
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。シゴロかヒフミが出たら負けた人は×2（両方なら×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
-        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、せーので開く。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て、ボードか「投げる！」をタップ。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
+        ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、順番に相手のカードだけを見る（自分のは見えない）。そのあと1人1回まで引き直せて、勝負で低い方が負け。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て、ボードか「投げる！」をタップ。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
@@ -4396,6 +4468,8 @@ function wireGame() {
     if (tool && tool.kind === 'darts' && tool.aimOn && e.target.closest('#dtBoard, [data-tl="go"]')) tool.snap = { x: tool.ax, y: tool.ay, t: performance.now() };
   }, true);
   $('toolStage').addEventListener('click', e => {
+    const b = tool && e.target.closest('[data-tl]');
+    if (b) { if (!b.disabled && performance.now() >= (tool.guard || 0)) toolAct(b.dataset.tl, b); return; }
     if (!tool || !e.target.closest('#tlBowl, #dtBoard')) return;
     const go = $('toolActs').querySelector('[data-tl="go"]');
     if (go && !go.disabled) toolAct('go');
