@@ -2,7 +2,7 @@
    The page itself is fetched fresh when online (so updates arrive), falling back to the saved copy offline;
    icons and fonts come from the cache. Bump VERSION on every release.
    The 3D dice libraries (vendor/) live in their own cache, kept across releases (rename VENDOR when they change). */
-const VERSION = 'sakego-202610080351';
+const VERSION = 'sakego-202610080427';
 const FONTS = 'sakego-fonts';
 const VENDOR = 'sakego-vendor-three160-cannon020';
 const VENDOR_FILES = ['./vendor/three.module.min.js', './vendor/cannon-es.min.js'];

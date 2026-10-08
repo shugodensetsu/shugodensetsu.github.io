@@ -3741,7 +3741,9 @@ function diceResult() {
 
 /* チンチロ: everyone throws three dice into the bowl (up to 3 tries for a hand). Strong → weak:
    ピンゾロ > ゾロ目 > シゴロ > 目（6〜1） > 目なし・ションベン（お椀の外） > ヒフミ.
-   The weakest drinks (a tie = all of them). A シゴロ or a ヒフミ anywhere in the round doubles it (both = ×4) */
+   The weakest drinks (a tie = all of them). Big rolls anywhere in the round multiply what the loser drinks:
+   ピンゾロ ×5, ゾロ目 ×3, シゴロ ×2, ヒフミ ×2 — each kind once, and kinds multiply together (シゴロ+ヒフミ = ×4, ピンゾロ+ヒフミ = ×10) */
+const CHIN_MULT = [['ピンゾロ', 5, h => h.rank === 100], ['ゾロ目', 3, h => h.rank > 90 && h.rank < 100], ['シゴロ', 2, h => h.name === 'シゴロ'], ['ヒフミ', 2, h => h.name === 'ヒフミ']];
 function chinHand(d) {
   const s = d.slice().sort((a, b) => a - b);
   if (s[0] === 1 && s[2] === 1) return { rank: 100, name: 'ピンゾロ' };
@@ -3755,7 +3757,7 @@ function chinHand(d) {
 function chinSetup() {
   const T = tool;
   T.hands = [];
-  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + T.base + '杯</b><small>シゴロかヒフミが出たら×2（両方なら×4）</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + T.base + '杯</b><small>ピンゾロ×5・ゾロ目×3・シゴロ×2・ヒフミ×2<br>出たら負けた人の杯数にかかる（重なったら掛け算）</small></p>' +
     '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
     '<div class="cc-row" id="ccR' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand" id="ccH' + j + '">—</b></div>').join('') + '</div>' +
     '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
@@ -3816,7 +3818,7 @@ function chinJudge(d, out) {
   if (hand.rank >= 80) {
     SE.play('bigheaven');
     const q = relPos($('tlBowl')); FXC.burst(q.x, q.y, 70, { colors: GOLD, star: true, speed: 12 });
-    telop(hand.rank === 100 ? 'ピンゾロ！！' : hand.name === 'シゴロ' ? 'シゴロ！<small>負けた人は×2</small>' : hand.name + '！', hand.rank === 100 ? 'angel' : 'sm', 1500);
+    telop(hand.rank === 100 ? 'ピンゾロ！！<small>負けた人は×5</small>' : hand.name === 'シゴロ' ? 'シゴロ！<small>負けた人は×2</small>' : hand.name + '！<small>負けた人は×3</small>', hand.rank === 100 ? 'angel' : 'sm', 1500);
   } else if (hand.rank <= 0) {
     SE.play('hell'); flash('#e8233f');
     if (hand.rank < 0) telop('ヒフミ……<small>負けたら×2</small>', 'devil', 1500);
@@ -3828,12 +3830,11 @@ function chinJudge(d, out) {
 function chinResult() {
   const T = tool, ranks = T.hands.map(x => x.rank), mn = Math.min.apply(null, ranks);
   const losers = T.ps.filter((_, j) => ranks[j] === mn);
-  const shi = T.hands.some(x => x.name === 'シゴロ'), hif = T.hands.some(x => x.name === 'ヒフミ');
-  const mult = (shi ? 2 : 1) * (hif ? 2 : 1);
+  const hits = CHIN_MULT.filter(([, , is]) => T.hands.some(is)), mult = hits.reduce((m, [, k]) => m * k, 1);
   T.cups = T.base * mult;
   const who = losers.length > 1 ? losers.map(q => '<b>' + esc(pname(q)) + '</b>').join('・') + ' が同じ役で負け！' : '<b>' + esc(pname(losers[0])) + '</b> の負け！（' + T.hands[T.ps.indexOf(losers[0])].name + '）';
   const msg = who + (mult > 1
-    ? '<br><span class="cc-mult">' + [shi ? 'シゴロ ×2' : '', hif ? 'ヒフミ ×2' : ''].filter(Boolean).join(' ・ ') + ' → ' + T.base + '杯 × ' + mult + ' = <b>' + T.cups + '杯</b></span>'
+    ? '<br><span class="cc-mult">' + hits.map(([n, k]) => n + '×' + k).join('・') + '<br>' + T.base + '杯 × ' + mult + ' = <b>' + T.cups + '杯</b>' + (losers.length > 1 ? 'ずつ' : '') + '</span>'
     : ' ' + T.cups + '杯' + (losers.length > 1 ? 'ずつ' : ''));
   toolFinish(losers, msg, j => $('ccR' + j));
   if (mult > 1) setTimeout(() => { if (screen === 'game') { telop('×' + mult + '！！<small>' + T.cups + '杯</small>', 'red', 1500); shake(true); } }, 450);
@@ -3935,7 +3936,7 @@ const GUIDE = [
     gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>が飲みます。爆発までの時間は毎回ちがいます。</p>') +
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
-      [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。シゴロかヒフミが出たら負けた人は×2（両方なら×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
+      [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。ピンゾロが出たら負けた人は×5、ゾロ目なら×3、シゴロ・ヒフミなら×2。いくつも出たら掛け算（シゴロとヒフミで×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
         ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、順番に相手のカードだけを見る（自分のは見えない）。そのあと1人1回まで引き直せて、勝負で低い方が負け。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て、ボードか「投げる！」をタップ。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
