@@ -886,12 +886,32 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .big-v{font-family:var(--f-display); font-weight:400; font-size:1.4em; color:var(--yellow)}
 .cc-mult{display:inline-block; margin-top:4px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:10px; padding:1px 10px; font-size:13px}
 .cc-mult b{color:var(--yellow); font-size:1.15em}
-.dt-board{position:relative; flex:none; width:min(86vw, 42cqh, 330px); aspect-ratio:1}
+.dt-board{position:relative; flex:none; width:min(94cqw, 97cqh); aspect-ratio:1; cursor:crosshair; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
+/* darts: everything else kept compact so the board gets all the room it can */
+.tool-ov.darts .tm-box{gap:6px; padding:10px 4px calc(10px + env(safe-area-inset-bottom, 0px))}
+.tool-ov.darts .tm-head{gap:4px; padding-inline:8px}
+.tool-ov.darts .tm-title{font-size:min(24px, 6.4vw)}
+.tool-ov.darts .tm-card{font-size:min(12.5px, 3.3vw); line-height:1.5; padding:4px 12px; border-width:2.5px; box-shadow:0 3px 0 var(--ink)}
+.tool-ov.darts .tm-stage{gap:6px}
+.tool-ov.darts .tm-acts{padding-inline:10px}
+.dt-stake{font-size:12px; line-height:1.4}
+.dt-stake small{font-size:10.5px}
+.dt-row{flex:none; padding-inline:8px; box-sizing:border-box}
+.dt-row .sw-p{flex-direction:row; justify-content:space-between; gap:6px; padding:4px 8px 4px 4px; border-radius:14px; box-shadow:0 3px 0 var(--ink)}
+.dt-row .sw-p.now{transform:scale(1.04)}
+.dt-row .sw-name{flex:0 1 auto; min-width:4.5em; font-size:13px; padding:1px 10px}
+.dt-row .tl-val{flex:none; font-size:20px; line-height:1; min-height:0; white-space:nowrap}
+.dt-row .tl-val small{display:inline; margin-left:3px; font-size:10px}
+.dt-row .sw-vs{font-size:16px}
+.dt-wrap{flex:1 1 0; min-height:0; align-self:stretch; display:grid; place-items:center; container-type:size}
+.dt-sub{font-size:14px; line-height:1.4; min-height:2.8em}
+.dt-sub small{display:block; font-size:11.5px; color:var(--muted)}
+@media (max-height: 740px){.tool-ov.darts .tm-card{display:none}} /* small phones: the players and the stake line already say it all */
 .dt-svg{position:relative; width:100%; height:100%; display:block; filter:drop-shadow(0 6px 0 rgba(0,0,0,.55))}
 .dt-n{font-family:var(--f-body); font-size:10.5px; font-weight:800; fill:#f4f4f6; text-anchor:middle}
 /* the LED ring round a DARTSLIVE-style board */
 .dt-led{position:absolute; inset:-3%; border-radius:50%; background:conic-gradient(from 0deg, #35e0ff, #b17cff, #ff4fa3, #ffd83d, #a8f03a, #35e0ff); filter:blur(6px); opacity:.85;
-  -webkit-mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); mask:radial-gradient(circle, transparent 60%, #000 64%, #000 70%, transparent 74%); animation:spin 6s linear infinite}
+  -webkit-mask:radial-gradient(circle, transparent 62%, #000 65%, #000 69%, transparent 72.5%); mask:radial-gradient(circle, transparent 62%, #000 65%, #000 69%, transparent 72.5%); animation:spin 6s linear infinite}
 .dt-board.lit .dt-led{animation:spin 1s linear infinite, ledFlash .9s ease-out}
 @keyframes ledFlash{0%{opacity:1; filter:blur(2px) brightness(2)} 100%{opacity:.85; filter:blur(6px)}}
 .dt-aim{position:absolute; left:50%; top:50%; width:13%; aspect-ratio:1; margin:-6.5% 0 0 -6.5%; box-sizing:border-box; border-radius:50%; border:3px solid var(--yellow); box-shadow:0 0 0 2px var(--ink), 0 0 14px 3px rgba(255,216,61,.7); pointer-events:none}
