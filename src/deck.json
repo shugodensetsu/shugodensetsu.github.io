@@ -58,7 +58,7 @@
 {"id":53,"cat":"all","text":"誕生日が一番近い人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":54,"cat":"all","text":"{引いた人}が2択のお題を出す。せーので全員が選び、少数派が1杯","cups":[1],"min":3,"dur":null,"note":"同数ならセーフ","on":true,"fx":null,"drink":null},
 {"id":55,"cat":"all","text":"全員がせーので指を1〜5本出す。誰とも被らなかった人が1杯","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":56,"cat":"all","text":"ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":56,"cat":"all","text":"ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":57,"cat":"topic","text":"{引いた人}がお題を決めて、時計回りに山手線ゲーム。答えられなかった人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":58,"cat":"all","text":"この中で黒髪の人はグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":59,"cat":"safe","text":"何も起こらない。","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},

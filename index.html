@@ -1623,7 +1623,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 {"id":53,"cat":"all","text":"誕生日が一番近い人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":54,"cat":"all","text":"{引いた人}が2択のお題を出す。せーので全員が選び、少数派が1杯","cups":[1],"min":3,"dur":null,"note":"同数ならセーフ","on":true,"fx":null,"drink":null},
 {"id":55,"cat":"all","text":"全員がせーので指を1〜5本出す。誰とも被らなかった人が1杯","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":56,"cat":"all","text":"ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":56,"cat":"all","text":"ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":57,"cat":"topic","text":"{引いた人}がお題を決めて、時計回りに山手線ゲーム。答えられなかった人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":58,"cat":"all","text":"この中で黒髪の人はグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":59,"cat":"safe","text":"何も起こらない。","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
@@ -1861,9 +1861,19 @@ function normalize(d) {
    (localStorage) instead of being republished into the page, and the deck built into the page is only the starting set */
 const IS_APP = !!window.SAKEGO_APP;
 const APP_DECK_KEY = 'sakego-deck';
+/* built-in cards that were rewritten later: a deck saved on the device still has the old wording, so it is updated too —
+   only while that card is exactly the old text (a card the user changed themselves is left alone) */
+const DECK_FIXES = [
+  [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
+];
 function appDeck() {
   if (!IS_APP) return null;
-  try { const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null'); return d && Array.isArray(d.cards) && Array.isArray(d.categories) ? d : null; } catch (_) { return null; }
+  try {
+    const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null');
+    if (!(d && Array.isArray(d.cards) && Array.isArray(d.categories))) return null;
+    DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
+    return d;
+  } catch (_) { return null; }
 }
 function parseEmbedded() {
   const own = appDeck();

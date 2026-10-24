@@ -178,9 +178,19 @@ function normalize(d) {
    (localStorage) instead of being republished into the page, and the deck built into the page is only the starting set */
 const IS_APP = !!window.SAKEGO_APP;
 const APP_DECK_KEY = 'sakego-deck';
+/* built-in cards that were rewritten later: a deck saved on the device still has the old wording, so it is updated too —
+   only while that card is exactly the old text (a card the user changed themselves is left alone) */
+const DECK_FIXES = [
+  [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
+];
 function appDeck() {
   if (!IS_APP) return null;
-  try { const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null'); return d && Array.isArray(d.cards) && Array.isArray(d.categories) ? d : null; } catch (_) { return null; }
+  try {
+    const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null');
+    if (!(d && Array.isArray(d.cards) && Array.isArray(d.categories))) return null;
+    DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
+    return d;
+  } catch (_) { return null; }
 }
 function parseEmbedded() {
   const own = appDeck();
