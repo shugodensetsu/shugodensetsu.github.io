@@ -677,13 +677,11 @@ function turnFx() {
   telop('<span style="color:' + pc(d) + '">' + esc(pname(d)) + '</span>のターン！', 'white sm', 1300);
   SE.play('turn');
 }
-function ruleTurns(dur, n) {
-  const m = /(\d+)\s*周/.exec(dur);
-  if (m) return Math.max(1, Number(m[1])) * n;
-  const t = /(\d+)\s*ターン/.exec(dur);
-  if (t) return Math.max(1, Number(t[1]));
-  return n;
-}
+/* a continuing rule lasts a random 4–10 turns, which nobody can see: it vanishes out of the blue,
+   and whoever is about to draw at that moment drinks 1 cup (per rule that vanished) */
+const RULE_LIFE = [4, 10];
+const ruleLife = () => RULE_LIFE[0] + Math.floor(Math.random() * (RULE_LIFE[1] - RULE_LIFE[0] + 1));
+const ruleAge = h => Math.max(1, G.turn - (Number(h.turn) || 0) + 1);
 const fillGame = text => esc(text).replace(TAG_RE, (_, k) => { const i = G.cur.names[k]; return '<span class="pn" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>'; });
 const plainFill = text => text.replace(TAG_RE, (_, k) => pname(G.cur.names[k]));
 function snap() {
@@ -697,7 +695,7 @@ function ticket(fx, label, extra) { return Object.assign({ kind: 'ticket', fx, l
 
 function drawCard() {
   const cur = G.cur;
-  if (cur.phase !== 'before' || picking) return;
+  if (cur.phase !== 'before' || picking || vanishCur === cur) return;
   const n = G.players.length;
   const pool = eligibleCards(n);
   if (!pool.length) return;
@@ -730,7 +728,7 @@ function drawCard() {
   if (fx === 'halfnext') { G.pending.half = true; if (!G.pending.src) G.pending.src = 'カードの効果'; }
   if (card.dur) {
     /* a continuing card goes to the drawer's hand and shows in the 「継続中」 strip; cups = what breaking the rule costs */
-    const item = { kind: 'dur', fx: fx === 'half' || fx === 'nodouble' ? fx : null, label: '継続', text: plainFill(card.text), left: ruleTurns(card.dur, n), mark: cur.card.mark, color: cur.card.color,
+    const item = { kind: 'dur', fx: fx === 'half' || fx === 'nodouble' ? fx : null, label: '継続', text: plainFill(card.text), left: ruleLife(), mark: cur.card.mark, color: cur.card.color,
       cups: card.cups.slice(), turn: G.turn };
     if (durPickCard(card)) Object.assign(item, { pick: true, who: null, title: ruleTitle(card.text) || '指名', mate: mateCard(card) });
     else {
@@ -772,7 +770,7 @@ function drawCard() {
 function cardInner(c) {
   return '<div class="gc-band"><span class="gc-mark">' + esc(c.mark) + '</span><span class="gc-cat">' + esc(c.catName) + '</span><span class="gc-no">' + fmtNo(c.id) + '</span></div>' +
     '<div class="gc-body"><p class="gc-text">' + fillGame(c.text) + '</p>' + (c.note ? '<p class="gc-note">' + fillGame(c.note) + '</p>' : '') + '</div>' +
-    '<div class="gc-foot"><span>' + (c.dur ? '<span class="gc-dur">継続 ' + esc(c.dur) + '</span>' : isChal(c.fx) ? '<span class="gc-dur ch">チャレンジ</span>' : timerTag(c)) + '</span>' + gameCups(c) + '</div>';
+    '<div class="gc-foot"><span>' + (c.dur ? '<span class="gc-dur">継続 いつ消える？</span>' : isChal(c.fx) ? '<span class="gc-dur ch">チャレンジ</span>' : timerTag(c)) + '</span>' + gameCups(c) + '</div>';
 }
 function cardActs() {
   const cur = G.cur, fx = cur.card && cur.card.fx, acts = [];
@@ -925,12 +923,22 @@ function nextTurn(force) {
   startTurn();
   saveGame();
   renderGame();
-  turnFx();
-  if (expired.length) setTimeout(() => {
-    const one = expired[0].length > 15 ? expired[0].slice(0, 14) + '…' : expired[0];
-    telop((expired.length > 1 ? expired.length + 'つのルールが終了！' : 'ルール終了！') + '<small>' + esc(expired.length > 1 ? one + ' など' : one) + '</small>', 'cyan sm', 1500);
-    SE.play('poof');
-  }, 1300);
+  if (expired.length) ruleVanish(expired); else turnFx();
+}
+/* rules vanished as this turn began: say so at once, then the person about to draw drinks 1 cup per rule
+   (recorded like any other drink, so 倍倍FIGHT！/天国と地獄 can follow). Drawing waits the moment this takes */
+let vanishCur = null;
+function ruleVanish(expired) {
+  const cur = G.cur;
+  vanishCur = cur;
+  const one = expired[0].length > 15 ? expired[0].slice(0, 14) + '…' : expired[0];
+  telop((expired.length > 1 ? expired.length + 'つのルールが消滅！' : 'ルール消滅！') + '<small>' + esc(expired.length > 1 ? one + ' など' : one) + '</small>', 'cyan', 1400);
+  SE.play('poof'); flash('#35e0ff');
+  setTimeout(() => {
+    if (vanishCur === cur) vanishCur = null;
+    if (!G || G.cur !== cur || screen !== 'game') return;
+    autoRecord([cur.drawer], expired.length, { src: 'vanish', from: $('gRules').hidden ? '#gRound' : '#gRules' });
+  }, 900);
 }
 /* ---------- going back: 「取り消す」 undoes the last record in this turn; 「◀ 前のターンに戻る」 restores the game exactly as it was
    when 「次へ」 was pressed (card, records, special rules used, hands, NEXT ×2 …), so a forgotten record can still be made ---------- */
@@ -1099,7 +1107,7 @@ function sheetHint(c, s) {
   return '';
 }
 function handRow(h) {
-  const detail = h.kind === 'dur' ? 'あと' + h.left + 'ターン'
+  const detail = h.kind === 'dur' ? ruleAge(h) + 'ターン目'
     : h.fx === 'heavenpass' ? 'ルーレットで地獄のとき使える'
     : h.fx === 'freecospa' ? 'コスパを使うと自動で使う'
     : '記録のときに使える';
@@ -1213,7 +1221,7 @@ function zoomHint() {
   const cur = G.cur, c = cur.card, n = G.players.length;
   const plain = { html: 'どこをタップしてもテーブルに戻ります' };
   if (!c || cur.autoDone) return plain;
-  if (c.dur) return { auto: true, html: durPickCard(c) ? '閉じると、指名する人を選びます' : '閉じると、上の<b>「継続中」</b>に表示されます（' + esc(c.dur) + '）' };
+  if (c.dur) return { auto: true, html: durPickCard(c) ? '閉じると、指名する人を選びます' : '閉じると、上の<b>「継続中」</b>に表示されます（いつ消えるかはお楽しみ）' };
   const pl = drinkPlan();
   if (AUTO_MODES.includes(pl.mode)) {
     if (!pl.ps.length) return { auto: true, html: '該当する人がいないので、今回はセーフ' };
@@ -1369,7 +1377,7 @@ function countUp(seat, from, to) {
   for (let i = 1; i <= steps; i++) setTimeout(() => { if (t.isConnected) show(i === steps ? to : from + unit * Math.round((to - from) * i / steps / unit)); }, i * Math.min(110, 480 / steps));
 }
 function autoTelop(items, o) {
-  const head = o && o.src === 'rule' ? '違反！ ' : '';
+  const head = o && o.src === 'rule' ? '違反！ ' : o && o.src === 'vanish' ? 'ルール消滅！ ' : '';
   const n = G.players.length, drink = items.filter(it => it.amt > 0);
   if (!drink.length) { telop('SAFE！', 'lime sm', 1200); return; }
   const amts = drink.map(it => it.amt), same = amts.every(a => a === amts[0]), max = Math.max.apply(null, amts);
@@ -1397,7 +1405,7 @@ function openSpecial() {
   else openDecide('who', { list });
 }
 /* a drink for the card itself (not コスパ, not naming someone, not a rule break) */
-const recordedThisTurn = () => G.cur.drinks.some(e => e.kind !== 'cospa' && e.kind !== 'name' && e.src !== 'rule');
+const recordedThisTurn = () => G.cur.drinks.some(e => e.kind !== 'cospa' && e.kind !== 'name' && e.src !== 'rule' && e.src !== 'vanish');
 /* the card's drinkers still have to be chosen */
 function needsPick() {
   const cur = G && G.cur;
@@ -1781,14 +1789,13 @@ function renderRules() {
   const cols = rows.length === 1 ? 'one' : rows.length >= 7 ? 'dense' : '';
   el.innerHTML = '<span class="gr-l">継続中</span><div class="gr-grid ' + cols + '">' + rows.map(([i, h]) => {
     const cls = ['gr-chip'];
-    if (h.left <= 1) cls.push('last');
     if (h.pick && h.who == null) cls.push('wait');
     if (!rulesShown.has(h.uid)) { cls.push('in'); rulesShown.add(h.uid); }
     const cups = ruleCups(h);
-    return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（あと' + h.left + 'ターン）' + (cups ? '。タップで違反を記録' : '') + '">' +
+    return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（' + ruleAge(h) + 'ターン目・いつ消えるかはランダム）' + (cups ? '。タップで違反を記録' : '') + '">' +
       '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + chipLabel(i, h) + '</span>' +
       (cups > 1 ? '<span class="gr-cup">' + cups + '杯</span>' : '') +
-      '<span class="gr-left">' + (h.left <= 1 ? 'ラスト' : 'あと' + h.left) + '</span></button>';
+      '<span class="gr-left">' + ruleAge(h) + 'ターン目</span></button>';
   }).join('') + '</div>';
 }
 function ruleTap(uid) {
@@ -1807,7 +1814,8 @@ function openRuleInfo(i, h) {
     : h.pick && h.who != null ? '「' + esc(h.title) + '」は <b>' + esc(pname(h.who)) + '</b>。' : '';
   $('infoBox').innerHTML = '<h2 id="infoTitle">継続中のルール</h2><p class="back-card">' + esc(h.text) + '</p>' +
     (extra ? '<p class="note-s">' + extra + '</p>' : '') +
-    '<p class="note-s"><span class="sh-mini" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>が引いたカード ・ あと<b>' + h.left + '</b>ターン</p>' +
+    '<p class="note-s"><span class="sh-mini" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>が引いたカード ・ <b>' + ruleAge(h) + '</b>ターン目</p>' +
+    '<p class="note-s">4〜10ターンのどこかで<b>突然消えます</b>。消えた瞬間、次にカードを引く人が<b>1杯</b>！</p>' +
     '<div class="dialog-acts"><button type="button" class="pbtn small" data-if="close">閉じる</button></div>';
   openOv('infoOv');
   SE.play('pop');
@@ -1880,7 +1888,7 @@ function openEnd() {
   G.players.forEach((pl, i) => pl.hand.forEach(h => { if (h.kind === 'dur') rows.push([i, h]); }));
   if (!rows.length) { closeOv('endOv'); return; }
   $('endBox').innerHTML = '<h2 id="endTitle">ルールを終わらせる</h2><p>終わらせたい継続カードを1枚選んでね。</p>' +
-    rows.map(([i, h]) => '<div class="end-item"><span class="dot" style="--p:' + pc(i) + '"></span><span>' + esc(pname(i)) + '：' + esc(h.text) + '（あと' + h.left + '）</span>' +
+    rows.map(([i, h]) => '<div class="end-item"><span class="dot" style="--p:' + pc(i) + '"></span><span>' + esc(pname(i)) + '：' + esc(h.text) + '（' + ruleAge(h) + 'ターン目）</span>' +
       '<button type="button" class="pbtn pink tiny" data-end="' + h.uid + '" data-p="' + i + '">終了</button></div>').join('') +
     '<div class="dialog-acts"><button type="button" class="pbtn white small" data-end="close">閉じる</button></div>';
   if ($('endOv').hidden) openOv('endOv');
@@ -2247,7 +2255,7 @@ const CHAL = {
     rule: q => '<b>5秒</b>以内に<br><b>' + q.need + '回</b>タップしたらクリア！<br>両手の指を使ってもOK', play: playMash },
   ch_circle: { title: 'まんまるチャレンジ', rule: '指で一筆の<b>まる</b>を描く。<br>きれいさを採点して<br><b>80点以上</b>でクリア！', play: playCircle },
   ch_color: { title: '色当てチャレンジ', rule: '書いてある言葉じゃなく<br><b>文字の色</b>をタップ！<br><b>5問連続</b>正解でクリア（1問1.8秒）', play: playColor },
-  ch_order: { title: '数字タッチ', rule: 'バラバラの1〜9を<br><b>順番に</b>タッチ！<br><b>5秒以内</b>でクリア<br><small>1回でも間違えたら、その場で<b>お手つき</b>アウト</small>', play: playOrder },
+  ch_order: { title: '数字タッチ', rule: 'バラバラの1〜9を<br><b>順番に</b>タッチ！<br><b>3秒以内</b>でクリア<br><small>1回でも間違えたら、その場で<b>お手つき</b>アウト</small>', play: playOrder },
   ch_hilo: { title: 'ハイ&ロー', rule: 'つぎのトランプが今より<br><b>上（ハイ）</b>か<b>下（ロー）</b>か当てる！<br><b>3連続</b>正解でクリア<br><small>Aがいちばん下、Kがいちばん上。同じ数はやり直し</small>', play: c => playHilo(c) },
 };
 const zoneLabel = W => (W <= 8 ? 'せまい' : W <= 13 ? 'ふつう' : 'ひろい');
@@ -2512,12 +2520,12 @@ function playColor(st) {
     }));
   });
 }
-/* 数字タッチ: tap 1..9 in order within 5 s; one wrong tap is an instant out */
+/* 数字タッチ: tap 1..9 in order within 3 s; one wrong tap is an instant out */
 function playOrder(st) {
   chalCountdown(() => {
-    const T = 5, nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    const T = 3, nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     let want = 1;
-    st.innerHTML = '<p class="cg-sub">のこり <b id="cgLeft">5.0</b> 秒 ・ 次は <b id="cgNext">1</b></p><div class="cg-grid" id="cgGrid">' +
+    st.innerHTML = '<p class="cg-sub">のこり <b id="cgLeft">3.0</b> 秒 ・ 次は <b id="cgNext">1</b></p><div class="cg-grid" id="cgGrid">' +
       nums.map(n => '<button type="button" data-n="' + n + '">' + n + '</button>').join('') + '</div>';
     const t0 = performance.now();
     let out = false;
@@ -3948,10 +3956,11 @@ const GUIDE = [
       '<span class="gd-mk" style="--c:' + colorVar(c.color) + '">' + esc(catMark(c)) + '</span><span><span class="gd-rn">' + esc(catName(c)) + '</span>' + esc(CAT_DESC[c.key] || 'カード編集で作った系統') + '</span>').join('') + '</div>') +
     gCard('名前が入るところ', '<p>カードの <span class="tag">{引いた人}</span> などは、ゲーム中は実際の名前に変わります。</p><ul class="gd-list">' +
       '<li><b>引いた人</b>：カードを引いた人</li><li><b>ランダム</b>：引いた人以外から、アプリが選んだ人</li><li><b>左隣・右隣</b>：登録順で次の人・前の人</li></ul>') +
-    gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-left">あと3</span></span>' +
-      '<span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t"><b class="gr-r">王様</b><small class="gr-w">ユウキ</small></span><span class="gr-left">あと4</span></span>' +
+    gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-left">5ターン目</span></span>' +
+      '<span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t"><b class="gr-r">王様</b><small class="gr-w">ユウキ</small></span><span class="gr-left">2ターン目</span></span>' +
       '<span class="gd-seat" style="--p:' + pc(0) + '"><span class="seat-badges"><span class="sb" style="--c:var(--c8)">王様</span></span>ユウキ<small>2杯</small></span></div>' +
-      '<p>「継続 2周」などと書かれたカードは、<b>画面の上の「継続中」</b>に並びます。増えても折り返して<b>全部が1画面に</b>収まります。あと何ターン続くかが出て、最後のターンは赤く光ります。期間が終わると自動で消えます。</p>' +
+      '<p>「継続」と書かれたカードは、<b>画面の上の「継続中」</b>に並びます。増えても折り返して<b>全部が1画面に</b>収まります。出ているのは、始まってから何ターン目か。</p>' +
+      '<p>ルールは<b>4〜10ターンのどこかで突然消えます</b>（いつ消えるかは誰にも分かりません）。<b>消えた瞬間、次にカードを引く人が1杯</b>。自動で記録されます（2つ同時に消えたら2杯）。</p>' +
       '<p><b>王様・クエスチョンマスター・インシュメイト・執事</b>のように人につくルールは、<b>その人の席の上に★付きで</b>表示されます。</p>' +
       '<ul class="gd-list"><li><b>違反した人がいたら</b> → 「継続中」のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。杯数は自動</li>' +
       '<li><b>インシュメイト</b> → カードを閉じたら相手を指名。そのあとは、どちらかが飲むと<b>もう片方にも同じ量が自動で記録</b>されます</li>' +
@@ -4043,7 +4052,7 @@ const COACH = [
   { k: 'later', when: () => noOv() && !picking && needsPick(), at: '#dock [data-g="decide"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド</span><p>飲む人が決まったら<b>「誰が飲む？」</b>から選んで記録しよう。</p>' },
   { k: 'rules', when: () => noOv() && !picking && !G.cur.select && durRows().length > 0 && !durWaiting(false), at: '#gRules', html: () =>
-    '<span class="cb-step">はじめてガイド</span><p>続くルールは<b>ここに表示</b>されます（あと何ターン続くかも）。</p><p class="sub">違反した人がいたら、<b>ルールをタップ</b>して選ぶだけで記録できます。</p>' },
+    '<span class="cb-step">はじめてガイド</span><p>続くルールは<b>ここに表示</b>されます。4〜10ターンのどこかで突然消えて、<b>消えた瞬間に次に引く人が1杯</b>！</p><p class="sub">違反した人がいたら、<b>ルールをタップ</b>して選ぶだけで記録できます。</p>' },
   { k: 'nodrink', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.drinks.length && !G.cur.select && !picking && !!G.cur.card && drinkOf(G.cur.card) === 'none',
     at: '#dock [data-g="next"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド</span><p>このカードは飲む人がいないので、そのまま<b>「次へ」</b>でOK。</p>' },
@@ -4220,7 +4229,7 @@ function entryPills(e) {
   if (e.kind === 'bomb') return pill(e.p, 'ドカーン');
   if (e.kind === 'safe') return '<span class="lg">誰も<b>飲まず</b></span>';
   if (e.kind === 'name') return pill(e.p, e.label);
-  return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + '杯' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
+  return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : e.src === 'vanish' ? '<span class="lg vio">ルール消滅</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + '杯' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
 }
 function renderLog() {
   const cur = G.cur, es = cur.drinks;

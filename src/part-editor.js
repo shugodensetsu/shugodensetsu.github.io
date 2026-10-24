@@ -110,7 +110,7 @@ function viewCard(card) {
   if (kind === 'off') meta.push('<span class="pill warn">OFF</span>');
   else if (kind === 'cat') meta.push('<span class="pill warn">系統OFF</span>');
   if (card.min > 2) meta.push('<span class="pill' + (kind === 'short' ? ' warn' : '') + '">' + card.min + '人以上</span>');
-  if (card.dur) meta.push('<span class="pill">継続：' + esc(card.dur) + '</span>');
+  if (card.dur) meta.push('<span class="pill">継続</span>');
   if (card.fx) meta.push('<span class="pill app">連動：' + esc(fxName(card.fx)) + '</span>');
   const tl = !card.fx && toolOf(card);
   if (tl) meta.push('<span class="pill app">アプリで' + esc(FX_INFO[tl].name) + '</span>');
@@ -160,9 +160,9 @@ function formCard(card, isNew) {
             '<span>杯</span></div>' +
           '<span class="hint">1〜99の整数。範囲のときだけ右にも入力。両方空欄なら杯数なし（セーフ・効果カード）</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-min">最低人数</label><select class="field" id="ed-min">' + minOpts + '</select></div>' +
-        '<div class="fld"><label class="lbl" for="ed-dur">継続（任意）</label>' +
-          '<input class="field" id="ed-dur" list="dur-list" maxlength="20" value="' + esc(d.dur) + '" placeholder="例：1周、次のターンまで">' +
-          '<datalist id="dur-list"><option value="1周"></option><option value="2周"></option><option value="3周"></option><option value="次のターンまで"></option></datalist></div>' +
+        '<div class="fld"><label class="lbl" for="ed-dur">継続</label>' +
+          '<select class="field" id="ed-dur"><option value=""' + (d.dur ? '' : ' selected') + '>しない（その場で終わり）</option><option value="' + esc(d.dur || 'ランダム') + '"' + (d.dur ? ' selected' : '') + '>する（ルールとして続く）</option></select>' +
+          '<span class="hint">続くルールは、4〜10ターンのどこかで突然消えます。消えた瞬間、次にカードを引く人が1杯</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-fx">アプリ連動</label><select class="field" id="ed-fx">' + fxOptions(d.fx) + '</select>' +
           '<span class="hint" id="ed-fx-hint">' + esc(fxHint(d.fx)) + '</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-drink">飲む人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
@@ -297,7 +297,7 @@ function validate(f) {
   }
   if (!catOf(f.cat)) return { err: '系統を選んでください。', field: 'ed-cat' };
   const fx = f.fx || null;
-  if ((fx === 'half' || fx === 'nodouble' || fx === 'mate') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」に期間（例：次のターンまで）を入れてください。', field: 'ed-dur' };
+  if ((fx === 'half' || fx === 'nodouble' || fx === 'mate') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」を「する」にしてください。', field: 'ed-dur' };
   return { card: { cat: f.cat, text, cups, min: Math.min(8, Math.max(2, Number(f.min) || 2)), dur: f.dur.trim() || null, note: f.note.replace(/\s+/g, ' ').trim() || null, fx, drink: DRINK_INFO[f.drink] ? f.drink : null } };
 }
 function showFormError(msg, field) {

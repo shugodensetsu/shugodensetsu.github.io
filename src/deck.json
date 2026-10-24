@@ -104,7 +104,7 @@
 {"id":103,"cat":"chal","text":"{引いた人}は「連打チャレンジ」に挑戦。5秒で指定の回数タップできたら回避、失敗したら1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_mash","drink":null},
 {"id":104,"cat":"chal","text":"{引いた人}は「まんまるチャレンジ」に挑戦。指で描いたまるが80点以上なら回避、失敗したら1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_circle","drink":null},
 {"id":105,"cat":"chal","text":"{引いた人}は「色当てチャレンジ」に挑戦。5問連続で正解したら回避、失敗したら2杯","cups":[2],"min":2,"dur":null,"note":"書いてある言葉ではなく、文字の色を答える","on":true,"fx":"ch_color","drink":null},
-{"id":106,"cat":"chal","text":"{引いた人}は「数字タッチ」に挑戦。1〜9を5秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_order","drink":null},
+{"id":106,"cat":"chal","text":"{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_order","drink":null},
 {"id":107,"cat":"chal","text":"{引いた人}はアプリが選ぶチャレンジに挑戦。クリアで回避、失敗したら2杯","cups":[2],"min":2,"dur":null,"note":"7種類のミニゲームからランダム","on":true,"fx":"ch_random","drink":null},
 {"id":108,"cat":"chal","text":"{引いた人}は「素直に1杯飲む」か「チャレンジに挑む（クリアで0杯・失敗で3杯）」かを選ぶ","cups":[1,3],"min":2,"dur":null,"note":"1杯を選んだら、そのまま{引いた人}の席から記録。挑むなら「チャレンジ抽選！」を押す","on":true,"fx":"ch_random","drink":null},
 {"id":109,"cat":"chal","text":"{引いた人}は「ハイ&ロー」に挑戦。3連続で当てたら回避、失敗したら1杯","cups":[1],"min":2,"dur":null,"note":"つぎのトランプが上か下かを当てる。同じ数はやり直し","on":true,"fx":"ch_hilo","drink":null},
