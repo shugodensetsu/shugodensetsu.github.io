@@ -98,6 +98,17 @@ function laugh(A, t) {
 const heart = (A, t, g) => { tone(A, t, { type: 'sine', f: 78, f2: 40, bend: 0.09, d: 0.2, g: g || 1 }); tone(A, t + 0.17, { type: 'sine', f: 66, f2: 36, bend: 0.09, d: 0.24, g: (g || 1) * 0.75 }); };
 const bellHit = (A, t, f, d, g) => { tone(A, t, { type: 'sine', f, d, g, rv: 0.6 }); tone(A, t, { type: 'sine', f: f * 2.76, d: d * 0.5, g: g * 0.45, rv: 0.6 }); tone(A, t, { type: 'sine', f: f * 5.4, d: d * 0.25, g: g * 0.25, rv: 0.6 }); };
 const SOUNDS = {
+  /* パーティーゲーム */
+  stab: (A, t) => { tone(A, t, { type: 'sine', f: 2600, f2: 1800, d: 0.07, g: 0.07 }); noise(A, t + 0.03, { d: 0.12, g: 0.55, type: 'bandpass', f: 700, f2: 300, q: 1.2 }); tone(A, t + 0.03, { type: 'triangle', f: 180, f2: 80, bend: 0.1, d: 0.2, g: 0.45 }); },
+  boing: (A, t) => { tone(A, t, { type: 'sine', f: 140, f2: 760, bend: 0.28, d: 0.75, g: 0.32, vib: 13, vibD: 35 }); noise(A, t, { d: 0.06, g: 0.5, type: 'highpass', f: 1500 }); kick(A, t, 0.8); sparkle(A, t + 0.2, 6); },
+  tooth: (A, t) => { tone(A, t, { type: 'square', f: 760, f2: 520, d: 0.05, g: 0.07 }); noise(A, t, { d: 0.04, g: 0.18, type: 'bandpass', f: 2600, q: 2 }); },
+  bite: (A, t) => { noise(A, t, { d: 0.05, g: 0.6, type: 'highpass', f: 2500 }); kick(A, t + 0.01, 1); noise(A, t + 0.01, { d: 0.3, g: 0.6, type: 'lowpass', f: 900, f2: 200 }); tone(A, t + 0.02, { type: 'sawtooth', f: 110, f2: 50, d: 0.35, g: 0.25, lp: 900, lp2: 200 }); },
+  dig: (A, t) => { noise(A, t, { d: 0.22, g: 0.45, type: 'lowpass', f: 900, f2: 250 }); noise(A, t + 0.05, { d: 0.12, g: 0.2, type: 'bandpass', f: 1800, q: 1.5 }); },
+  pump: (A, t) => { noise(A, t, { d: 0.22, g: 0.32, type: 'bandpass', f: 900, f2: 2600, q: 1.1, a: 0.04 }); tone(A, t, { type: 'sine', f: 180, f2: 260, d: 0.18, g: 0.08 }); },
+  squeak: (A, t) => tone(A, t, { type: 'triangle', f: 700 + Math.random() * 300, f2: 1250, d: 0.22, g: 0.06, vib: 30, vibD: 25 }),
+  burst: (A, t) => { noise(A, t, { d: 0.08, g: 1, type: 'highpass', f: 1200 }); noise(A, t, { d: 0.5, g: 0.45, type: 'bandpass', f: 700, f2: 200, q: 0.6, rv: 0.4 }); kick(A, t, 1); crash(A, t, 0.25); },
+  slosh: (A, t) => { noise(A, t, { d: 0.26, g: 0.32, type: 'bandpass', f: 450, f2: 1300, q: 0.9 }); noise(A, t + 0.12, { d: 0.2, g: 0.2, type: 'bandpass', f: 1300, f2: 500, q: 0.9 }); tone(A, t, { type: 'sine', f: 300, f2: 420, d: 0.12, g: 0.05 }); },
+  cork: (A, t) => { tone(A, t, { type: 'sine', f: 380, f2: 1600, bend: 0.025, d: 0.09, g: 0.7 }); noise(A, t, { d: 0.05, g: 0.6, type: 'highpass', f: 2000 }); noise(A, t + 0.06, { d: 1.8, g: 0.28, type: 'highpass', f: 5000, a: 0.04, rv: 0.3 }); sparkle(A, t + 0.15, 8); },
   tap: (A, t) => tone(A, t, { type: 'sine', f: 520, f2: 1150, bend: 0.06, d: 0.1, g: 0.2 }),
   pop: (A, t) => tone(A, t, { type: 'sine', f: 700, f2: 1500, bend: 0.05, d: 0.08, g: 0.2 }),
   draw: (A, t) => { noise(A, t, { d: 0.32, g: 0.3, type: 'bandpass', f: 400, f2: 5200, q: 0.9 }); kick(A, t + 0.26, 0.7); brass(A, t + 0.26, [392, 523.25, 659.25], 0.32, 0.06, { lp: 1500, lp2: 3800 }); },
@@ -784,7 +795,7 @@ function cardActs() {
   if (fx === 'givesafe' && !cur.giveDone) acts.push(['give', 'セーフ券を渡す', 'lime']);
   if (fx === 'endrule' && anyDur()) acts.push(['endrule', 'ルールを終わらせる', 'lime']);
   const tk = cur.phase === 'drawn' ? toolOf(cur.card) : null;
-  if (tk && !recordedThisTurn()) acts.push(['tool', TOOL_INFO[tk].act, 'cyan']);
+  if (tk && !recordedThisTurn()) acts.push(['tool', TOOL_INFO[tk].act, TOOL_INFO[tk].btn || 'cyan']);
   const tm = timerOf(cur.card);
   if (tm) acts.push(['timer', tm.stop ? fmtSec(tm.sec) + 'ストップ対決！' : fmtSec(tm.sec) + 'タイマー スタート！', 'cyan']);
   return acts;
@@ -1422,8 +1433,8 @@ function turnTask() {
   if (!cur.card || recordedThisTurn()) return null;
   if (needsPick()) return { title: 'まだ飲む人を記録していません', text: 'このカードで飲んだ人は、いなかった？', go: 'decide', goLabel: '飲む人を選ぶ', skip: '誰も飲まなかった' };
   if (drinkOf(cur.card) === 'app') {
-    const a = cardActs().find(x => GAME_NAMES[x[0]]);
-    if (a) return { title: 'まだ「' + (a[0] === 'chal' && CHAL[cur.card.fx] ? CHAL[cur.card.fx].title : GAME_NAMES[a[0]]) + '」をやっていません', text: 'やらずに次の人へ進む？', go: a[0], goLabel: 'やる！', skip: 'やらずに次へ' };
+    const a = cardActs().find(x => GAME_NAMES[x[0]] || (x[0] === 'tool' && PARTY_FX.includes(cur.card.fx)));
+    if (a) return { title: 'まだ「' + (a[0] === 'chal' && CHAL[cur.card.fx] ? CHAL[cur.card.fx].title : a[0] === 'tool' ? TOOL_INFO[cur.card.fx].title : GAME_NAMES[a[0]]) + '」をやっていません', text: 'やらずに次の人へ進む？', go: a[0], goLabel: 'やる！', skip: 'やらずに次へ' };
   }
   return null;
 }
@@ -3357,6 +3368,12 @@ const TOOL_INFO = {
   cards: { title: 'トランプ勝負', act: 'アプリでトランプ！', cls: 'casino', stake: '低い方（A=1）が' },
   indian: { title: 'インディアンポーカー', act: 'アプリでインディアンポーカー！', cls: 'casino', stake: '低い方が（JOKERは2人とも）' },
   darts: { title: 'ダーツ勝負', act: 'アプリでダーツ！', cls: 'darts', stake: '得点の低い方が' },
+  taru: { title: '酒樽危機一髪', act: '酒樽危機一髪スタート！', cls: 'taru pg', stake: '親父を飛ばした人が', btn: 'pink' },
+  wani: { title: 'ワニの歯', act: 'ワニの歯スタート！', cls: 'wani pg', stake: '噛まれた人が', btn: 'pink' },
+  mine: { title: '地雷原', act: '地雷原スタート！', cls: 'mine pg', stake: '地雷を踏んだ人が', btn: 'pink' },
+  skull: { title: 'ドクロめくり', act: 'ドクロめくりスタート！', cls: 'skull pg', stake: 'ドクロを引いた人が', btn: 'pink' },
+  balloon: { title: '風船パンク', act: '風船パンクスタート！', cls: 'balloon pg', stake: '割った人が', btn: 'pink' },
+  champ: { title: 'シャンパン振り', act: 'シャンパン振りスタート！', cls: 'champ pg', stake: '栓を飛ばした人が', btn: 'pink' },
 };
 const TOOL_CLOSE = '<button type="button" class="pbtn white small" data-tl="close">やめる</button>';
 let tool = null;
@@ -3372,7 +3389,7 @@ function openTool() {
   if (tool || !kind || cur.phase !== 'drawn') return;
   const n = G.players.length;
   let ps;
-  if (kind === 'chinchiro') ps = Array.from({ length: n }, (_, k) => (cur.drawer + k) % n);
+  if (kind === 'chinchiro' || PARTY_FX.includes(kind)) ps = Array.from({ length: n }, (_, k) => (cur.drawer + k) % n);
   else {
     ps = cardPeople(c).slice(0, 2);
     const a = ps.length ? ps[0] : cur.drawer;
@@ -3385,7 +3402,7 @@ function openTool() {
   openOv('toolOv');
   BGM.play('tension'); BGM.level(0.7, 0.3);
   SE.play('pop');
-  if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else duelSetup();
+  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else duelSetup();
 }
 function closeTool(mode) {
   const T = tool;
@@ -3405,6 +3422,7 @@ function toolAct(a, el) {
   const T = tool;
   if (a === 'close') { closeTool(false); return; }
   if (a === 'rec' || a === 'special') { closeTool(a); return; }
+  if (PARTY_FX.includes(T.kind)) { partyAct(a, el); return; }
   if (T.kind === 'indian' && a === 'peek') { indianPeek(); return; }
   if (T.kind === 'indian' && a === 'hide') { indianHide(); return; }
   if (T.kind === 'indian' && a === 'redraw') { indianRedraw(+el.dataset.j); return; }
@@ -3883,6 +3901,446 @@ function chinResult() {
   if (mult > 1) setTimeout(() => { if (screen === 'game') { telop('×' + mult + '！！<small>' + T.cups + '杯</small>', 'red', 1500); shake(true); } }, 450);
 }
 
+/* ---------- パーティーゲーム: 黒ひげ系（1人1つずつ。ハズレを引いた人の負け）と 度胸系（何回進めるかを自分で決めて次の人へ）.
+   Everyone plays, in turn from the drawer, passing the phone round. Whoever sets it off drinks the card's cups:
+   recorded like any other drink, so 倍倍FIGHT！/天国と地獄 can follow ---------- */
+const PARTY_HINT = {
+  taru: '穴をタップして、剣を1本刺す', wani: '歯を1本タップして押す', mine: 'マスを1つタップして掘る',
+  skull: 'カードを1枚タップしてめくる', balloon: '空気を1〜3回入れて「次の人へ」', champ: 'ボトルを1〜5回振って「次の人へ」',
+};
+const PARTY_LOSE = { taru: 'が親父を飛ばした！', wani: 'が噛まれた！', mine: 'が地雷を踏んだ！', skull: 'がドクロを引いた！', balloon: 'が風船を割った！', champ: 'が栓を飛ばした！' };
+const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pips = (n, max) => '●'.repeat(n) + '○'.repeat(Math.max(0, max - n));
+const pgNow = () => tool.ps[tool.k % tool.ps.length];
+const restartAnim = (el, cls) => { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); };
+const PARTY = {};
+function partySetup() {
+  const T = tool, kind = T.kind, P = PARTY[kind];
+  Object.assign(T, { turns: 0, acts: 0 });
+  P.init(T);
+  $('toolStage').innerHTML = '<p class="tl-stake pg-stake" id="pgStake"></p>' +
+    '<div class="pg-order" id="pgOrder">' + T.ps.map((p, j) => '<span class="pg-o" id="pgO' + j + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>').join('') + '</div>' +
+    '<div class="pg-stage pg-' + kind + '" id="pgArt">' + P.art(T) + '</div><p class="tm-sub pg-sub" id="toolSub"></p>';
+  partyStake();
+  partyTurn();
+}
+function partyStake() {
+  const T = tool, P = PARTY[T.kind];
+  $('pgStake').innerHTML = TOOL_INFO[T.kind].stake + ' <b id="pgCups">' + T.cups + '杯</b>' + (P.info ? '<small>' + P.info(T) + '</small>' : '');
+}
+function partyTurn() {
+  const T = tool, j = T.k % T.ps.length, p = T.ps[j];
+  T.busy = false; T.acts = 0;
+  T.ps.forEach((_, i) => $('pgO' + i).classList.toggle('now', i === j));
+  $('pgArt').style.setProperty('--p', pc(p));
+  $('toolSub').innerHTML = (T.turns ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(p)) + '</b> の番！<small>' + PARTY_HINT[T.kind] + '</small>';
+  partyButtons();
+  if (T.turns) SE.play('pass');
+}
+function partyButtons() { const T = tool, P = PARTY[T.kind]; toolActs(TOOL_CLOSE + (P.buttons ? P.buttons(T) : ''), false); }
+function partyNext(ms) { const T = tool; T.busy = true; T.turns++; T.k++; toolLater(partyTurn, ms == null ? 650 : ms); }
+function partyLose(ms) {
+  const T = tool, p = pgNow();
+  T.state = 'boom'; T.busy = true;
+  toolActs('', false);
+  vibrate([80, 50, 160]);
+  toolLater(() => toolFinish([p], '<b>' + esc(pname(p)) + '</b> ' + PARTY_LOSE[T.kind] + ' <b>' + T.cups + '杯</b>', j => $('pgO' + j)), ms || 1500);
+}
+function partyAct(a, el) {
+  const T = tool;
+  if (T.state !== 'play' || T.busy) return;
+  const P = PARTY[T.kind];
+  if (a === 'hit' && P.hit) P.hit(T, Number(el.dataset.i), el);
+  else if (a === 'go' && P.go) P.go(T);
+  else if (a === 'pass' && T.acts > 0) { SE.play('swoosh'); partyNext(250); }
+}
+
+/* 酒樽危機一髪: a straw-wrapped sake barrel (菰樽) with 12 holes; one hidden hole sends the old man flying out of the lid */
+const TARU_N = 12;
+const TARU_HOLES = (() => {
+  const out = [];
+  [[128, 114], [250, 111]].forEach(([y, R]) => [-62, -37, -12, 12, 37, 62].forEach(deg => {
+    const a = deg * Math.PI / 180;
+    out.push({ x: 160 + R * Math.sin(a), y: y + 13 * Math.cos(a), rx: 3.5 + 8.5 * Math.cos(a), a: deg });
+  }));
+  return out;
+})();
+const TARU_BODY = 'M48 78 C 36 160, 36 250, 58 318 A102 20 0 0 0 262 318 C 284 250, 284 160, 272 78 A112 22 0 0 1 48 78 Z';
+const OYAJI_SVG = '<g class="tr-oyaji">' +
+  '<path d="M116 98 C 118 70, 202 70, 204 98 Z" fill="#1f62c4" stroke="#150733" stroke-width="2.5"/>' +
+  '<path d="M146 73 L160 94 L174 73" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>' +
+  '<path d="M190 82 L210 56" stroke="#1f62c4" stroke-width="14" stroke-linecap="round"/><path d="M190 82 L210 56" stroke="#150733" stroke-width="18" stroke-linecap="round" opacity=".0"/>' +
+  '<path d="M209 58 L217 42" stroke="#150733" stroke-width="11" stroke-linecap="round"/><path d="M209 58 L217 42" stroke="#ffd7b0" stroke-width="7.5" stroke-linecap="round"/>' +
+  '<g transform="translate(220 30) rotate(14)"><path d="M-13 -11 L13 -11 L10 11 L-10 11 Z" fill="#e7c27a" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><path d="M-11 -8 L11 -8" stroke="#fff3cf" stroke-width="3"/></g>' +
+  '<circle cx="134" cy="45" r="6.5" fill="#ffd7b0" stroke="#150733" stroke-width="2.2"/><circle cx="186" cy="45" r="6.5" fill="#ffd7b0" stroke="#150733" stroke-width="2.2"/>' +
+  '<circle cx="160" cy="42" r="27" fill="#ffd7b0" stroke="#150733" stroke-width="2.6"/>' +
+  '<path d="M153 17 Q160 3 167 17 Z" fill="#2a2a30" stroke="#150733" stroke-width="1.5"/><rect x="150" y="8" width="20" height="6" rx="3" fill="#2a2a30"/>' +
+  '<path d="M133 27 Q160 19 187 27 L187 36 Q160 28 133 36 Z" fill="#fff" stroke="#150733" stroke-width="2"/>' +
+  '<path d="M139 28 l6 6 M149 25 l6 6 M159 24 l6 6 M169 25 l6 6 M179 27 l5 5" stroke="#e8233f" stroke-width="3.2"/>' +
+  '<path d="M186 29 l15 -9 l-2 11 Z M186 33 l13 9 l-11 2 Z" fill="#fff" stroke="#150733" stroke-width="1.6" stroke-linejoin="round"/>' +
+  '<path d="M141 40 l11 -2 M168 38 l11 2" stroke="#150733" stroke-width="3" stroke-linecap="round"/>' +
+  '<path class="tr-eye" d="M143 47 q5 -6 10 0 M167 47 q5 -6 10 0" fill="none" stroke="#150733" stroke-width="2.8" stroke-linecap="round"/>' +
+  '<ellipse cx="142" cy="55" rx="6" ry="4" fill="#ff8fa3" opacity=".85"/><ellipse cx="178" cy="55" rx="6" ry="4" fill="#ff8fa3" opacity=".85"/>' +
+  '<circle cx="160" cy="52" r="5.5" fill="#ff5a6e" stroke="#150733" stroke-width="1.6"/>' +
+  '<path d="M150 59 Q160 71 170 59 Z" fill="#8a1f2b" stroke="#150733" stroke-width="2" stroke-linejoin="round"/>' +
+  '<path class="tr-sweat" d="M190 40 q-6 8 0 12 q6 -4 0 -12 Z" fill="#7fd3ff" stroke="#150733" stroke-width="1.3"/>' +
+  '<path class="tr-sweat" d="M129 34 q-4 6 0 9 q4 -3 0 -9 Z" fill="#7fd3ff" stroke="#150733" stroke-width="1.2"/>' +
+  '</g>';
+function taruSVG() {
+  const ropes = [[100, 44], [204, 38], [306, 54]].map(([y, x]) => {
+    const d = 'M' + x + ' ' + y + ' A' + (160 - x) + ' 21 0 0 0 ' + (320 - x) + ' ' + y;
+    return '<path d="' + d + '" class="tr-rope"/><path d="' + d + '" class="tr-rope2"/>';
+  }).join('');
+  const holes = TARU_HOLES.map(h => '<ellipse cx="' + h.x.toFixed(1) + '" cy="' + h.y.toFixed(1) + '" rx="' + h.rx.toFixed(1) + '" ry="11" class="tr-hole"/>' +
+    '<path d="M' + (h.x - h.rx * 0.8).toFixed(1) + ' ' + (h.y + 7).toFixed(1) + ' Q' + h.x.toFixed(1) + ' ' + (h.y + 13).toFixed(1) + ' ' + (h.x + h.rx * 0.8).toFixed(1) + ' ' + (h.y + 7).toFixed(1) + '" class="tr-hole-lip"/>').join('');
+  const hits = TARU_HOLES.map((h, i) => '<circle cx="' + h.x.toFixed(1) + '" cy="' + h.y.toFixed(1) + '" r="22" class="pg-hit" data-tl="hit" data-i="' + i + '"/>').join('');
+  return '<svg class="tr-svg" id="trSvg" viewBox="0 0 320 360" role="img" aria-label="酒樽">' +
+    '<defs><linearGradient id="trStraw" x1="0" x2="1"><stop offset="0" stop-color="#9c7434"/><stop offset=".2" stop-color="#e2c37c"/><stop offset=".45" stop-color="#f8e6b0"/><stop offset=".72" stop-color="#dcb76c"/><stop offset="1" stop-color="#86601f"/></linearGradient>' +
+    '<pattern id="trWeave" width="5" height="9" patternUnits="userSpaceOnUse"><path d="M1 0v9M3.5 0v9" stroke="#7a5418" stroke-opacity=".3" stroke-width=".8"/><path d="M0 4.5h5" stroke="#fff" stroke-opacity=".14" stroke-width=".7"/></pattern>' +
+    '<radialGradient id="trHoleG" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="#000"/><stop offset=".7" stop-color="#190b02"/><stop offset="1" stop-color="#4a2a0c"/></radialGradient>' +
+    '<linearGradient id="trLid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c38c52"/><stop offset="1" stop-color="#8b5829"/></linearGradient>' +
+    '<clipPath id="trClip"><rect x="-200" y="-500" width="720" height="580"/><ellipse cx="160" cy="80" rx="37" ry="10"/></clipPath></defs>' +
+    '<ellipse cx="160" cy="338" rx="134" ry="15" class="tr-shadow"/>' +
+    '<g class="tr-barrel">' +
+    '<ellipse cx="160" cy="78" rx="112" ry="22" fill="url(#trLid)" stroke="#150733" stroke-width="2.5"/>' +
+    '<path d="M66 70h188M60 80h200M72 90h176" stroke="#6b4220" stroke-opacity=".3" stroke-width="1.3"/>' +
+    '<ellipse cx="160" cy="80" rx="37" ry="10" fill="#1a0c03" stroke="#5a3510" stroke-width="2"/>' +
+    '<path class="tr-spring" d="M160 82 l-10 -6 l20 -7 l-20 -7 l20 -7 l-20 -7 l20 -7 l-10 -4" fill="none" stroke="#c9ced6" stroke-width="3.2" stroke-linejoin="round"/>' +
+    '<g class="tr-fly" id="trOyaji"><g clip-path="url(#trClip)">' + OYAJI_SVG + '</g></g>' +
+    '<path d="' + TARU_BODY + '" fill="url(#trStraw)"/><path d="' + TARU_BODY + '" fill="url(#trWeave)"/>' +
+    '<path d="' + TARU_BODY + '" fill="none" stroke="#150733" stroke-width="3"/>' +
+    '<path d="M272 78 A112 22 0 0 1 48 78" fill="none" stroke="#d9ad66" stroke-width="7"/><path d="M272 78 A112 22 0 0 1 48 78" fill="none" stroke="#150733" stroke-width="2"/>' +
+    ropes +
+    '<g transform="translate(160 196)"><rect x="-47" y="-52" width="94" height="104" rx="3" fill="#fffaf0" stroke="#c8102e" stroke-width="4.5"/>' +
+    '<rect x="-39" y="-44" width="78" height="88" fill="none" stroke="#c8102e" stroke-width="1.3"/>' +
+    '<text x="0" y="16" class="tr-kanji">酒</text><rect x="14" y="22" width="20" height="18" rx="2" fill="#c8102e"/><text x="24" y="35.5" class="tr-seal">GO</text></g>' +
+    holes + '<g id="trSwords"></g></g>' + hits + '</svg>';
+}
+function taruSword(h, p) {
+  const r = h.a * 1.05, L = Math.round(16 + 30 * Math.abs(Math.sin(h.a * Math.PI / 180)));
+  let ito = '';
+  for (let y = 9; y < L - 3; y += 8) ito += '<path d="M-4 ' + -(y + 4) + ' l4 -4 l4 4 l-4 4 Z" fill="#fff" opacity=".85"/>';
+  return '<g transform="translate(' + h.x.toFixed(1) + ' ' + h.y.toFixed(1) + ') rotate(' + r.toFixed(1) + ')"><g class="tr-sword">' +
+    '<rect x="-5.5" y="' + -(L + 4) + '" width="11" height="' + L + '" rx="3" fill="' + pcHex(p) + '" stroke="#150733" stroke-width="2"/>' + ito +
+    '<rect x="-6.5" y="' + -(L + 10) + '" width="13" height="7" rx="2.5" fill="#2b2b33" stroke="#150733" stroke-width="1.6"/>' +
+    '<ellipse cx="0" cy="-3" rx="11.5" ry="4.6" fill="#e3b448" stroke="#150733" stroke-width="2"/><ellipse cx="-3" cy="-4" rx="4" ry="1.4" fill="#fff4c8"/></g></g>';
+}
+PARTY.taru = {
+  init(T) { T.trap = rint(0, TARU_N - 1); T.stuck = []; },
+  info: T => 'のこりの穴 <b>' + (TARU_N - T.stuck.length) + '</b>（当たりは1つ）',
+  art: () => taruSVG(),
+  hit(T, i) {
+    if (T.stuck.includes(i)) return;
+    T.busy = true; T.stuck.push(i);
+    $('trSwords').insertAdjacentHTML('beforeend', taruSword(TARU_HOLES[i], pgNow()));
+    const svg = $('trSvg');
+    restartAnim(svg, 'thud');
+    SE.play('stab'); vibrate(30);
+    partyStake();
+    if (i === T.trap) { toolLater(taruPop, 430); return; }
+    const left = TARU_N - T.stuck.length;
+    svg.classList.toggle('lv1', left <= 6); svg.classList.toggle('lv2', left <= 3);
+    toolLater(() => partyNext(420), 380);
+  },
+};
+function taruPop() {
+  const svg = $('trSvg'), man = $('trOyaji'), q = relPos(man);
+  svg.appendChild(man);   /* in front of the barrel while it flies and lands */
+  const cl = man.firstElementChild; if (cl) cl.removeAttribute('clip-path');
+  svg.classList.add('pop');
+  SE.play('boing'); flash('#ffe066'); shake(true);
+  FXC.burst(q.x, q.y, 70, { colors: ['#ffd23f', '#ff4fa3', '#35e0ff', '#ffffff', '#e8233f'], star: true, speed: 14 });
+  telop('ポーン！！', 'red', 1300);
+  partyLose(1800);
+}
+
+/* ワニの歯: a crocodile with its mouth wide open and 10 teeth; one hidden tooth snaps the jaw shut */
+const WANI_N = 10;
+const WANI_TEETH = (() => { const out = []; for (let k = 0; k < WANI_N; k++) { const ph = (162 - k * 16) * Math.PI / 180; out.push({ x: 160 + 115 * Math.cos(ph), y: 171 + 46 * Math.sin(ph), s: 0.82 + 0.3 * Math.sin(ph) }); } return out; })();
+function waniSVG() {
+  const qb = t => { const u = 1 - t; return [u * u * 296 + 2 * u * t * 160 + t * t * 24, u * u * 150 + 2 * u * t * 108 + t * t * 150]; };
+  let top = '';
+  for (let k = 1; k <= 9; k++) { const [x, y] = qb(k / 10); top += '<path d="M' + (x - 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' L' + x.toFixed(1) + ' ' + (y + 13).toFixed(1) + ' L' + (x + 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' Z" fill="#fffdf2" stroke="#9e9682" stroke-width="1.3" stroke-linejoin="round"/>'; }
+  const teeth = WANI_TEETH.map((t, i) => '<g transform="translate(' + t.x.toFixed(1) + ' ' + t.y.toFixed(1) + ') scale(' + t.s.toFixed(2) + ')"><g class="wn-tooth" id="wnT' + i + '">' +
+    '<path d="M-10 3 C -10 -10, -5 -24, 0 -28 C 5 -24, 10 -10, 10 3 Z" fill="#fffdf2" stroke="#8f8771" stroke-width="1.6"/><path d="M-4 -3 C -4 -12, -2 -19, 0 -22" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></g></g>').join('');
+  /* a round tap area per tooth, as big as it can be without reaching into the next tooth's */
+  const hits = WANI_TEETH.map((t, i) => {
+    const near = WANI_TEETH.filter((_, j) => Math.abs(j - i) === 1).map(u => Math.hypot(u.x - t.x, u.y - t.y));
+    return '<circle cx="' + t.x.toFixed(1) + '" cy="' + (t.y - 12 * t.s).toFixed(1) + '" r="' + Math.min(19, Math.min.apply(null, near) / 2).toFixed(1) + '" class="pg-hit" data-tl="hit" data-i="' + i + '"/>';
+  }).join('');
+  const eye = x => '<g transform="translate(' + x + ' 42)"><circle r="27" fill="url(#wnSkin)" stroke="#0d3a17" stroke-width="3"/><circle r="18" fill="url(#wnIris)" stroke="#0d3a17" stroke-width="2"/>' +
+    '<g class="wn-pupil"><ellipse rx="4" ry="13" fill="#150733"/><circle cx="-6" cy="-7" r="3.2" fill="#fff"/></g>' +
+    '<path class="wn-lid" d="M-19.5 0 A19.5 19.5 0 0 1 19.5 0 Z" fill="#43b552" stroke="#0d3a17" stroke-width="2"/></g>';
+  let ridge = '';
+  [[128, 64], [146, 58], [160, 56], [174, 58], [192, 64]].forEach(([x, y]) => { ridge += '<path d="M' + (x - 7) + ' ' + (y + 4) + ' L' + x + ' ' + (y - 6) + ' L' + (x + 7) + ' ' + (y + 4) + ' Z" fill="#2a8a3e" stroke="#0d3a17" stroke-width="1.8" stroke-linejoin="round"/>'; });
+  return '<svg class="wn-svg" id="wnSvg" viewBox="0 0 320 304" role="img" aria-label="ワニ">' +
+    '<defs><linearGradient id="wnSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7be07c"/><stop offset=".55" stop-color="#36a64a"/><stop offset="1" stop-color="#1d7a33"/></linearGradient>' +
+    '<linearGradient id="wnSkin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3fae4f"/><stop offset="1" stop-color="#1b6e2e"/></linearGradient>' +
+    '<radialGradient id="wnIris" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#fff59a"/><stop offset=".6" stop-color="#f4c531"/><stop offset="1" stop-color="#c98a0a"/></radialGradient>' +
+    '<radialGradient id="wnMouth" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#7a1030"/><stop offset=".55" stop-color="#e04772"/><stop offset="1" stop-color="#ff86a6"/></radialGradient></defs>' +
+    '<ellipse cx="160" cy="294" rx="140" ry="10" fill="rgba(0,0,0,.3)"/>' +
+    '<g class="wn-mouth"><ellipse cx="160" cy="166" rx="125" ry="56" fill="url(#wnMouth)" stroke="#0d3a17" stroke-width="3"/>' +
+    '<path d="M108 204 Q160 150 212 204 Q160 226 108 204 Z" fill="#ff9db4" stroke="#b3264d" stroke-width="2"/><path d="M160 178 L160 214" stroke="#d94f73" stroke-width="2"/></g>' +
+    '<path d="M30 172 A130 52 0 0 0 290 172 C 292 236, 236 290, 160 292 C 84 290, 28 236, 30 172 Z" fill="url(#wnSkin2)" stroke="#0d3a17" stroke-width="3"/>' +
+    '<path d="M74 246 Q160 274 246 246 M92 266 Q160 288 228 266" fill="none" stroke="#bff09a" stroke-width="5" stroke-linecap="round" opacity=".55"/>' +
+    '<circle cx="58" cy="214" r="5" fill="#1d7a33"/><circle cx="262" cy="214" r="5" fill="#1d7a33"/><circle cx="76" cy="230" r="3.5" fill="#1d7a33"/><circle cx="244" cy="230" r="3.5" fill="#1d7a33"/>' +
+    teeth +
+    '<g class="wn-top" id="wnTop"><g class="wn-growl">' +
+    '<path d="M24 150 C 20 96, 72 50, 160 48 C 248 50, 300 96, 296 150 Q 160 108 24 150 Z" fill="url(#wnSkin)" stroke="#0d3a17" stroke-width="3"/>' + top +
+    '<ellipse cx="96" cy="100" rx="9" ry="5" fill="#2a8a3e"/><ellipse cx="224" cy="100" rx="9" ry="5" fill="#2a8a3e"/><ellipse cx="128" cy="86" rx="6" ry="4" fill="#2a8a3e"/><ellipse cx="192" cy="86" rx="6" ry="4" fill="#2a8a3e"/>' +
+    '<path d="M128 116 Q160 98 192 116 Q160 126 128 116 Z" fill="#4cc25c" stroke="#0d3a17" stroke-width="2.4"/>' +
+    '<ellipse cx="148" cy="112.5" rx="5.5" ry="3.4" fill="#0d3a17"/><ellipse cx="172" cy="112.5" rx="5.5" ry="3.4" fill="#0d3a17"/>' +
+    ridge + eye(100) + eye(220) + '</g></g>' + hits + '</svg>';
+}
+PARTY.wani = {
+  init(T) { T.trap = rint(0, WANI_N - 1); T.down = []; },
+  info: T => 'のこりの歯 <b>' + (WANI_N - T.down.length) + '</b>（噛む歯は1本）',
+  art: () => waniSVG(),
+  hit(T, i) {
+    if (T.down.includes(i)) return;
+    T.busy = true; T.down.push(i);
+    const t = WANI_TEETH[i], svg = $('wnSvg');
+    $('wnT' + i).classList.add('down');
+    svg.style.setProperty('--lx', ((t.x - 160) / 22).toFixed(1) + 'px');
+    SE.play('tooth'); vibrate(20);
+    partyStake();
+    if (i === T.trap) { toolLater(waniBite, 300); return; }
+    const left = WANI_N - T.down.length;
+    svg.classList.toggle('lv1', left <= 5); svg.classList.toggle('lv2', left <= 3);
+    toolLater(() => partyNext(420), 380);
+  },
+};
+function waniBite() {
+  const svg = $('wnSvg');
+  svg.classList.add('bite');
+  SE.play('bite'); flash('#ff2a3a'); shake(true);
+  toolLater(() => { const q = relPos(svg); FXC.burst(q.x, q.y + q.h * 0.15, 40, { colors: ['#ffffff', '#ff2a3a', '#ffd23f'], star: true, speed: 11 }); }, 90);
+  telop('ガブッ！！', 'red', 1300);
+  partyLose(1700);
+}
+
+/* 地雷原: 5×5 ground, 6 mines (never under the first spade); an opened square shows how many mines touch it */
+const MINE_SIZE = 5, MINE_COUNT = 6;
+const MINE_SVG = '<svg class="mn-mine" viewBox="-20 -20 40 40" aria-hidden="true"><g stroke="#150733" stroke-width="3" stroke-linecap="round"><path d="M0 -17v34M-17 0h34M-12 -12l24 24M12 -12l-24 24"/></g>' +
+  '<circle r="11.5" fill="#2b2d33" stroke="#150733" stroke-width="2"/><circle cx="-4" cy="-4.5" r="3.2" fill="#fff" opacity=".55"/><circle class="mn-led" cx="3.5" cy="3.5" r="2.8" fill="#ff3b30"/></svg>';
+function mineCount(T, i) {
+  const r = Math.floor(i / MINE_SIZE), c = i % MINE_SIZE;
+  let n = 0;
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    const rr = r + dr, cc = c + dc;
+    if ((dr || dc) && rr >= 0 && rr < MINE_SIZE && cc >= 0 && cc < MINE_SIZE && T.mines.includes(rr * MINE_SIZE + cc)) n++;
+  }
+  return n;
+}
+PARTY.mine = {
+  init(T) { T.mines = null; T.open = []; },
+  info: T => '地雷 <b>' + MINE_COUNT + '</b>コ ・ 数字はとなりの地雷の数',
+  art() {
+    let h = '<div class="mn-field"><div class="mn-sign"><span>危険</span>地雷原</div><div class="mn-grid" id="mnGrid">';
+    for (let i = 0; i < MINE_SIZE * MINE_SIZE; i++) h += '<button type="button" class="mn-c" data-tl="hit" data-i="' + i + '" aria-label="マス' + (i + 1) + '" style="--gr:' + rint(0, 3) + '"></button>';
+    return h + '</div></div>';
+  },
+  hit(T, i, el) {
+    if (T.open.includes(i) || el.disabled) return;
+    if (!T.mines) T.mines = shuffle(Array.from({ length: MINE_SIZE * MINE_SIZE }, (_, k) => k).filter(k => k !== i)).slice(0, MINE_COUNT);
+    T.busy = true; T.open.push(i); el.disabled = true;
+    if (T.mines.includes(i)) { mineBoom(T, i, el); return; }
+    const n = mineCount(T, i);
+    el.classList.add('op');
+    el.innerHTML = '<i class="mn-turf"></i>' + (n ? '<b class="mn-n n' + n + '">' + n + '</b>' : '<i class="mn-zero"></i>');
+    el.setAttribute('aria-label', n ? 'となりに地雷' + n + 'コ' : '地雷なし');
+    SE.play('dig');
+    const q = relPos(el); FXC.burst(q.x, q.y, 14, { colors: ['#8a5a2b', '#5e3d22', '#b98552', '#4caf3a'], speed: 6 });
+    toolLater(() => partyNext(420), 380);
+  },
+};
+function mineBoom(T, i, el) {
+  el.classList.add('op', 'boom'); el.innerHTML = MINE_SVG;
+  const f = $('pgArt'), r = el.getBoundingClientRect(), fr = f.getBoundingClientRect(), q = relPos(el);
+  const at = 'left:' + (r.left - fr.left + r.width / 2).toFixed(0) + 'px;top:' + (r.top - fr.top + r.height / 2).toFixed(0) + 'px';
+  f.insertAdjacentHTML('beforeend', '<i class="mn-blast" style="' + at + '"></i>' + [[-46, -64], [38, -72], [4, -100], [-10, -40]].map(([x, y], k) => '<i class="mn-smoke" style="' + at + ';--sx:' + x + 'px;--sy:' + y + 'px;animation-delay:' + (k * 0.08) + 's"></i>').join(''));
+  SE.play('boom'); flash('#ff7a1a'); shake(true);
+  FXC.burst(q.x, q.y, 80, { colors: ['#ffe066', '#ff9f1c', '#ff3b30', '#6b6b6b', '#2b2b2b'], speed: 14 });
+  telop('ドカーン！！', 'red', 1400);
+  T.mines.filter(m => m !== i).forEach((m, k) => toolLater(() => { const c = $('mnGrid').children[m]; c.classList.add('op', 'mine'); c.innerHTML = MINE_SVG; c.disabled = true; SE.play('tick'); }, 750 + k * 130));
+  partyLose(2000);
+}
+
+/* ドクロめくり: 12 face-down cards — 1 skull, two "+1杯" (each makes the skull 1 cup heavier), the rest SAFE */
+const SK_N = 12;
+const SK_FACE = {
+  safe: '<div class="sk-face safe"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#2fbf71" stroke="#150733" stroke-width="2.5"/><path d="M12 20.5l5.5 5.5L29 14.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>SAFE</b></div>',
+  plus: '<div class="sk-face plus"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3c3 7 11 10 11 20a11 11 0 0 1-22 0c0-5 3-8 5-10 0 4 2 6 4 6-2-6 0-12 2-16z" fill="#ff5a1f" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><path d="M20 20c2 3 5 4 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#ffd23f"/></svg><b>+1杯</b></div>',
+  skull: '<div class="sk-face skull"><svg viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><path d="M6 33L34 9M6 9l28 24" stroke="#150733" stroke-width="7.5"/><path d="M6 33L34 9M6 9l28 24" stroke="#f1ece0" stroke-width="4.5"/></g>' +
+    '<path d="M20 4.5c-8 0-13 5.5-13 12.5 0 4 2 6.6 4.6 8.2V30h16.8v-4.8C31 23.6 33 21 33 17 33 10 28 4.5 20 4.5z" fill="#f6f1e4" stroke="#150733" stroke-width="2.2"/>' +
+    '<circle class="sk-eye" cx="15" cy="17" r="3.8" fill="#ff2a3a"/><circle class="sk-eye" cx="25" cy="17" r="3.8" fill="#ff2a3a"/><path d="M20 21l-2.2 4h4.4z" fill="#150733"/>' +
+    '<path d="M15.5 30v-3.4M18.5 30v-3.4M21.5 30v-3.4M24.5 30v-3.4" stroke="#150733" stroke-width="1.5"/></svg><b>ドクロ</b></div>',
+};
+PARTY.skull = {
+  init(T) { T.faces = shuffle(['skull', 'plus', 'plus'].concat(Array(SK_N - 3).fill('safe'))); T.open = []; },
+  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・+1杯が2枚',
+  art() {
+    let h = '<div class="sk-grid">';
+    for (let i = 0; i < SK_N; i++) h += '<button type="button" class="sk-card" data-tl="hit" data-i="' + i + '" aria-label="カード' + (i + 1) + '"><span class="flip" id="skC' + i + '"><span class="flip-in"><span class="flip-b"><span class="sk-back"><i>?</i></span></span><span class="flip-f"></span></span></span></button>';
+    return h + '</div>';
+  },
+  hit(T, i, el) {
+    if (T.open.includes(i) || el.disabled) return;
+    T.busy = true; T.open.push(i); el.disabled = true;
+    const f = T.faces[i], box = $('skC' + i);
+    box.querySelector('.flip-f').innerHTML = SK_FACE[f];
+    el.classList.add('lift'); SE.play('roll');
+    toolLater(() => {
+      box.classList.add('open'); SE.play('flip');
+      toolLater(() => skullResult(T, f, el), 420);
+    }, 560);
+  },
+};
+function skullResult(T, f, el) {
+  partyStake();
+  if (f === 'skull') {
+    el.classList.add('hit-skull');
+    SE.play('devil'); flash('#7a1fff'); shake(true);
+    telop('ドクロ……！', 'devil', 1500);
+    partyLose(1800);
+    return;
+  }
+  if (f === 'plus') {
+    T.cups++;
+    partyStake(); tmPop($('pgCups'));
+    SE.play('coin');
+    telop('+1杯！<small>ドクロが重くなった…</small>', 'sm', 1200);
+    toolLater(() => partyNext(420), 700);
+    return;
+  }
+  SE.play('ding');
+  toolLater(() => partyNext(420), 300);
+}
+
+/* 風船パンク: pump 1–3 times, then hand it on. It bursts at a hidden number of pumps (5–20); its size never gives that away */
+const BL_COLORS = [['#ff3b5c', '#ffc2cc', '#a8102b'], ['#2f8cff', '#c2dcff', '#0f4aa0'], ['#ffcf2e', '#fff3b8', '#b98000'], ['#33d17a', '#c3f5d8', '#13763a'], ['#ff6fd8', '#ffd6f4', '#a5168f'], ['#ff8a2a', '#ffd8b8', '#ad4b06']];
+const BL_PATH = 'M150 20 C 222 20, 262 80, 254 142 C 246 200, 196 244, 158 256 L142 256 C 104 244, 54 200, 46 142 C 38 80, 78 20, 150 20 Z';
+function balloonSVG(T) {
+  const [c, cl, cd] = T.col;
+  let shards = '';
+  for (let k = 0; k < 10; k++) {
+    const a = k / 10 * Math.PI * 2 + Math.random() * 0.4, d = 90 + Math.random() * 70;
+    shards += '<path class="bl-sh" style="--dx:' + (Math.cos(a) * d).toFixed(0) + 'px;--dy:' + (Math.sin(a) * d + 40).toFixed(0) + 'px;--r:' + rint(-300, 300) + 'deg" d="M-17 -4 Q-4 -18 17 -6 Q4 2 -17 -4 Z" fill="' + c + '" stroke="#150733" stroke-width="2"/>';
+  }
+  let star = '';
+  for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2, r = k % 2 ? 46 : 74; star += (k ? 'L' : 'M') + (Math.cos(a) * r).toFixed(1) + ' ' + (Math.sin(a) * r * 0.72).toFixed(1) + ' '; }
+  return '<svg class="bl-svg" id="blSvg" viewBox="0 0 320 380" data-tl="hit" data-i="0" role="img" aria-label="風船">' +
+    '<defs><radialGradient id="blG" cx="36%" cy="28%" r="78%"><stop offset="0" stop-color="' + cl + '"/><stop offset=".42" stop-color="' + c + '"/><stop offset="1" stop-color="' + cd + '"/></radialGradient>' +
+    '<linearGradient id="blMetal" x1="0" x2="1"><stop offset="0" stop-color="#8b939e"/><stop offset=".45" stop-color="#eef2f6"/><stop offset="1" stop-color="#6b737e"/></linearGradient>' +
+    '<linearGradient id="blPumpG" x1="0" x2="1"><stop offset="0" stop-color="#1f4fa8"/><stop offset=".45" stop-color="#4f8cff"/><stop offset="1" stop-color="#173f8a"/></linearGradient></defs>' +
+    '<ellipse cx="170" cy="366" rx="128" ry="10" fill="rgba(0,0,0,.25)"/>' +
+    '<path d="M234 344 C 196 362, 150 346, 150 268" fill="none" stroke="#150733" stroke-width="8" stroke-linecap="round"/><path d="M234 344 C 196 362, 150 346, 150 268" fill="none" stroke="#3a3d48" stroke-width="4.5" stroke-linecap="round"/>' +
+    '<g class="bl-pump"><rect x="212" y="350" width="84" height="12" rx="5" fill="#2b2d33" stroke="#150733" stroke-width="2.5"/>' +
+    '<g class="bl-handle"><rect x="251" y="222" width="6" height="46" fill="url(#blMetal)" stroke="#150733" stroke-width="1.5"/><rect x="224" y="212" width="60" height="13" rx="6.5" fill="#2b2d33" stroke="#150733" stroke-width="2.5"/><rect x="230" y="215" width="20" height="3" rx="1.5" fill="#fff" opacity=".25"/></g>' +
+    '<rect x="238" y="262" width="32" height="90" rx="7" fill="url(#blPumpG)" stroke="#150733" stroke-width="2.5"/><rect x="235" y="257" width="38" height="10" rx="3" fill="#2b2d33" stroke="#150733" stroke-width="2"/>' +
+    '<path d="M246 276v64" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/><rect x="226" y="338" width="14" height="10" rx="2" fill="#2b2d33" stroke="#150733" stroke-width="1.8"/></g>' +
+    '<g id="blBody" class="bl-body"><g class="bl-tight"><g class="bl-wob">' +
+    '<path d="' + BL_PATH + '" fill="url(#blG)" stroke="#150733" stroke-width="3" vector-effect="non-scaling-stroke"/>' +
+    '<path d="M142 255 L158 255 L163 268 Q150 272 137 268 Z" fill="' + cd + '" stroke="#150733" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
+    '<ellipse cx="104" cy="80" rx="17" ry="32" transform="rotate(28 104 80)" fill="#fff" opacity=".5"/><ellipse cx="118" cy="130" rx="6" ry="10" transform="rotate(20 118 130)" fill="#fff" opacity=".32"/>' +
+    '</g></g></g>' +
+    '<g id="blShards" class="bl-shards">' + shards + '</g>' +
+    '<g id="blBang" class="bl-bang"><g class="bl-bang-in"><path d="' + star + 'Z" fill="#ffe066" stroke="#150733" stroke-width="3.5" stroke-linejoin="round"/><text y="10" class="bl-bang-t">パーン!!</text></g></g>' +
+    '</svg>';
+}
+function balloonSize(T) {
+  const s = 0.36 + 0.64 * Math.min(1, T.pumps / 21);
+  $('blBody').style.transform = 'scale(' + s.toFixed(3) + ')';
+  $('blSvg').classList.toggle('tight', s > 0.8);
+  return s;
+}
+PARTY.balloon = {
+  init(T) { T.limit = rint(5, 20); T.pumps = 0; T.col = BL_COLORS[rint(0, BL_COLORS.length - 1)]; },
+  info: () => '1人1〜3回 ・ どこで割れるかは誰にも分からない',
+  art: T => balloonSVG(T),
+  buttons: T => '<button type="button" class="pbtn big main pg-go" data-tl="go"' + (T.acts >= 3 ? ' disabled' : '') + '>シュッ！<small>' + pips(T.acts, 3) + '</small></button>' +
+    '<button type="button" class="pbtn cyan small pg-pass" data-tl="pass"' + (T.acts ? '' : ' disabled') + '>次の人へ ▶</button>',
+  hit(T) { this.go(T); },
+  go(T) {
+    if (T.acts >= 3) return;
+    T.acts++; T.pumps++;
+    restartAnim($('blSvg'), 'pumpA');
+    SE.play('pump'); vibrate(15);
+    if (T.pumps >= T.limit) { T.busy = true; toolActs('', false); toolLater(balloonPop, 240); return; }
+    if (balloonSize(T) > 0.72) SE.play('squeak', 0.14);
+    partyButtons();
+    if (T.acts >= 3) { T.busy = true; toolLater(() => partyNext(300), 650); }
+  },
+};
+function balloonPop() {
+  const T = tool, svg = $('blSvg'), s = balloonSize(T);
+  const cy = 268 - 136 * s;
+  $('blShards').setAttribute('transform', 'translate(150 ' + cy.toFixed(0) + ')');
+  $('blBang').setAttribute('transform', 'translate(150 ' + cy.toFixed(0) + ')');
+  svg.classList.add('popped');
+  const q = relPos($('blBang'));
+  SE.play('burst'); flash('#ffffff'); shake(true);
+  FXC.burst(q.x, q.y, 70, { colors: [T.col[0], T.col[1], '#ffffff', '#ffd23f'], speed: 15, star: true });
+  partyLose(1700);
+}
+
+/* シャンパン振り: shake 1–5 times, then hand it on. Each shake adds a hidden 1–3 of pressure; the cork flies at a hidden 14–30 */
+const CH_BODY = 'M134 96 L134 156 C 134 186, 94 196, 94 236 L94 394 Q94 408 108 408 L192 408 Q206 408 206 394 L206 236 C 206 196, 166 186, 166 156 L166 96 Z';
+function champSVG() {
+  let bub = '';
+  for (let k = 0; k < 18; k++) bub += '<circle class="ch-b" cx="' + rint(102, 198) + '" cy="' + rint(330, 404) + '" r="' + (1.8 + Math.random() * 2.8).toFixed(1) + '" style="--d:' + (-Math.random() * 1.6).toFixed(2) + 's"/>';
+  return '<svg class="ch-svg" id="chSvg" viewBox="0 0 300 430" data-tl="hit" data-i="0" data-fz="0" role="img" aria-label="シャンパン">' +
+    '<defs><linearGradient id="chGlass" x1="0" x2="1"><stop offset="0" stop-color="#062b18"/><stop offset=".22" stop-color="#14663d"/><stop offset=".36" stop-color="#2c9e62"/><stop offset=".55" stop-color="#11552f"/><stop offset="1" stop-color="#041d10"/></linearGradient>' +
+    '<linearGradient id="chFoil" x1="0" x2="1"><stop offset="0" stop-color="#8a6116"/><stop offset=".3" stop-color="#f6dd7a"/><stop offset=".5" stop-color="#d4a83a"/><stop offset=".75" stop-color="#f0cf63"/><stop offset="1" stop-color="#7a5410"/></linearGradient>' +
+    '<linearGradient id="chCorkG" x1="0" x2="1"><stop offset="0" stop-color="#a8743e"/><stop offset=".45" stop-color="#e9bd80"/><stop offset="1" stop-color="#94622f"/></linearGradient>' +
+    '<clipPath id="chIn"><path d="' + CH_BODY + '"/></clipPath></defs>' +
+    '<ellipse cx="150" cy="414" rx="98" ry="12" fill="rgba(0,0,0,.35)"/>' +
+    '<g class="ch-bottle">' +
+    '<g class="ch-cork" id="chCork"><path d="M134 98 L134 70 Q134 52 150 52 Q166 52 166 70 L166 98 Z" fill="url(#chCorkG)" stroke="#150733" stroke-width="2.5"/>' +
+    '<path d="M138 63h24M137 73h26M137 83h26" stroke="#7a4e22" stroke-opacity=".45" stroke-width="1.5"/>' +
+    '<path d="M139 58 L136 100 M161 58 L164 100 M150 52 L150 100" stroke="#d6dbe1" stroke-width="2.2"/><ellipse cx="150" cy="54" rx="10.5" ry="4.2" fill="#e3e7ec" stroke="#150733" stroke-width="1.6"/></g>' +
+    '<path d="' + CH_BODY + '" fill="url(#chGlass)" stroke="#150733" stroke-width="3"/>' +
+    '<g clip-path="url(#chIn)" class="ch-bubbles">' + bub + '</g>' +
+    '<path d="M106 250 L106 388" stroke="#fff" stroke-opacity=".28" stroke-width="7" stroke-linecap="round"/><path d="M112 216 Q120 198 140 188" stroke="#fff" stroke-opacity=".22" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<path d="M130 92 L170 92 L173 152 Q150 160 127 152 Z" fill="url(#chFoil)" stroke="#150733" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M138 100 l4 40 M150 100 l-2 48 M161 100 l3 42" stroke="#7a5410" stroke-opacity=".35" stroke-width="1.3"/>' +
+    '<path d="M114 198 Q150 210 186 198 L191 216 Q150 230 109 216 Z" fill="#c8102e" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/>' +
+    '<g transform="translate(150 306)"><rect x="-50" y="-42" width="100" height="84" rx="10" fill="#f7eed6" stroke="#d4a83a" stroke-width="3"/><rect x="-44" y="-36" width="88" height="72" rx="7" fill="none" stroke="#150733" stroke-opacity=".3" stroke-width="1"/>' +
+    '<path d="M0 -31 l3 6.2 6.8 1 -4.9 4.8 1.2 6.8 -6.1 -3.2 -6.1 3.2 1.2 -6.8 -4.9 -4.8 6.8 -1z" fill="#d4a83a"/><text y="7" class="ch-l1">SAKE</text><text y="29" class="ch-l2">GO!!</text></g>' +
+    '<g class="ch-foam"><path d="M134 100 C 130 120, 128 138, 133 150 C 137 158, 141 150, 140 136 C 139 122, 142 110, 142 100 Z M160 100 C 162 116, 166 132, 168 140 C 170 148, 175 144, 174 132 C 172 118, 168 108, 166 100 Z" fill="#fffdf4" stroke="#150733" stroke-width="2"/>' +
+    '<path d="M124 98 C 108 86, 114 62, 132 64 C 134 44, 162 40, 168 58 C 186 54, 196 76, 178 88 C 190 100, 170 112, 158 102 C 150 116, 130 112, 124 98 Z" fill="#fffdf4" stroke="#150733" stroke-width="2.2"/></g>' +
+    '</g></svg>';
+}
+PARTY.champ = {
+  init(T) { T.limit = rint(14, 30); T.pres = 0; T.shakes = 0; },
+  info: () => '1人1〜5回 ・ いつ栓が飛ぶかは誰にも分からない',
+  art: () => champSVG(),
+  buttons: T => '<button type="button" class="pbtn big main pg-go" data-tl="go"' + (T.acts >= 5 ? ' disabled' : '') + '>振る！<small>' + pips(T.acts, 5) + '</small></button>' +
+    '<button type="button" class="pbtn cyan small pg-pass" data-tl="pass"' + (T.acts ? '' : ' disabled') + '>次の人へ ▶</button>',
+  hit(T) { this.go(T); },
+  go(T) {
+    if (T.acts >= 5) return;
+    T.acts++; T.shakes++; T.pres += rint(1, 3);
+    const svg = $('chSvg');
+    restartAnim(svg, 'shk');
+    svg.setAttribute('data-fz', String(Math.min(3, Math.floor(T.shakes / 4))));
+    SE.play('slosh'); vibrate(25);
+    if (T.pres >= T.limit) { T.busy = true; toolActs('', false); toolLater(champPop, 420); return; }
+    partyButtons();
+    if (T.acts >= 5) { T.busy = true; toolLater(() => partyNext(300), 700); }
+  },
+};
+function champPop() {
+  const svg = $('chSvg'), q = relPos($('chCork'));
+  svg.classList.add('popped');
+  SE.play('cork'); flash('#fff4c2'); shake(true);
+  const foam = ['#ffffff', '#fff8e1', '#ffeab0', '#f3d36b', '#d4af37'];
+  FXC.burst(q.x, q.y + 14, 90, { colors: foam, speed: 17, angle: -Math.PI / 2, spread: 0.9, g: 0.34 });
+  toolLater(() => FXC.burst(q.x, q.y + 20, 60, { colors: foam, speed: 13, angle: -Math.PI / 2, spread: 1.3, g: 0.34 }), 180);
+  telop('ポンッ！！', '', 1300);
+  partyLose(1800);
+}
+
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
 const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
@@ -3988,6 +4446,12 @@ const GUIDE = [
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
+    gCard('パーティーゲーム', '<p>引いた人から順番に<b>スマホを回して</b>遊ぶゲームです。カードの<b>「〇〇スタート！」</b>ボタンから始めて、ハズレを引いた人が負け。負けた人は自動で記録。</p><div class="gd-rows">' +
+      [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['ワニの歯', '歯を1本ずつ押す。噛まれた人が負け（噛む歯は1本）'],
+        ['地雷原', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せたカードを1枚ずつめくる。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
+        ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
+        .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
+      '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },

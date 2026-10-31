@@ -31,6 +31,12 @@ const FX_GROUPS = [
   ]],
   ['みんなで遊ぶ', [
     ['bomb', '爆弾パス回し', 'お題に答えながらスマホを左隣へパス。爆発したときに持っていた人がカードの杯数（杯数なしなら1杯）'],
+    ['taru', '酒樽危機一髪', '引いた人から順番に、酒樽の穴へ剣を1本ずつ刺す。親父を飛ばした人がカードの杯数'],
+    ['wani', 'ワニの歯', '引いた人から順番に、ワニの歯を1本ずつ押す。噛まれた人がカードの杯数'],
+    ['mine', '地雷原', '引いた人から順番に、5×5のマスを1つずつ掘る（数字はとなりの地雷の数）。地雷を踏んだ人がカードの杯数'],
+    ['skull', 'ドクロめくり', '引いた人から順番に、伏せたカードを1枚ずつめくる。ドクロを引いた人がカードの杯数（+1カードが出るたびに1杯増える）'],
+    ['balloon', '風船パンク', '引いた人から順番に、風船へ空気を1〜3回入れて次へ。割った人がカードの杯数'],
+    ['champ', 'シャンパン振り', '引いた人から順番に、シャンパンを1〜5回振って次へ。栓を飛ばした人がカードの杯数'],
   ]],
   ['アプリの演出', [
     ['pick', '名前ルーレット', 'アプリのルーレットで1人を選び、その人の記録画面を開く'],
@@ -111,9 +117,11 @@ function guessDrink(text) {
 }
 /* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
 const TOOL_FX = ['chinchiro', 'dice', 'cards', 'indian', 'darts'];
+/* party games played only in the app, passing the phone round from the drawer (黒ひげ系 and 度胸系) */
+const PARTY_FX = ['taru', 'wani', 'mine', 'skull', 'balloon', 'champ'];
 function toolOf(c) {
   if (!c) return null;
-  if (TOOL_FX.includes(c.fx)) return c.fx;
+  if (TOOL_FX.includes(c.fx) || PARTY_FX.includes(c.fx)) return c.fx;
   if (c.fx || c.drink || !c.cups || !c.cups.length || c.dur) return null;
   const t = String(c.text || '');
   if (/チンチロ/.test(t)) return 'chinchiro';
@@ -130,7 +138,7 @@ const ruleTitle = text => { const m = /「([^」]{1,12})」/.exec(String(text ||
 /* the mode the game uses: app-linked effects first, then the editor choice, then the text */
 function drinkOf(c) {
   const fx = (c && c.fx) || '';
-  if (/^ch_/.test(fx) || fx === 'bomb' || fx === 'tap' || fx === 'pick' || fx === 'hh') return 'app';
+  if (/^ch_/.test(fx) || fx === 'bomb' || fx === 'tap' || fx === 'pick' || fx === 'hh' || PARTY_FX.includes(fx)) return 'app';
   if (fx === 'least' || fx === 'last') return fx;
   if (!c || !c.cups || !c.cups.length) return 'none';
   if (c.drink && DRINK_INFO[c.drink]) return c.drink;
@@ -184,12 +192,31 @@ const DECK_FIXES = [
   [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
   [106, '{引いた人}は「数字タッチ」に挑戦。1〜9を5秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯', '{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯'],
 ];
+/* built-in cards added later: put into a deck saved on the device once (a card the user then deletes stays deleted) */
+const DECK_ADDS = [114, 115, 116, 117, 118, 119];
+const DECK_ADDS_KEY = 'sakego-deck-added';
 function appDeck() {
   if (!IS_APP) return null;
   try {
     const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null');
     if (!(d && Array.isArray(d.cards) && Array.isArray(d.categories))) return null;
     DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem(DECK_ADDS_KEY) || '[]'); } catch (_) { done = []; }
+    const todo = DECK_ADDS.filter(id => !done.includes(id));
+    if (todo.length) {
+      let base = null;
+      try { base = JSON.parse($('deck-data').textContent); } catch (_) { base = null; }
+      todo.forEach(id => {
+        const c = base && base.cards.find(x => x.id === id);
+        if (!c || d.cards.some(x => x.text === c.text) || !d.categories.some(k => k.key === c.cat)) return;
+        const add = Object.assign({}, c);
+        if (d.cards.some(x => x.id === add.id)) add.id = Math.max.apply(null, d.cards.map(x => Number(x.id) || 0)) + 1;
+        d.cards.push(add);
+      });
+      localStorage.setItem(DECK_ADDS_KEY, JSON.stringify(done.concat(todo)));
+      localStorage.setItem(APP_DECK_KEY, JSON.stringify(d));
+    }
     return d;
   } catch (_) { return null; }
 }

@@ -111,5 +111,11 @@
 {"id":110,"cat":"chal","text":"全員で「爆弾パス回し」。お題に答えながら左隣へパス。爆発したときに持っていた人が2杯","cups":[2],"min":2,"dur":null,"note":"{引いた人}からスタート。答えに詰まってもパスしないと爆発する","on":true,"fx":"bomb","drink":null},
 {"id":111,"cat":"c1","text":"{引いた人}と{ランダム}でダーツの矢を1本投げ、得点の低い方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同点なら両方","on":true,"fx":"darts","drink":null},
 {"id":112,"cat":"c1","text":"{引いた人}と{ランダム}がサイコロを振り、数字の小さい方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"dice","drink":null},
-{"id":113,"cat":"hit","text":"{引いた人}と{ランダム}がトランプを1枚ずつ引き数字の低い方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"cards","drink":null}
+{"id":113,"cat":"hit","text":"{引いた人}と{ランダム}がトランプを1枚ずつ引き数字の低い方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"cards","drink":null},
+{"id":114,"cat":"c1","text":"{引いた人}から順番に「酒樽危機一髪」。樽の穴に剣を1本ずつ刺して、親父を飛ばした人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"taru","drink":null},
+{"id":115,"cat":"c1","text":"{引いた人}から順番に「ワニの歯」。歯を1本ずつ押して、噛まれた人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"wani","drink":null},
+{"id":116,"cat":"c1","text":"{引いた人}から順番に「地雷原」。マスを1つずつ掘って、地雷を踏んだ人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"mine","drink":null},
+{"id":117,"cat":"c1","text":"{引いた人}から順番に「ドクロめくり」。カードを1枚ずつめくって、ドクロを引いた人が1杯（+1カードが出るたびに増える）","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"skull","drink":null},
+{"id":118,"cat":"c1","text":"{引いた人}から順番に「風船パンク」。空気を1〜3回入れて次の人へ。割った人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"balloon","drink":null},
+{"id":119,"cat":"c1","text":"{引いた人}から順番に「シャンパン振り」。1〜5回振って次の人へ。栓を飛ばした人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"champ","drink":null}
 ]}
