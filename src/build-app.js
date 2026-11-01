@@ -18,8 +18,10 @@ deck.categories = deck.categories.map(c => Object.assign({}, c, { on: true }));
 
 const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
 const js = ['part-head.js', 'part-editor.js', 'part-game.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd();
+/* test builds only (node src/build-app.js test): a handle on the game's state for the automated phone-size tests */
+const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG };' : '';
 if (/<\/script/i.test(js)) throw new Error('page.js contains a closing script tag');
-const page = tpl.replace('__DECK_JSON__', () => serialize(deck).replace(/</g, '\\u003c')).replace('__PAGE_JS__', () => js);
+const page = tpl.replace('__DECK_JSON__', () => serialize(deck).replace(/</g, '\\u003c')).replace('__PAGE_JS__', () => (TEST_HOOK ? js.replace(/\}\)\(\);\s*$/, TEST_HOOK + '\n})();') : js));
 const cut = page.indexOf('<div class="app"');
 if (cut < 0) throw new Error('app root not found');
 const headPart = page.slice(0, cut).trim(), bodyPart = page.slice(cut).trim();

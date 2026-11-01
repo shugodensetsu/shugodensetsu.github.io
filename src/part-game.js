@@ -519,7 +519,7 @@ const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
-const setup = { count: 4, names: [], rounds: 3, loaded: false, coach: null };
+const setup = { count: 4, names: [], rounds: 3, loaded: false, coach: null, mode: 'card' };
 let sheet = null, decide = null, wheel = null, tap = null, picking = null, zoom = null;
 let wakeLock = null, lastFocus = null, spotRot = 0;
 
@@ -562,6 +562,7 @@ function normalizeGame(g) {
   g.pile = Array.isArray(g.pile) ? g.pile : [];
   g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
+  if (g.mode === 'mini') normalizeMini(g);
   return g;
 }
 async function requestWake() {
@@ -648,6 +649,15 @@ function renderSetup(full) {
   }
   if (setup.coach == null) setup.coach = lsGet(COACH_KEY) !== 'done';
   $('coachOpt').checked = !!setup.coach;
+  const mini = setup.mode === 'mini';
+  $('setupTitle').textContent = mini ? 'ミニゲーム8番勝負' : 'メンバー登録';
+  $('roundPanel').hidden = mini; $('coachRow').hidden = mini;
+  if (mini) {
+    $('setupInfo').classList.remove('bad');
+    $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、3つたまると <b>1杯</b>';
+    $('startGame').disabled = false;
+    return;
+  }
   const pool = eligibleCards(setup.count).length;
   const info = $('setupInfo');
   info.classList.toggle('bad', pool === 0);
@@ -657,6 +667,7 @@ function renderSetup(full) {
   $('startGame').disabled = pool === 0;
 }
 function beginGame() {
+  if (setup.mode === 'mini') { beginMini(); return; }
   const n = setup.count;
   if (!eligibleCards(n).length) { renderSetup(false); return; }
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
@@ -1283,6 +1294,7 @@ function afterDraw() {
 }
 /* the app was closed while a fresh card was up: show it again, and record when it's closed */
 function resumeDraw() {
+  if (isMini()) return;
   const cur = G && G.cur;
   if (!cur || cur.phase !== 'drawn' || cur.autoDone || zoom) return;
   setTimeout(() => { if (screen === 'game' && G && G.cur === cur && !cur.autoDone && !zoom && noOv()) { openZoom(false); afterZoom(afterDraw); } }, 400);
@@ -1933,6 +1945,7 @@ function openHand(i) {
   SE.play('pop');
 }
 function seatTap(i) {
+  if (isMini()) return;
   const cur = G.cur;
   if (picking) return;
   if (cur.select) { if (i === cur.drawer) return; if (cur.select === 'swap') doSwap(i); else doGive(i); return; }
@@ -2685,7 +2698,7 @@ function openBomb() {
   const ov = $('bombOv');
   ov.className = 'ov bomb-ov';
   $('bombStage').innerHTML = '<div class="bm-hero"><i class="bm-glow"></i>' + BOMB_SVG + BOMB_SPARK + '</div>';
-  $('bombTop').innerHTML = '<h2 class="bm-title ol" id="bombTitle">爆弾パス回し</h2><p class="bm-rule">お題に合うものを1つ言ってから<b>パス</b>！ 左隣へ回す<br>爆発したときに持っていた人が <b>' + bomb.cups + '杯</b></p>';
+  $('bombTop').innerHTML = '<h2 class="bm-title ol" id="bombTitle">爆弾パス回し</h2><p class="bm-rule">お題に合うものを1つ言ってから<b>パス</b>！ 左隣へ回す<br>爆発したときに持っていた人が <b>' + amtTxt(bomb.cups) + '</b></p>';
   $('bombBottom').innerHTML = '<p class="bm-topic" id="bombTopic">お題を抽選中…</p><div class="bm-acts"><button type="button" class="pbtn white small" data-b="cancel">やめる</button><button type="button" class="pbtn big main" data-b="ignite" disabled>点火！</button></div>';
   openOv('bombOv');
   BGM.play('tension');
@@ -2785,8 +2798,8 @@ function explodeBomb() {
   /* the result (who drinks + the buttons) comes first, so nothing below can ever leave the screen without a way out */
   bombTimer(() => {
     $('bombTop').innerHTML = '<p class="bm-now">爆発したとき持っていたのは…</p><p class="bm-name loser" style="--p:' + pc(b.holder) + '">' + esc(pname(b.holder)) + '</p>' +
-      '<p class="bm-verdict ol">' + b.cups + '杯！</p><p class="bm-meta"><span>パス ' + b.passes + '回</span><span>' + b.T.toFixed(1) + '秒で爆発</span></p>';
-    $('bombBottom').innerHTML = '<div class="bm-acts"><button type="button" class="pbtn big main" data-b="rec">OK！ ' + b.cups + '杯を記録</button></div>';
+      '<p class="bm-verdict ol">' + amtTxt(b.cups) + '！</p><p class="bm-meta"><span>パス ' + b.passes + '回</span><span>' + b.T.toFixed(1) + '秒で爆発</span></p>';
+    $('bombBottom').innerHTML = '<div class="bm-acts"><button type="button" class="pbtn big main" data-b="rec">OK！ ' + amtTxt(b.cups) + 'を記録</button></div>';
     b.resultAt = performance.now();
     SE.play('hell');
   }, 1400);
@@ -2820,6 +2833,7 @@ function closeBomb(rec) {
   closeOv('bombOv');
   BGM.play('party'); BGM.level(1, 0.3);
   if (b.state !== 'done') return;
+  if (isMini()) { miniRecord([b.holder], b.cups); return; }
   renderGame();
   if (rec === 'special') openSheet(b.holder, { base: b.cups, owed: true, src: 'bomb' });
   else autoRecord([b.holder], b.cups, { src: 'bomb' });
@@ -3044,18 +3058,18 @@ function swResult(diffs) {
   const d0 = Math.round(diffs[0] * 100), d1 = Math.round(diffs[1] * 100);
   if (d0 === d1) {
     T.ps.forEach((_, j) => $('swP' + j).classList.add('lose'));
-    $('tmSub').innerHTML = 'まさかの同じ差！ 2人とも <b>' + T.cups + '杯</b>';
+    $('tmSub').innerHTML = 'まさかの同じ差！ 2人とも <b>' + amtTxt(T.cups) + '</b>';
     SE.play('hell'); flash('#e8233f');
-    tmActs('<button type="button" class="pbtn big main" data-tm="multi">OK！ 2人に' + T.cups + '杯ずつ記録</button>');
+    tmActs('<button type="button" class="pbtn big main" data-tm="multi">OK！ 2人に' + amtTxt(T.cups) + 'ずつ記録</button>');
     return;
   }
   const lose = d0 > d1 ? 0 : 1, win = 1 - lose;
   T.loser = T.ps[lose];
   $('swP' + lose).classList.add('lose'); $('swP' + win).classList.add('win');
-  $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + T.cups + '杯';
+  $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + amtTxt(T.cups);
   SE.play('bigheaven'); vibrate([60, 40, 60]);
   const q = relPos($('swP' + win)); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 });
-  tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + T.cups + '杯を記録</button>');
+  tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>');
 }
 
 /* ---------- tap duel ---------- */
@@ -3105,7 +3119,7 @@ function tapHit(side) {
   $('tapMsg' + loser).textContent = loseMsg; $('tapMsg' + (1 - loser)).textContent = winMsg;
   const wp = relPos(els[1 - loser]); FXC.burst(wp.x, wp.y, 50);
   const cups = G.cur.card && G.cur.card.cups.length ? G.cur.card.cups[0] : 1;
-  $('tapCenter').innerHTML = '<p class="tap-res"><b>' + esc(pname(tap.loser)) + '</b> の負け！ ' + cups + '杯</p><div class="tap-acts">' +
+  $('tapCenter').innerHTML = '<p class="tap-res"><b>' + esc(pname(tap.loser)) + '</b> の負け！ ' + amtTxt(cups) + '</p><div class="tap-acts">' +
     '<button type="button" class="pbtn small" data-t="rec">OK！ 記録する</button>' +
     '<button type="button" class="pbtn white tiny" data-t="again">もう一回</button></div>';
   const b = $('tapCenter').querySelector('[data-t="rec"]'); if (b) b.focus({ preventScroll: true });
@@ -3119,6 +3133,7 @@ function closeTap(rec) {
   BGM.play('party');
   if (loser == null || rec === 'again') return;
   const cups = G.cur.card && G.cur.card.cups.length ? G.cur.card.cups[0] : 1;
+  if (isMini()) { miniRecord([loser], cups); return; }
   if (rec === 'special') openSheet(loser, { base: cups, owed: true, src: 'tap' });
   else autoRecord([loser], cups, { src: 'tap' });
 }
@@ -3429,6 +3444,7 @@ function closeTool(mode) {
   closeOv('toolOv');
   BGM.play('party'); BGM.level(1, 0.3);
   if (T.state !== 'done' || !T.losers || !T.losers.length) return;
+  if (isMini()) { miniRecord(T.losers, T.cups); return; }
   renderGame();
   if (mode === 'special' && T.losers.length === 1) openSheet(T.losers[0], { base: T.cups, owed: true, src: 'tool' });
   else autoRecord(T.losers, T.cups, { src: 'tool', decided: true });
@@ -3466,10 +3482,10 @@ function toolFinish(losers, msg, panel) {
   vibrate([60, 40, 120]);
   BGM.level(0.15, 0.05);
   toolActs(losers.length === 1
-    ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + T.cups + '杯を記録</button>'
-    : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + T.cups + '杯ずつ記録</button>');
+    ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>'
+    : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録</button>');
 }
-const stakeLine = T => '<p class="tl-stake">' + TOOL_INFO[T.kind].stake + ' <b>' + T.cups + '杯</b></p>';
+const stakeLine = T => '<p class="tl-stake">' + TOOL_INFO[T.kind].stake + ' <b>' + amtTxt(T.cups) + '</b></p>';
 
 /* dice faces */
 const PIPS = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[28, 28], [50, 50], [72, 72]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]], 6: [[28, 26], [72, 26], [28, 50], [72, 50], [28, 74], [72, 74]] };
@@ -3627,11 +3643,11 @@ function indianOpen() {
 function duelResult() {
   const T = tool;
   let losers, msg;
-  if (T.kind === 'indian' && T.res.some(c => c.joker)) { losers = T.ps.slice(); msg = 'JOKERが出た！ 2人とも <b>' + T.cups + '杯</b>'; }
+  if (T.kind === 'indian' && T.res.some(c => c.joker)) { losers = T.ps.slice(); msg = 'JOKERが出た！ 2人とも <b>' + amtTxt(T.cups) + '</b>'; }
   else {
     const vals = T.res.map(x => (typeof x === 'number' ? x : x.r)), mn = Math.min.apply(null, vals);
     losers = T.ps.filter((_, j) => vals[j] === mn);
-    msg = losers.length > 1 ? '同じ数！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯';
+    msg = losers.length > 1 ? '同じ数！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups);
   }
   toolFinish(losers, msg, j => $('tlP' + j));
 }
@@ -3688,7 +3704,7 @@ const DART_SVG = '<svg viewBox="0 0 60 90" aria-hidden="true"><defs><linearGradi
 const dartPct = v => (50 + v / (DB.vb * 2) * 100).toFixed(2) + '%';
 function dartsSetup() {
   const T = tool;
-  $('toolStage').innerHTML = '<p class="tl-stake dt-stake">得点の低い方が <b>' + T.cups + '杯</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake dt-stake">得点の低い方が <b>' + amtTxt(T.cups) + '</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
     '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
     '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>' +
     '<div class="dt-wrap"><div class="dt-board" id="dtBoard"><i class="dt-led" aria-hidden="true"></i>' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div></div><p class="tm-sub dt-sub" id="toolSub"></p>';
@@ -3759,7 +3775,7 @@ function dartsThrow() {
     if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1400); }
     else toolLater(() => {
       const mn = Math.min.apply(null, T.res), losers = T.ps.filter((_, j) => T.res[j] === mn);
-      toolFinish(losers, losers.length > 1 ? '同点！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯', j => $('tlP' + j));
+      toolFinish(losers, losers.length > 1 ? '同点！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j));
     }, 1400);
   }, 230);
 }
@@ -3812,7 +3828,7 @@ function diceThrow() {
 function diceResult() {
   const T = tool, mn = Math.min.apply(null, T.res);
   const losers = T.ps.filter((_, j) => T.res[j] === mn);
-  toolFinish(losers, losers.length > 1 ? '同じ目！ 2人とも <b>' + T.cups + '杯</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + T.cups + '杯', j => $('tlP' + j));
+  toolFinish(losers, losers.length > 1 ? '同じ目！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j));
 }
 
 /* チンチロ: everyone throws three dice into the bowl (up to 3 tries for a hand). Strong → weak:
@@ -3833,7 +3849,7 @@ function chinHand(d) {
 function chinSetup() {
   const T = tool;
   T.hands = [];
-  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + T.base + '杯</b><small>ピンゾロ×5・ゾロ目×3・シゴロ×2・ヒフミ×2<br>出たら負けた人の杯数にかかる（重なったら掛け算）</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + amtTxt(T.base) + '</b><small>ピンゾロ×5・ゾロ目×3・シゴロ×2・ヒフミ×2<br>出たら負けた人の' + (isMini() ? 'カウント' : '杯数') + 'にかかる（重なったら掛け算）</small></p>' +
     '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
     '<div class="cc-row" id="ccR' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand" id="ccH' + j + '">—</b></div>').join('') + '</div>' +
     '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
@@ -3910,10 +3926,10 @@ function chinResult() {
   T.cups = T.base * mult;
   const who = losers.length > 1 ? losers.map(q => '<b>' + esc(pname(q)) + '</b>').join('・') + ' が同じ役で負け！' : '<b>' + esc(pname(losers[0])) + '</b> の負け！（' + T.hands[T.ps.indexOf(losers[0])].name + '）';
   const msg = who + (mult > 1
-    ? '<br><span class="cc-mult">' + hits.map(([n, k]) => n + '×' + k).join('・') + '<br>' + T.base + '杯 × ' + mult + ' = <b>' + T.cups + '杯</b>' + (losers.length > 1 ? 'ずつ' : '') + '</span>'
-    : ' ' + T.cups + '杯' + (losers.length > 1 ? 'ずつ' : ''));
+    ? '<br><span class="cc-mult">' + hits.map(([n, k]) => n + '×' + k).join('・') + '<br>' + amtTxt(T.base) + ' × ' + mult + ' = <b>' + amtTxt(T.cups) + '</b>' + (losers.length > 1 ? 'ずつ' : '') + '</span>'
+    : ' ' + amtTxt(T.cups) + (losers.length > 1 ? 'ずつ' : ''));
   toolFinish(losers, msg, j => $('ccR' + j));
-  if (mult > 1) setTimeout(() => { if (screen === 'game') { telop('×' + mult + '！！<small>' + T.cups + '杯</small>', 'red', 1500); shake(true); } }, 450);
+  if (mult > 1) setTimeout(() => { if (screen === 'game') { telop('×' + mult + '！！<small>' + amtTxt(T.cups) + '</small>', 'red', 1500); shake(true); } }, 450);
 }
 
 /* ---------- パーティーゲーム: 黒ひげ系（1人1つずつ。ハズレを引いた人の負け）と 度胸系（何回進めるかを自分で決めて次の人へ）.
@@ -3941,7 +3957,7 @@ function partySetup() {
 }
 function partyStake() {
   const T = tool, P = PARTY[T.kind];
-  $('pgStake').innerHTML = TOOL_INFO[T.kind].stake + ' <b id="pgCups">' + T.cups + '杯</b>' + (P.info ? '<small>' + P.info(T) + '</small>' : '');
+  $('pgStake').innerHTML = TOOL_INFO[T.kind].stake + ' <b id="pgCups">' + amtTxt(T.cups) + '</b>' + (P.info ? '<small>' + P.info(T) + '</small>' : '');
 }
 function partyTurn() {
   const T = tool, j = T.k % T.ps.length, p = T.ps[j];
@@ -3959,7 +3975,7 @@ function partyLose(ms) {
   T.state = 'boom'; T.busy = true;
   toolActs('', false);
   vibrate([80, 50, 160]);
-  toolLater(() => toolFinish([p], '<b>' + esc(pname(p)) + '</b> ' + PARTY_LOSE[T.kind] + ' <b>' + T.cups + '杯</b>', j => $('pgO' + j)), ms || 1500);
+  toolLater(() => toolFinish([p], '<b>' + esc(pname(p)) + '</b> ' + PARTY_LOSE[T.kind] + ' <b>' + amtTxt(T.cups) + '</b>', j => $('pgO' + j)), ms || 1500);
 }
 function partyAct(a, el) {
   const T = tool;
@@ -4193,7 +4209,7 @@ const SK_FACE = {
 };
 PARTY.skull = {
   init(T) { T.faces = shuffle(['skull', 'plus', 'plus'].concat(Array(SK_N - 3).fill('safe'))); T.open = []; },
-  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・+1杯が2枚',
+  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・' + (isMini() ? '+1' : '+1杯') + 'が2枚',
   art() {
     let h = '<div class="sk-grid">';
     for (let i = 0; i < SK_N; i++) h += '<button type="button" class="sk-card" data-tl="hit" data-i="' + i + '" aria-label="カード' + (i + 1) + '"><span class="flip" id="skC' + i + '"><span class="flip-in"><span class="flip-b"><span class="sk-back"><i>?</i></span></span><span class="flip-f"></span></span></span></button>';
@@ -4203,7 +4219,7 @@ PARTY.skull = {
     if (T.open.includes(i) || el.disabled) return;
     T.busy = true; T.open.push(i); el.disabled = true;
     const f = T.faces[i], box = $('skC' + i);
-    box.querySelector('.flip-f').innerHTML = SK_FACE[f];
+    box.querySelector('.flip-f').innerHTML = isMini() ? SK_FACE[f].replace('+1杯', '+1') : SK_FACE[f];
     el.classList.add('lift'); SE.play('roll');
     toolLater(() => {
       box.classList.add('open'); SE.play('flip');
@@ -4224,7 +4240,7 @@ function skullResult(T, f, el) {
     T.cups++;
     partyStake(); tmPop($('pgCups'));
     SE.play('coin');
-    telop('+1杯！<small>ドクロが重くなった…</small>', 'sm', 1200);
+    telop((isMini() ? '+1！' : '+1杯！') + '<small>ドクロが重くなった…</small>', 'sm', 1200);
     toolLater(() => partyNext(420), 700);
     return;
   }
@@ -4517,6 +4533,286 @@ function useMini(kind) {
   useTrack('mini_game', { kind });
 }
 
+/* ---------- ミニゲーム8番勝負: only the app's mini games, 8 rounds, a different one each round (drawn at random).
+   Whoever loses a round gets +2 counts; every 3 counts is 1 cup, and what's left over carries on toward the next cup
+   (2 counts + 2 = 1 cup and 1 count). All-player games start from a different person each round; 1-on-1 games pair
+   the people who have played the fewest 1-on-1s so far ---------- */
+const MINI_TOTAL = 8, MINI_LOSS = 2, MINI_PER_CUP = 3;
+const isMini = () => !!(G && G.mode === 'mini');
+const amtTxt = n => (isMini() ? '+' + n : n + '杯');
+const MG = {
+  taru: { who: 'all', short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
+  wani: { who: 'all', short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。噛まれた人の負け' },
+  mine: { who: 'all', short: '地雷', text: '{引いた人}から順番に、マスを1つずつ掘る。地雷を踏んだ人の負け' },
+  skull: { who: 'all', short: 'ドクロ', text: '{引いた人}から順番に、カードを1枚ずつめくる。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
+  balloon: { who: 'all', short: '風船', text: '{引いた人}から順番に、風船へ空気を1〜3回入れて次の人へ。割った人の負け' },
+  champ: { who: 'all', short: 'シャンパン', text: '{引いた人}から順番に、シャンパンを1〜5回振って次の人へ。栓を飛ばした人の負け' },
+  chinchiro: { who: 'all', short: 'チンチロ', text: '{引いた人}から順番にチンチロ。いちばん弱い役の人の負け（ピンゾロ×5・ゾロ目×3・シゴロとヒフミ×2）' },
+  bomb: { who: 'all', short: '爆弾', title: '爆弾パス回し', text: '{引いた人}から爆弾パス回し。お題に答えて左隣へパス。爆発したときに持っていた人の負け' },
+  dice: { who: 'duel', short: 'サイコロ', text: '{引いた人}と{ランダム}でサイコロ勝負。小さい目の方の負け' },
+  cards: { who: 'duel', short: 'トランプ', text: '{引いた人}と{ランダム}がトランプを1枚ずつ引く。数字の低い方の負け（A=1）' },
+  indian: { who: 'duel', short: 'インディアン', text: '{引いた人}と{ランダム}でインディアンポーカー。低い方の負け（JOKERは2人とも）' },
+  darts: { who: 'duel', short: 'ダーツ', text: '{引いた人}と{ランダム}がダーツを1本ずつ投げる。得点の低い方の負け' },
+  tap: { who: 'duel', short: '早押し', title: '早押し対決', text: '{引いた人}と{ランダム}で早押し対決。合図が出たら先にタップ。フライングは負け' },
+  stop: { who: 'duel', short: '10秒', title: '10秒ストップ', text: '{引いた人}と{ランダム}で10秒ストップ対決。画面を見ずにストップを押して、10秒から遠い方の負け' },
+};
+const MG_COLOR = { all: 8, duel: 10 };
+const mgTitle = k => MG[k].title || TOOL_INFO[k].title;
+let mSpin = null;
+
+function beginMini() {
+  const n = setup.count;
+  const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds })); } catch (_) { /* ignore */ }
+  mSpin = null;
+  G = {
+    v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
+    players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], pts: 0, loss: 0 })),
+    mini: { total: MINI_TOTAL, used: [], skip: [], duel: Array(n).fill(0), last: null, log: [] },
+  };
+  startTurn();
+  saveGame();
+  useTrack('game_start', { players: n, rounds: MINI_TOTAL, mode: 'mini' });
+  coachEnd(false);
+  bgmDelay = 2.6;
+  showScreen('game');
+  SE.play('start');
+  telop('ミニゲーム8番勝負！<small>負けたら+2・3つで1杯</small>', '', 1800);
+  FXC.rain(90);
+  requestWake();
+  setTimeout(() => { if (screen === 'game' && isMini() && G.turn === 0) miniRoundFx(); }, 1900);
+}
+function normalizeMini(g) {
+  const n = g.players.length, m = g.mini && typeof g.mini === 'object' ? g.mini : {};
+  g.players.forEach(p => { p.pts = Number(p.pts) || 0; p.loss = Number(p.loss) || 0; p.total = Math.floor(p.pts / MINI_PER_CUP); });
+  const kinds = a => (Array.isArray(a) ? a.filter(k => MG[k]) : []);
+  g.mini = { total: Number(m.total) || MINI_TOTAL, used: kinds(m.used), skip: kinds(m.skip), duel: Array.from({ length: n }, (_, i) => Number((m.duel || [])[i]) || 0),
+    last: Array.isArray(m.last) ? m.last : null, log: Array.isArray(m.log) ? m.log : [] };
+  const c = g.cur;
+  if (c.phase !== 'before' && !MG[c.mkind]) c.phase = 'before';
+  if (c.phase === 'done' && !c.mres) c.phase = 'drawn';
+}
+function miniRoundFx() {
+  const last = G.turn + 1 === G.mini.total;
+  telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1200);
+  SE.play('turn');
+}
+function miniChoose() {
+  const M = G.mini, all = Object.keys(MG);
+  let pool = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
+  if (!pool.length) pool = all.filter(k => !M.skip.includes(k));
+  if (!pool.length) pool = all;
+  /* no more than two 1-on-1 games in a row (with 3 or more people, most of the table would just watch) */
+  const prev = M.used.slice(-2);
+  if (G.players.length > 2 && prev.length === 2 && prev.every(k => MG[k].who === 'duel')) { const p = pool.filter(k => MG[k].who === 'all'); if (p.length) pool = p; }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function miniPair() {
+  const n = G.players.length, M = G.mini;
+  if (n === 2) return G.turn % 2 ? [1, 0] : [0, 1];
+  const ids = shuffle(G.players.map((_, i) => i)).sort((a, b) => M.duel[a] - M.duel[b]);
+  let a = ids[0], b = ids[1];
+  if (M.last && M.last.includes(a) && M.last.includes(b)) b = ids[2];
+  return [a, b];
+}
+function miniPick() {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'before' || mSpin || noOv() === false) return;
+  const kind = miniChoose();
+  const others = shuffle(Object.keys(MG).filter(k => k !== kind));
+  const reel = Array.from({ length: reduceMotion ? 0 : 11 }, (_, i) => others[i % others.length]).concat(kind);
+  mSpin = { cur, i: 0 };
+  renderGame();
+  SE.play('pop');
+  const step = () => {
+    if (!mSpin || mSpin.cur !== cur || G.cur !== cur) return;
+    const el = $('mgRoll');
+    if (el) { el.textContent = mgTitle(reel[mSpin.i]); el.dataset.who = MG[reel[mSpin.i]].who; restartAnim(el, 'tick'); }
+    SE.play('tick');
+    if (mSpin.i < reel.length - 1) { mSpin.i++; setTimeout(step, 55 + mSpin.i * mSpin.i * 2.4); }
+    else setTimeout(() => miniLand(cur, kind), 420);
+  };
+  step();
+}
+function miniLand(cur, kind) {
+  mSpin = null;
+  if (!isMini() || G.cur !== cur || cur.phase !== 'before') return;
+  const n = G.players.length, M = G.mini, m = MG[kind];
+  let d = cur.drawer, r = (d + 1) % n;
+  if (m.who === 'duel') { [d, r] = miniPair(); M.duel[d]++; M.duel[r]++; M.last = [d, r]; }
+  cur.drawer = d;
+  cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': r };
+  cur.card = { id: 0, cat: 'mini', text: m.text, cups: [MINI_LOSS], dur: false, note: '', fx: kind, catName: m.who === 'duel' ? '1対1で勝負' : 'みんなで勝負', mark: '遊', color: MG_COLOR[m.who] };
+  cur.mkind = kind; cur.mres = null; cur.msnap = null; cur.bombDone = false; cur.drinks = [];
+  cur.phase = 'drawn';
+  M.used.push(kind);
+  saveGame();
+  renderGame('draw');
+  if (screen !== 'game') return;
+  SE.play('bigheaven');
+  telop(mgTitle(kind) + '！', m.who === 'duel' ? 'cyan' : 'pink', 1300);
+  const c = $('center'); if (c && !reduceMotion) { const q = relPos(c); FXC.burst(q.x, q.y, 50, { colors: GOLD, star: true, speed: 11 }); }
+}
+/* 「別のゲーム」: put this one aside for the rest of the game and draw again (1-on-1 counts are given back) */
+function miniReroll() {
+  const cur = G.cur, M = G.mini;
+  if (!isMini() || cur.phase !== 'drawn' || mSpin) return;
+  const k = cur.mkind;
+  M.used = M.used.filter((x, i) => !(x === k && i === M.used.lastIndexOf(k)));
+  if (!M.skip.includes(k)) M.skip.push(k);
+  if (MG[k].who === 'duel') { M.duel[cur.names['引いた人']] = Math.max(0, M.duel[cur.names['引いた人']] - 1); M.duel[cur.names['ランダム']] = Math.max(0, M.duel[cur.names['ランダム']] - 1); }
+  cur.phase = 'before'; cur.card = null; cur.names = null; cur.mkind = null;
+  cur.drawer = G.turn % G.players.length;
+  saveGame();
+  miniPick();
+}
+function miniStart() {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'drawn' || mSpin) return;
+  const k = cur.mkind;
+  if (k === 'bomb') openBomb(); else if (k === 'tap') openTap(); else if (k === 'stop') openTimer(); else openTool();
+}
+/* the result of a round: +2 counts each, turned into cups at 3 */
+function miniRecord(losers, amt) {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'drawn' || !losers || !losers.length) return;
+  cur.msnap = JSON.stringify(G.players.map(p => [p.pts, p.total, p.loss]));
+  const items = losers.map(p => {
+    const pl = G.players[p], before = pl.total;
+    pl.pts += amt; pl.total = Math.floor(pl.pts / MINI_PER_CUP); pl.loss++;
+    return { p, amt, cups: pl.total - before };
+  });
+  cur.mres = { losers: losers.slice(), amt, items };
+  cur.phase = 'done';
+  G.mini.log.push({ r: G.turn, kind: cur.mkind, items });
+  saveGame();
+  renderGame();
+  items.forEach((it, k) => setTimeout(() => floatAt(it.p, '+' + it.amt), k * 220));
+  const cupped = items.filter(it => it.cups > 0);
+  if (!cupped.length) { SE.play('tap'); return; }
+  setTimeout(() => {
+    if (screen !== 'game' || G.cur !== cur) return;
+    cupped.forEach(it => floatAt(it.p, it.cups + '杯！'));
+    const who = cupped.map(it => '<span style="color:' + pc(it.p) + '">' + esc(pname(it.p)) + '</span>').join('・');
+    const many = cupped.some(it => it.cups > 1);
+    telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(it => it.cups)) + '杯！' : '3つたまって 1杯！') + '</small>', 'red', 1700);
+    SE.play('hell'); shake(false); vibrate([80, 40, 120]);
+  }, 300 + items.length * 220);
+}
+function miniUndo() {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'done' || !cur.msnap) return;
+  JSON.parse(cur.msnap).forEach(([pts, total, loss], i) => Object.assign(G.players[i], { pts, total, loss }));
+  G.mini.log.pop();
+  cur.mres = null; cur.msnap = null; cur.phase = 'drawn'; cur.bombDone = false; cur.drinks = [];
+  saveGame();
+  renderGame();
+  SE.play('poof');
+}
+function miniNext() {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'done') return;
+  useTick();
+  G.turn++;
+  if (G.turn >= G.mini.total) { finishGame(); return; }
+  startTurn();
+  saveGame();
+  renderGame();
+  miniRoundFx();
+}
+
+/* rendering */
+const miniPips = n => '<span class="seat-pips" aria-hidden="true">' + [0, 1, 2].map(j => '<i' + (j < n ? ' class="on"' : '') + '></i>').join('') + '</span>';
+function miniInPlay(i) {
+  const cur = G.cur, m = cur.mkind && MG[cur.mkind];
+  if (cur.phase === 'before' || !m) return null;
+  return m.who === 'all' || i === cur.names['引いた人'] || i === cur.names['ランダム'];
+}
+function miniSeatHTML(i) {
+  const pl = G.players[i], cur = G.cur, m = cur.mkind && MG[cur.mkind];
+  const play = miniInPlay(i), duel = m && m.who === 'duel';
+  const role = play == null ? '' : duel ? (play ? '対戦' : '') : i === cur.drawer ? 'スタート' : '';
+  const lost = cur.phase === 'done' && cur.mres && cur.mres.losers.includes(i);
+  const cls = ['seat', 'mg'];
+  if (play && (duel || i === cur.drawer) && cur.phase === 'drawn') cls.push('now');
+  if (play === false) cls.push('dim');
+  const left = pl.pts % MINI_PER_CUP;
+  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + '杯・カウント' + left + '">' +
+    (role ? '<span class="seat-role">' + role + '</span>' : '') +
+    '<span class="seat-name">' + esc(pl.name) + '</span><span class="seat-total">' + pl.total + '<small>杯</small></span>' + miniPips(left) +
+    (lost ? '<span class="seat-flag">負け +' + cur.mres.amt + '</span>' : '') + '</button>';
+}
+function miniCenter(anim) {
+  const cur = G.cur, M = G.mini, last = G.turn + 1 === M.total;
+  const label = '<div class="turn-label ol mg-label">' + (last ? '<span class="fin">FINAL</span>' : 'ROUND') + ' <span class="nm">' + (G.turn + 1) + '</span><small>/' + M.total + '</small>' + '</div>';
+  if (cur.phase === 'before' && mSpin) {
+    return label + '<div class="gcard mg-card mg-spin" style="--c:var(--c' + MG_COLOR.all + ')"><div class="gc-band"><span class="gc-mark">？</span><span class="gc-cat">ミニゲーム抽選中…</span></div>' +
+      '<div class="mg-reel"><b class="mg-roll" id="mgRoll">？</b></div></div>';
+  }
+  if (cur.phase === 'before') {
+    return label + '<button type="button" class="deck mg-deck" data-g="mpick" aria-label="ミニゲームを抽選する">' +
+      '<span class="deck-card b3"></span><span class="deck-card b2"></span><span class="deck-card b1"><span class="back-logo">遊</span></span><span class="tap-bubble">TAP!</span></button>';
+  }
+  const c = cur.card, m = MG[cur.mkind], done = cur.phase === 'done';
+  const stamp = done ? '<div class="mg-stamp">' + cur.mres.items.map(it => '<span style="--p:' + pc(it.p) + '"><b>' + esc(pname(it.p)) + '</b> +' + it.amt + (it.cups ? ' → ' + it.cups + '杯！' : '') + '</span>').join('') + '</div>' : '';
+  return label + '<div class="gcard mg-card' + (anim === 'draw' ? ' enter' : '') + (done ? ' done' : '') + '" style="--c:var(--c' + c.color + ')"' + (done ? '' : ' data-g="mstart" role="button" tabindex="0" aria-label="' + esc(mgTitle(cur.mkind)) + 'をスタート"') + '>' +
+    '<div class="gc-band"><span class="gc-mark">遊</span><span class="gc-cat">' + esc(c.catName) + '</span></div>' +
+    '<div class="gc-body"><p class="mg-title">' + esc(mgTitle(cur.mkind)) + '</p><p class="gc-text">' + fillGame(m.text) + '</p></div>' +
+    '<div class="gc-foot"><span class="mg-lose">負けたら</span><span class="gc-cups">+' + MINI_LOSS + '</span></div>' + stamp + '</div>';
+}
+function miniDock() {
+  const cur = G.cur, last = G.turn + 1 >= G.mini.total;
+  if (cur.phase === 'before') {
+    return '<div class="dock-row">' + (mSpin ? '<div class="dock-note">抽選中…</div>' : '<button type="button" class="pbtn big main pulse" data-g="mpick">ミニゲーム抽選！</button>') + '</div>';
+  }
+  if (cur.phase === 'drawn') {
+    return '<div class="dock-row"><button type="button" class="pbtn white small" data-g="mreroll">別のゲーム<span class="sub">にする</span></button>' +
+      '<button type="button" class="pbtn big main pulse pink" data-g="mstart">スタート！</button></div>';
+  }
+  return '<div class="dock-row"><button type="button" class="pbtn white small" data-g="mundo">やり直す<span class="sub">結果を取り消す</span></button>' +
+    '<button type="button" class="pbtn big main" data-g="mnext">' + (last ? '結果発表へ！' : '次へ ▶ ' + (G.turn + 2) + '戦目') + '</button></div>';
+}
+function miniLog() {
+  const log = G.mini.log;
+  if (!log.length) return '<span class="lg-hint">負けた人は <b>+2</b>。●が3つたまると <b>1杯</b>（あふれた分は次の1杯へ）</span>';
+  return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + esc(MG[e.kind] ? MG[e.kind].short : '') + '</span>' +
+    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>+' + it.amt + (it.cups ? ' ' + it.cups + '杯' : '') + '</b></span>').join('')).join('');
+}
+function renderMini(anim) {
+  const M = G.mini;
+  $('gRound').innerHTML = (G.turn + 1) + '<small>/' + M.total + '戦</small>';
+  $('gPending').hidden = true;
+  $('gRules').hidden = true;
+  renderSeats();
+  $('center').innerHTML = miniCenter(anim);
+  $('dock').innerHTML = miniDock();
+  const box = $('gLog');
+  box.innerHTML = miniLog();
+  box.scrollLeft = G.mini.log.length ? box.scrollWidth : 0;
+  layoutTable();
+}
+function renderMiniResult() {
+  const n = G.players.length;
+  const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.pts - a.pts || a.i - b.i);
+  const maxP = order[0].pts, minP = order[order.length - 1].pts, spread = maxP > minP;
+  const cups = G.players.reduce((s, p) => s + p.total, 0), losses = G.players.reduce((s, p) => s + p.loss, 0);
+  $('resSub').textContent = 'ミニゲーム8番勝負 ・ ' + G.mini.log.length + '戦しました';
+  $('resList').innerHTML = order.map((p, idx) => {
+    const rank = 1 + order.filter(q => q.pts > p.pts).length;
+    const title = spread && p.pts === maxP ? '酒豪！' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
+    const delay = reduceMotion ? 0 : 1.5 + (n - 1 - idx) * 0.35;
+    const left = p.pts % MINI_PER_CUP;
+    return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
+      '<span class="res-rank">' + rank + (spread && rank === 1 ? '<span class="crown"></span>' : '') + '</span>' +
+      '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
+      '<span class="res-sub2">負け ' + p.loss + '回 ・ カウント合計 ' + p.pts + (left ? ' ・ のこり' + '●'.repeat(left) : '') + '</span></span>' +
+      '<span class="res-total">' + p.total + '<small>杯</small></span></li>';
+  }).join('');
+  $('resStats').innerHTML = '<div class="stat"><b>' + cups + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.mini.log.length + '</b><span>ミニゲーム</span></div>' +
+    '<div class="stat"><b>' + losses + '</b><span>負けの合計</span></div><div class="stat"><b>' + G.players.filter(p => !p.loss).length + '</b><span>無敗の人</span></div>';
+}
+
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
 const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
@@ -4628,6 +4924,9 @@ const GUIDE = [
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
+    gCard('ミニゲーム8番勝負', '<p>タイトルの<b>「ミニゲーム8番勝負」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
+      '<p>負けた人は<b>+2</b>。席の●が<b>3つたまると1杯</b>。●が2つの人がまた負けたら、1杯飲んで●1つから再スタート。</p>' +
+      '<p class="sub">みんなで遊ぶゲームは毎回スタートの人が変わり、1対1のゲームはまだ対戦の少ない2人が選ばれます。やりたくないゲームは「別のゲームにする」で引き直し。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },
@@ -4810,6 +5109,7 @@ function renderCenter(anim) {
   $('center').innerHTML = label + body;
 }
 function seatHTML(i) {
+  if (isMini()) return miniSeatHTML(i);
   const pl = G.players[i], cur = G.cur, d = cur.drawer;
   const roles = cur.phase === 'drawn' && cur.names ? ROLE_ORDER.filter(k => cur.names[k] === i) : [];
   const roleText = cur.phase === 'before' && i === d ? 'キミの番！' : roles.join('・');
@@ -4890,6 +5190,7 @@ function renderLog() {
 }
 function renderGame(anim) {
   if (!validGame(G)) { showScreen('title'); return; }
+  if (isMini()) { renderMini(anim); return; }
   const n = G.players.length, d = G.cur.drawer;
   const round = Math.floor(G.turn / n) + 1;
   $('gRound').innerHTML = round + '<small>' + (G.rounds ? '/' + G.rounds + '周' : '周目') + '</small>';
@@ -4973,6 +5274,7 @@ function fitText(body, cw, start) {
 function renderResult() {
   if (!validGame(G)) { showScreen('title'); return; }
   $('resBack').hidden = !canBack();
+  if (isMini()) { renderMiniResult(); return; }
   const n = G.players.length;
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.total - a.total || a.i - b.i);
   const maxT = order[0].total, minT = order[order.length - 1].total, spread = maxT > minT;
@@ -5013,7 +5315,8 @@ function wireGame() {
   const unlock = () => { if (SE.ensure()) BGM.sync(); };
   document.addEventListener('pointerdown', unlock, true);
   document.addEventListener('keydown', unlock, true);
-  $('goSetup').addEventListener('click', () => { loadSetup(); SE.play('tap'); showScreen('setup'); });
+  $('goSetup').addEventListener('click', () => { loadSetup(); setup.mode = 'card'; SE.play('tap'); showScreen('setup'); });
+  $('goMini').addEventListener('click', () => { loadSetup(); setup.mode = 'mini'; SE.play('tap'); showScreen('setup'); });
   $('resumeBtn').addEventListener('click', () => { if (validGame(G) && !G.done) { SE.play('tap'); showScreen('game'); requestWake(); } });
   $('goEditor').addEventListener('click', () => { SE.play('tap'); showScreen('editor'); });
   $('howBtn').addEventListener('click', () => openGuide('start'));
@@ -5073,6 +5376,11 @@ function wireGame() {
   const gameAct = g => {
     if (!G) return;
     if (g === 'draw') drawCard();
+    else if (g === 'mpick') miniPick();
+    else if (g === 'mstart') miniStart();
+    else if (g === 'mreroll') miniReroll();
+    else if (g === 'mundo') miniUndo();
+    else if (g === 'mnext') miniNext();
     else if (g === 'cospa') useCospa();
     else if (g === 'decide') openDecide();
     else if (g === 'special') openSpecial();
@@ -5097,7 +5405,11 @@ function wireGame() {
   };
   const onGame = e => { const b = e.target.closest('[data-g]'); if (b && !b.disabled) gameAct(b.dataset.g); };
   $('center').addEventListener('click', onGame);
-  $('center').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-g="zoom"]')) { e.preventDefault(); openZoom(false); } });
+  $('center').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target.closest('[data-g="zoom"]')) { e.preventDefault(); openZoom(false); }
+    else if (e.target.closest('[data-g="mstart"]')) { e.preventDefault(); miniStart(); }
+  });
   $('zoomOv').addEventListener('click', e => {
     if (!zoom) return;
     const b = e.target.closest('[data-z]');
@@ -5112,7 +5424,7 @@ function wireGame() {
   $('confirmYes').addEventListener('click', () => { closeOv('confirmOv'); finishGame(); });
   const sameMembers = () => {
     if (!validGame(G)) return;
-    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; setup.loaded = true;
+    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
   };
   $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
@@ -5221,9 +5533,9 @@ function wireGame() {
     else if (a === 'stop') cdStop();
     else if (a === 'cancel') cdReady();
     else if (a === 'again') { if (T.mode === 'stop') swSetup(); else cdReady(); }
-    else if (a === 'rec') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) autoRecord([p], cups, { src: 'game' }); }
+    else if (a === 'rec') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) { if (isMini()) miniRecord([p], cups); else autoRecord([p], cups, { src: 'game' }); } }
     else if (a === 'special') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) openSheet(p, { base: cups, owed: true, src: 'game' }); }
-    else if (a === 'multi') { const ps = T.ps.slice(), cups = T.cups; closeTimer(); autoRecord(ps, cups, { src: 'game' }); }
+    else if (a === 'multi') { const ps = T.ps.slice(), cups = T.cups; closeTimer(); if (isMini()) miniRecord(ps, cups); else autoRecord(ps, cups, { src: 'game' }); }
     else closeTimer();
   });
   $('chalActs').addEventListener('click', e => {

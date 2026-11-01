@@ -1183,6 +1183,33 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .us-fine{margin:0; font-weight:800; font-size:12px; color:var(--muted); text-align:center}
 .us-fine a, .fine a{color:var(--muted); text-decoration:underline; text-underline-offset:3px; display:inline-block; padding:6px 4px 0}
 .us-reset{flex:none; align-self:center; min-width:180px}
+
+/* ---------- ミニゲーム8番勝負 ---------- */
+.seat-pips{display:flex; gap:3px; justify-content:center; margin-top:1px}
+.seat-pips i{width:9px; height:9px; border-radius:50%; background:rgba(21,7,51,.18); border:2px solid var(--ink)}
+.seat-pips i.on{background:var(--yellow)}
+.seat.mg.bump .seat-pips i.on{animation:bump .55s cubic-bezier(.3,1.8,.5,1)}
+.mg-label small{font-size:.6em; margin-left:2px; color:var(--muted)}
+.mg-label .nm{color:var(--yellow)}
+.mg-label .fin{color:var(--red)}
+.mg-deck .back-logo{background:var(--cyan)}
+.mg-card{cursor:pointer}
+.mg-card.done{cursor:default}
+.mg-title{margin:0; font-family:var(--f-display); font-weight:400; font-size:1.35em; line-height:1.25; color:var(--ink); text-shadow:2px 2px 0 var(--c); overflow-wrap:anywhere}
+.mg-card .gc-text{font-size:.82em; line-height:1.55}
+.mg-lose{font-weight:800; font-size:calc(var(--cw) * .05); color:var(--ink-muted); align-self:center}
+.mg-stamp{position:absolute; left:6%; right:6%; top:50%; transform:translateY(-50%) rotate(-7deg); display:flex; flex-direction:column; gap:4px; align-items:center;
+  background:var(--red); color:var(--white); border:3px solid var(--ink); border-radius:12px; box-shadow:0 4px 0 var(--ink); padding:8px 6px; animation:stampIn .45s cubic-bezier(.2,1.6,.4,1) both}
+.mg-stamp span{font-family:var(--f-display); font-size:calc(var(--cw) * .085); line-height:1.2; text-align:center; overflow-wrap:anywhere}
+.mg-stamp b{font-weight:400; color:var(--yellow)}
+@keyframes stampIn{0%{transform:translateY(-50%) rotate(-7deg) scale(2.2); opacity:0} 100%{transform:translateY(-50%) rotate(-7deg) scale(1); opacity:1}}
+.mg-spin .mg-reel{flex:1; display:grid; place-items:center; padding:8px; background:repeating-linear-gradient(0deg, var(--paper) 0 14px, #f6eedb 14px 28px)}
+.mg-roll{font-family:var(--f-display); font-weight:400; font-size:calc(var(--cw) * .12); line-height:1.25; text-align:center; color:var(--ink); text-shadow:3px 3px 0 var(--pink)}
+.mg-roll[data-who="duel"]{text-shadow:3px 3px 0 var(--cyan)}
+.mg-roll.tick{animation:mgTick .12s ease-out}
+@keyframes mgTick{from{transform:translateY(-30%); opacity:.3} to{transform:none; opacity:1}}
+.mg-lg{padding:1px 9px 1px 3px; background:var(--table-2)}
+.lg-r{display:inline-grid; place-items:center; min-width:18px; height:18px; border-radius:50%; background:var(--yellow); color:var(--ink); font-style:normal; font-family:var(--f-display); font-size:11px}
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
 .chal-ov.casino::before{background:repeating-conic-gradient(from 0deg, transparent 0deg 8deg, rgba(255,216,61,.1) 8deg 16deg)}
@@ -1512,6 +1539,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <p class="t-tag">引いたが最後！ 天国か、地獄か。</p>
       <div class="t-actions">
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
+        <button type="button" class="pbtn pink" id="goMini">ミニゲーム8番勝負<span class="sub">全8戦・負けたら+2、3つで1杯</span></button>
         <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
         <div class="t-row">
           <button type="button" class="pbtn white small" id="goEditor">カード編集</button>
@@ -1523,7 +1551,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
     </section>
 
     <section class="screen s-setup" id="scr-setup" aria-label="メンバー登録" hidden>
-      <h2 class="scr-title ol">メンバー登録</h2>
+      <h2 class="scr-title ol" id="setupTitle">メンバー登録</h2>
       <div class="panel">
         <div class="p-h"><span class="num-badge">1</span>何人であそぶ？</div>
         <div class="count-row" id="countGrid" role="group" aria-label="人数"></div>
@@ -1532,11 +1560,11 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="p-h"><span class="num-badge">2</span>名前<span class="p-hint">座っている順に入れると、席の並びが実際と合います</span></div>
         <div class="names" id="nameList"></div>
       </div>
-      <div class="panel">
+      <div class="panel" id="roundPanel">
         <div class="p-h"><span class="num-badge">3</span>何周あそぶ？</div>
         <div class="round-row" id="roundGrid" role="group" aria-label="終了条件"></div>
       </div>
-      <label class="coach-opt"><input type="checkbox" id="coachOpt"><span>1ターン目に、操作の案内を出す（はじめての人向け）</span></label>
+      <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>1ターン目に、操作の案内を出す（はじめての人向け）</span></label>
       <p class="setup-info" id="setupInfo"></p>
       <div class="row-btns">
         <button type="button" class="pbtn white small" id="setupBack">もどる</button>
