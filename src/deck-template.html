@@ -1196,7 +1196,26 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .mg-pc{font-family:var(--f-display); line-height:1.1; background:var(--white); border:2px solid var(--ink); border-radius:999px; padding:0 9px}
 .mg-pc b{font-weight:400; font-size:17px}
 .mg-pc small{font-family:var(--f-body); font-weight:800; font-size:10px; margin-left:1px}
-.mg-p .seat-pips{margin-top:2px}
+.mg-row{display:flex; align-items:center; gap:5px; margin-top:1px}
+.mg-pc{white-space:nowrap}
+.mg-board.c4 .mg-row{gap:3px}
+.mg-board.c4 .mg-pc{padding:0 5px}
+.mg-board.c4 .mg-pc b{font-size:15px}
+.mg-board.c4 .glass{width:21px; height:29px}
+.glass{width:28px; height:39px; flex:none; overflow:visible}
+.glass.sm{width:12px; height:16px; vertical-align:-3px; margin-left:2px}
+.gl-bg{fill:#fffdf6}
+.gl-s{fill:#ffaa1a}
+.gl-s.nw{transform-box:fill-box; transform-origin:50% 100%; animation:glFill .45s var(--d, 0s) cubic-bezier(.3,1.3,.5,1) both}
+@keyframes glFill{from{transform:scaleY(0)} to{transform:none}}
+.gl-top{fill:#fff6d6}
+.gl-mk{stroke:rgba(21,7,51,.55); stroke-width:1.3; stroke-linecap:round; fill:none}
+.gl-line{fill:none; stroke:var(--ink); stroke-width:2.2; stroke-linejoin:round}
+.gl-hi{stroke:rgba(255,255,255,.95); stroke-width:1.6; stroke-linecap:round; mix-blend-mode:screen}
+.gl-foam{fill:#fffdf3; stroke:var(--ink); stroke-width:1.2; animation:glFoam 1.6s .25s ease-out both}
+@keyframes glFoam{0%{transform:translateY(8px); opacity:0} 25%{transform:translateY(-1px); opacity:1} 70%{opacity:1} 100%{transform:translateY(-3px); opacity:0}}
+.glass.brim{animation:glBrim .6s .2s ease-in-out}
+@keyframes glBrim{25%{transform:rotate(-8deg)} 60%{transform:rotate(6deg)} 100%{transform:none}}
 .mg-p.start{box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--yellow); transform:translateY(-2px)}
 .mg-p.lose{animation:tmLose .3s 2; box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--red)}
 .mg-p.bump .mg-pc{animation:bump .55s cubic-bezier(.3,1.8,.5,1)}
