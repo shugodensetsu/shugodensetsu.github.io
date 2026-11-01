@@ -107,6 +107,7 @@ const SOUNDS = {
   pump: (A, t) => { noise(A, t, { d: 0.22, g: 0.32, type: 'bandpass', f: 900, f2: 2600, q: 1.1, a: 0.04 }); tone(A, t, { type: 'sine', f: 180, f2: 260, d: 0.18, g: 0.08 }); },
   squeak: (A, t) => tone(A, t, { type: 'triangle', f: 700 + Math.random() * 300, f2: 1250, d: 0.22, g: 0.06, vib: 30, vibD: 25 }),
   burst: (A, t) => { noise(A, t, { d: 0.08, g: 1, type: 'highpass', f: 1200 }); noise(A, t, { d: 0.5, g: 0.45, type: 'bandpass', f: 700, f2: 200, q: 0.6, rv: 0.4 }); kick(A, t, 1); crash(A, t, 0.25); },
+  pour: (A, t) => { noise(A, t, { d: 0.42, g: 0.16, type: 'bandpass', f: 700, f2: 1900, q: 2.2, a: 0.05 }); [0, 0.08, 0.17, 0.27].forEach((dt, i) => tone(A, t + dt, { type: 'sine', f: 420 + i * 90, f2: 640 + i * 110, d: 0.07, g: 0.1 })); },
   slosh: (A, t) => { noise(A, t, { d: 0.26, g: 0.32, type: 'bandpass', f: 450, f2: 1300, q: 0.9 }); noise(A, t + 0.12, { d: 0.2, g: 0.2, type: 'bandpass', f: 1300, f2: 500, q: 0.9 }); tone(A, t, { type: 'sine', f: 300, f2: 420, d: 0.12, g: 0.05 }); },
   cork: (A, t) => { tone(A, t, { type: 'sine', f: 380, f2: 1600, bend: 0.025, d: 0.09, g: 0.7 }); noise(A, t, { d: 0.05, g: 0.6, type: 'highpass', f: 2000 }); noise(A, t + 0.06, { d: 1.8, g: 0.28, type: 'highpass', f: 5000, a: 0.04, rv: 0.3 }); sparkle(A, t + 0.15, 8); },
   tap: (A, t) => tone(A, t, { type: 'sine', f: 520, f2: 1150, bend: 0.06, d: 0.1, g: 0.2 }),
@@ -4021,7 +4022,7 @@ function chinResult() {
    recorded like any other drink, so 倍倍FIGHT！/天国と地獄 can follow ---------- */
 const PARTY_HINT = {
   taru: '穴をタップして、剣を1本刺す', wani: '歯を1本タップして押す', mine: 'マスを1つタップして掘る',
-  skull: 'カードを1枚タップしてめくる', balloon: '空気を1〜3回入れて「次の人へ」', champ: 'ボトルを1〜5回振って「次の人へ」',
+  skull: '好きな枚数めくって「次の人へ」（1枚以上）', balloon: '空気を1〜3回入れて「次の人へ」', champ: 'ボトルを1〜5回振って「次の人へ」',
 };
 const PARTY_LOSE = { taru: 'が親父を飛ばした！', wani: 'が噛まれた！', mine: 'が地雷を踏んだ！', skull: 'がドクロを引いた！', balloon: 'が風船を割った！', champ: 'が栓を飛ばした！' };
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -4281,8 +4282,9 @@ function mineBoom(T, i, el) {
   partyLose(2000);
 }
 
-/* ドクロめくり: 12 face-down cards — 1 skull, two "+1杯" (each makes the skull 1 cup heavier), the rest SAFE */
-const SK_N = 12;
+/* ドクロめくり: 16 face-down cards — 1 skull, two "+1杯" (each makes the skull 1 cup heavier), the rest SAFE.
+   On your turn flip as many as you dare (at least one), then hand it on */
+const SK_N = 16;
 const SK_FACE = {
   safe: '<div class="sk-face safe"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#2fbf71" stroke="#150733" stroke-width="2.5"/><path d="M12 20.5l5.5 5.5L29 14.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>SAFE</b></div>',
   plus: '<div class="sk-face plus"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3c3 7 11 10 11 20a11 11 0 0 1-22 0c0-5 3-8 5-10 0 4 2 6 4 6-2-6 0-12 2-16z" fill="#ff5a1f" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><path d="M20 20c2 3 5 4 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#ffd23f"/></svg><b>+1杯</b></div>',
@@ -4293,7 +4295,8 @@ const SK_FACE = {
 };
 PARTY.skull = {
   init(T) { T.faces = shuffle(['skull', 'plus', 'plus'].concat(Array(SK_N - 3).fill('safe'))); T.open = []; },
-  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・' + (isMini() ? '+1' : '+1杯') + 'が2枚',
+  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・' + (isMini() ? '+1' : '+1杯') + 'が2枚 ・ 何枚めくってもOK',
+  buttons: T => '<button type="button" class="pbtn big main pg-pass sk-pass" data-tl="pass"' + (T.acts ? '' : ' disabled') + '>' + (T.acts ? T.acts + '枚めくった！ 次の人へ ▶' : '1枚以上めくってね') + '</button>',
   art() {
     let h = '<div class="sk-grid">';
     for (let i = 0; i < SK_N; i++) h += '<button type="button" class="sk-card" data-tl="hit" data-i="' + i + '" aria-label="カード' + (i + 1) + '"><span class="flip" id="skC' + i + '"><span class="flip-in"><span class="flip-b"><span class="sk-back"><i>?</i></span></span><span class="flip-f"></span></span></span></button>';
@@ -4301,7 +4304,8 @@ PARTY.skull = {
   },
   hit(T, i, el) {
     if (T.open.includes(i) || el.disabled) return;
-    T.busy = true; T.open.push(i); el.disabled = true;
+    T.busy = true; T.open.push(i); T.acts++; el.disabled = true;
+    toolActs(TOOL_CLOSE, false);
     const f = T.faces[i], box = $('skC' + i);
     box.querySelector('.flip-f').innerHTML = isMini() ? SK_FACE[f].replace('+1杯', '+1') : SK_FACE[f];
     el.classList.add('lift'); SE.play('roll');
@@ -4325,11 +4329,10 @@ function skullResult(T, f, el) {
     partyStake(); tmPop($('pgCups'));
     SE.play('coin');
     telop((isMini() ? '+1！' : '+1杯！') + '<small>ドクロが重くなった…</small>', 'sm', 1200);
-    toolLater(() => partyNext(420), 700);
-    return;
-  }
-  SE.play('ding');
-  toolLater(() => partyNext(420), 300);
+  } else SE.play('ding');
+  /* still your turn: flip another, or hand it on */
+  T.busy = false;
+  partyButtons();
 }
 
 /* 風船パンク: pump 1–3 times, then hand it on. It bursts at a hidden number of pumps (5–20); its size never gives that away */
@@ -4628,7 +4631,7 @@ const MG = {
   taru: { short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
   wani: { short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。噛まれた人の負け' },
   mine: { short: '地雷', text: '{引いた人}から順番に、マスを1つずつ掘る。地雷を踏んだ人の負け' },
-  skull: { short: 'ドクロ', text: '{引いた人}から順番に、カードを1枚ずつめくる。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
+  skull: { short: 'ドクロ', text: '{引いた人}から順番に、カードを好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
   balloon: { short: '風船', text: '{引いた人}から順番に、風船へ空気を1〜3回入れて次の人へ。割った人の負け' },
   champ: { short: 'シャンパン', text: '{引いた人}から順番に、シャンパンを1〜5回振って次の人へ。栓を飛ばした人の負け' },
   bomb: { short: '爆弾', title: '爆弾パス回し', text: '{引いた人}から爆弾パス回し。お題に答えて左隣へパス。爆発したときに持っていた人の負け' },
@@ -4757,20 +4760,10 @@ function miniRecord(losers, amt) {
   cur.phase = 'done';
   G.mini.log.push({ r: G.turn, kind: cur.mkind, items });
   saveGame();
-  mFresh = cur;
   renderGame();
-  mFresh = null;
-  items.forEach((it, k) => setTimeout(() => floatAt(it.p, '+' + it.amt), k * 220));
-  const cupped = items.filter(it => it.cups > 0);
-  if (!cupped.length) { SE.play('tap'); return; }
-  setTimeout(() => {
-    if (screen !== 'game' || G.cur !== cur) return;
-    cupped.forEach(it => floatAt(it.p, it.cups + '杯！'));
-    const who = cupped.map(it => '<span style="color:' + pc(it.p) + '">' + esc(pname(it.p)) + '</span>').join('・');
-    const many = cupped.some(it => it.cups > 1);
-    telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(it => it.cups)) + '杯！' : 'グラスが満タン！ 1杯！') + '</small>', 'red', 1700);
-    SE.play('hell'); shake(false); vibrate([80, 40, 120]);
-  }, 300 + items.length * 220);
+  items.forEach((it, k) => setTimeout(() => { if (G && G.cur === cur) floatAt(it.p, '+' + it.amt); }, k * 220));
+  SE.play('tap');
+  miniPour(cur, items);
 }
 function miniUndo() {
   const cur = G.cur;
@@ -4802,7 +4795,7 @@ let glassN = 0;
 function glassSVG(n, o) {
   o = o || {};
   const id = 'gl' + (++glassN), fresh = o.fresh || [];
-  const seg = [0, 1, 2].map(j => j < n ? '<rect class="gl-s' + (fresh.includes(j) ? ' nw' : '') + '" style="--d:' + (fresh.indexOf(j) * 0.18).toFixed(2) + 's" x="0" y="' + (30.6 - (j + 1) * 8.4).toFixed(1) + '" width="26" height="8.6"/>' : '').join('');
+  const seg = [0, 1, 2].map(j => j < n ? '<rect class="gl-s' + (fresh.includes(j) ? ' nw' + (o.slow ? ' slow' : '') : '') + '" style="--d:' + (fresh.indexOf(j) * 0.18).toFixed(2) + 's" x="0" y="' + (30.6 - (j + 1) * 8.4).toFixed(1) + '" width="26" height="8.6"/>' : '').join('');
   return '<svg class="glass' + (o.brim ? ' brim' : '') + (o.cls ? ' ' + o.cls : '') + '" viewBox="0 -4 26 36" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + GLASS_IN + '"/></clipPath></defs>' +
     '<path class="gl-bg" d="' + GLASS_IN + '"/><g clip-path="url(#' + id + ')">' + seg +
     (n ? '<rect class="gl-top" x="0" y="' + (30.6 - n * 8.4 - 0.6).toFixed(1) + '" width="26" height="1.8"/>' : '') +
@@ -4810,15 +4803,52 @@ function glassSVG(n, o) {
     '<path class="gl-line" d="' + GLASS_IN + '"/><path class="gl-hi" d="M6 6.5 L8.4 26"/>' +
     (o.brim ? '<g class="gl-foam"><circle cx="7" cy="2.6" r="3"/><circle cx="12.5" cy="1.4" r="3.6"/><circle cx="18.5" cy="2.4" r="3.2"/><circle cx="21.6" cy="5" r="2"/></g>' : '') + '</svg>';
 }
-let mFresh = null;
+
 const miniRound = () => (G.turn + 1 === G.mini.total ? '<span class="fin">FINAL</span>' : 'ROUND') + ' <b>' + (G.turn + 1) + '</b><small>/' + G.mini.total + '</small>';
-/* right after a result: which marks were just poured in (and whether the glass overflowed into a cup) */
-function glassFx(i, left) {
-  const cur = G.cur, it = mFresh === cur && cur.mres ? cur.mres.items.find(x => x.p === i) : null;
-  if (!it) return null;
-  if (it.cups) return { brim: true, fresh: Array.from({ length: left }, (_, j) => j) };
-  const was = (G.players[i].pts - it.amt) % MINI_PER_CUP;
-  return { fresh: Array.from({ length: left - was }, (_, j) => was + j) };
+/* after a result the losers' glasses are poured slowly, one mark at a time. When one fills up it waits a beat with the glass
+   full, then the cup lands with a show (foam over the rim, sparks, the cup count jumps) and the glass starts again empty.
+   The board itself is already drawn in its final state; this only replays the glass and the cup count, and stops if anything redraws */
+let mAnim = null;
+function miniPour(cur, items) {
+  const A = mAnim = { timers: [] };
+  const later = (fn, ms) => A.timers.push(setTimeout(() => { if (mAnim === A && G && G.cur === cur && screen === 'game') fn(); }, ms));
+  const cupped = items.filter(it => it.cups > 0);
+  let first = true, left = items.length;
+  items.forEach((it, k) => {
+    let pts = G.players[it.p].pts - it.amt, u = 0;
+    const chip = () => $('mgBoard').querySelector('[data-seat="' + it.p + '"]');
+    const show = (n, o, cups) => {
+      const c = chip(); if (!c) return;
+      const g = c.querySelector('.glass'); if (g) g.outerHTML = glassSVG(n, o);
+      const b = c.querySelector('.mg-pc b'); if (b) b.textContent = cups;
+    };
+    show(pts % MINI_PER_CUP, null, Math.floor(pts / MINI_PER_CUP));
+    const step = () => {
+      if (u >= it.amt) { if (--left === 0 && mAnim === A) mAnim = null; return; }
+      u++; pts++;
+      const n = pts % MINI_PER_CUP || MINI_PER_CUP;
+      show(n, { fresh: [n - 1], slow: true }, Math.floor((pts - (n === MINI_PER_CUP ? 1 : 0)) / MINI_PER_CUP));
+      SE.play('pour');
+      if (n < MINI_PER_CUP) { later(step, 900); return; }
+      later(() => {
+        const c = chip(); if (!c) return;
+        show(MINI_PER_CUP, { brim: true }, Math.floor(pts / MINI_PER_CUP));
+        c.classList.remove('cupfx'); void c.offsetWidth; c.classList.add('cupfx');
+        const q = relPos(c); FXC.burst(q.x, q.y, 80, { colors: GOLD, star: true, speed: 13 });
+        floatAt(it.p, '1杯！');
+        SE.play('bigheaven'); vibrate([60, 40, 160]);
+        if (first) {
+          first = false;
+          flash('#ffd83d'); shake(false);
+          const who = cupped.map(x => '<span style="color:' + pc(x.p) + '">' + esc(pname(x.p)) + '</span>').join('・');
+          const many = cupped.some(x => x.cups > 1);
+          telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(x => x.cups)) + '杯！' : 'グラスが満タン！ 1杯！') + '</small>', 'red', 1800);
+        }
+        later(() => { show(0, null, Math.floor(pts / MINI_PER_CUP)); SE.play('gulp'); later(step, 500); }, 1400);
+      }, 750);
+    };
+    later(step, 500 + k * 350);
+  });
 }
 function miniBoard() {
   const cur = G.cur, res = cur.phase === 'done' ? cur.mres : null;
@@ -4826,7 +4856,7 @@ function miniBoard() {
     const lost = !!res && res.losers.includes(i), st = !res && cur.phase !== 'before' && i === cur.drawer, left = pl.pts % MINI_PER_CUP;
     return '<div class="mg-p' + (lost ? ' lose' : '') + (st ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + '杯・カウント' + left + '">' +
       (st ? '<span class="mg-tag">スタート</span>' : lost ? '<span class="mg-tag lose">+' + res.amt + '</span>' : '') +
-      '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + pl.total + '</b><small>杯</small></span>' + glassSVG(left, glassFx(i, left)) + '</span></div>';
+      '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + pl.total + '</b><small>杯</small></span>' + glassSVG(left) + '</span></div>';
   }).join('');
 }
 function miniStageHTML(anim) {
@@ -4865,6 +4895,7 @@ function miniLog() {
 }
 function renderMini(anim) {
   const n = G.players.length;
+  if (mAnim) { mAnim.timers.forEach(clearTimeout); mAnim = null; }
   $('gRound').innerHTML = (G.turn + 1) + '<small>/' + G.mini.total + '戦</small>';
   $('gPending').hidden = true;
   $('gRules').hidden = true;
@@ -5097,7 +5128,7 @@ const GUIDE = [
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
     gCard('パーティーゲーム', '<p>引いた人から順番に<b>スマホを回して</b>遊ぶゲームです。カードの<b>「〇〇スタート！」</b>ボタンから始めて、ハズレを引いた人が負け。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['ワニの歯', '歯を1本ずつ押す。噛まれた人が負け（噛む歯は1本）'],
-        ['地雷原', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せたカードを1枚ずつめくる。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
+        ['地雷原', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
