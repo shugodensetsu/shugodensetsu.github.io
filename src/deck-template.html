@@ -1187,7 +1187,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .us-fine a, .fine a{color:var(--muted); text-decoration:underline; text-underline-offset:3px; display:inline-block; padding:6px 4px 0}
 .us-reset{flex:none; align-self:center; min-width:180px}
 
-/* ---------- ミニゲーム8番勝負 ---------- */
+/* ---------- ミニゲームモード ---------- */
 .mg-wrap{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px; padding:2px 0 4px}
 .mg-board{flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:8px 6px; padding-top:4px}
 .mg-p{flex:0 0 calc((100% - (var(--cols, 4) - 1) * 6px) / var(--cols, 4)); box-sizing:border-box; position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; background:var(--p); color:var(--ink); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:8px 4px 5px}
@@ -1607,7 +1607,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <p class="t-tag">引いたが最後！ 天国か、地獄か。</p>
       <div class="t-actions">
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
-        <button type="button" class="pbtn pink" id="goMini">ミニゲーム8番勝負<span class="sub">全8戦・負けたら+2、3つで1杯</span></button>
+        <button type="button" class="pbtn pink" id="goMini">ミニゲームモード</button>
         <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
         <div class="t-row">
           <button type="button" class="pbtn white small" id="goEditor">カード編集</button>

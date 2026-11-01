@@ -650,7 +650,7 @@ function renderSetup(full) {
   if (setup.coach == null) setup.coach = lsGet(COACH_KEY) !== 'done';
   $('coachOpt').checked = !!setup.coach;
   const mini = setup.mode === 'mini';
-  $('setupTitle').textContent = mini ? 'ミニゲーム8番勝負' : 'メンバー登録';
+  $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
   $('roundPanel').hidden = mini; $('coachRow').hidden = mini;
   if (mini) {
     $('setupInfo').classList.remove('bad');
@@ -4617,7 +4617,7 @@ function useMini(kind) {
   useTrack('mini_game', { kind });
 }
 
-/* ---------- ミニゲーム8番勝負: only the app's mini games, 8 rounds, a different one each round (a roulette down the list of games).
+/* ---------- ミニゲームモード: only the app's mini games, 8 rounds, a different one each round (a roulette down the list of games).
    Everyone plays every game (the timing ones one person at a time) and the loser(s) of each round get +2 counts;
    every 3 counts is 1 cup, and what's left over carries on toward the next cup (2 counts + 2 = 1 cup and 1 count).
    Each round starts from the next person round the table ---------- */
@@ -4664,7 +4664,7 @@ function beginMini() {
   bgmDelay = 2.6;
   showScreen('game');
   SE.play('start');
-  telop('ミニゲーム8番勝負！<small>負けたら+2・3つで1杯</small>', '', 1800);
+  telop('ミニゲームモード！<small>負けたら+2・3つで1杯</small>', '', 1800);
   FXC.rain(90);
   requestWake();
   setTimeout(() => { if (screen === 'game' && isMini() && G.turn === 0) miniRoundFx(); }, 1900);
@@ -4874,7 +4874,7 @@ function renderMiniResult() {
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.pts - a.pts || a.i - b.i);
   const maxP = order[0].pts, minP = order[order.length - 1].pts, spread = maxP > minP;
   const cups = G.players.reduce((s, p) => s + p.total, 0), losses = G.players.reduce((s, p) => s + p.loss, 0);
-  $('resSub').textContent = 'ミニゲーム8番勝負 ・ ' + G.mini.log.length + '戦しました';
+  $('resSub').textContent = 'ミニゲームモード ・ ' + G.mini.log.length + '戦しました';
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.pts > p.pts).length;
     const title = spread && p.pts === maxP ? '酒豪！' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
@@ -5076,7 +5076,7 @@ const GUIDE = [
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
-    gCard('ミニゲーム8番勝負', '<p>タイトルの<b>「ミニゲーム8番勝負」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
+    gCard('ミニゲームモード', '<p>タイトルの<b>「ミニゲームモード」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
       '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、●が<b>3つたまると1杯</b>。●が2つの人がまた負けたら、1杯飲んで●1つから再スタート。</p>' +
       '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
