@@ -549,6 +549,7 @@ function normalizeGame(g) {
   if (!validGame(g)) return null;
   g.players.forEach(p => { p.hand = Array.isArray(p.hand) ? p.hand : []; p.hand.forEach(h => { delete h.fresh; }); ['total', 'times', 'dbl', 'hh', 'cospa'].forEach(k => { p[k] = Number(p[k]) || 0; }); });
   g.uid = g.uid || 1;
+  g.gid = Number(g.gid) || Date.now();
   g.stats = Object.assign({ cards: 0, devil: 0, angel: 0, hh: 0 }, g.stats || {});
   const c = g.cur;
   c.select = null;
@@ -574,7 +575,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv'];
+const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -661,12 +662,13 @@ function beginGame() {
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
   try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds })); } catch (_) { /* ignore */ }
   G = {
-    v: 2, rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [] })),
   };
   startTurn();
   saveGame();
+  useTrack('game_start', { players: n, rounds: setup.rounds || 0 });
   if (setup.coach) coachStart(); else coachEnd(false);
   bgmDelay = 2.6;
   showScreen('game');
@@ -734,6 +736,7 @@ function drawCard() {
   cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': r };
   cur.phase = 'drawn';
   G.stats.cards++;
+  useTrack('card_draw', { card_id: card.id, cat: card.cat, kind: cardKind(card) });
   const fx = card.fx, gifts = [];
   if (fx === 'x2next') { G.pending.mult = Math.min(64, G.pending.mult * 2); G.pending.from = null; G.pending.src = 'カードの効果'; }
   if (fx === 'halfnext') { G.pending.half = true; if (!G.pending.src) G.pending.src = 'カードの効果'; }
@@ -915,12 +918,14 @@ function useCospa() {
   saveGame();
   renderGame();
   if (mx.length) mateFx(mx, 900);
+  useTrack('special_rule', { type: 'cospa' });
   SE.play(free ? 'ticket' : 'coin');
   telop((free ? 'コスパ無料！' : 'コスパ発動！') + '<small>このターン、' + esc(pname(d)) + 'が飲む量は半分</small>', 'lime', 1700);
   floatAt(d, amt ? '+1杯' : 'FREE', !amt);
 }
 function nextTurn(force) {
   if (!G || G.cur.phase !== 'drawn' || picking) return;
+  useTick();
   /* 「次へ」 with nobody recorded on a card that needs a choice (or a mini game not played yet) asks first */
   if (!force) { const t = turnTask(); if (t) { openNextAsk(t); return; } }
   const n = G.players.length;
@@ -996,6 +1001,7 @@ function finishGame() {
   closeAllOverlays();
   G.done = true;
   saveGame();
+  useTrack('game_end', { turns: G.turn, players: G.players.length, cups: Math.round(G.players.reduce((a, p) => a + p.total, 0) * 10) / 10 });
   releaseWake();
   resultIntro = true;
   showScreen('result');
@@ -1179,6 +1185,9 @@ function recordSheet() {
   if (s.batch && s.batch.src) entry.src = s.batch.src; else if (s.owed && s.src) entry.src = s.src;
   cur.drinks.push(entry);
   if (s.batch) cur.decided = true;
+  if (s.dbl) useTrack('special_rule', { type: 'double' });
+  if (s.hh) useTrack('special_rule', { type: 'heaven_hell' });
+  if (calc.ticketUsed || s.pass) useTrack('special_rule', { type: 'ticket' });
   sheet = null;
   closeOv('sheetOv');
   saveGame();
@@ -1936,6 +1945,7 @@ function seatTap(i) {
 function runPick() {
   const cur = G.cur;
   if (picking || cur.pickDone != null) return;
+  useMini('pick');
   const n = G.players.length, target = Math.floor(Math.random() * n);
   const S = reduceMotion ? 6 : Math.max(18, n * 3 + 7);
   const start = (((target - (S - 1)) % n) + n) % n;
@@ -2291,6 +2301,7 @@ function openChallenge() {
   const rolled = !CHAL[c.fx];
   chal = { p: cur.drawer, kind: rolled ? CHAL_KINDS[Math.floor(Math.random() * CHAL_KINDS.length)] : c.fx, cups: c.cups.length ? c.cups[c.cups.length - 1] : 1, state: 'intro', timers: [], raf: 0, ok: null };
   chal.q = CHAL[chal.kind].setup ? CHAL[chal.kind].setup() : {};
+  useMini('chal');
   $('chalWho').innerHTML = '<span class="sh-name" style="--p:' + pc(chal.p) + '">' + esc(pname(chal.p)) + '</span> の挑戦！';
   $('chalStake').innerHTML = '<span>クリア → <b class="ok">回避</b></span><span>失敗 → <b class="ng">' + chal.cups + '杯</b></span>';
   $('chalOv').className = 'ov chal-ov';
@@ -2669,6 +2680,7 @@ function openBomb() {
   const cur = G.cur, c = cur.card;
   if (bomb || chal || !c || c.fx !== 'bomb' || cur.bombDone) return;
   const n = G.players.length;
+  useMini('bomb');
   bomb = { holder: cur.drawer, n, cups: c.cups.length ? c.cups[c.cups.length - 1] : 1, state: 'intro', timers: [], raf: 0, passes: 0, topic: BOMB_TOPICS[Math.floor(Math.random() * BOMB_TOPICS.length)], lockUntil: 0 };
   const ov = $('bombOv');
   ov.className = 'ov bomb-ov';
@@ -2836,6 +2848,7 @@ function timerPlayers(c) {
 function openTimer() {
   const c = G.cur.card, tm = timerOf(c);
   if (timer || !tm) return;
+  useMini('timer');
   timer = { mode: tm.stop ? 'stop' : 'count', sec: tm.sec, cups: c.cups.length ? c.cups[0] : 1, timers: [], raf: 0, anim: null, state: 'ready', guard: 0 };
   $('tmHead').innerHTML = '<h2 class="tm-title ol" id="tmTitle"><span class="tm-mark" style="--c:' + colorVar(c.color) + '">' + esc(c.mark) + '</span>' +
       (tm.stop ? fmtSec(tm.sec) + 'ストップ対決' : fmtSec(tm.sec) + 'タイマー') + '</h2>' +
@@ -3048,6 +3061,7 @@ function swResult(diffs) {
 /* ---------- tap duel ---------- */
 function openTap() {
   const a = G.cur.names['引いた人'], b = G.cur.names['ランダム'];
+  useMini('tap');
   tap = { sides: [a, b], state: 'count', timers: [], goAt: 0, loser: null };
   const half = (i, id) => '<span class="tap-name">' + esc(pname(tap.sides[i])) + '</span><span class="tap-msg" id="' + id + '">合図が出たらここをタップ！</span>';
   $('tapBottom').innerHTML = half(0, 'tapMsg0');
@@ -3396,6 +3410,7 @@ function openTool() {
     if (ps.length < 2) { const r = cur.names['ランダム']; ps = [a, r != null && r !== a ? r : (a + 1) % n]; }
   }
   const base = c.cups.length ? c.cups[0] : 1;
+  useMini(kind);
   tool = { kind, ps, base, cups: base, k: 0, res: [], state: 'play', timers: [], raf: 0, guard: 0, losers: null, busy: false, bowl: null, flat: false };
   $('toolOv').className = 'ov timer-ov tool-ov ' + TOOL_INFO[kind].cls;
   $('toolHead').innerHTML = '<h2 class="tm-title ol" id="toolTitle">' + TOOL_INFO[kind].title + '</h2><p class="tm-card">' + fillGame(c.text) + '</p>';
@@ -4341,6 +4356,157 @@ function champPop() {
   partyLose(1800);
 }
 
+
+/* ---------- あそびの記録（この端末だけ）と、全員分の利用状況（Googleアナリティクス。測定IDを入れたときだけ動く）.
+   Only counts are kept or sent: never player names. The artifact version keeps its own device record and sends nothing ---------- */
+const USE_KEY = 'sakego-usage';
+const GA_ID = '';   /* Googleアナリティクス（GA4）の測定ID「G-XXXXXXXXXX」。空のあいだは外へ何も送らない */
+const USE_GAP = 10 * 60 * 1000;   /* play time: a pause longer than 10 minutes isn't counted */
+let USE = null;
+const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function useLoad() {
+  if (USE) return USE;
+  try { USE = JSON.parse(localStorage.getItem(USE_KEY) || 'null'); } catch (_) { USE = null; }
+  if (!USE || USE.v !== 1) USE = { v: 1, first: Date.now(), games: 0, done: 0, draws: 0, ms: 0, cups: 0, days: {}, players: {}, cards: {}, fx: {}, mini: {}, special: {}, cur: 0, last: 0, ended: 0 };
+  return USE;
+}
+function useSave() {
+  const U = USE, keys = Object.keys(U.days).sort();
+  if (keys.length > 200) keys.slice(0, keys.length - 200).forEach(k => delete U.days[k]);
+  try { localStorage.setItem(USE_KEY, JSON.stringify(U)); } catch (_) { /* ignore */ }
+}
+const bump = (o, k, n) => { o[k] = (o[k] || 0) + (n == null ? 1 : n); };
+/* time only: called as turns go by, so the time spent in a long mini game still counts if the game is left unfinished */
+function useTick() {
+  const U = useLoad(), now = Date.now(), gid = G && G.gid;
+  if (!gid) return;
+  if (U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
+  U.cur = gid; U.last = now;
+  useSave();
+}
+function useTrack(ev, p) {
+  p = p || {};
+  const U = useLoad(), now = Date.now(), gid = G && G.gid;
+  if (gid && U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
+  if (gid) { U.cur = gid; U.last = now; }
+  if (ev === 'game_start') { U.games++; bump(U.days, dayKey(now)); bump(U.players, p.players); }
+  else if (ev === 'card_draw') { U.draws++; bump(U.cards, p.card_id); if (p.kind) bump(U.fx, p.kind); }
+  else if (ev === 'mini_game') bump(U.mini, p.kind);
+  else if (ev === 'special_rule') bump(U.special, p.type);
+  else if (ev === 'game_end') { if (U.ended === gid) return; U.ended = gid; U.done++; U.cups += p.cups || 0; }
+  useSave();
+  if (window.gtag && !gaOff()) { try { window.gtag('event', ev, p); } catch (_) { /* ignore */ } }
+}
+/* what a card is, for the counts: its mini game / app effect, if any */
+const cardKind = c => (c ? toolOf(c) || (/^ch_/.test(c.fx || '') ? 'chal' : c.fx === 'bomb' || c.fx === 'pick' || c.fx === 'tap' ? c.fx : timerOf(c) ? 'timer' : '') : '');
+const GA_OFF_KEY = 'sakego-ga-off';
+const gaOff = () => { try { return localStorage.getItem(GA_OFF_KEY) === '1'; } catch (_) { return false; } };
+function gaInit() {
+  if (!IS_APP || !GA_ID || gaOff() || window.gtag) return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', GA_ID);
+  const s = document.createElement('script');
+  s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
+  document.head.appendChild(s);
+}
+
+const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'ワニの歯', mine: '地雷原', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
+  indian: 'インディアンポーカー', darts: 'ダーツ勝負', bomb: '爆弾パス回し', chal: 'チャレンジ', pick: '名前ルーレット', tap: '早押し対決', timer: 'タイマー' };
+const SPECIAL_NAMES = [['double', '倍倍FIGHT！'], ['heaven_hell', '天国と地獄'], ['cospa', 'コスパ'], ['ticket', '券']];
+function fmtDur(ms) {
+  const m = Math.round(ms / 60000);
+  if (m < 1) return ms > 0 ? '1分未満' : '0分';
+  return m >= 60 ? Math.floor(m / 60) + '時間' + (m % 60 ? (m % 60) + '分' : '') : m + '分';
+}
+let usageReset = false, usageDay = null;
+function openUsage() {
+  USE = null;   /* read it fresh: another tab may have written to it */
+  usageReset = false; usageDay = null;
+  renderUsage();
+  if ($('statsOv').hidden) { openOv('statsOv'); SE.play('pop'); }
+  $('statsClose').focus({ preventScroll: true });
+}
+function renderUsage() {
+  const U = useLoad(), now = Date.now();
+  const days = Object.keys(U.days).length;
+  const pl = Object.entries(U.players), plN = pl.reduce((a, [, v]) => a + v, 0);
+  const avgP = plN ? pl.reduce((a, [k, v]) => a + Number(k) * v, 0) / plN : 0;
+  const tile = (v, l, s) => '<div class="us-tile"><b>' + v + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>';
+  /* the last 14 days, one bar each */
+  const span = [];
+  for (let i = 13; i >= 0; i--) { const t = now - i * 86400000; span.push({ k: dayKey(t), d: new Date(t) }); }
+  const vals = span.map(x => U.days[x.k] || 0), mx = Math.max(1, ...vals);
+  if (usageDay == null) usageDay = span.length - 1;
+  const sel = span[usageDay], selV = vals[usageDay];
+  const week = vals.slice(7).reduce((a, b) => a + b, 0), prevWeek = vals.slice(0, 7).reduce((a, b) => a + b, 0);
+  const bars = span.map((x, i) => {
+    /* every other day is labelled (today always), with the month on the first label and on the 1st */
+    const lab = (span.length - 1 - i) % 2 === 0, first = i <= 1 || x.d.getDate() === 1;
+    return '<button type="button" class="us-bar' + (i === usageDay ? ' on' : '') + (x.d.getDay() === 0 || x.d.getDay() === 6 ? ' we' : '') + '" data-us="day" data-i="' + i + '" aria-label="' + (x.d.getMonth() + 1) + '月' + x.d.getDate() + '日 ' + vals[i] + '回">' +
+      '<span class="us-col"><i style="height:' + (vals[i] ? Math.max(6, vals[i] / mx * 100) : 0) + '%"></i></span><span class="us-d">' + (lab ? (first ? (x.d.getMonth() + 1) + '/' : '') + x.d.getDate() : '') + '</span></button>';
+  }).join('');
+  /* mini games: how often each was played, and how often it was played when its card came up (使用率) */
+  const kinds = Object.keys(MINI_NAMES).filter(k => U.mini[k] || U.fx[k]);
+  kinds.sort((a, b) => (U.mini[b] || 0) - (U.mini[a] || 0) || (U.fx[b] || 0) - (U.fx[a] || 0));
+  const mMax = Math.max(1, ...kinds.map(k => U.mini[k] || 0));
+  const minis = kinds.length ? '<div class="us-grid">' + kinds.map(k => {
+    const n = U.mini[k] || 0, seen = U.fx[k] || 0, rate = seen ? Math.min(100, Math.round(n / seen * 100)) : null;
+    return '<div class="us-row"><span class="us-nm">' + esc(MINI_NAMES[k]) + '</span><span class="us-track"><i style="width:' + (n / mMax * 100) + '%"></i></span>' +
+      '<span class="us-v">' + n + '回' + (rate != null ? '<small>出た' + seen + '回中 ' + rate + '%</small>' : '') + '</span></div>';
+  }).join('') + '</div>' : '<p class="us-none">まだミニゲームで遊んでいません</p>';
+  /* cards that came up most, and how many never did */
+  const byId = new Map(deck.cards.map(c => [String(c.id), c]));
+  const top = Object.entries(U.cards).filter(([id]) => byId.has(id)).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const cMax = Math.max(1, ...top.map(x => x[1]));
+  const onCards = deck.cards.filter(c => c.on), never = onCards.filter(c => !U.cards[c.id]).length;
+  const plain = t => String(t).replace(TAG_RE, (_, k) => k);
+  const cards = top.length ? '<div class="us-grid cards">' + top.map(([id, n]) => '<div class="us-row"><span class="us-nm">' + esc(plain(byId.get(id).text)) + '</span><span class="us-track"><i style="width:' + (n / cMax * 100) + '%"></i></span><span class="us-v">' + n + '回</span></div>').join('') + '</div>'
+    : '<p class="us-none">まだカードを引いていません</p>';
+  const special = SPECIAL_NAMES.map(([k, l]) => '<span class="us-chip">' + l + '<b>' + (U.special[k] || 0) + '</b></span>').join('');
+  const people = [2, 3, 4, 5, 6, 7, 8].map(n => '<span class="us-chip' + (U.players[n] ? '' : ' zero') + '">' + n + '人<b>' + (U.players[n] || 0) + '</b></span>').join('');
+  const since = new Date(U.first);
+  $('statsBody').innerHTML =
+    '<p class="us-lead">この端末で遊んだ記録です（' + (since.getMonth() + 1) + '月' + since.getDate() + '日から）。</p>' +
+    '<div class="us-tiles">' + tile(U.games, '遊んだ回数', U.done < U.games ? '最後まで ' + U.done + '回' : '') + tile(days, '遊んだ日数') + tile(fmtDur(U.ms), 'プレイ時間') +
+      tile(U.games ? fmtDur(U.ms / U.games) : '—', '1回の平均') + tile(avgP ? avgP.toFixed(1) + '人' : '—', '平均人数') + tile(U.draws, '引いたカード', U.games ? '1回 ' + Math.round(U.draws / U.games) + '枚' : '') + '</div>' +
+    '<section class="us-card"><h3>最近2週間<span class="us-sum">今週 <b>' + week + '</b>回 ・ 先週 ' + prevWeek + '回</span></h3>' +
+      '<p class="us-sel"><b>' + (sel.d.getMonth() + 1) + '/' + sel.d.getDate() + '</b>（' + '日月火水木金土'[sel.d.getDay()] + '）' + (selV ? ' <b>' + selV + '</b>回遊んだ' : ' 遊んでいない') + '</p>' +
+      '<div class="us-bars">' + bars + '</div></section>' +
+    '<section class="us-card"><h3>ミニゲーム<span class="us-sum">遊んだ回数 ・ カードが出たときに遊んだ割合</span></h3>' + minis + '</section>' +
+    '<section class="us-card"><h3>よく出たカード<span class="us-sum">まだ出ていない ' + never + '枚 / ' + onCards.length + '枚</span></h3>' + cards + '</section>' +
+    '<section class="us-card"><h3>特殊ルール・人数</h3><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
+      (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
+    (IS_APP && GA_ID ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数や使われたミニゲームを匿名で集計しています（Googleアナリティクス）。名前やカードの内容は送りません。</p>' +
+      '<button type="button" class="us-opt" data-us="ga" aria-pressed="' + !gaOff() + '"><span class="us-sw"></span>' + (gaOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
+    '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。</p>' +
+    '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
+}
+function usageAct(a, el) {
+  if (a === 'day') { usageDay = Number(el.dataset.i); renderUsage(); SE.play('tick'); return; }
+  if (a === 'ga') {
+    const off = !gaOff();
+    try { if (off) localStorage.setItem(GA_OFF_KEY, '1'); else localStorage.removeItem(GA_OFF_KEY); } catch (_) { /* ignore */ }
+    window['ga-disable-' + GA_ID] = off;
+    if (!off) gaInit();
+    renderUsage(); SE.play('tap'); return;
+  }
+  if (a === 'reset') {
+    if (!usageReset) { usageReset = true; renderUsage(); return; }
+    try { localStorage.removeItem(USE_KEY); } catch (_) { /* ignore */ }
+    USE = null; usageReset = false; usageDay = null;
+    renderUsage(); SE.play('poof');
+  }
+}
+/* a mini game counts once per card, even if it's opened again */
+function useMini(kind) {
+  const cur = G && G.cur;
+  if (!cur || cur.miniT === kind) return;
+  cur.miniT = kind;
+  useTrack('mini_game', { kind });
+}
+
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
 const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
@@ -4865,6 +5031,9 @@ function wireGame() {
   });
   $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
+  $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
+  $('statsClose').addEventListener('click', () => closeOv('statsOv'));
+  $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));
 
   $('countGrid').addEventListener('click', e => {
@@ -5013,6 +5182,7 @@ function wireGame() {
   backdrop('handOv', () => closeOv('handOv'));
   backdrop('endOv', () => closeOv('endOv'));
   backdrop('howOv', () => closeOv('howOv'));
+  backdrop('statsOv', () => closeOv('statsOv'));
   backdrop('catOv', () => closeOv('catOv'));
   backdrop('confirmOv', () => closeOv('confirmOv'));
   backdrop('backOv', () => closeOv('backOv'));
@@ -5070,7 +5240,7 @@ function wireGame() {
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
     if (tool) { closeTool(false); return; }
     if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
-    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'howOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
+    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
     if (G && G.cur && G.cur.select && screen === 'game') { G.cur.select = null; renderGame(); }
@@ -5112,6 +5282,7 @@ function boot(data) {
   wireEditor(); wireGame();
   checkDraft();
   G = normalizeGame(validGame(data.G) ? data.G : loadGame());
+  gaInit();
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';
