@@ -317,6 +317,9 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .pick-players{display:flex; flex-wrap:wrap; gap:6px}
 .pick-players button{display:inline-flex; align-items:center; gap:6px; background:var(--white); border:2.5px solid var(--ink); color:var(--ink); border-radius:999px; padding:3px 12px 3px 6px; font-size:14px; font-weight:800}
 .pick-players button[aria-pressed="true"]{background:var(--p)}
+.push-to button .dot{width:12px; height:12px}
+.push-to button[aria-pressed="true"] .dot{background:var(--white)}
+.push-h{margin-top:2px}
 .note-s{margin:0; font-size:11.5px; font-weight:800; color:var(--ink-muted)}
 .dialog{width:100%; max-width:420px; max-height:100%; overflow:auto; box-sizing:border-box; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:22px; box-shadow:0 6px 0 var(--ink);
   padding:18px; display:flex; flex-direction:column; gap:12px; animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
@@ -1967,11 +1970,11 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 {"id":80,"cat":"app","text":"直前に飲んだ人がもう1杯","cups":[1],"min":2,"dur":null,"note":"アプリの記録を参照","on":true,"fx":"last","drink":null},
 {"id":81,"cat":"app","text":"アプリのルーレットで1人を選ぶ。当たった人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"pick","drink":null},
 {"id":82,"cat":"app","text":"アプリの3秒カウントダウンのあと、{引いた人}と{ランダム}が同時に画面をタップ。遅かった方が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"tap","drink":null},
-{"id":83,"cat":"app","text":"{引いた人}は1杯を賭けて天国と地獄を回す","cups":[1],"min":2,"dur":null,"note":"天国→回避／地獄→2杯／大天国→押し付け／大地獄→3杯。デビルモードと大天使降臨も発生する。特殊ルールの使用には数えない","on":true,"fx":"hh","drink":null},
+{"id":83,"cat":"app","text":"{引いた人}は1杯を賭けて天国と地獄を回す","cups":[1],"min":2,"dur":null,"note":"天国→回避／地獄→2杯／大天国→好きな人に押し付け／大地獄→3杯。デビルモードと大天使降臨も発生する。特殊ルールの使用には数えない","on":true,"fx":"hh","drink":null},
 {"id":84,"cat":"app","text":"次に飲む人の量は2倍。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"倍倍FIGHT！と重ねがけ可（上限99杯）","on":true,"fx":"x2next","drink":null},
 {"id":85,"cat":"app","text":"次に飲む人の量は半分。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"0.5杯はそれ以上半分にならない","on":true,"fx":"halfnext","drink":null},
 {"id":86,"cat":"app","text":"現時点で飲んだ杯数が一番多い人は、次に飲む1回を回避できる","cups":[],"min":2,"dur":null,"note":"休憩券として手札に入る（全員同じ杯数なら該当なし）","on":true,"fx":"rest","drink":null},
-{"id":87,"cat":"app","text":"{引いた人}は次に飲むとき、その量を{ランダム}に押し付けられる","cups":[],"min":2,"dur":null,"note":"押し付け券として手札に入る","on":true,"fx":"push","drink":null},
+{"id":87,"cat":"app","text":"{引いた人}は次に飲むとき、その量を好きな人に押し付けられる","cups":[],"min":2,"dur":null,"note":"押し付け券として手札に入る。押し付ける相手は使うときに選ぶ","on":true,"fx":"push","drink":null},
 {"id":88,"cat":"app","text":"{引いた人}は好きな1人と、ここまでの飲んだ杯数の記録を入れ替えられる","cups":[],"min":2,"dur":null,"note":"結果発表のランキングに反映","on":true,"fx":"swap","drink":null},
 {"id":89,"cat":"safe","text":"セーフ！{引いた人}は何もなし","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":90,"cat":"safe","text":"全員セーフ。{引いた人}の音頭で乾杯だけして次へ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
@@ -2065,7 +2068,7 @@ const FX_GROUPS = [
   ['手札に入る券', [
     ['safe', 'セーフ券', '引いた人の手札へ。飲む対象になったとき1回だけ回避'],
     ['givesafe', 'セーフ券を渡す', '引いた人が選んだ人の手札にセーフ券を入れる'],
-    ['push', '押し付け券', '引いた人の手札へ。飲む量をランダムの人に押し付けられる'],
+    ['push', '押し付け券', '引いた人の手札へ。次に飲むとき、その量を好きな人に押し付けられる（相手は使うときに選ぶ）'],
     ['heavenpass', '天国パス', '天国と地獄で地獄マスを1回だけ天国にできる'],
     ['freecospa', 'コスパ無料券', '次のコスパの前払い1杯が不要になる'],
     ['rest', '休憩券（最多の人へ）', '今いちばん飲んでいる人の手札に休憩券（1回回避）'],
@@ -2201,6 +2204,7 @@ const APP_DECK_KEY = 'sakego-deck';
 const DECK_FIXES = [
   [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
   [106, '{引いた人}は「数字タッチ」に挑戦。1〜9を5秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯', '{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯'],
+  [87, '{引いた人}は次に飲むとき、その量を{ランダム}に押し付けられる', '{引いた人}は次に飲むとき、その量を好きな人に押し付けられる'],
 ];
 /* built-in cards added later: put into a deck saved on the device once (a card the user then deletes stays deleted) */
 const DECK_ADDS = [114, 115, 116, 117, 118, 119];
@@ -3633,7 +3637,7 @@ function drawCard() {
     gifts.push([d, giveItem(d, item)]);
   }
   if (fx === 'safe') gifts.push([d, giveItem(d, ticket('avoid', 'セーフ券'))]);
-  if (fx === 'push') gifts.push([d, giveItem(d, ticket('push', '押し付け券', { target: r, text: '押し付け券（→' + pname(r) + '）' }))]);
+  if (fx === 'push') gifts.push([d, giveItem(d, ticket('push', '押し付け券'))]);
   if (fx === 'heavenpass') gifts.push([d, giveItem(d, ticket('heavenpass', '天国パス'))]);
   if (fx === 'freecospa') gifts.push([d, giveItem(d, ticket('freecospa', 'コスパ無料券'))]);
   let restNote = '';
@@ -3902,8 +3906,11 @@ function floatAt(p, text, safe) {
   setTimeout(() => el.remove(), 1300);
   seat.classList.remove('bump'); void seat.offsetWidth; seat.classList.add('bump');
 }
+/* 大天国 / 押し付け券: who it goes to is picked on the record sheet (s.to); until then the left neighbour
+   (or, for a push ticket saved before the choice existed, the person written on it) */
 function computeAmount(s) {
   const p = s.p, cur = G.cur, n = G.players.length, P = pendFor(s);
+  const pushTo = d => (s.to != null && s.to !== p && G.players[s.to] ? s.to : d);
   let a = s.base; const steps = [s.base + '杯'], pushes = [];
   if (pendHits(P, p)) {
     if (P.mult !== 1) { a *= P.mult; steps.push('×' + P.mult + '（' + P.src + '）'); }
@@ -3913,7 +3920,7 @@ function computeAmount(s) {
   if (s.hh === 'heaven') { a = 0; steps.push(s.pass ? '天国パスで回避' : '天国で回避'); }
   else if (s.hh === 'hell') { a *= 2; steps.push('×2（地獄）'); }
   else if (s.hh === 'bighell') { a *= 3; steps.push('×3（大地獄）'); }
-  else if (s.hh === 'bigheaven') { pushes.push({ to: (p + 1) % n, amt: a }); a = 0; steps.push('大天国で押し付け'); }
+  else if (s.hh === 'bigheaven') { const to = pushTo((p + 1) % n); pushes.push({ to, amt: a }); a = 0; steps.push('大天国で' + pname(to) + 'に押し付け'); }
   if (cur.cospa && p === cur.drawer && a > 0) { a = halfOf(a); steps.push('半分（コスパ）'); }
   if (hasDur(p, 'half') && a > 0) { a = halfOf(a); steps.push('半分（手札）'); }
   let ticketUsed = false;
@@ -3922,7 +3929,7 @@ function computeAmount(s) {
     if (t && a > 0) {
       ticketUsed = true;
       if (t.fx === 'avoid') { steps.push(t.label + 'で回避'); a = 0; }
-      else if (t.fx === 'push') { pushes.push({ to: t.target, amt: a }); steps.push(t.label + 'で押し付け'); a = 0; }
+      else if (t.fx === 'push') { const to = pushTo(t.target != null && t.target !== p && G.players[t.target] ? t.target : (p + 1) % n); pushes.push({ to, amt: a }); steps.push(t.label + 'で' + pname(to) + 'に押し付け'); a = 0; }
     }
   }
   return { amt: Math.min(99, a), pushes: pushes.map(x => ({ to: x.to, amt: Math.min(99, x.amt) })), steps, ticketUsed };
@@ -3941,7 +3948,7 @@ function makeSheet(p, opts) {
   opts = opts || {};
   const cur = G.cur, c = cur.card;
   const def = c && c.cups.length ? c.cups[0] : 1;
-  sheet = { p, base: Math.max(1, Math.min(99, opts.base || def)), dbl: false, hh: null, hhFree: false, mode: null, locked: false, ticket: null, pass: null,
+  sheet = { p, base: Math.max(1, Math.min(99, opts.base || def)), dbl: false, hh: null, hhFree: false, mode: null, locked: false, ticket: null, pass: null, to: null,
     replace: null, batch: opts.batch || null, owed: !!opts.owed, src: opts.src || '' };
   const e = opts.replace != null ? cur.drinks[opts.replace] : null;
   if (e && e.kind === 'auto') {
@@ -3967,7 +3974,7 @@ function renderSheet() {
     : withOthers.length ? '<p class="sh-ctx">' + withOthers.map(q => '<span class="sh-mini" style="--p:' + pc(q) + '">' + esc(pname(q)) + '</span>').join('') + 'も「記録する！」で一緒に記録します</p>'
     : s.owed ? '<p class="sh-ctx">特殊ルール・券を使わないなら「使わずに記録」</p>' : '';
   const cancel = s.owed ? '使わずに記録' : s.batch ? 'もどる' : 'やめる';
-  const hhLabel = { heaven: '天国！ 回避', hell: '地獄… 2倍', bigheaven: '大天国！ 次の人に押し付け', bighell: '大地獄…… 3倍' };
+  const hhLabel = { heaven: '天国！ 回避', hell: '地獄… 2倍', bigheaven: '大天国！ 好きな人に押し付け', bighell: '大地獄…… 3倍' };
   const modeLabel = s.mode === 'devil' ? '（デビルモード）' : s.mode === 'angel' ? '（大天使降臨）' : '';
   const dblDis = used || (s.hh && !s.hhFree);
   const hhDis = used || s.dbl || !!s.hh;
@@ -3990,6 +3997,8 @@ function renderSheet() {
     (usable.length ? '<div class="pick-players" role="group" aria-label="券を使う">' + usable.map(h =>
       '<button type="button" class="tk" data-s="ticket" data-uid="' + h.uid + '" aria-pressed="' + (s.ticket === h.uid) + '">' + esc(h.text) + 'を使う</button>').join('') + '</div>' : '') +
     (others.length ? '<div class="hand-list">' + others.map(h => handRow(h)).join('') + '</div>' : '') +
+    (calc.pushes.length ? '<p class="sp-h push-h">押し付ける相手<span>タップで選ぶ</span></p><div class="pick-players push-to" role="group" aria-label="押し付ける相手">' +
+      G.players.map((q, i) => i === p ? '' : '<button type="button" data-s="to" data-to="' + i + '" style="--p:' + pc(i) + '" aria-pressed="' + (calc.pushes[0].to === i) + '"><span class="dot"></span>' + esc(q.name) + '</button>').join('') + '</div>' : '') +
     '<div class="final"><span class="final-l">飲む量</span><span class="final-v' + (calc.amt ? '' : ' zero') + '">' + (calc.amt ? fmtAmt(calc.amt) + '<small>杯</small>' : 'SAFE') + '</span>' +
       calc.pushes.map(x => '<span class="push">' + esc(pname(x.to)) + 'に' + fmtAmt(x.amt) + '杯を押し付け！</span>').join('') +
       '<span class="steps">' + esc(calc.steps.join(' → ')) + '</span></div>' +
@@ -4962,7 +4971,7 @@ function openWheel(free) {
   setHub('運命');
   const md = $('wheelMode'); md.textContent = '天国か？ 地獄か？'; md.classList.remove('go');
   const res = $('wheelResult'); res.textContent = ''; res.className = 'wheel-result ol';
-  $('wheelLegend').textContent = '天国：回避 ／ 地獄：2倍 ／ 大天国：次の人に押し付け ／ 大地獄：3倍';
+  $('wheelLegend').textContent = '天国：回避 ／ 地獄：2倍 ／ 大天国：好きな人に押し付け ／ 大地獄：3倍';
   $('wheelSpin').hidden = false; $('wheelSpin').disabled = false;
   $('wheelCancel').hidden = false;
   $('wheelPass').hidden = true;
@@ -7885,7 +7894,7 @@ const GUIDE = [
     gCard('<span class="gd-sp hh">天国と地獄</span>', '<p>ルーレットで運命が決まる。<b>回したら取り消せません。</b></p><div class="gd-rows">' +
       '<span class="gd-chip heaven">天国</span><span>飲まなくてOK</span>' +
       '<span class="gd-chip hell">地獄</span><span>2倍</span>' +
-      '<span class="gd-chip bigheaven">大天国</span><span>自分は0杯。その量を次の人（左隣）に押し付け</span>' +
+      '<span class="gd-chip bigheaven">大天国</span><span>自分は0杯。その量を好きな人に押し付け（記録画面で相手を選ぶ）</span>' +
       '<span class="gd-chip bighell">大地獄</span><span>3倍</span></div>' +
       '<p class="sub">ふつうは10秒で止まります。たまに<b>デビルモード</b>（地獄だらけ）や<b>大天使降臨</b>（ほぼ天国、でも大地獄が2マス）が起きます。</p>') +
     gCard('<span class="gd-sp cospa">コストパフォーマンス</span>', '<div class="gd-mock">' + gBtn('コスパ<span class="sub">先に1杯で半分に</span>', 'pink small') + '</div>' +
@@ -7914,7 +7923,7 @@ const GUIDE = [
       '<p class="sub">カードを引く前に席をタップすると、その人の手札（継続カード・券）とここまでの記録が見られます。</p>') +
     gCard('券', '<div class="gd-rows">' +
       '<span class="gd-chip plain">セーフ券・休憩券</span><span>飲む対象になったとき、1回だけ回避</span>' +
-      '<span class="gd-chip plain">押し付け券</span><span>飲む量を、書かれた人に押し付け</span>' +
+      '<span class="gd-chip plain">押し付け券</span><span>飲む量を、好きな人に押し付け（使うときに相手を選ぶ）</span>' +
       '<span class="gd-chip plain">天国パス</span><span>天国と地獄で、地獄を1回だけ天国に</span>' +
       '<span class="gd-chip plain">コスパ無料券</span><span>次のコスパの、前払い1杯が不要</span></div>' +
       '<p class="sub">券は、記録画面に「〇〇を使う」ボタンとして出てきます（天国パスはルーレットの結果画面、コスパ無料券は自動で使われます）。「特殊ルールを使う？」の画面にも出ます。</p>') +
@@ -8460,6 +8469,7 @@ function wireGame() {
     else if (s === 'dbl') { sheet.dbl = !sheet.dbl; if (sheet.dbl) { SE.play('double'); flash('#ff8b2b'); } else SE.play('tap'); renderSheet(); refocus('[data-s="dbl"]'); }
     else if (s === 'hh') openWheel(false);
     else if (s === 'hhfree') openWheel(true);
+    else if (s === 'to') { sheet.to = Number(b.dataset.to); SE.play('select'); renderSheet(); refocus('[data-to="' + sheet.to + '"]'); }
     else if (s === 'ticket') { const u = Number(b.dataset.uid); sheet.ticket = sheet.ticket === u ? null : u; SE.play(sheet.ticket ? 'ticket' : 'tap'); renderSheet(); refocus('[data-uid="' + u + '"]'); }
     else if (s === 'close') closeSheet();
     else if (s === 'record') recordSheet();
