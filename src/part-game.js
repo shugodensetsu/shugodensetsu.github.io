@@ -3124,13 +3124,13 @@ function closeTap(rec) {
 }
 
 /* ---------- 3D dice: thrown into a bowl and settled by real physics (three.js + cannon-es, loaded on demand from ./vendor).
-   The result is whatever face ends up on top. If WebGL or the libraries are not available, the flat 2D dice are used ---------- */
-const DICE_SRC = [['./vendor/three.module.min.js', './vendor/cannon-es.min.js'],
-  ['https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js', 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js']];
+   The result is whatever face ends up on top. If WebGL or the libraries are not available, the flat 2D dice are used.
+   Only our own copies are loaded (no outside CDN), so no third-party script ever runs in the page ---------- */
+const DICE_SRC = [['./vendor/three.module.min.js', './vendor/cannon-es.min.js']];
 let diceLibs = null;
 function loadDiceLibs() {
   const get = k => Promise.all(DICE_SRC[k].map(u => import(u))).then(([THREE, CANNON]) => ({ THREE, CANNON }));
-  if (!diceLibs) diceLibs = get(0).catch(() => get(1)).catch(e => { diceLibs = null; throw e; });
+  if (!diceLibs) diceLibs = get(0).catch(e => { diceLibs = null; throw e; });
   return diceLibs;
 }
 /* bowl: flat bottom, then a quarter-circle wall up to the rim. Units: a die is 0.62.
@@ -4360,14 +4360,24 @@ function champPop() {
 /* ---------- あそびの記録（この端末だけ）と、全員分の利用状況（Googleアナリティクス。測定IDを入れたときだけ動く）.
    Only counts are kept or sent: never player names. The artifact version keeps its own device record and sends nothing ---------- */
 const USE_KEY = 'sakego-usage';
-const GA_ID = '';   /* Googleアナリティクス（GA4）の測定ID「G-XXXXXXXXXX」。空のあいだは外へ何も送らない */
+const GA_ID = '';
+const PRIVACY_URL = 'https://shugodensetsu.github.io/privacy.html';   /* Googleアナリティクス（GA4）の測定ID「G-XXXXXXXXXX」。空のあいだは外へ何も送らない */
 const USE_GAP = 10 * 60 * 1000;   /* play time: a pause longer than 10 minutes isn't counted */
 let USE = null;
 const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function useLoad() {
   if (USE) return USE;
   try { USE = JSON.parse(localStorage.getItem(USE_KEY) || 'null'); } catch (_) { USE = null; }
-  if (!USE || USE.v !== 1) USE = { v: 1, first: Date.now(), games: 0, done: 0, draws: 0, ms: 0, cups: 0, days: {}, players: {}, cards: {}, fx: {}, mini: {}, special: {}, cur: 0, last: 0, ended: 0 };
+  if (!USE || typeof USE !== 'object' || USE.v !== 1) USE = { v: 1 };
+  /* only numbers are kept, whatever was saved: the record screen shows these values as they are */
+  const num = x => (Number.isFinite(Number(x)) ? Number(x) : 0);
+  ['first', 'games', 'done', 'draws', 'ms', 'cups', 'cur', 'last', 'ended'].forEach(k => { USE[k] = num(USE[k]); });
+  if (!USE.first) USE.first = Date.now();
+  ['days', 'players', 'cards', 'fx', 'mini', 'special'].forEach(k => {
+    const o = USE[k] && typeof USE[k] === 'object' ? USE[k] : {}, clean = {};
+    Object.keys(o).forEach(j => { if (/^[\w-]{1,24}$/.test(j)) clean[j] = num(o[j]); });
+    USE[k] = clean;
+  });
   return USE;
 }
 function useSave() {
@@ -4480,7 +4490,7 @@ function renderUsage() {
       (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
     (IS_APP && GA_ID ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数や使われたミニゲームを匿名で集計しています（Googleアナリティクス）。名前やカードの内容は送りません。</p>' +
       '<button type="button" class="us-opt" data-us="ga" aria-pressed="' + !gaOff() + '"><span class="us-sw"></span>' + (gaOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
-    '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。</p>' +
+    '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
 }
 function usageAct(a, el) {
