@@ -1185,31 +1185,96 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .us-reset{flex:none; align-self:center; min-width:180px}
 
 /* ---------- ミニゲーム8番勝負 ---------- */
-.seat-pips{display:flex; gap:3px; justify-content:center; margin-top:1px}
+.mg-wrap{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px; padding:2px 0 4px}
+.mg-board{flex:none; display:flex; flex-wrap:wrap; justify-content:center; gap:8px 6px; padding-top:4px}
+.mg-p{flex:0 0 calc((100% - (var(--cols, 4) - 1) * 6px) / var(--cols, 4)); box-sizing:border-box; position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:1px; background:var(--p); color:var(--ink); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:8px 4px 5px}
+.mg-pn{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:800; font-size:13px; line-height:1.2}
+.mg-board.c4 .mg-pn{font-size:min(13px, 3.1vw); letter-spacing:-.02em}
+.mg-pc{font-family:var(--f-display); line-height:1.1; background:var(--white); border:2px solid var(--ink); border-radius:999px; padding:0 9px}
+.mg-pc b{font-weight:400; font-size:17px}
+.mg-pc small{font-family:var(--f-body); font-weight:800; font-size:10px; margin-left:1px}
+.mg-p .seat-pips{margin-top:2px}
+.mg-p.start{box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--yellow); transform:translateY(-2px)}
+.mg-p.lose{animation:tmLose .3s 2; box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--red)}
+.mg-p.bump .mg-pc{animation:bump .55s cubic-bezier(.3,1.8,.5,1)}
+.mg-tag{position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--yellow); color:var(--ink); border:2px solid var(--ink); border-radius:999px; font-size:10px; font-weight:800; line-height:1.35; padding:0 7px; white-space:nowrap}
+.mg-tag.lose{background:var(--red); color:var(--white); font-family:var(--f-display); font-size:12px}
+.seat-pips{display:flex; gap:3px; justify-content:center}
 .seat-pips i{width:9px; height:9px; border-radius:50%; background:rgba(21,7,51,.18); border:2px solid var(--ink)}
 .seat-pips i.on{background:var(--yellow)}
-.seat.mg.bump .seat-pips i.on{animation:bump .55s cubic-bezier(.3,1.8,.5,1)}
-.mg-label small{font-size:.6em; margin-left:2px; color:var(--muted)}
-.mg-label .nm{color:var(--yellow)}
-.mg-label .fin{color:var(--red)}
-.mg-deck .back-logo{background:var(--cyan)}
-.mg-card{cursor:pointer}
-.mg-card.done{cursor:default}
-.mg-title{margin:0; font-family:var(--f-display); font-weight:400; font-size:1.35em; line-height:1.25; color:var(--ink); text-shadow:2px 2px 0 var(--c); overflow-wrap:anywhere}
-.mg-card .gc-text{font-size:.82em; line-height:1.55}
-.mg-lose{font-weight:800; font-size:calc(var(--cw) * .05); color:var(--ink-muted); align-self:center}
-.mg-stamp{position:absolute; left:6%; right:6%; top:50%; transform:translateY(-50%) rotate(-7deg); display:flex; flex-direction:column; gap:4px; align-items:center;
-  background:var(--red); color:var(--white); border:3px solid var(--ink); border-radius:12px; box-shadow:0 4px 0 var(--ink); padding:8px 6px; animation:stampIn .45s cubic-bezier(.2,1.6,.4,1) both}
-.mg-stamp span{font-family:var(--f-display); font-size:calc(var(--cw) * .085); line-height:1.2; text-align:center; overflow-wrap:anywhere}
-.mg-stamp b{font-weight:400; color:var(--yellow)}
-@keyframes stampIn{0%{transform:translateY(-50%) rotate(-7deg) scale(2.2); opacity:0} 100%{transform:translateY(-50%) rotate(-7deg) scale(1); opacity:1}}
-.mg-spin .mg-reel{flex:1; display:grid; place-items:center; padding:8px; background:repeating-linear-gradient(0deg, var(--paper) 0 14px, #f6eedb 14px 28px)}
-.mg-roll{font-family:var(--f-display); font-weight:400; font-size:calc(var(--cw) * .12); line-height:1.25; text-align:center; color:var(--ink); text-shadow:3px 3px 0 var(--pink)}
-.mg-roll[data-who="duel"]{text-shadow:3px 3px 0 var(--cyan)}
-.mg-roll.tick{animation:mgTick .12s ease-out}
-@keyframes mgTick{from{transform:translateY(-30%); opacity:.3} to{transform:none; opacity:1}}
+.mg-stage{flex:1; min-height:0; display:flex; flex-direction:column; gap:6px; background:var(--table); border:3px solid var(--ink); border-radius:20px; box-shadow:inset 0 0 0 3px rgba(255,216,61,.25), 0 5px 0 var(--ink); padding:8px 10px 10px; overflow:hidden}
+.mg-head{flex:none; margin:0; text-align:center; font-family:var(--f-display); font-size:18px; line-height:1.2; color:var(--white)}
+.mg-head b{font-weight:400; color:var(--yellow)}
+.mg-head small{font-size:.65em; color:var(--muted); margin-left:2px}
+.mg-head .fin{color:var(--red)}
+.mg-list{flex:1; min-height:0; margin:0; padding:0; list-style:none; display:grid; grid-template-rows:repeat(14, minmax(0,1fr)); gap:3px}
+.mg-list.two{grid-template-rows:repeat(7, minmax(0,1fr)); grid-template-columns:1fr 1fr; grid-auto-flow:column; column-gap:6px}
+.mg-item{min-height:0; display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--chip-bg); border:2px solid rgba(199,184,245,.28); border-radius:10px; padding:0 10px; font-weight:800; font-size:min(15px, 2.4cqh); color:var(--white); transition:background .08s, transform .08s}
+.mg-it{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.mg-item i{flex:none; font-style:normal; font-size:10.5px; color:var(--muted); border:1.5px solid currentColor; border-radius:6px; padding:0 5px; line-height:1.4}
+.mg-item.used, .mg-item.skip{opacity:.38}
+.mg-item.skip .mg-it{text-decoration:line-through}
+.mg-item.hot{background:var(--yellow); color:var(--ink); border-color:var(--ink); transform:scale(1.03); box-shadow:0 0 16px 3px rgba(255,216,61,.6)}
+.mg-item.win{background:var(--pink); color:var(--white); animation:mgWin .7s ease-in-out}
+@keyframes mgWin{0%,100%{transform:scale(1.03)} 25%,75%{transform:scale(1.1)} 50%{transform:scale(.98)}}
+.mg-big{flex:1; min-height:0; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; cursor:pointer}
+.mg-big.done{cursor:default}
+.mg-big.enter .mg-name{animation:mgIn .6s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes mgIn{0%{transform:scale(.2) rotate(-8deg); opacity:0} 60%{transform:scale(1.12) rotate(2deg); opacity:1} 100%{transform:none}}
+.mg-big .mg-head{position:absolute; top:0; left:0; right:0}
+.mg-name{margin:0; width:100%; white-space:nowrap; overflow:hidden; font-family:var(--f-display); font-weight:400; line-height:1.15; color:var(--yellow); letter-spacing:.01em}
+.mg-rule{margin:0; max-width:30em; font-weight:800; font-size:min(15px, 3.9vw); line-height:1.65; color:var(--white)}
+.mg-rule .pn{color:var(--ink)}
+.mg-stake{margin:0; font-weight:800; font-size:14px; color:var(--muted); display:flex; align-items:baseline; gap:8px}
+.mg-stake b{font-family:var(--f-display); font-weight:400; font-size:30px; color:var(--pink); text-shadow:2px 2px 0 var(--ink)}
+.mg-stake small{font-size:12px}
+.mg-stamp{display:flex; flex-direction:column; gap:4px; align-items:center; background:var(--red); color:var(--white); border:3px solid var(--ink); border-radius:14px; box-shadow:0 5px 0 var(--ink);
+  padding:8px 16px; transform:rotate(-4deg); animation:stampIn .45s cubic-bezier(.2,1.6,.4,1) both; max-width:94%}
+.mg-stamp span{display:flex; align-items:center; gap:6px; font-family:var(--f-display); font-size:min(22px, 5.6vw); line-height:1.25}
+.mg-stamp b{font-weight:400}
+.mg-stamp .dot{width:14px; height:14px}
+.mg-stamp em{font-style:normal; color:var(--yellow)}
+@keyframes stampIn{0%{transform:rotate(-4deg) scale(2.2); opacity:0} 100%{transform:rotate(-4deg) scale(1); opacity:1}}
 .mg-lg{padding:1px 9px 1px 3px; background:var(--table-2)}
 .lg-r{display:inline-grid; place-items:center; min-width:18px; height:18px; border-radius:50%; background:var(--yellow); color:var(--ink); font-style:normal; font-family:var(--f-display); font-size:11px}
+/* everyone in a 1-on-1 style game (3+ people): a list instead of the VS row */
+.cc-row.wait{opacity:.55}
+.cc-row.peek{border-color:var(--cyan); box-shadow:0 0 14px 3px rgba(53,224,255,.45)}
+.tl-list .cc-hand{min-width:3.2em; text-align:right}
+.tl-list .cc-hand small{display:none}
+.cs-red{color:#ff6b7d; margin-right:1px} .cs-blk{color:var(--white); margin-right:1px}
+.tl-one{width:min(24vw, 15vh, 104px)}
+.tl-mini{flex:none; width:28px; margin-left:auto}
+.tl-list .tl-mini ~ .tl-v{display:none}
+.tl-list .cc-nm{flex:0 1 auto}
+.tl-mini .pc-face, .tl-mini .pc-back{border-width:2px; box-shadow:0 2px 0 var(--ink)}
+.tl-mini .pc-back span{font-size:9px; border-width:1.5px}
+.tl-mini .pc-face.joker .jk{font-size:7px}
+.tl-mini .flip.lose::after{font-size:26px}
+.tl-list .ip-act{flex:none}
+.tl-list .ip-btn{padding:2px 8px; font-size:11px}
+.tl-list .ip-done{font-size:10px}
+.timer-ov.swgroup .cc-list{max-width:460px}
+.sw-r .sw-rv{display:flex; flex-direction:column; align-items:flex-end; line-height:1.1}
+.sw-r .sw-time{font-family:var(--f-display); font-weight:400; font-size:16px; color:var(--white)}
+.sw-r .sw-diff{font-size:10px; font-weight:800; color:var(--muted)}
+.cc-row.measuring{border-color:var(--yellow)}
+.cc-row.measuring .sw-time{color:var(--yellow); animation:pulse .8s ease-in-out infinite}
+.cc-row.win .sw-diff{color:var(--lime)}
+.cc-row.lose .sw-diff{color:#ffb0b8}
+/* 早押し（反応速度） */
+.tool-ov.react{background:radial-gradient(circle at 50% 50%, #1f6f8a 0, #0b2f45 60%, #04121d 100%)}
+.rc-pad{flex:1 1 0; min-height:120px; max-height:min(42cqh, 300px); width:100%; max-width:420px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  border:4px solid var(--ink); border-radius:28px; box-shadow:0 7px 0 var(--ink); color:var(--ink); touch-action:manipulation; user-select:none; -webkit-user-select:none; transition:background .06s}
+.rc-pad b{font-family:var(--f-display); font-weight:400; font-size:min(40px, 9vw); line-height:1.1}
+.rc-pad small{font-weight:800; font-size:13px}
+.rc-pad.ready{background:var(--white)}
+.rc-pad.wait{background:#c3203a; color:var(--white)}
+.rc-pad.go{background:var(--yellow); animation:rcGo .25s ease-out}
+.rc-pad.hit{background:var(--cyan)}
+.rc-pad.foul{background:#5d5370; color:var(--white)}
+@keyframes rcGo{from{transform:scale(1.06)} to{transform:none}}
+.rc-foul{color:#ff8b98; font-size:12px}
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
 .chal-ov.casino::before{background:repeating-conic-gradient(from 0deg, transparent 0deg 8deg, rgba(255,216,61,.1) 8deg 16deg)}
@@ -1584,6 +1649,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="center" id="center"></div>
         <div class="seats" id="seats"></div>
       </div>
+      <div class="mg-wrap" id="mgWrap" hidden><div class="mg-board" id="mgBoard"></div><div class="mg-stage" id="mgStage"></div></div>
       <div class="g-log" id="gLog" aria-live="polite"></div>
       <div class="dock" id="dock"></div>
     </section>

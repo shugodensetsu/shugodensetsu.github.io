@@ -1022,7 +1022,7 @@ function finishGame() {
 /* ---------- drinks ---------- */
 function addDrink(p, amt) { if (!amt) return; G.players[p].total += amt; G.players[p].times++; G.last = p; }
 function floatAt(p, text, safe) {
-  const seat = document.querySelector('.seat[data-seat="' + p + '"]');
+  const seat = (isMini() ? $('mgBoard') : $('seats')).querySelector('[data-seat="' + p + '"]');
   if (!seat) return;
   const pos = relPos(seat);
   const el = document.createElement('div');
@@ -2986,10 +2986,14 @@ function cdStop() {
 function swSetup() {
   const T = timer;
   stopTimerWork(T);
-  T.ps = timerPlayers(G.cur.card); T.times = []; T.k = 0; T.loser = null; T.state = 'ready';
-  tmState('');
-  $('tmStage').innerHTML = '<div class="sw-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
-      '<div class="sw-p" id="swP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="sw-time" id="swT' + i + '">--.--</b><span class="sw-diff" id="swD' + i + '"></span></div>').join('') + '</div>' +
+  const n = G.players.length, d = G.cur.drawer;
+  T.ps = isMini() ? Array.from({ length: n }, (_, k) => (d + k) % n) : timerPlayers(G.cur.card); T.times = []; T.k = 0; T.loser = null; T.losers = null; T.state = 'ready';
+  tmState(T.ps.length > 2 ? 'swgroup' : '');
+  $('tmStage').innerHTML = (T.ps.length > 2
+    ? '<div class="cc-list sw-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, i) => '<div class="cc-row sw-r" id="swP' + i + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span>' +
+      '<span class="sw-rv"><b class="sw-time" id="swT' + i + '">--.--</b><span class="sw-diff" id="swD' + i + '"></span></span></div>').join('') + '</div>'
+    : '<div class="sw-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+      '<div class="sw-p" id="swP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="sw-time" id="swT' + i + '">--.--</b><span class="sw-diff" id="swD' + i + '"></span></div>').join('') + '</div>') +
     '<p class="tm-sub" id="tmSub"></p><button type="button" class="cg-big sw-btn" id="swBtn">スタート</button>';
   onPress($('swBtn'), swPress);
   tmActs('<button type="button" class="pbtn white small" data-tm="close">やめる</button>', false);
@@ -3037,13 +3041,14 @@ function swReveal() {
   BGM.level(0.3, 0.2);
   SE.play('roll');
   const diffs = T.times.map(t => Math.abs(t - T.sec));
+  const gap = T.ps.length > 2 ? 320 : 450;
   T.ps.forEach((_, j) => tmLater(() => {
     const el = $('swT' + j);
     el.textContent = T.times[j].toFixed(2); el.classList.add('show');
-    $('swD' + j).textContent = fmtSec(T.sec) + 'との差 ' + diffs[j].toFixed(2) + '秒';
+    $('swD' + j).textContent = (T.ps.length > 2 ? '差 ' : fmtSec(T.sec) + 'との差 ') + diffs[j].toFixed(2) + '秒';
     SE.play('flip');
-  }, 800 + j * 450));
-  tmLater(() => swResult(diffs), 800 + T.ps.length * 450 + 300);
+  }, 800 + j * gap));
+  tmLater(() => swResult(diffs), 800 + T.ps.length * (T.ps.length > 2 ? 320 : 450) + 300);
 }
 function swResult(diffs) {
   const T = timer;
@@ -3053,6 +3058,24 @@ function swResult(diffs) {
     $('tmSub').innerHTML = fmtSec(T.sec) + 'との差 <b>' + diffs[0].toFixed(2) + '</b>秒';
     SE.play(diffs[0] <= 0.3 ? 'bigheaven' : 'ding');
     tmActs(TM_DONE);
+    return;
+  }
+  if (T.ps.length > 2) {
+    const ds = diffs.map(x => Math.round(x * 100)), mx = Math.max.apply(null, ds);
+    const lj = T.ps.map((_, j) => j).filter(j => ds[j] === mx);
+    T.ps.forEach((_, j) => $('swP' + j).classList.add(lj.includes(j) ? 'lose' : 'win'));
+    const best = ds.indexOf(Math.min.apply(null, ds));
+    SE.play('bigheaven'); setTimeout(() => SE.play('hell'), 350); vibrate([60, 40, 60]);
+    const q = relPos($('swP' + best)); FXC.burst(q.x, q.y, 50, { colors: GOLD, star: true, speed: 10 });
+    if (lj.length === 1) {
+      T.loser = T.ps[lj[0]];
+      $('tmSub').innerHTML = 'いちばん遠かった <b>' + esc(pname(T.loser)) + '</b> の負け！ ' + amtTxt(T.cups);
+      tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>');
+    } else {
+      T.losers = lj.map(j => T.ps[j]);
+      $('tmSub').innerHTML = 'まさかの同じ差！ ' + T.losers.map(p => '<b>' + esc(pname(p)) + '</b>').join('・') + ' の負け！ ' + amtTxt(T.cups) + 'ずつ';
+      tmActs('<button type="button" class="pbtn big main" data-tm="multi">OK！ ' + T.losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録</button>');
+    }
     return;
   }
   const d0 = Math.round(diffs[0] * 100), d1 = Math.round(diffs[1] * 100);
@@ -3393,6 +3416,7 @@ function toolBowl(T) {
    (Playing with real tools still works: close the card and choose in 「誰が飲む？」) ---------- */
 const TOOL_INFO = {
   chinchiro: { title: 'チンチロ', act: 'アプリでチンチロ！', cls: 'chin', stake: 'いちばん弱い役の人が' },
+  react: { title: '早押し', act: '早押しスタート！', cls: 'react', stake: 'いちばん遅い人が（フライングも負け）' },
   dice: { title: 'サイコロ勝負', act: 'アプリでサイコロ！', cls: 'dice', stake: '小さい目の方が' },
   cards: { title: 'トランプ勝負', act: 'アプリでトランプ！', cls: 'casino', stake: '低い方（A=1）が' },
   indian: { title: 'インディアンポーカー', act: 'アプリでインディアンポーカー！', cls: 'casino', stake: '低い方が（JOKERは2人とも）' },
@@ -3413,26 +3437,27 @@ function toolActs(h, focus) {
   const f = focus === false ? null : a.querySelector('.main') || a.querySelector('button');
   if (f) f.focus({ preventScroll: true });
 }
-function openTool() {
-  const cur = G.cur, c = cur.card, kind = toolOf(c);
+function openTool(force) {
+  const cur = G.cur, c = cur.card, kind = typeof force === 'string' ? force : toolOf(c);
   if (tool || !kind || cur.phase !== 'drawn') return;
   const n = G.players.length;
   let ps;
-  if (kind === 'chinchiro' || PARTY_FX.includes(kind)) ps = Array.from({ length: n }, (_, k) => (cur.drawer + k) % n);
+  /* the mini game mode: everyone plays every game, starting from this round's first player */
+  if (kind === 'chinchiro' || PARTY_FX.includes(kind) || isMini()) ps = Array.from({ length: n }, (_, k) => (cur.drawer + k) % n);
   else {
     ps = cardPeople(c).slice(0, 2);
     const a = ps.length ? ps[0] : cur.drawer;
     if (ps.length < 2) { const r = cur.names['ランダム']; ps = [a, r != null && r !== a ? r : (a + 1) % n]; }
   }
   const base = c.cups.length ? c.cups[0] : 1;
-  useMini(kind);
+  useMini(kind === 'react' ? 'tap' : kind);
   tool = { kind, ps, base, cups: base, k: 0, res: [], state: 'play', timers: [], raf: 0, guard: 0, losers: null, busy: false, bowl: null, flat: false };
   $('toolOv').className = 'ov timer-ov tool-ov ' + TOOL_INFO[kind].cls;
   $('toolHead').innerHTML = '<h2 class="tm-title ol" id="toolTitle">' + TOOL_INFO[kind].title + '</h2><p class="tm-card">' + fillGame(c.text) + '</p>';
   openOv('toolOv');
   BGM.play('tension'); BGM.level(0.7, 0.3);
   SE.play('pop');
-  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else duelSetup();
+  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else if (kind === 'react') reactSetup(); else duelSetup();
 }
 function closeTool(mode) {
   const T = tool;
@@ -3454,6 +3479,7 @@ function toolAct(a, el) {
   if (a === 'close') { closeTool(false); return; }
   if (a === 'rec' || a === 'special') { closeTool(a); return; }
   if (PARTY_FX.includes(T.kind)) { partyAct(a, el); return; }
+  if (T.kind === 'react') { reactAct(a); return; }
   if (T.kind === 'indian' && a === 'peek') { indianPeek(); return; }
   if (T.kind === 'indian' && a === 'hide') { indianHide(); return; }
   if (T.kind === 'indian' && a === 'redraw') { indianRedraw(+el.dataset.j); return; }
@@ -3485,7 +3511,19 @@ function toolFinish(losers, msg, panel) {
     ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>'
     : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録</button>');
 }
-const stakeLine = T => '<p class="tl-stake">' + TOOL_INFO[T.kind].stake + ' <b>' + amtTxt(T.cups) + '</b></p>';
+/* 3 or more people (the mini game mode): a list of everyone instead of the 1-on-1 「VS」 row */
+const tlGroup = T => T.ps.length > 2;
+const tlList = (T, val, extra) => '<div class="cc-list tl-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
+  '<div class="cc-row tl-r" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span>' + (extra ? extra(j) : '') + '<b class="cc-hand tl-v" id="tlV' + j + '">' + val + '</b></div>').join('') + '</div>';
+function loseLine(T, losers, tie) {
+  if (losers.length === 1) return '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups);
+  if (T.ps.length === 2) return tie + ' 2人とも <b>' + amtTxt(T.cups) + '</b>';
+  return tie + ' ' + losers.map(p => '<b>' + esc(pname(p)) + '</b>').join('・') + ' の負け！ ' + amtTxt(T.cups) + 'ずつ';
+}
+const SUIT_CH = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const cardTxt = c => '<span class="' + (c.s === 'h' || c.s === 'd' ? 'cs-red' : 'cs-blk') + '">' + SUIT_CH[c.s] + '</span>' + rankName(c);
+const GROUP_STAKE = { dice: 'いちばん小さい目の人が', cards: 'いちばん低い人（A=1）が', indian: 'いちばん低い人とJOKERの人が' };
+const stakeLine = T => '<p class="tl-stake">' + ((tlGroup(T) && GROUP_STAKE[T.kind]) || TOOL_INFO[T.kind].stake) + ' <b>' + amtTxt(T.cups) + '</b></p>';
 
 /* dice faces */
 const PIPS = { 1: [[50, 50]], 2: [[28, 28], [72, 72]], 3: [[28, 28], [50, 50], [72, 72]], 4: [[28, 28], [72, 28], [28, 72], [72, 72]], 5: [[28, 28], [72, 28], [50, 50], [28, 72], [72, 72]], 6: [[28, 26], [72, 26], [28, 50], [72, 50], [28, 74], [72, 74]] };
@@ -3512,6 +3550,15 @@ const jokerFace = () => '<div class="pc-face joker"><span class="pc-mid"><svg cl
 function duelSetup() {
   const T = tool;
   T.deck = shuffle([].concat(...['s', 'h', 'd', 'c'].map(s => RANKS.map((_, i) => ({ r: i + 1, s })))).concat(T.kind === 'indian' ? [{ joker: true }] : []));
+  if (tlGroup(T)) {
+    /* everyone: トランプ draws into one big card in the middle; インディアン deals a small card to each person's row */
+    $('toolStage').innerHTML = stakeLine(T) + (T.kind === 'indian'
+      ? tlList(T, '', j => '<span class="tl-slot card-slot tl-mini" id="tlS' + j + '">' + flipCard('tlC' + j, null, false) + '</span><span class="ip-act" id="tlA' + j + '"></span>')
+      : '<div class="tl-slot card-slot tl-one" id="tlS"></div>' + tlList(T, '?')) + '<p class="tm-sub" id="toolSub"></p>';
+    if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = T.ps.map(() => false); }
+    duelTurn();
+    return;
+  }
   $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
     '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span>' +
     '<div class="tl-slot ' + (T.kind === 'dice' ? 'die-slot' : 'card-slot') + '" id="tlS' + i + '">' + (T.kind === 'dice' ? dieSVG(0) : flipCard('tlC' + i, null, false)) + '</div>' +
@@ -3522,11 +3569,12 @@ function duelSetup() {
 function duelTurn() {
   const T = tool, i = T.k;
   if (T.kind === 'indian') {
-    $('toolSub').innerHTML = '2人にカードを1枚ずつ配ります';
+    $('toolSub').innerHTML = (tlGroup(T) ? '全員' : '2人') + 'にカードを1枚ずつ配ります';
     toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">カードを配る！</button>');
     return;
   }
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  if (tlGroup(T) && T.kind === 'cards') $('tlS').innerHTML = flipCard('tlC', null, false);
   $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">' + (T.kind === 'dice' ? 'サイコロを振る！' : 'カードを引く！') + '</button>');
 }
@@ -3537,7 +3585,7 @@ function duelDraw() {
   toolActs('', false);
   if (T.kind === 'indian') {
     T.ps.forEach((_, j) => { T.res[j] = T.deck.pop(); toolLater(() => { const box = $('tlS' + j); box.innerHTML = flipCard('tlC' + j, null, false); box.firstElementChild.classList.add('deal'); SE.play('deal'); }, j * 380); });
-    toolLater(() => { T.busy = false; T.k = 0; indianPeekTurn(); }, 1000);
+    toolLater(() => { T.busy = false; T.k = 0; indianPeekTurn(); }, Math.max(1000, T.ps.length * 380 + 300));
     return;
   }
   const i = T.k;
@@ -3548,14 +3596,14 @@ function duelDraw() {
     rollDie($('tlS' + i), v, 13, () => { T.res[i] = v; const el = $('tlV' + i); el.textContent = v; tmPop(el); SE.play('ding'); after(); });
     return;
   }
-  const c = T.deck.pop(), box = $('tlC' + i);
+  const c = T.deck.pop(), box = $(tlGroup(T) ? 'tlC' : 'tlC' + i);
   T.res[i] = c;
   box.classList.add('suspense'); SE.play('roll');
   toolLater(() => {
     box.classList.remove('suspense');
     box.querySelector('.flip-f').innerHTML = pcardFace(c);
     box.classList.add('open'); SE.play('flip');
-    const el = $('tlV' + i); el.textContent = rankName(c); tmPop(el);
+    const el = $('tlV' + i); el.innerHTML = tlGroup(T) ? cardTxt(c) : rankName(c); tmPop(el);
     after();
   }, 850);
 }
@@ -3564,6 +3612,12 @@ const ipName = j => '<b>' + esc(pname(tool.ps[j])) + '</b>';
 function indianPeekTurn() {
   const T = tool, i = T.k, o = 1 - i;
   T.phase = 'peek';
+  if (tlGroup(T)) {
+    T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.remove('wait', 'peek'); });
+    $('toolSub').innerHTML = (i ? 'スマホを渡して… ' : '') + ipName(i) + ' の番！ みんなのカードを見よう<small>ほかの人は画面を見ないで！ 自分のカードは見えないよ</small>';
+    toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="peek">自分以外のカードを見る</button>');
+    return;
+  }
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.remove('wait', 'peek'); });
   $('toolSub').innerHTML = (i ? 'スマホを渡して… ' : '') + ipName(i) + ' の番！ ' + ipName(o) + ' のカードを見よう' +
     '<small>' + esc(pname(T.ps[o])) + ' は画面を見ないで！ 自分のカードは見えないよ</small>';
@@ -3573,6 +3627,19 @@ function indianPeek() {
   const T = tool, i = T.k, o = 1 - i, c = T.res[o], box = $('tlC' + o);
   if (T.phase !== 'peek' || T.busy) return;
   T.phase = 'peeking';
+  if (tlGroup(T)) {
+    const last = i + 1 >= T.ps.length;
+    T.ps.forEach((_, j) => {
+      if (j === i) return;
+      const b = $('tlC' + j), cj = T.res[j];
+      b.querySelector('.flip-f').innerHTML = cj.joker ? jokerFace() : pcardFace(cj);
+      b.classList.add('open'); $('tlP' + j).classList.add('peek');
+    });
+    SE.play('flip');
+    $('toolSub').innerHTML = 'みんなのカードはこれ！<small>覚えたら閉じて' + (last ? '、引き直すか決めよう' : '、スマホを ' + esc(pname(T.ps[i + 1])) + ' に渡そう') + '</small>';
+    toolActs('<button type="button" class="pbtn big main" data-tl="hide">' + (last ? '見た！ 次へ' : '見た！ ' + esc(pname(T.ps[i + 1])) + ' に渡す') + '</button>');
+    return;
+  }
   box.querySelector('.flip-f').innerHTML = c.joker ? jokerFace() : pcardFace(c);
   box.classList.add('open'); $('tlP' + o).classList.add('peek');
   SE.play('flip');
@@ -3582,6 +3649,16 @@ function indianPeek() {
 function indianHide() {
   const T = tool, i = T.k, o = 1 - i;
   if (T.phase !== 'peeking') return;
+  if (tlGroup(T)) {
+    T.ps.forEach((_, j) => { $('tlC' + j).classList.remove('open'); $('tlP' + j).classList.remove('peek'); });
+    SE.play('swoosh');
+    toolActs('', false);
+    toolLater(() => {
+      T.ps.forEach((_, j) => { $('tlC' + j).querySelector('.flip-f').innerHTML = ''; });
+      if (i + 1 < T.ps.length) { T.k = i + 1; indianPeekTurn(); } else indianRedrawPhase();
+    }, 520);
+    return;
+  }
   $('tlC' + o).classList.remove('open'); $('tlP' + o).classList.remove('peek');
   SE.play('swoosh');
   toolActs('', false);
@@ -3593,7 +3670,7 @@ function indianRedrawPhase() {
   const T = tool;
   T.phase = 'redraw';
   T.ps.forEach((_, j) => { $('tlP' + j).classList.remove('now', 'wait'); ipRedrawBtn(j); });
-  $('toolSub').innerHTML = '自分のカード、<b>引き直す？</b><small>自分のカードは見えないまま。相手の顔色を読んで決めよう（1人1回まで）</small>';
+  $('toolSub').innerHTML = '自分のカード、<b>引き直す？</b><small>自分のカードは見えないまま。' + (tlGroup(T) ? 'みんなの顔色' : '相手の顔色') + 'を読んで決めよう（1人1回まで）</small>';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="open">勝負！ オープン</button>');
 }
 function ipRedrawBtn(j) {
@@ -3615,7 +3692,7 @@ function indianRedraw(j) {
     box.firstElementChild.classList.add('deal'); SE.play('deal');
     ipRedrawBtn(j);
     T.busy = false;
-    $('toolSub').innerHTML = ipName(j) + ' が引き直した！<small>' + (T.redrawn.every(Boolean) ? '2人とも引き直したら、いざ勝負！' : 'もう1人も引き直す？ このままでよければ「勝負！」') + '</small>';
+    $('toolSub').innerHTML = ipName(j) + ' が引き直した！<small>' + (T.redrawn.every(Boolean) ? (tlGroup(T) ? '全員' : '2人とも') + '引き直したら、いざ勝負！' : (tlGroup(T) ? 'ほかに引き直す人は？' : 'もう1人も引き直す？') + ' このままでよければ「勝負！」') + '</small>';
   }, 420);
 }
 function indianOpen() {
@@ -3633,7 +3710,7 @@ function indianOpen() {
       box.classList.remove('suspense');
       box.querySelector('.flip-f').innerHTML = c.joker ? jokerFace() : pcardFace(c);
       box.classList.add('open');
-      $('tlV' + j).textContent = c.joker ? 'JOKER' : rankName(c);
+      $('tlV' + j).innerHTML = c.joker ? 'JOKER' : tlGroup(T) ? cardTxt(c) : rankName(c);
     });
     SE.play('flip');
     if (T.res.some(c => c.joker)) { flash('#b17cff'); telop('JOKER!!', 'devil', 1500); SE.play('devil'); }
@@ -3643,11 +3720,13 @@ function indianOpen() {
 function duelResult() {
   const T = tool;
   let losers, msg;
-  if (T.kind === 'indian' && T.res.some(c => c.joker)) { losers = T.ps.slice(); msg = 'JOKERが出た！ 2人とも <b>' + amtTxt(T.cups) + '</b>'; }
+  const jk = T.kind === 'indian' ? T.ps.filter((_, j) => T.res[j].joker) : [];
+  if (jk.length && !tlGroup(T)) { losers = T.ps.slice(); msg = 'JOKERが出た！ 2人とも <b>' + amtTxt(T.cups) + '</b>'; }
+  else if (jk.length) { losers = jk; msg = 'JOKERを持っていた <b>' + esc(pname(jk[0])) + '</b> の負け！ ' + amtTxt(T.cups); }
   else {
     const vals = T.res.map(x => (typeof x === 'number' ? x : x.r)), mn = Math.min.apply(null, vals);
     losers = T.ps.filter((_, j) => vals[j] === mn);
-    msg = losers.length > 1 ? '同じ数！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups);
+    msg = loseLine(T, losers, '同じ数！');
   }
   toolFinish(losers, msg, j => $('tlP' + j));
 }
@@ -3704,9 +3783,9 @@ const DART_SVG = '<svg viewBox="0 0 60 90" aria-hidden="true"><defs><linearGradi
 const dartPct = v => (50 + v / (DB.vb * 2) * 100).toFixed(2) + '%';
 function dartsSetup() {
   const T = tool;
-  $('toolStage').innerHTML = '<p class="tl-stake dt-stake">得点の低い方が <b>' + amtTxt(T.cups) + '</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
-    '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
-    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>' +
+  $('toolStage').innerHTML = '<p class="tl-stake dt-stake">' + (tlGroup(T) ? 'いちばん得点の低い人が' : '得点の低い方が') + ' <b>' + amtTxt(T.cups) + '</b><small>トリプル3倍・ダブル2倍・ブル50点（インもアウトも）</small></p>' +
+    (tlGroup(T) ? tlList(T, '--') : '<div class="sw-row tl-row dt-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val" id="tlV' + i + '">--</b></div>').join('') + '</div>') +
     '<div class="dt-wrap"><div class="dt-board" id="dtBoard"><i class="dt-led" aria-hidden="true"></i>' + dartBoardSVG() + '<div class="dt-hits" id="dtHits"></div><i class="dt-aim" id="dtAim"></i></div></div><p class="tm-sub dt-sub" id="toolSub"></p>';
   dartsTurn();
 }
@@ -3775,7 +3854,7 @@ function dartsThrow() {
     if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1400); }
     else toolLater(() => {
       const mn = Math.min.apply(null, T.res), losers = T.ps.filter((_, j) => T.res[j] === mn);
-      toolFinish(losers, losers.length > 1 ? '同点！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j));
+      toolFinish(losers, loseLine(T, losers, '同点！'), j => $('tlP' + j));
     }, 1400);
   }, 230);
 }
@@ -3783,8 +3862,8 @@ function dartsThrow() {
 /* サイコロ勝負: each of the two throws one die into the bowl; the smaller number drinks (same number = both) */
 function diceSetup() {
   const T = tool;
-  $('toolStage').innerHTML = stakeLine(T) + '<div class="sw-row tl-row dc3-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
-    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val big" id="tlV' + i + '">?</b></div>').join('') + '</div>' +
+  $('toolStage').innerHTML = stakeLine(T) + (tlGroup(T) ? tlList(T, '?') : '<div class="sw-row tl-row dc3-row">' + T.ps.map((p, i) => (i ? '<span class="sw-vs ol">VS</span>' : '') +
+    '<div class="sw-p tl-p" id="tlP' + i + '" style="--p:' + pc(p) + '"><span class="sw-name">' + esc(pname(p)) + '</span><b class="tl-val big" id="tlV' + i + '">?</b></div>').join('') + '</div>') +
     '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
   toolBowl(T).then(() => { if (tool === T && T.flat) $('tlBowl').innerHTML = '<div class="tl-slot die-slot flat-die" id="tlDie">' + dieSVG(0) + '</div>'; });
   diceTurn();
@@ -3828,7 +3907,7 @@ function diceThrow() {
 function diceResult() {
   const T = tool, mn = Math.min.apply(null, T.res);
   const losers = T.ps.filter((_, j) => T.res[j] === mn);
-  toolFinish(losers, losers.length > 1 ? '同じ目！ 2人とも <b>' + amtTxt(T.cups) + '</b>' : '<b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j));
+  toolFinish(losers, loseLine(T, losers, '同じ目！'), j => $('tlP' + j));
 }
 
 /* チンチロ: everyone throws three dice into the bowl (up to 3 tries for a hand). Strong → weak:
@@ -4533,31 +4612,33 @@ function useMini(kind) {
   useTrack('mini_game', { kind });
 }
 
-/* ---------- ミニゲーム8番勝負: only the app's mini games, 8 rounds, a different one each round (drawn at random).
-   Whoever loses a round gets +2 counts; every 3 counts is 1 cup, and what's left over carries on toward the next cup
-   (2 counts + 2 = 1 cup and 1 count). All-player games start from a different person each round; 1-on-1 games pair
-   the people who have played the fewest 1-on-1s so far ---------- */
+/* ---------- ミニゲーム8番勝負: only the app's mini games, 8 rounds, a different one each round (a roulette down the list of games).
+   Everyone plays every game (the timing ones one person at a time) and the loser(s) of each round get +2 counts;
+   every 3 counts is 1 cup, and what's left over carries on toward the next cup (2 counts + 2 = 1 cup and 1 count).
+   Each round starts from the next person round the table ---------- */
 const MINI_TOTAL = 8, MINI_LOSS = 2, MINI_PER_CUP = 3;
 const isMini = () => !!(G && G.mode === 'mini');
 const amtTxt = n => (isMini() ? '+' + n : n + '杯');
 const MG = {
-  taru: { who: 'all', short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
-  wani: { who: 'all', short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。噛まれた人の負け' },
-  mine: { who: 'all', short: '地雷', text: '{引いた人}から順番に、マスを1つずつ掘る。地雷を踏んだ人の負け' },
-  skull: { who: 'all', short: 'ドクロ', text: '{引いた人}から順番に、カードを1枚ずつめくる。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
-  balloon: { who: 'all', short: '風船', text: '{引いた人}から順番に、風船へ空気を1〜3回入れて次の人へ。割った人の負け' },
-  champ: { who: 'all', short: 'シャンパン', text: '{引いた人}から順番に、シャンパンを1〜5回振って次の人へ。栓を飛ばした人の負け' },
-  chinchiro: { who: 'all', short: 'チンチロ', text: '{引いた人}から順番にチンチロ。いちばん弱い役の人の負け（ピンゾロ×5・ゾロ目×3・シゴロとヒフミ×2）' },
-  bomb: { who: 'all', short: '爆弾', title: '爆弾パス回し', text: '{引いた人}から爆弾パス回し。お題に答えて左隣へパス。爆発したときに持っていた人の負け' },
-  dice: { who: 'duel', short: 'サイコロ', text: '{引いた人}と{ランダム}でサイコロ勝負。小さい目の方の負け' },
-  cards: { who: 'duel', short: 'トランプ', text: '{引いた人}と{ランダム}がトランプを1枚ずつ引く。数字の低い方の負け（A=1）' },
-  indian: { who: 'duel', short: 'インディアン', text: '{引いた人}と{ランダム}でインディアンポーカー。低い方の負け（JOKERは2人とも）' },
-  darts: { who: 'duel', short: 'ダーツ', text: '{引いた人}と{ランダム}がダーツを1本ずつ投げる。得点の低い方の負け' },
-  tap: { who: 'duel', short: '早押し', title: '早押し対決', text: '{引いた人}と{ランダム}で早押し対決。合図が出たら先にタップ。フライングは負け' },
-  stop: { who: 'duel', short: '10秒', title: '10秒ストップ', text: '{引いた人}と{ランダム}で10秒ストップ対決。画面を見ずにストップを押して、10秒から遠い方の負け' },
+  taru: { short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
+  wani: { short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。噛まれた人の負け' },
+  mine: { short: '地雷', text: '{引いた人}から順番に、マスを1つずつ掘る。地雷を踏んだ人の負け' },
+  skull: { short: 'ドクロ', text: '{引いた人}から順番に、カードを1枚ずつめくる。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
+  balloon: { short: '風船', text: '{引いた人}から順番に、風船へ空気を1〜3回入れて次の人へ。割った人の負け' },
+  champ: { short: 'シャンパン', text: '{引いた人}から順番に、シャンパンを1〜5回振って次の人へ。栓を飛ばした人の負け' },
+  bomb: { short: '爆弾', title: '爆弾パス回し', text: '{引いた人}から爆弾パス回し。お題に答えて左隣へパス。爆発したときに持っていた人の負け' },
+  chinchiro: { short: 'チンチロ', text: '{引いた人}から順番にチンチロ。いちばん弱い役の人の負け（ピンゾロ×5・ゾロ目×3・シゴロとヒフミ×2）' },
+  dice: { short: 'サイコロ', text: '{引いた人}から順番にサイコロを1個ずつ振る。いちばん小さい目の人の負け（同じ目なら全員）' },
+  cards: { short: 'トランプ', text: '{引いた人}から順番にトランプを1枚ずつ引く。いちばん低い数字の人の負け（A=1・同じなら全員）' },
+  indian: { short: 'インディアン', text: '全員にカードを配り、{引いた人}から順番に自分以外のカードを見る。引き直しは1人1回。いちばん低い人の負け（JOKERを持っていた人も負け）',
+    text2: '2人にカードを配り、{引いた人}から順番に相手のカードだけを見る。引き直しは1人1回。低い方の負け（JOKERが出たら2人とも）' },
+  darts: { short: 'ダーツ', text: '{引いた人}から順番にダーツを1本ずつ投げる。いちばん得点の低い人の負け' },
+  tap: { short: '早押し', title: '早押し', text: '{引いた人}から1人ずつ。合図が出たら画面をタップ。いちばん遅い人の負け（フライングも負け）' },
+  stop: { short: '10秒', title: '10秒ストップ', text: '{引いた人}から1人ずつ10秒ストップ。画面を見ずに止めて、10秒からいちばん遠い人の負け' },
 };
-const MG_COLOR = { all: 8, duel: 10 };
+const MG_ORDER = Object.keys(MG);
 const mgTitle = k => MG[k].title || TOOL_INFO[k].title;
+const mgText = k => (G.players.length === 2 && MG[k].text2) || MG[k].text;
 let mSpin = null;
 
 function beginMini() {
@@ -4569,7 +4650,7 @@ function beginMini() {
     v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], pts: 0, loss: 0 })),
-    mini: { total: MINI_TOTAL, used: [], skip: [], duel: Array(n).fill(0), last: null, log: [] },
+    mini: { total: MINI_TOTAL, used: [], skip: [], log: [] },
   };
   startTurn();
   saveGame();
@@ -4584,11 +4665,10 @@ function beginMini() {
   setTimeout(() => { if (screen === 'game' && isMini() && G.turn === 0) miniRoundFx(); }, 1900);
 }
 function normalizeMini(g) {
-  const n = g.players.length, m = g.mini && typeof g.mini === 'object' ? g.mini : {};
+  const m = g.mini && typeof g.mini === 'object' ? g.mini : {};
   g.players.forEach(p => { p.pts = Number(p.pts) || 0; p.loss = Number(p.loss) || 0; p.total = Math.floor(p.pts / MINI_PER_CUP); });
   const kinds = a => (Array.isArray(a) ? a.filter(k => MG[k]) : []);
-  g.mini = { total: Number(m.total) || MINI_TOTAL, used: kinds(m.used), skip: kinds(m.skip), duel: Array.from({ length: n }, (_, i) => Number((m.duel || [])[i]) || 0),
-    last: Array.isArray(m.last) ? m.last : null, log: Array.isArray(m.log) ? m.log : [] };
+  g.mini = { total: Number(m.total) || MINI_TOTAL, used: kinds(m.used), skip: kinds(m.skip), log: Array.isArray(m.log) ? m.log.filter(e => e && MG[e.kind] && Array.isArray(e.items)) : [] };
   const c = g.cur;
   if (c.phase !== 'before' && !MG[c.mkind]) c.phase = 'before';
   if (c.phase === 'done' && !c.mres) c.phase = 'drawn';
@@ -4598,72 +4678,57 @@ function miniRoundFx() {
   telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1200);
   SE.play('turn');
 }
-function miniChoose() {
-  const M = G.mini, all = Object.keys(MG);
-  let pool = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
-  if (!pool.length) pool = all.filter(k => !M.skip.includes(k));
-  if (!pool.length) pool = all;
-  /* no more than two 1-on-1 games in a row (with 3 or more people, most of the table would just watch) */
-  const prev = M.used.slice(-2);
-  if (G.players.length > 2 && prev.length === 2 && prev.every(k => MG[k].who === 'duel')) { const p = pool.filter(k => MG[k].who === 'all'); if (p.length) pool = p; }
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-function miniPair() {
-  const n = G.players.length, M = G.mini;
-  if (n === 2) return G.turn % 2 ? [1, 0] : [0, 1];
-  const ids = shuffle(G.players.map((_, i) => i)).sort((a, b) => M.duel[a] - M.duel[b]);
-  let a = ids[0], b = ids[1];
-  if (M.last && M.last.includes(a) && M.last.includes(b)) b = ids[2];
-  return [a, b];
-}
+const miniAvail = () => {
+  const M = G.mini;
+  let a = MG_ORDER.filter(k => !M.used.includes(k) && !M.skip.includes(k));
+  if (!a.length) a = MG_ORDER.filter(k => !M.skip.includes(k));
+  return a.length ? a : MG_ORDER.slice();
+};
+/* the roulette: a highlight runs down the list of games still to play (two or three laps, slowing down) and stops on the drawn one */
 function miniPick() {
   const cur = G.cur;
-  if (!isMini() || cur.phase !== 'before' || mSpin || noOv() === false) return;
-  const kind = miniChoose();
-  const others = shuffle(Object.keys(MG).filter(k => k !== kind));
-  const reel = Array.from({ length: reduceMotion ? 0 : 11 }, (_, i) => others[i % others.length]).concat(kind);
-  mSpin = { cur, i: 0 };
+  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv()) return;
+  const avail = miniAvail(), kind = avail[Math.floor(Math.random() * avail.length)];
+  const steps = reduceMotion ? 0 : (avail.length > 1 ? (avail.length < 6 ? 3 : 2) * avail.length : 0) + avail.indexOf(kind);
+  mSpin = { cur, kind };
   renderGame();
-  SE.play('pop');
-  const step = () => {
+  let s = reduceMotion ? avail.indexOf(kind) : 0, el = null;
+  const tick = () => {
     if (!mSpin || mSpin.cur !== cur || G.cur !== cur) return;
-    const el = $('mgRoll');
-    if (el) { el.textContent = mgTitle(reel[mSpin.i]); el.dataset.who = MG[reel[mSpin.i]].who; restartAnim(el, 'tick'); }
+    document.querySelectorAll('#mgList .hot').forEach(e => e.classList.remove('hot'));
+    el = document.querySelector('#mgList [data-k="' + avail[s % avail.length] + '"]');
+    if (el) el.classList.add('hot');
     SE.play('tick');
-    if (mSpin.i < reel.length - 1) { mSpin.i++; setTimeout(step, 55 + mSpin.i * mSpin.i * 2.4); }
-    else setTimeout(() => miniLand(cur, kind), 420);
+    if (s < steps) { s++; const f = s / steps; setTimeout(tick, 38 + 250 * f * f * f + (steps - s < 2 ? 140 : 0)); return; }
+    if (el) el.classList.add('win');
+    SE.play('ding'); vibrate(40);
+    setTimeout(() => miniLand(cur, kind), 800);
   };
-  step();
+  tick();
 }
 function miniLand(cur, kind) {
   mSpin = null;
   if (!isMini() || G.cur !== cur || cur.phase !== 'before') return;
-  const n = G.players.length, M = G.mini, m = MG[kind];
-  let d = cur.drawer, r = (d + 1) % n;
-  if (m.who === 'duel') { [d, r] = miniPair(); M.duel[d]++; M.duel[r]++; M.last = [d, r]; }
-  cur.drawer = d;
-  cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': r };
-  cur.card = { id: 0, cat: 'mini', text: m.text, cups: [MINI_LOSS], dur: false, note: '', fx: kind, catName: m.who === 'duel' ? '1対1で勝負' : 'みんなで勝負', mark: '遊', color: MG_COLOR[m.who] };
+  const n = G.players.length, d = cur.drawer;
+  cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': (d + 1) % n };
+  cur.card = { id: 0, cat: 'mini', text: mgText(kind), cups: [MINI_LOSS], dur: false, note: '', fx: kind, catName: 'ミニゲーム', mark: '遊', color: 8 };
   cur.mkind = kind; cur.mres = null; cur.msnap = null; cur.bombDone = false; cur.drinks = [];
   cur.phase = 'drawn';
-  M.used.push(kind);
+  G.mini.used.push(kind);
   saveGame();
   renderGame('draw');
   if (screen !== 'game') return;
   SE.play('bigheaven');
-  telop(mgTitle(kind) + '！', m.who === 'duel' ? 'cyan' : 'pink', 1300);
-  const c = $('center'); if (c && !reduceMotion) { const q = relPos(c); FXC.burst(q.x, q.y, 50, { colors: GOLD, star: true, speed: 11 }); }
+  const q = relPos($('mgStage')); if (!reduceMotion) FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 });
 }
-/* 「別のゲーム」: put this one aside for the rest of the game and draw again (1-on-1 counts are given back) */
+/* 「別のゲーム」: put this one aside for the rest of the game and spin again */
 function miniReroll() {
   const cur = G.cur, M = G.mini;
   if (!isMini() || cur.phase !== 'drawn' || mSpin) return;
-  const k = cur.mkind;
-  M.used = M.used.filter((x, i) => !(x === k && i === M.used.lastIndexOf(k)));
+  const k = cur.mkind, at = M.used.lastIndexOf(k);
+  if (at >= 0) M.used.splice(at, 1);
   if (!M.skip.includes(k)) M.skip.push(k);
-  if (MG[k].who === 'duel') { M.duel[cur.names['引いた人']] = Math.max(0, M.duel[cur.names['引いた人']] - 1); M.duel[cur.names['ランダム']] = Math.max(0, M.duel[cur.names['ランダム']] - 1); }
   cur.phase = 'before'; cur.card = null; cur.names = null; cur.mkind = null;
-  cur.drawer = G.turn % G.players.length;
   saveGame();
   miniPick();
 }
@@ -4671,7 +4736,7 @@ function miniStart() {
   const cur = G.cur;
   if (!isMini() || cur.phase !== 'drawn' || mSpin) return;
   const k = cur.mkind;
-  if (k === 'bomb') openBomb(); else if (k === 'tap') openTap(); else if (k === 'stop') openTimer(); else openTool();
+  if (k === 'bomb') openBomb(); else if (k === 'stop') openTimer(); else if (k === 'tap') openTool('react'); else openTool();
 }
 /* the result of a round: +2 counts each, turned into cups at 3 */
 function miniRecord(losers, amt) {
@@ -4722,49 +4787,38 @@ function miniNext() {
   miniRoundFx();
 }
 
-/* rendering */
+/* rendering: a score board for everyone on top, the roulette list / the drawn game's name in the middle */
 const miniPips = n => '<span class="seat-pips" aria-hidden="true">' + [0, 1, 2].map(j => '<i' + (j < n ? ' class="on"' : '') + '></i>').join('') + '</span>';
-function miniInPlay(i) {
-  const cur = G.cur, m = cur.mkind && MG[cur.mkind];
-  if (cur.phase === 'before' || !m) return null;
-  return m.who === 'all' || i === cur.names['引いた人'] || i === cur.names['ランダム'];
+const miniRound = () => (G.turn + 1 === G.mini.total ? '<span class="fin">FINAL</span>' : 'ROUND') + ' <b>' + (G.turn + 1) + '</b><small>/' + G.mini.total + '</small>';
+function miniBoard() {
+  const cur = G.cur, res = cur.phase === 'done' ? cur.mres : null;
+  return G.players.map((pl, i) => {
+    const lost = !!res && res.losers.includes(i), st = !res && cur.phase !== 'before' && i === cur.drawer, left = pl.pts % MINI_PER_CUP;
+    return '<div class="mg-p' + (lost ? ' lose' : '') + (st ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + '杯・カウント' + left + '">' +
+      (st ? '<span class="mg-tag">スタート</span>' : lost ? '<span class="mg-tag lose">+' + res.amt + '</span>' : '') +
+      '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-pc"><b>' + pl.total + '</b><small>杯</small></span>' + miniPips(left) + '</div>';
+  }).join('');
 }
-function miniSeatHTML(i) {
-  const pl = G.players[i], cur = G.cur, m = cur.mkind && MG[cur.mkind];
-  const play = miniInPlay(i), duel = m && m.who === 'duel';
-  const role = play == null ? '' : duel ? (play ? '対戦' : '') : i === cur.drawer ? 'スタート' : '';
-  const lost = cur.phase === 'done' && cur.mres && cur.mres.losers.includes(i);
-  const cls = ['seat', 'mg'];
-  if (play && (duel || i === cur.drawer) && cur.phase === 'drawn') cls.push('now');
-  if (play === false) cls.push('dim');
-  const left = pl.pts % MINI_PER_CUP;
-  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + '杯・カウント' + left + '">' +
-    (role ? '<span class="seat-role">' + role + '</span>' : '') +
-    '<span class="seat-name">' + esc(pl.name) + '</span><span class="seat-total">' + pl.total + '<small>杯</small></span>' + miniPips(left) +
-    (lost ? '<span class="seat-flag">負け +' + cur.mres.amt + '</span>' : '') + '</button>';
-}
-function miniCenter(anim) {
-  const cur = G.cur, M = G.mini, last = G.turn + 1 === M.total;
-  const label = '<div class="turn-label ol mg-label">' + (last ? '<span class="fin">FINAL</span>' : 'ROUND') + ' <span class="nm">' + (G.turn + 1) + '</span><small>/' + M.total + '</small>' + '</div>';
-  if (cur.phase === 'before' && mSpin) {
-    return label + '<div class="gcard mg-card mg-spin" style="--c:var(--c' + MG_COLOR.all + ')"><div class="gc-band"><span class="gc-mark">？</span><span class="gc-cat">ミニゲーム抽選中…</span></div>' +
-      '<div class="mg-reel"><b class="mg-roll" id="mgRoll">？</b></div></div>';
-  }
+function miniStageHTML(anim) {
+  const cur = G.cur, M = G.mini;
   if (cur.phase === 'before') {
-    return label + '<button type="button" class="deck mg-deck" data-g="mpick" aria-label="ミニゲームを抽選する">' +
-      '<span class="deck-card b3"></span><span class="deck-card b2"></span><span class="deck-card b1"><span class="back-logo">遊</span></span><span class="tap-bubble">TAP!</span></button>';
+    return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList">' + MG_ORDER.map(k => {
+      const used = M.used.includes(k), skip = M.skip.includes(k);
+      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : '') + '" data-k="' + k + '"><span class="mg-it">' + esc(mgTitle(k)) + '</span>' + (used ? '<i>済</i>' : skip ? '<i>パス</i>' : '') + '</li>';
+    }).join('') + '</ol>';
   }
-  const c = cur.card, m = MG[cur.mkind], done = cur.phase === 'done';
-  const stamp = done ? '<div class="mg-stamp">' + cur.mres.items.map(it => '<span style="--p:' + pc(it.p) + '"><b>' + esc(pname(it.p)) + '</b> +' + it.amt + (it.cups ? ' → ' + it.cups + '杯！' : '') + '</span>').join('') + '</div>' : '';
-  return label + '<div class="gcard mg-card' + (anim === 'draw' ? ' enter' : '') + (done ? ' done' : '') + '" style="--c:var(--c' + c.color + ')"' + (done ? '' : ' data-g="mstart" role="button" tabindex="0" aria-label="' + esc(mgTitle(cur.mkind)) + 'をスタート"') + '>' +
-    '<div class="gc-band"><span class="gc-mark">遊</span><span class="gc-cat">' + esc(c.catName) + '</span></div>' +
-    '<div class="gc-body"><p class="mg-title">' + esc(mgTitle(cur.mkind)) + '</p><p class="gc-text">' + fillGame(m.text) + '</p></div>' +
-    '<div class="gc-foot"><span class="mg-lose">負けたら</span><span class="gc-cups">+' + MINI_LOSS + '</span></div>' + stamp + '</div>';
+  const k = cur.mkind, done = cur.phase === 'done';
+  const stamp = done ? '<div class="mg-stamp">' + cur.mres.items.map(it => '<span><i class="dot" style="--p:' + pc(it.p) + '"></i><b>' + esc(pname(it.p)) + '</b> +' + it.amt + (it.cups ? ' <em>' + it.cups + '杯！</em>' : '') + '</span>').join('') + '</div>' : '';
+  return '<div class="mg-big' + (anim === 'draw' ? ' enter' : '') + (done ? ' done' : '') + '"' + (done ? '' : ' data-g="mstart" role="button" tabindex="0" aria-label="' + esc(mgTitle(k)) + 'をスタート"') + '>' +
+    '<p class="mg-head ol">' + miniRound() + '</p>' +
+    '<h2 class="mg-name ol" id="mgName">' + esc(mgTitle(k)) + '</h2>' +
+    '<p class="mg-rule">' + fillGame(mgText(k)) + '</p>' +
+    (done ? stamp : '<p class="mg-stake">負けたら <b>+' + MINI_LOSS + '</b><small>●3つで1杯</small></p>') + '</div>';
 }
 function miniDock() {
   const cur = G.cur, last = G.turn + 1 >= G.mini.total;
   if (cur.phase === 'before') {
-    return '<div class="dock-row">' + (mSpin ? '<div class="dock-note">抽選中…</div>' : '<button type="button" class="pbtn big main pulse" data-g="mpick">ミニゲーム抽選！</button>') + '</div>';
+    return '<div class="dock-row">' + (mSpin ? '<div class="dock-note">ルーレット中…</div>' : '<button type="button" class="pbtn big main pulse" data-g="mpick">ルーレットスタート！</button>') + '</div>';
   }
   if (cur.phase === 'drawn') {
     return '<div class="dock-row"><button type="button" class="pbtn white small" data-g="mreroll">別のゲーム<span class="sub">にする</span></button>' +
@@ -4776,21 +4830,39 @@ function miniDock() {
 function miniLog() {
   const log = G.mini.log;
   if (!log.length) return '<span class="lg-hint">負けた人は <b>+2</b>。●が3つたまると <b>1杯</b>（あふれた分は次の1杯へ）</span>';
-  return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + esc(MG[e.kind] ? MG[e.kind].short : '') + '</span>' +
+  return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + esc(MG[e.kind].short) + '</span>' +
     e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>+' + it.amt + (it.cups ? ' ' + it.cups + '杯' : '') + '</b></span>').join('')).join('');
 }
 function renderMini(anim) {
-  const M = G.mini;
-  $('gRound').innerHTML = (G.turn + 1) + '<small>/' + M.total + '戦</small>';
+  const n = G.players.length;
+  $('gRound').innerHTML = (G.turn + 1) + '<small>/' + G.mini.total + '戦</small>';
   $('gPending').hidden = true;
   $('gRules').hidden = true;
-  renderSeats();
-  $('center').innerHTML = miniCenter(anim);
+  $('tableWrap').hidden = true;
+  $('mgWrap').hidden = false;
+  const board = $('mgBoard');
+  const cols = n <= 4 ? n : n <= 6 ? 3 : 4;
+  board.style.setProperty('--cols', cols);
+  board.classList.toggle('c4', cols === 4);
+  board.innerHTML = miniBoard();
+  $('mgStage').innerHTML = miniStageHTML(anim);
   $('dock').innerHTML = miniDock();
   const box = $('gLog');
   box.innerHTML = miniLog();
   box.scrollLeft = G.mini.log.length ? box.scrollWidth : 0;
-  layoutTable();
+  miniFit();
+}
+/* the list goes into two columns when one column of 14 would be too cramped; the game's name is as big as fits */
+function miniFit() {
+  if (!isMini() || screen !== 'game') return;
+  const L = $('mgList');
+  if (L) { L.classList.remove('two'); L.classList.toggle('two', L.clientHeight / MG_ORDER.length < 31); }
+  const nm = $('mgName');
+  if (nm) {
+    let fs = Math.max(26, Math.min(76, (nm.parentElement.clientWidth - 16) / Math.max(3, nm.textContent.length)));
+    nm.style.fontSize = fs + 'px';
+    while (nm.scrollWidth > nm.clientWidth + 1 && fs > 18) { fs -= 2; nm.style.fontSize = fs + 'px'; }
+  }
 }
 function renderMiniResult() {
   const n = G.players.length;
@@ -4812,6 +4884,81 @@ function renderMiniResult() {
   $('resStats').innerHTML = '<div class="stat"><b>' + cups + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.mini.log.length + '</b><span>ミニゲーム</span></div>' +
     '<div class="stat"><b>' + losses + '</b><span>負けの合計</span></div><div class="stat"><b>' + G.players.filter(p => !p.loss).length + '</b><span>無敗の人</span></div>';
 }
+
+/* 早押し（反応速度）: one at a time — tap to get ready, wait for the signal (1.5–4.5 s, at random), then tap as fast as you can.
+   Tapping before the signal is a false start. The slowest loses; anyone who false-starts loses instead (all of them) */
+function reactSetup() {
+  const T = tool;
+  T.times = T.ps.map(() => null);
+  $('toolStage').innerHTML = stakeLine(T) + tlList(T, '--') +
+    '<button type="button" class="rc-pad" id="rcPad"><b id="rcBig"></b><small id="rcSmall"></small></button><p class="tm-sub" id="toolSub"></p>';
+  onPress($('rcPad'), reactPress);
+  reactTurn();
+}
+function reactTurn() {
+  const T = tool, i = T.k;
+  T.rc = 'ready';
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('rcPad').className = 'rc-pad ready';
+  $('rcBig').textContent = 'タップで準備'; $('rcSmall').textContent = '色が変わったら、すぐタップ！';
+  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！';
+  toolActs(TOOL_CLOSE, false);
+}
+function reactPress() {
+  const T = tool;
+  if (!T || T.kind !== 'react' || T.state === 'done' || T.rc === 'gap') return;
+  const i = T.k, pad = $('rcPad');
+  if (T.rc === 'ready') {
+    T.rc = 'wait';
+    pad.className = 'rc-pad wait'; $('rcBig').textContent = 'まだ…'; $('rcSmall').textContent = 'ガマン！';
+    SE.play('select');
+    T.goT = toolLater(() => {
+      if (T.rc !== 'wait') return;
+      T.rc = 'go'; T.goAt = performance.now();
+      pad.className = 'rc-pad go'; $('rcBig').textContent = 'タップ！'; $('rcSmall').textContent = '';
+      SE.play('go'); vibrate(30);
+    }, 1500 + Math.random() * 3000);
+    return;
+  }
+  if (T.rc === 'wait') {
+    clearTimeout(T.goT);
+    T.times[i] = Infinity; T.rc = 'gap';
+    pad.className = 'rc-pad foul'; $('rcBig').textContent = 'フライング！'; $('rcSmall').textContent = '';
+    const el = $('tlV' + i); el.innerHTML = '<span class="rc-foul">フライング</span>'; tmPop(el);
+    SE.play('buzz'); vibrate([80, 40, 80]);
+    reactNext();
+    return;
+  }
+  if (T.rc === 'go') {
+    const ms = Math.round(performance.now() - T.goAt);
+    T.times[i] = ms; T.rc = 'gap';
+    pad.className = 'rc-pad hit'; $('rcBig').textContent = (ms / 1000).toFixed(3) + '秒'; $('rcSmall').textContent = ms < 250 ? 'はやい！' : ms < 380 ? 'いい反応！' : 'おそい…';
+    const el = $('tlV' + i); el.textContent = (ms / 1000).toFixed(3) + '秒'; tmPop(el);
+    SE.play('ding');
+    reactNext();
+  }
+}
+function reactNext() {
+  const T = tool;
+  toolActs('', false);
+  if (T.k + 1 < T.ps.length) { T.k++; toolLater(reactTurn, 1300); }
+  else toolLater(reactResult, 1100);
+}
+function reactResult() {
+  const T = tool, pad = $('rcPad');
+  if (pad) pad.remove();
+  T.ps.forEach((_, j) => $('tlP' + j).classList.remove('now', 'wait'));
+  const fouls = T.ps.filter((_, j) => T.times[j] === Infinity);
+  let losers, msg;
+  if (fouls.length) { losers = fouls; msg = fouls.length === 1 ? 'フライングした <b>' + esc(pname(fouls[0])) + '</b> の負け！ ' + amtTxt(T.cups) : loseLine(T, fouls, 'フライング！'); }
+  else {
+    const mx = Math.max.apply(null, T.times);
+    losers = T.ps.filter((_, j) => T.times[j] === mx);
+    msg = losers.length === 1 ? 'いちばん遅かった <b>' + esc(pname(losers[0])) + '</b> の負け！ ' + amtTxt(T.cups) : loseLine(T, losers, '同じタイム！');
+  }
+  toolFinish(losers, msg, j => $('tlP' + j));
+}
+function reactAct() { /* the pad is pressed directly (onPress); the buttons (やめる / OK) are handled by toolAct */ }
 
 /* ---------- 遊び方ガイド: a full-screen manual (tabs + pages), opened from the title, the ？ button in the game and the record sheet ---------- */
 const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY = 'sakego-recs';
@@ -4925,8 +5072,8 @@ const GUIDE = [
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
     gCard('ミニゲーム8番勝負', '<p>タイトルの<b>「ミニゲーム8番勝負」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
-      '<p>負けた人は<b>+2</b>。席の●が<b>3つたまると1杯</b>。●が2つの人がまた負けたら、1杯飲んで●1つから再スタート。</p>' +
-      '<p class="sub">みんなで遊ぶゲームは毎回スタートの人が変わり、1対1のゲームはまだ対戦の少ない2人が選ばれます。やりたくないゲームは「別のゲームにする」で引き直し。</p>') +
+      '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、●が<b>3つたまると1杯</b>。●が2つの人がまた負けたら、1杯飲んで●1つから再スタート。</p>' +
+      '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },
@@ -5109,7 +5256,6 @@ function renderCenter(anim) {
   $('center').innerHTML = label + body;
 }
 function seatHTML(i) {
-  if (isMini()) return miniSeatHTML(i);
   const pl = G.players[i], cur = G.cur, d = cur.drawer;
   const roles = cur.phase === 'drawn' && cur.names ? ROLE_ORDER.filter(k => cur.names[k] === i) : [];
   const roleText = cur.phase === 'before' && i === d ? 'キミの番！' : roles.join('・');
@@ -5191,6 +5337,7 @@ function renderLog() {
 function renderGame(anim) {
   if (!validGame(G)) { showScreen('title'); return; }
   if (isMini()) { renderMini(anim); return; }
+  $('tableWrap').hidden = false; $('mgWrap').hidden = true;
   const n = G.players.length, d = G.cur.drawer;
   const round = Math.floor(G.turn / n) + 1;
   $('gRound').innerHTML = round + '<small>' + (G.rounds ? '/' + G.rounds + '周' : '周目') + '</small>';
@@ -5535,7 +5682,7 @@ function wireGame() {
     else if (a === 'again') { if (T.mode === 'stop') swSetup(); else cdReady(); }
     else if (a === 'rec') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) { if (isMini()) miniRecord([p], cups); else autoRecord([p], cups, { src: 'game' }); } }
     else if (a === 'special') { const p = T.loser, cups = T.cups; closeTimer(); if (p != null) openSheet(p, { base: cups, owed: true, src: 'game' }); }
-    else if (a === 'multi') { const ps = T.ps.slice(), cups = T.cups; closeTimer(); if (isMini()) miniRecord(ps, cups); else autoRecord(ps, cups, { src: 'game' }); }
+    else if (a === 'multi') { const ps = (T.losers || T.ps).slice(), cups = T.cups; closeTimer(); if (isMini()) miniRecord(ps, cups); else autoRecord(ps, cups, { src: 'game' }); }
     else closeTimer();
   });
   $('chalActs').addEventListener('click', e => {
@@ -5572,9 +5719,9 @@ function wireGame() {
     if (document.visibilityState === 'visible') { if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
     else if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } }
   });
-  const onResize = () => { FXC.size(); if (screen === 'game') layoutTable(); if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
-  if (window.ResizeObserver) new ResizeObserver(onResize).observe($('tableWrap'));
+  if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }
 
 /* =====================================================================
