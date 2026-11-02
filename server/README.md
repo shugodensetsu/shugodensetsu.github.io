@@ -14,7 +14,11 @@
 ## しくみ
 
 - `POST /v1/p` — 受け口（`src/collector.js`）。アプリから届く報告を確かめて保存する
-- `GET /` — 集計ページ（`src/stats.js`）。パスワードか Cloudflare Access が通ったときだけ表示する
+- `GET /` — 集計ページ（`src/stats.js`）。ログインか Cloudflare Access が通ったときだけ表示する
+  - ログイン画面でパスワード（`STATS_PASSWORD`）が合うと、30日有効の署名つき Cookie を渡す（HttpOnly・Secure・SameSite=Strict）。パスワードを変えると全員ログアウトになる
+  - 同じパスワードの HTTP Basic 認証でも見られる（デプロイ後の動作確認用）
+  - `manifest.webmanifest` とアイコンはパスワードなしで返す。iPhone の「ホーム画面に追加」でアプリのように開ける
+- `tools/make-icons.js` — ホーム画面用のアイコン（`tools/icons/`）を作る
 - `migrations/0001_init.sql` — データベースの表。デプロイのたびに `wrangler d1 migrations apply DB --remote` が未適用のぶんだけ流す
 - `tools/stats.src.js` — 集計ページの元。編集したら `node server/tools/build-stats.js` で `src/stats.js` を作り直す（カードの文章とゲーム名を埋め込む）
 
@@ -25,7 +29,7 @@
 ## 守り
 
 - 受け口：アプリのオリジン（https://shugodensetsu.github.io）以外からの報告は受け付けない。大きさ・形・値の範囲をすべて確かめ、合わないものは捨てる。1分30件/送信元まで
-- 集計ページ：パスワード（Secret `STATS_PASSWORD`、16文字以上）か Cloudflare Access のどちらかが通らないと何も見せない。パスワードの間違いは1分10回/送信元まで
+- 集計ページ：パスワード（Secret `STATS_PASSWORD`、16文字以上）か Cloudflare Access のどちらかが通らないと何も見せない。パスワードの間違いは1分10回/送信元まで。Cookie はパスワードから作る鍵で署名していて、書きかえると通らない
 - 無料枠を超えたときは記録されないだけで、料金はかからない。ゲームにも影響しない
 
 ## 設定のあと

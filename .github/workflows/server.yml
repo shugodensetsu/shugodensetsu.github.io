@@ -100,6 +100,12 @@ jobs:
           if [ -n "$STATS_PASSWORD" ]; then
             body=$(curl -s --max-time 15 -u "check:$STATS_PASSWORD" "$url/?d=7")
             if printf '%s' "$body" | grep -q 'の集計'; then echo "集計ページ（パスワードあり）: 表示できた（データベースもOK）" | tee -a "$log"; else echo "集計ページ（パスワードあり）: 表示できない" | tee -a "$log"; printf '%s' "$body" | head -c 300 | "$RUNNER_TEMP/mask.sh" | tee -a "$log"; ok=0; fi
+            jar="$RUNNER_TEMP/jar.txt"; rm -f "$jar"
+            r=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -c "$jar" --data-urlencode "password=$STATS_PASSWORD" "$url/login")
+            body=$(curl -s --max-time 15 -b "$jar" "$url/")
+            if [ "$r" = 303 ] && printf '%s' "$body" | grep -q 'ログアウト'; then echo "ログイン画面から入る: できた（30日間ログインしたまま）" | tee -a "$log"; else echo "ログイン画面から入る: できない（$r）" | tee -a "$log"; ok=0; fi
+            rm -f "$jar"
+            r=$(code "$url/manifest.webmanifest"); echo "ホーム画面用の設定: $r（200 なら正しい）" | tee -a "$log"; [ "$r" = 200 ] || ok=0
           fi
           [ "$ok" = 1 ]
 
