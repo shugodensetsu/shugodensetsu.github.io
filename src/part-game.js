@@ -3637,33 +3637,16 @@ function loseLine(T, losers, tie) {
 }
 const SUIT_CH = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const cardTxt = c => '<span class="' + (c.s === 'h' || c.s === 'd' ? 'cs-red' : 'cs-blk') + '">' + SUIT_CH[c.s] + '</span>' + rankName(c);
-/* インディアン for 3+: a seat per person, laid out in whichever number of columns gives the biggest cards on this screen
-   (worked out again whenever the room changes: a longer message or a second button below takes some of the height) */
-const ipSeats = T =>
-  '<div class="ip-seats" id="ipSeats">' + T.ps.map((p, j) =>
-    '<div class="cc-row tl-r ip-seat" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span>' +
+/* インディアン for 3+: a seat per person in two rows that never change shape during the game —
+   2×2 for 4 (3 = 2 + 1), 3 + 3 / 3 + 2 for 5–6, 4 + 4 / 4 + 3 for 7–8; an odd last row sits in the middle.
+   Each seat's card is as big as its seat lets it be */
+const ipSeats = T => {
+  const n = T.ps.length, cols = Math.ceil(n / 2);
+  return '<div class="ip-seats' + (cols >= 4 ? ' tight' : '') + '" id="ipSeats" style="grid-template-columns:repeat(' + cols * 2 + ', minmax(0, 1fr))">' + T.ps.map((p, j) =>
+    '<div class="cc-row tl-r ip-seat" id="tlP' + j + '" style="--p:' + pc(p) + (n % 2 && j === cols ? ';grid-column:2 / span 2' : '') + '"><span class="cc-nm">' + esc(pname(p)) + '</span>' +
     '<div class="ip-cardbox"><span class="tl-slot card-slot ip-card" id="tlS' + j + '">' + flipCard('tlC' + j, null, false) + '</span></div>' +
     '<span class="ip-act" id="tlA' + j + '"></span><b class="tl-v" id="tlV' + j + '" hidden></b></div>').join('') + '</div>';
-function ipFit(el) {
-  const n = el.children.length, W = el.clientWidth, H = el.clientHeight;
-  if (!n || !W || !H) return;
-  const gap = 8, nameH = 26, padV = 13, padH = 10;
-  let best = -1, cols = 2;
-  for (let c = 1; c <= n; c++) {
-    const r = Math.ceil(n / c), w = Math.min((W - gap * (c - 1)) / c - padH, ((H - gap * (r - 1)) / r - nameH - padV) * 5 / 7);
-    if (w > best + 0.5) { best = w; cols = c; }
-  }
-  el.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
-  el.classList.toggle('tight', (W - gap * (cols - 1)) / cols < 92);
-}
-function ipWatch() {
-  const el = $('ipSeats');
-  if (!el) return;
-  ipFit(el);
-  if (!window.ResizeObserver) return;
-  const ro = new ResizeObserver(() => { if (!el.isConnected) { ro.disconnect(); return; } ipFit(el); });
-  ro.observe(el);
-}
+};
 const GROUP_STAKE = { dice: 'いちばん小さい目の人が', cards: 'いちばん低い人（A=1）が', indian: 'いちばん低い人とJOKERの人が' };
 /* ---------- 負け演出 (every mini game): B = at the deciding moment the music cuts out and the screen goes dark and still for a beat,
    then the hit lands; A = the loser is spotlit (everyone else dims) and stamped across the screen like a red hanko ---------- */
@@ -3754,7 +3737,7 @@ function duelSetup() {
     $('toolStage').innerHTML = stakeLine(T) + (T.kind === 'indian'
       ? ipSeats(T)
       : '<div class="tl-slot card-slot tl-one" id="tlS"></div>' + tlList(T, '?')) + '<p class="tm-sub" id="toolSub"></p>';
-    if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = T.ps.map(() => false); ipWatch(); }
+    if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = T.ps.map(() => false); }
     duelTurn();
     return;
   }
