@@ -976,7 +976,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dt-pop.miss{color:#ff8b98}
 .tl-val small{display:block; font-family:var(--f-body); font-weight:800; font-size:11px; color:var(--muted)}
 
-/* ---------- パーティーゲーム（酒樽危機一髪・ワニの歯・地雷原・ドクロめくり・風船パンク・シャンパン振り） ---------- */
+/* ---------- パーティーゲーム（酒樽危機一髪・パクッとワニ・マインスイーパー・ドクロめくり・風船パンク・シャンパン振り） ---------- */
 .tool-ov.taru{background:radial-gradient(circle at 50% 40%, #d4552f 0, #7c2414 54%, #2a0904 100%)}
 .tool-ov.wani{background:radial-gradient(circle at 50% 46%, #22a8bf 0, #0c5569 55%, #04202c 100%)}
 .tool-ov.mine{background:radial-gradient(circle at 50% 44%, #74893f 0, #333f19 55%, #121707 100%)}
@@ -1066,7 +1066,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 @keyframes wnBlink{0%, 90%, 100%{transform:scaleY(0)} 94%{transform:scaleY(1)}}
 .wn-hmm{display:inline-block; animation:wnHmm .7s ease-in-out infinite alternate}
 @keyframes wnHmm{from{transform:rotate(-3deg)} to{transform:rotate(3deg) scale(1.06)}}
-/* 地雷原 */
+/* マインスイーパー */
 .mn-field{position:relative; width:min(92cqw, 78cqh); box-sizing:border-box; padding:10px 10px 12px; border-radius:18px; background:linear-gradient(#5f3e20, #3d2713); border:3px solid var(--ink); box-shadow:0 6px 0 var(--ink), inset 0 0 0 4px rgba(255,255,255,.06)}
 .mn-field::after{content:""; position:absolute; left:-8px; right:-8px; bottom:-12px; height:12px; background:repeating-linear-gradient(-45deg, #ffd23f 0 11px, #1b1b1b 11px 22px); border:2.5px solid var(--ink); border-radius:4px; transform:rotate(-1.2deg)}
 .mn-sign{display:flex; align-items:center; justify-content:center; gap:6px; margin:0 auto 8px; width:max-content; font-family:var(--f-display); font-size:15px; color:var(--white); background:#c8102e; border:2.5px solid var(--ink); border-radius:8px; padding:1px 12px 1px 4px; box-shadow:0 3px 0 var(--ink); transform:rotate(-2deg)}
@@ -1379,7 +1379,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .wn-brow{opacity:0; transition:opacity .2s}
 .wn-svg.smug .wn-brow{opacity:1}
 .wn-svg.smug .wn-lid{animation:none; transform:scaleY(.42)}
-/* 地雷原 */
+/* マインスイーパー */
 .mn-c.warn .mn-n{animation:mnPop .3s cubic-bezier(.2,1.6,.4,1), mnWarn .5s .3s ease-in-out 3; text-shadow:0 0 8px rgba(255,61,79,.9)}
 @keyframes mnWarn{50%{transform:scale(1.25)}}
 .mn-c.armed{background:radial-gradient(circle, #2a2a2a 0 34%, #4a2a12 62%, #2e1a0b); z-index:3; animation:mnArmed .12s linear infinite}

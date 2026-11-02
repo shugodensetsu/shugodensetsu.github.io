@@ -354,11 +354,7 @@ const SOUNDS = {
     [196, 207.65, 98].forEach(f => tone(A, t2, { type: 'sawtooth', f, d: 1.1, g: 0.14, lp: 1600, lp2: 420, sus: 1, rel: 0.2 }));
     kick(A, t2, 1.1); snare(A, t2, 0.45); crash(A, t2, 0.45);
   },
-  boom: (A, t) => {
-    noise(A, t, { d: 0.12, g: 1, type: 'highpass', f: 1500 }); noise(A, t, { d: 2.8, g: 0.9, type: 'lowpass', f: 4000, f2: 50, q: 0.5, rv: 0.4 });
-    kick(A, t, 1.4); tone(A, t, { type: 'sine', f: 80, f2: 22, bend: 1.5, d: 2, g: 0.9 }); crash(A, t, 0.6);
-    for (let i = 0; i < 14; i++) noise(A, t + 0.15 + Math.random() * 1.4, { d: 0.05, g: 0.1 + Math.random() * 0.25, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
-  },
+  boom: (A, t) => SOUNDS.mnBoom(A, t),
 };
 /* the recorded versions: [the recordings they need, how they play]. A sound plays this way once all of its recordings
    are decoded, and its synthesized version (SOUNDS) until then */
@@ -368,6 +364,15 @@ const FLIP = ['cFlip1', 'cFlip2', 'cFlip3'], SLIDE = ['cSlide1', 'cSlide2'], WOO
 const swish = (A, t, d, g, f1, f2, ar) => noise(A, t, { d, g, type: 'bandpass', f: f1 || 500, f2: f2 || 5000, q: 0.8, a: d * (ar || 0.3) });
 const drop = (A, t, g, f1, f2, d) => tone(A, t, { type: 'sine', f: f1 || 120, f2: f2 || 32, bend: (d || 0.55) * 0.75, d: d || 0.55, g: g || 0.8 });
 const tail = (A, t, g, d) => noise(A, t, { d: d || 1.2, g, type: 'lowpass', f: 1600, f2: 70, q: 0.4, rv: 0.5 });
+/* every explosion in the app is this one (it was the マインスイーパー blast); s scales it down for the small ones */
+const BOOM = ['boomL', 'rumble', 'boomS'];
+function bigBoom(A, t, s) {
+  const big = s >= 1, L = big ? 1 : 0.55 + 0.45 * s;
+  smp(A, t, 'boomL', { g: s, rate: 0.85, vary: big ? 0.03 : 0.1, drive: 2, rv: 0.3, d: big ? 0 : 1.1 });
+  smp(A, t, 'rumble', { g: s, rate: 0.8, d: big ? 0 : 0.8 });
+  smp(A, t + 0.05, 'boomS', { g: 0.6 * s, rate: 0.7 });
+  kick(A, t, 1.6 * s); drop(A, t, s, 80, 20, 1.8 * L); crash(A, t, 0.5 * s); tail(A, t, 0.55 * s, 2.4 * L);
+}
 const REAL = {
   /* 負け演出 */
   hanko: [['softH', 'paper', 'woodH'], (A, t) => {
@@ -375,7 +380,10 @@ const REAL = {
     smp(A, t, 'softH', { g: 1, rate: 0.72, vary: 0.02, drive: 2 }); smp(A, t, 'paper', { g: 0.9, rate: 0.9 }); smp(A, t, 'woodH', { g: 0.8, rate: 0.7 });
     kick(A, t, 1.3); drop(A, t, 0.9, 95, 28, 0.8); snare(A, t, 0.4); crash(A, t, 0.32); tail(A, t, 0.25, 0.9);
   }],
-  mnPop: [['boomS'], (A, t) => { smp(A, t, 'boomS', { g: 0.75, rate: 1.1, vary: 0.12, d: 0.6, drive: 1.5 }); kick(A, t, 1); drop(A, t, 0.5, 100, 35, 0.4); }],
+  /* the other mines going up one after another: the same blast, smaller and shorter */
+  mnPop: [BOOM, (A, t) => bigBoom(A, t, 0.5)],
+  /* マインスイーパー's "you lost": the falling whistle, then the blast once more (smaller) */
+  loseMine: [BOOM, (A, t) => { tone(A, t, { type: 'sine', f: 1800, f2: 300, bend: 0.7, d: 0.75, g: 0.12 }); bigBoom(A, t + 0.75, 0.6); }],
   corkBonk: [WOODL, (A, t) => { smp(A, t, WOODL, { g: 1, rate: 1.6, drive: 1 }); tone(A, t, { type: 'sine', f: 700, f2: 300, bend: 0.07, d: 0.2, g: 0.3 }); kick(A, t, 0.5); bellHit(A, t + 0.02, 2349.3, 0.4, 0.05); }],
   dropLand: [['softM', 'woodM'], (A, t) => {
     tone(A, t, { type: 'sine', f: 1700, f2: 380, bend: 0.5, d: 0.55, g: 0.09 });
@@ -389,10 +397,7 @@ const REAL = {
   cupIn: [['glassM', 'glassL2'], (A, t) => { smp(A, t, 'glassM', { g: 0.85, rv: 0.4 }); smp(A, t + 0.06, 'glassL2', { g: 0.6, rate: 1.3, rv: 0.4 }); SOUNDS.cupIn(A, t + 0.02); drop(A, t, 0.5, 110, 40, 0.5); }],
   /* ミニゲーム・パーティーゲーム */
   skFlip: [FLIP, (A, t) => { swish(A, t, 0.08, 0.14, 1500, 6000); smp(A, t, FLIP, { g: 0.9, drive: 1 }); tone(A, t, { type: 'sine', f: 700, f2: 1300, bend: 0.05, d: 0.08, g: 0.1 }); }],
-  mnBoom: [['boomL', 'rumble', 'boomS'], (A, t) => {
-    smp(A, t, 'boomL', { g: 1, rate: 0.85, vary: 0.03, drive: 2, rv: 0.3 }); smp(A, t, 'rumble', { g: 1, rate: 0.8 }); smp(A, t + 0.05, 'boomS', { g: 0.6, rate: 0.7 });
-    kick(A, t, 1.6); drop(A, t, 1, 80, 20, 1.8); crash(A, t, 0.5); tail(A, t, 0.55, 2.4);
-  }],
+  mnBoom: [BOOM, (A, t) => bigBoom(A, t, 1)],
   cdShuffle: [['cFan'], (A, t) => { smp(A, t, 'cFan', { g: 0.75 }); swish(A, t, 0.55, 0.12, 800, 6000); }],
   cdFlip: [FLIP, (A, t) => {
     swish(A, t, 0.09, 0.15, 1200, 6000); smp(A, t, FLIP, { g: 0.85, drive: 1.2 });
@@ -448,11 +453,8 @@ const REAL = {
   flip: [FLIP, (A, t) => { swish(A, t, 0.08, 0.14, 1500, 6000); smp(A, t, FLIP, { g: 0.8, drive: 1 }); kick(A, t, 0.35); }],
   deal: [SLIDE, (A, t) => { smp(A, t, SLIDE, { g: 0.7, d: 0.4 }); swish(A, t, 0.18, 0.1, 900, 5000); }],
   strike: [['rumble'], (A, t) => { SOUNDS.strike(A, t); smp(A, t + 0.02, 'rumble', { g: 0.9, rate: 0.75 }); drop(A, t, 0.7, 90, 25, 1.2); }],
-  boom: [['boomL', 'rumble', 'boomS'], (A, t) => {
-    smp(A, t, 'boomL', { g: 1, rate: 0.85, vary: 0.02, drive: 2, rv: 0.35 }); smp(A, t, 'rumble', { g: 1, rate: 0.75, vary: 0.02 }); smp(A, t + 0.1, 'boomS', { g: 0.6, rate: 0.7, rv: 0.4 });
-    kick(A, t, 1.6); drop(A, t, 1, 75, 18, 2.2); snare(A, t, 0.5); crash(A, t, 0.55); tail(A, t, 0.6, 2.8);
-    for (let i = 0; i < 10; i++) noise(A, t + 0.3 + Math.random() * 1.4, { d: 0.05, g: 0.08 + Math.random() * 0.14, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
-  }],
+  /* 爆弾パス回し: the same blast as マインスイーパー */
+  boom: [BOOM, (A, t) => bigBoom(A, t, 1)],
 };
 /* a sound by name: recorded when its recordings are ready, synthesized otherwise */
 function snd(name, A, t) {
@@ -3698,7 +3700,7 @@ const TOOL_INFO = {
   darts: { title: 'ダーツ勝負', act: 'アプリでダーツ！', cls: 'darts', stake: '得点の低い方が' },
   taru: { title: '酒樽危機一髪', act: '酒樽危機一髪スタート！', cls: 'taru pg', stake: '親父を飛ばした人が', btn: 'pink' },
   wani: { title: 'パクッとワニ', act: 'パクッとワニスタート！', cls: 'wani pg', stake: 'パクッとされた人が', btn: 'pink' },
-  mine: { title: '地雷原', act: '地雷原スタート！', cls: 'mine pg', stake: '地雷を踏んだ人が', btn: 'pink' },
+  mine: { title: 'マインスイーパー', act: 'マインスイーパー スタート！', cls: 'mine pg', stake: '地雷を踏んだ人が', btn: 'pink' },
   skull: { title: 'ドクロめくり', act: 'ドクロめくりスタート！', cls: 'skull pg', stake: 'ドクロを引いた人が', btn: 'pink' },
   balloon: { title: '風船パンク', act: '風船パンクスタート！', cls: 'balloon pg', stake: '割った人が', btn: 'pink' },
   champ: { title: 'シャンパン振り', act: 'シャンパン振りスタート！', cls: 'champ pg', stake: '栓を飛ばした人が', btn: 'pink' },
@@ -4650,7 +4652,7 @@ function waniBite() {
   partyLose(1900);
 }
 
-/* 地雷原: 5×5 ground, 6 mines (never under the first spade); an opened square shows how many mines touch it */
+/* マインスイーパー: 5×5 ground, 6 mines (never under the first spade); an opened square shows how many mines touch it */
 const MINE_SIZE = 5, MINE_COUNT = 6;
 const MINE_SVG = '<svg class="mn-mine" viewBox="-20 -20 40 40" aria-hidden="true"><g stroke="#150733" stroke-width="3" stroke-linecap="round"><path d="M0 -17v34M-17 0h34M-12 -12l24 24M12 -12l-24 24"/></g>' +
   '<circle r="11.5" fill="#2b2d33" stroke="#150733" stroke-width="2"/><circle cx="-4" cy="-4.5" r="3.2" fill="#fff" opacity=".55"/><circle class="mn-led" cx="3.5" cy="3.5" r="2.8" fill="#ff3b30"/></svg>';
@@ -4667,7 +4669,7 @@ PARTY.mine = {
   init(T) { T.mines = null; T.open = []; },
   info: T => '地雷 <b>' + MINE_COUNT + '</b>コ ・ 数字はとなりの地雷の数',
   art() {
-    let h = '<div class="mn-field"><div class="mn-sign"><span>危険</span>地雷原</div><div class="mn-grid" id="mnGrid">';
+    let h = '<div class="mn-field"><div class="mn-sign"><span>危険</span>マインスイーパー</div><div class="mn-grid" id="mnGrid">';
     for (let i = 0; i < MINE_SIZE * MINE_SIZE; i++) h += '<button type="button" class="mn-c" data-tl="hit" data-i="' + i + '" aria-label="マス' + (i + 1) + '" style="--gr:' + rint(0, 3) + '"></button>';
     return h + '</div></div>';
   },
@@ -4978,7 +4980,7 @@ function gaInit() {
   document.head.appendChild(s);
 }
 
-const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'パクッとワニ', mine: '地雷原', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
+const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'パクッとワニ', mine: 'マインスイーパー', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
   indian: 'インディアンポーカー', darts: 'ダーツ勝負', bomb: '爆弾パス回し', chal: 'チャレンジ', pick: '名前ルーレット', tap: '早押し対決', timer: 'タイマー' };
 const SPECIAL_NAMES = [['double', '倍倍FIGHT！'], ['heaven_hell', '天国と地獄'], ['cospa', 'コスパ'], ['ticket', '券']];
 function fmtDur(ms) {
@@ -5582,7 +5584,7 @@ const GUIDE = [
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
     gCard('パーティーゲーム', '<p>引いた人から順番に<b>スマホを回して</b>遊ぶゲームです。カードの<b>「〇〇スタート！」</b>ボタンから始めて、ハズレを引いた人が負け。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['パクッとワニ', 'ワニの歯を1本ずつ押す。押すとワニがじっと考えて…パクッとされた人が負け（パクッとする歯は1本）'],
-        ['地雷原', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
+        ['マインスイーパー', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
