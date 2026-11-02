@@ -1,4 +1,4 @@
-# 調査用：同じコードを別の名前（sakego-probe）でデプロイして、新しいコードが返るかを確かめ、最後に消す。
+# 調査用：wrangler tail で、いまどの版が答えているかを確かめる。
 # server/.probe を変えて push すると動く。結果は deploy-status ブランチの probe.md。
 name: 集計サーバーの調査
 
@@ -39,19 +39,25 @@ jobs:
             echo "# 調査 $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')"
             npm install --no-audit --no-fund > /dev/null 2>&1
             node tools/ensure-d1.mjs 2>&1 | mask
-            echo '## deploy sakego-probe'; echo '```'
-            npx wrangler deploy --name sakego-probe 2>&1 | mask | tail -n 8
-            echo '```'
+            echo '## tail（どの版が答えているか）'; echo '```'
+            npx wrangler tail sakego --format json > "$RUNNER_TEMP/tail.json" 2> "$RUNNER_TEMP/tail.err" &
+            tp=$!
+            sleep 12
+            for p in /manifest.webmanifest / /icon-192.png; do curl -s -o /dev/null -w "$p %{http_code}\n" --max-time 15 "https://sakego.shugodensetsu.workers.dev$p"; done
             sleep 8
-            for u in https://sakego-probe.shugodensetsu.workers.dev https://sakego.shugodensetsu.workers.dev; do
-              echo "## $u/manifest.webmanifest"; echo '```'; hdr "$u/manifest.webmanifest"; echo '```'
-            done
+            kill $tp 2>/dev/null || true
+            node -e '
+              const lines = require("fs").readFileSync(process.argv[1], "utf8").split("\n");
+              let buf = "", n = 0;
+              for (const l of lines) { buf += l + "\n"; try { const e = JSON.parse(buf); buf = ""; n++;
+                console.log((e.scriptVersion && e.scriptVersion.id) || "?", e.outcome, e.event && e.event.request && new URL(e.event.request.url).pathname, e.event && e.event.response && e.event.response.status); } catch (_) {} }
+              console.log("events:", n);
+            ' "$RUNNER_TEMP/tail.json"
+            tail -n 5 "$RUNNER_TEMP/tail.err" | mask
+            echo '```'
             echo '## sakego versions'; echo '```'
             npx wrangler versions list --name sakego 2>&1 | mask | tail -n 14
             npx wrangler deployments status --name sakego 2>&1 | mask | tail -n 8
-            echo '```'
-            echo '## delete probe'; echo '```'
-            npx wrangler delete --name sakego-probe --force 2>&1 | mask | tail -n 4
             echo '```'
           } > "$out" 2>&1 || true
           cat "$out"
