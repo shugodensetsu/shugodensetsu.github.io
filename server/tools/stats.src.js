@@ -159,7 +159,7 @@ export default {
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
     const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ? AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
     const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws] = await Promise.all([
-      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again FROM games WHERE day >= ?', from),
+      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mix IS NOT NULL) mixn FROM games WHERE day >= ?', from),
       q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ? GROUP BY day', from),
       q('SELECT players k, COUNT(*) n FROM games WHERE day >= ? GROUP BY players ORDER BY players', from),
       q(each('cards') + ' LIMIT 15', from),
@@ -209,6 +209,7 @@ ${tile(mins(tot.ms), '1ゲームの平均時間', '最後まで遊んだゲー�
 ${tile(pct(tot.inst || 0, n), 'ホーム画面から', 'タブレット ' + pct(tot.tab || 0, n))}
 ${tile(evN('share'), '「友達に教える」', '結果画面から ' + evN('share', d => d === 'result'))}
 ${tile(evN('install', d => d === 'done'), 'ホーム画面に追加', '追加の案内を開いた ' + evN('install', d => d.startsWith('guide')))}
+${tile(pct(tot.lively || 0, tot.mixn || 0), 'にぎやかモード', '出かたを選んだゲーム ' + (tot.mixn || 0) + 'のうち')}
 ${tile(pct(ownN, allDraws), '自作・書きかえたカード', '引いたカード ' + allDraws + '枚のうち')}
 </div>
 <section><h2>日ごとのゲーム数</h2>${daily(perDay, days)}</section>

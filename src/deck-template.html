@@ -106,6 +106,24 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .scr-title{margin:0; text-align:center; font-family:var(--f-display); font-weight:400; font-size:min(28px, 5cqh); line-height:1.2; color:var(--yellow)}
 .panel{background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink); padding:8px 12px 10px; display:flex; flex-direction:column; gap:8px; min-height:0}
 .panel.grow{flex:1 1 auto; overflow:auto}
+#roundPanel, #mixPanel, .s-setup > .panel:first-of-type{flex-shrink:0}
+.s-setup .panel.grow{min-height:96px}
+.s-setup{overflow-y:auto; overscroll-behavior:contain}
+/* short screens (iPhone SE and the like): tighter setup so all four panels and the start button fit */
+/* when it still doesn't fit (landscape, very small phones) the screen scrolls, and the start button stays at the bottom */
+.s-setup .row-btns{position:sticky; bottom:-12px; margin-top:auto; padding:8px 0 12px; margin-bottom:-12px; background:linear-gradient(rgba(42,18,102,0), var(--bg) 40%)}
+@container (max-height: 700px){
+  .s-setup{gap:6px}
+  .s-setup .panel{padding:5px 10px 7px; gap:4px}
+  .s-setup .p-hint{display:none}
+  .s-setup .panel.grow{min-height:80px}
+  .count-row button{max-height:38px}
+  .mix-row small{display:none}
+  .mix-row button{padding:4px 8px}
+  .mix-row b, .round-row button{font-size:16px}
+  .round-row button{padding:3px 0}
+  .s-setup .setup-info{font-size:11.5px; line-height:1.4}
+}
 .p-h{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; flex-wrap:wrap}
 .num-badge{width:24px; height:24px; border-radius:50%; background:var(--pink); color:var(--white); border:2.5px solid var(--ink); display:grid; place-items:center; font-size:13px; flex:none}
 .p-hint{font-weight:500; font-size:12px; color:var(--ink-muted)}
@@ -120,6 +138,13 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .round-row{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px}
 .round-row button{border:3px solid var(--ink); border-radius:14px; background:var(--white); color:var(--ink); font-family:var(--f-display); font-size:17px; padding:7px 0; box-shadow:0 3px 0 var(--ink); transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
 .round-row button[aria-pressed="true"]{background:var(--cyan); transform:translateY(-2px) rotate(-3deg)}
+.mix-row{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px}
+.mix-row button{border:3px solid var(--ink); border-radius:14px; background:var(--white); color:var(--ink); padding:4px 8px 5px; box-shadow:0 3px 0 var(--ink); display:flex; flex-direction:column; align-items:center; gap:1px; text-align:center; transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.mix-row b{font-family:var(--f-display); font-weight:400; font-size:17px; line-height:1.2}
+.mix-row small{font-size:11px; font-weight:700; line-height:1.3; color:var(--ink-muted); white-space:nowrap}
+.mix-row button[aria-pressed="true"]{background:var(--cyan); transform:translateY(-2px) rotate(-2deg)}
+.mix-row button[aria-pressed="true"] small{color:var(--ink)}
+#mix-lively[aria-pressed="true"]{background:var(--yellow)}
 .setup-info{margin:0; text-align:center; font-size:12.5px; font-weight:800; color:var(--muted)}
 .setup-info b{color:var(--yellow); font-family:var(--f-display); font-weight:400}
 .setup-info.bad{color:var(--red)}
@@ -1804,6 +1829,10 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <div class="panel" id="roundPanel">
         <div class="p-h"><span class="num-badge">3</span>何周あそぶ？</div>
         <div class="round-row" id="roundGrid" role="group" aria-label="終了条件"></div>
+      </div>
+      <div class="panel" id="mixPanel">
+        <div class="p-h"><span class="num-badge">4</span>カードの出かた</div>
+        <div class="mix-row" id="mixGrid" role="group" aria-label="カードの出かた"></div>
       </div>
       <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>1ターン目に、操作の案内を出す（はじめての人向け）</span></label>
       <p class="setup-info" id="setupInfo"></p>

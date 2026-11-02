@@ -773,7 +773,22 @@ const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
-const setup = { count: 4, names: [], rounds: 3, loaded: false, coach: null, mode: 'card' };
+const setup = { count: 4, names: [], rounds: 3, mix: 'even', loaded: false, coach: null, mode: 'card' };
+/* カードの出かた: バランス = every card equally likely; にぎやか = these categories come up more often */
+const MIX_KEYS = ['app', 'rule', 'chal', 'c1'], MIX_WEIGHT = 2.5;
+const cardWeight = (c, mix) => (mix === 'lively' && MIX_KEYS.includes(c.cat) ? MIX_WEIGHT : 1);
+function pickWeighted(list, mix) {
+  const total = list.reduce((a, c) => a + cardWeight(c, mix), 0);
+  let r = Math.random() * total;
+  for (const c of list) { r -= cardWeight(c, mix); if (r < 0) return c; }
+  return list[list.length - 1];
+}
+/* the deck for a set number of rounds (drawn from the end). にぎやか: a weighted order (each card's key is random^(1/weight)),
+   so the heavier cards tend to come first while still no card repeats until the deck runs out */
+function pileOf(pool, mix) {
+  if (mix !== 'lively') return shuffle(pool.map(c => c.id));
+  return pool.map(c => ({ id: c.id, k: Math.pow(Math.random(), 1 / cardWeight(c, mix)) })).sort((a, b) => a.k - b.k).map(x => x.id);
+}
 let sheet = null, decide = null, wheel = null, tap = null, picking = null, zoom = null;
 let wakeLock = null, lastFocus = null, spotRot = 0;
 
@@ -830,6 +845,7 @@ function normalizeGame(g) {
   c.decided = !!c.decided;
   g.hist = Array.isArray(g.hist) ? g.hist.filter(h => typeof h === 'string').slice(-HIST_MAX) : [];
   g.pile = Array.isArray(g.pile) ? g.pile : [];
+  g.mix = g.mix === 'lively' ? 'lively' : 'even';
   g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
   /* the play-count record: dropped if it isn't what statStart made (the collector checks everything again anyway) */
@@ -920,6 +936,7 @@ function loadSetup() {
       setup.names = s.names.slice(0, 8).map(String);
       if (s.count >= 2 && s.count <= 8) setup.count = s.count;
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
+      if (s.mix === 'lively' || s.mix === 'even') setup.mix = s.mix;
     }
   } catch (_) { /* ignore */ }
 }
@@ -928,6 +945,9 @@ function renderSetup(full) {
   for (let n = 2; n <= 8; n++) h += '<button type="button" id="cnt-' + n + '" data-cnt="' + n + '" aria-pressed="' + (setup.count === n) + '" aria-label="' + n + '人">' + n + '</button>';
   $('countGrid').innerHTML = h;
   $('roundGrid').innerHTML = ROUND_OPTS.map(r => '<button type="button" id="rnd-' + r + '" data-rnd="' + r + '" aria-pressed="' + (setup.rounds === r) + '">' + (r ? r + '周' : '∞') + '</button>').join('');
+  $('mixGrid').innerHTML =
+    '<button type="button" id="mix-even" data-mix="even" aria-pressed="' + (setup.mix !== 'lively') + '"><b>バランス</b><small>全カードが均等に出る</small></button>' +
+    '<button type="button" id="mix-lively" data-mix="lively" aria-pressed="' + (setup.mix === 'lively') + '"><b>にぎやか</b><small>ゲーム・ルール系が多め</small></button>';
   if (full) {
     $('nameList').innerHTML = Array.from({ length: setup.count }, (_, i) =>
       '<label class="nm-row" style="--p:' + pc(i) + '"><span class="nm-idx" aria-hidden="true">' + (i + 1) + '</span>' +
@@ -937,7 +957,7 @@ function renderSetup(full) {
   $('coachOpt').checked = !!setup.coach;
   const mini = setup.mode === 'mini';
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
-  $('roundPanel').hidden = mini; $('coachRow').hidden = mini;
+  $('roundPanel').hidden = mini; $('mixPanel').hidden = mini; $('coachRow').hidden = mini;
   if (mini) {
     $('setupInfo').classList.remove('bad');
     $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>';
@@ -947,8 +967,12 @@ function renderSetup(full) {
   const pool = eligibleCards(setup.count).length;
   const info = $('setupInfo');
   info.classList.toggle('bad', pool === 0);
+  const live = MIX_KEYS.map(k => catOf(k)).filter(c => c && c.on);
+  const liveOff = setup.mix === 'lively' && pool > 0 && !eligibleCards(setup.count).some(c => MIX_KEYS.includes(c.cat));
   info.innerHTML = pool
-    ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）')
+    ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）') +
+      (setup.mix !== 'lively' ? '' : liveOff ? '<br>にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
+        : '<br>にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
     : 'この人数で使えるカードがありません。カード編集でONにしてね';
   $('startGame').disabled = pool === 0;
 }
@@ -957,9 +981,9 @@ function beginGame() {
   const n = setup.count;
   if (!eligibleCards(n).length) { renderSetup(false); return; }
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix })); } catch (_) { /* ignore */ }
   G = {
-    v: 2, gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [] })),
   };
@@ -1018,13 +1042,13 @@ function drawCard() {
     const out = new Set(keep ? recent.slice(-keep) : []);
     const cand = pool.filter(c => !out.has(c.id));
     const from = cand.length ? cand : pool;
-    card = from[Math.floor(Math.random() * from.length)];
+    card = pickWeighted(from, G.mix);
     G.recent = recent.concat(card.id).slice(-3);
   } else {
     /* a set number of rounds: go through a shuffled deck, so no card repeats until it runs out */
     const byId = new Map(pool.map(c => [c.id, c]));
     while (!card && G.pile.length) card = byId.get(G.pile.pop()) || null;
-    if (!card) { G.pile = shuffle(pool.map(c => c.id)); card = byId.get(G.pile.pop()); }
+    if (!card) { G.pile = pileOf(pool, G.mix); card = byId.get(G.pile.pop()); }
   }
   const d = cur.drawer;
   let r = Math.floor(Math.random() * (n - 1)); if (r >= d) r++;
@@ -5109,7 +5133,7 @@ function statTouch() {
 function statEnd(st) {
   if (!st || !st.sid) return;
   st.seq = (st.seq || 0) + 1;
-  statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
+  statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, mix: st.mix || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
     turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp });
   st.dirty = false;
 }
@@ -5119,13 +5143,13 @@ function statStart(p) {
   if (!G) return;
   const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
   const st = G.st = {
-    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
+    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', mix: G.mode === 'mini' ? null : G.mix, players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
     form: Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone', inst: isStandalone() ? 1 : 0, nth: clampInt(useLoad().games, 1, 99999),
     turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {},
   };
   stCur = st;
   saveGame();   /* the game was saved just before this: keep the record with it, or a reopened game would lose it */
-  statSend({ k: 'start', sid: st.sid, mode: st.mode, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth });
+  statSend({ k: 'start', sid: st.sid, mode: st.mode, mix: st.mix || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth });
 }
 function statDone() {
   const st = statTouch();
@@ -5274,7 +5298,7 @@ let mSpin = null;
 function beginMini() {
   const n = setup.count;
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix })); } catch (_) { /* ignore */ }
   mSpin = null;
   G = {
     v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
@@ -5663,7 +5687,7 @@ const gCard = (title, body, num) => '<section class="gd-card"><h3>' + (num ? '<s
 const GUIDE = [
   { k: 'start', tab: 'はじめに', html: () =>
     '<p class="gd-lead">スマホ1台をみんなで回して遊ぶカードゲームです。アプリは<b>「カードを出す係」</b>と<b>「飲んだ量を記録する係」</b>。飲む人が決まっているカードは<b>アプリが自動で記録</b>、ジャンケンなどの勝ち負けはみんなで判定して、アプリに教えてあげます。</p>' +
-    gCard('メンバーを登録', '<p>人数・名前・何周あそぶかを決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
+    gCard('メンバーを登録', '<p>人数・名前・何周あそぶか・カードの出かたを決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
     gCard('カードを引く', '<div class="gd-mock">' + gBtn('カードを引く！', 'big') + '</div><p>自分の番の人がタップ。カードが大きく出るので<b>声に出して読み上げ</b>、書いてあるとおりに遊びます。</p>', 2) +
     gCard('飲む人の記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + '<span class="gd-tok">+1<small>杯</small></span>' + gSeat('サキ', 1, 1, 'ランダム') + '</div>' +
       '<p>「左隣は1杯」のように<b>飲む人が決まっているカードは、閉じると自動で記録</b>されます。</p>' +
@@ -5764,6 +5788,7 @@ const GUIDE = [
   },
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
+    gCard('カードの出かた', '<p><b>バランス</b>：どのカードも同じくらい出ます。</p><p><b>にぎやか</b>：「アプリならでは」「ルール追加」「チャレンジ」「遊び系」のカードが、ほかの2倍以上出やすくなります。ミニゲームや特殊ルールで盛り上がりたいときに。</p>') +
     gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
     gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
     gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>' +
@@ -6202,6 +6227,11 @@ function wireGame() {
     setup.rounds = Number(b.dataset.rnd); renderSetup(false); SE.play('pop');
     const again = $(b.id); if (again) again.focus({ preventScroll: true });
   });
+  $('mixGrid').addEventListener('click', e => {
+    const b = e.target.closest('button[data-mix]'); if (!b) return;
+    setup.mix = b.dataset.mix === 'lively' ? 'lively' : 'even'; renderSetup(false); SE.play('pop');
+    const again = $(b.id); if (again) again.focus({ preventScroll: true });
+  });
   $('nameList').addEventListener('input', e => {
     const i = Number(e.target.dataset.i); if (Number.isNaN(i)) return;
     setup.names[i] = e.target.value;
@@ -6267,7 +6297,7 @@ function wireGame() {
   $('confirmYes').addEventListener('click', () => { closeOv('confirmOv'); finishGame(); });
   const sameMembers = () => {
     if (!validGame(G)) return;
-    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
+    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
   };
   $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });

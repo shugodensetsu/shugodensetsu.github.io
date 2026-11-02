@@ -60,10 +60,11 @@ export default {
       const mode = r.mode === 'card' || r.mode === 'mini' ? r.mode : null;
       const players = int(r.players, 2, 8), rounds = int(r.rounds ?? 0, 0, 99);
       const form = r.form === 'tablet' ? 'tablet' : 'phone', installed = r.inst ? 1 : 0, nth = int(r.nth ?? 1, 1, 99999);
+      const mix = mode === 'card' && (r.mix === 'even' || r.mix === 'lively') ? r.mix : null;   // カードの出かた
       if (!sid || !mode || players == null || rounds == null || nth == null) return reply(400, origin);
       if (r.k === 'start') {
-        await env.DB.prepare('INSERT INTO games (sid, day, started, mode, players, rounds, form, installed, nth, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(sid) DO NOTHING')
-          .bind(sid, day, now, mode, players, rounds, form, installed, nth).run();
+        await env.DB.prepare('INSERT INTO games (sid, day, started, mode, mix, players, rounds, form, installed, nth, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(sid) DO NOTHING')
+          .bind(sid, day, now, mode, mix, players, rounds, form, installed, nth).run();
         return reply(204, origin);
       }
       const seq = int(r.seq ?? 1, 1, 99999), turns = int(r.turns ?? 0, 0, 9999), ms = int(r.ms ?? 0, 0, 24 * 3600e3), cups = int(r.cups ?? 0, 0, 99999), own = int(r.own ?? 0, 0, 9999), done = r.done ? 1 : 0;
@@ -71,10 +72,10 @@ export default {
       if (seq == null || turns == null || ms == null || cups == null || own == null || Object.values(data).some(v => v === null)) return reply(400, origin);
       data.own = own;   // cards the players added or rewrote: how many were drawn, nothing more
       await env.DB.prepare(
-        'INSERT INTO games (sid, day, started, mode, players, rounds, form, installed, nth, seq, ended, turns, done, ms, cups, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
-        'ON CONFLICT(sid) DO UPDATE SET seq = excluded.seq, ended = excluded.ended, turns = excluded.turns, done = MAX(COALESCE(games.done, 0), excluded.done), ms = excluded.ms, cups = excluded.cups, data = excluded.data ' +
+        'INSERT INTO games (sid, day, started, mode, mix, players, rounds, form, installed, nth, seq, ended, turns, done, ms, cups, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
+        'ON CONFLICT(sid) DO UPDATE SET mix = COALESCE(games.mix, excluded.mix), seq = excluded.seq, ended = excluded.ended, turns = excluded.turns, done = MAX(COALESCE(games.done, 0), excluded.done), ms = excluded.ms, cups = excluded.cups, data = excluded.data ' +
         'WHERE excluded.seq >= COALESCE(games.seq, 0)')   // a late-arriving older report never overwrites a newer one
-        .bind(sid, day, now - ms, mode, players, rounds, form, installed, nth, seq, now, turns, done, ms, cups, JSON.stringify(data)).run();
+        .bind(sid, day, now - ms, mode, mix, players, rounds, form, installed, nth, seq, now, turns, done, ms, cups, JSON.stringify(data)).run();
       return reply(204, origin);
     } catch (_) {
       return reply(500, origin);   // e.g. the free plan's daily limit: the game itself is unaffected
