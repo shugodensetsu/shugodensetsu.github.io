@@ -3637,6 +3637,33 @@ function loseLine(T, losers, tie) {
 }
 const SUIT_CH = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const cardTxt = c => '<span class="' + (c.s === 'h' || c.s === 'd' ? 'cs-red' : 'cs-blk') + '">' + SUIT_CH[c.s] + '</span>' + rankName(c);
+/* インディアン for 3+: a seat per person, laid out in whichever number of columns gives the biggest cards on this screen
+   (worked out again whenever the room changes: a longer message or a second button below takes some of the height) */
+const ipSeats = T =>
+  '<div class="ip-seats" id="ipSeats">' + T.ps.map((p, j) =>
+    '<div class="cc-row tl-r ip-seat" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span>' +
+    '<div class="ip-cardbox"><span class="tl-slot card-slot ip-card" id="tlS' + j + '">' + flipCard('tlC' + j, null, false) + '</span></div>' +
+    '<span class="ip-act" id="tlA' + j + '"></span><b class="tl-v" id="tlV' + j + '" hidden></b></div>').join('') + '</div>';
+function ipFit(el) {
+  const n = el.children.length, W = el.clientWidth, H = el.clientHeight;
+  if (!n || !W || !H) return;
+  const gap = 8, nameH = 26, padV = 13, padH = 10;
+  let best = -1, cols = 2;
+  for (let c = 1; c <= n; c++) {
+    const r = Math.ceil(n / c), w = Math.min((W - gap * (c - 1)) / c - padH, ((H - gap * (r - 1)) / r - nameH - padV) * 5 / 7);
+    if (w > best + 0.5) { best = w; cols = c; }
+  }
+  el.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+  el.classList.toggle('tight', (W - gap * (cols - 1)) / cols < 92);
+}
+function ipWatch() {
+  const el = $('ipSeats');
+  if (!el) return;
+  ipFit(el);
+  if (!window.ResizeObserver) return;
+  const ro = new ResizeObserver(() => { if (!el.isConnected) { ro.disconnect(); return; } ipFit(el); });
+  ro.observe(el);
+}
 const GROUP_STAKE = { dice: 'いちばん小さい目の人が', cards: 'いちばん低い人（A=1）が', indian: 'いちばん低い人とJOKERの人が' };
 /* ---------- 負け演出 (every mini game): B = at the deciding moment the music cuts out and the screen goes dark and still for a beat,
    then the hit lands; A = the loser is spotlit (everyone else dims) and stamped across the screen like a red hanko ---------- */
@@ -3725,9 +3752,9 @@ function duelSetup() {
   if (tlGroup(T)) {
     /* everyone: トランプ draws into one big card in the middle; インディアン deals a small card to each person's row */
     $('toolStage').innerHTML = stakeLine(T) + (T.kind === 'indian'
-      ? tlList(T, '', j => '<span class="tl-slot card-slot tl-mini" id="tlS' + j + '">' + flipCard('tlC' + j, null, false) + '</span><span class="ip-act" id="tlA' + j + '"></span>')
+      ? ipSeats(T)
       : '<div class="tl-slot card-slot tl-one" id="tlS"></div>' + tlList(T, '?')) + '<p class="tm-sub" id="toolSub"></p>';
-    if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = T.ps.map(() => false); }
+    if (T.kind === 'indian') { T.phase = 'deal'; T.redrawn = T.ps.map(() => false); ipWatch(); }
     duelTurn();
     return;
   }

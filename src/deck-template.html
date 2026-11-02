@@ -1095,18 +1095,19 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .mn-smoke{width:40px; height:40px; margin:-20px 0 0 -20px; background:radial-gradient(circle, rgba(80,80,80,.9), rgba(60,60,60,0) 70%); opacity:0; animation:mnSmoke 1.5s ease-out forwards}
 @keyframes mnSmoke{from{transform:translate(0,0) scale(.4); opacity:.9} to{transform:translate(var(--sx),var(--sy)) scale(3.4); opacity:0}}
 /* ドクロめくり */
-.sk-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:7px; width:min(90cqw, 60cqh)}
+.sk-grid{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); grid-template-rows:repeat(4, minmax(0, 1fr)); gap:min(8px, 2cqmin);
+  width:min(100cqw, 90cqh); height:min(calc(100cqh - 8px), 146cqw)}
 .sk-pass small{display:inline}
-.sk-card{position:relative; aspect-ratio:5 / 7; padding:0; border:0; background:none; perspective:600px; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
+.sk-card{position:relative; min-width:0; min-height:0; container-type:size; padding:0; border:0; background:none; perspective:600px; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
 .sk-card .flip, .sk-card .flip-in, .sk-card .flip-b, .sk-card .flip-f{display:block}
 .sk-back, .sk-face{position:absolute; inset:0; box-sizing:border-box; border:3px solid var(--ink); border-radius:12% / 9%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px}
 .sk-back{background:radial-gradient(circle at 50% 38%, #7440c2, #2a0d4d 72%); box-shadow:inset 0 0 0 4px #2a0d4d, inset 0 0 0 6px #e8c35a, 0 5px 0 var(--ink)}
-.sk-back::before, .sk-back::after{content:"✦"; position:absolute; color:#e8c35a; font-size:10px; line-height:1}
+.sk-back::before, .sk-back::after{content:"✦"; position:absolute; color:#e8c35a; font-size:max(10px, 12cqmin); line-height:1}
 .sk-back::before{top:10%; left:14%} .sk-back::after{bottom:10%; right:14%}
-.sk-back i{font-style:normal; font-family:var(--f-display); font-size:min(30px, 8cqw); color:#ffd23f; text-shadow:0 0 10px rgba(255,210,63,.7), 2px 2px 0 var(--ink)}
+.sk-back i{font-style:normal; font-family:var(--f-display); font-size:44cqmin; color:#ffd23f; text-shadow:0 0 10px rgba(255,210,63,.7), 2px 2px 0 var(--ink)}
 .sk-face{box-shadow:0 5px 0 var(--ink)}
-.sk-face svg{width:64%; height:auto; display:block}
-.sk-face b{font-family:var(--f-display); font-weight:400; font-size:min(14px, 3.8cqw); line-height:1}
+.sk-face svg{width:min(66cqw, 56cqh); height:auto; display:block}
+.sk-face b{font-family:var(--f-display); font-weight:400; font-size:min(24px, 17cqmin); line-height:1}
 .sk-face.safe{background:#dffbe9; color:#127a32}
 .sk-face.plus{background:linear-gradient(#ffe08a, #ffad3b); color:#a33a00}
 .sk-face.skull{background:radial-gradient(circle at 50% 40%, #4a1166, #12031b 75%); color:#ff6b7a}
@@ -1289,16 +1290,30 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .tl-list .cc-hand small{display:none}
 .cs-red{color:#ff6b7d; margin-right:1px} .cs-blk{color:var(--white); margin-right:1px}
 .tl-one{width:min(24vw, 15vh, 104px)}
-.tl-mini{flex:none; width:28px; margin-left:auto}
-.tl-list .tl-mini ~ .tl-v{display:none}
 .tl-list .cc-nm{flex:0 1 auto}
-.tl-mini .pc-face, .tl-mini .pc-back{border-width:2px; box-shadow:0 2px 0 var(--ink)}
-.tl-mini .pc-back span{font-size:9px; border-width:1.5px}
-.tl-mini .pc-face.joker .jk{font-size:7px}
-.tl-mini .flip.lose::after{font-size:26px}
-.tl-list .ip-act{flex:none}
-.tl-list .ip-btn{padding:2px 8px; font-size:11px}
-.tl-list .ip-done{font-size:10px}
+/* インディアン (3+): one seat per person, the card filling all the room the seat has */
+.ip-seats{flex:1 1 0; min-height:0; width:100%; max-width:640px; display:grid; gap:8px; grid-template-columns:repeat(2, minmax(0, 1fr)); grid-auto-rows:minmax(0, 1fr)}
+.ip-seat{flex-direction:column; justify-content:flex-start; align-items:stretch; gap:4px; min-height:0; padding:5px 5px 4px; border-radius:14px}
+.ip-seat .cc-nm{flex:none; align-self:center; max-width:100%; box-sizing:border-box; font-size:12.5px; text-align:center}
+.ip-seats.tight .ip-seat .cc-nm{font-size:11px; padding:0 6px}
+.ip-cardbox{flex:1 1 0; min-height:0; container-type:size; display:grid; place-items:center}
+.ip-card.card-slot{width:min(100cqw, calc((100cqh - 7px) * 5 / 7)); aspect-ratio:5 / 7}
+.ip-card .pc-back span{font-size:min(28px, 20cqmin)}
+.ip-card .flip.lose::after{font-size:min(110px, 70cqmin)}
+/* 引き直す sits on the lower part of the (still face-down) card, so the card keeps the whole seat */
+.ip-seat{position:relative}
+.ip-seat .ip-act{position:absolute; left:4px; right:4px; bottom:12%; z-index:3; min-height:0; pointer-events:none}
+.ip-seat .ip-act > *{pointer-events:auto}
+.ip-seat .ip-btn{padding:4px 12px; font-size:13px; box-shadow:0 3px 0 var(--ink)}
+.ip-seats.tight .ip-btn{padding:3px 7px; font-size:11.5px}
+.ip-seat .ip-done{font-size:11px; color:var(--white); background:rgba(21,7,51,.85); border:2px solid var(--ink); border-radius:999px; padding:1px 9px}
+.ip-seat.now{transform:none; box-shadow:0 0 0 2px var(--yellow)}
+/* 1-on-1 (トランプ・インディアン): bigger cards, the room is there */
+.tl-p .card-slot{width:max(56px, min(36cqw, calc((100cqh - 255px) * 5 / 7), 160px))}
+/* the number on an インディアン card, as big as the card takes */
+.ip-card .pc-mid b, .tl-p .card-slot .pc-mid b{font-size:54cqw}
+.ip-card .pc-big, .tl-p .card-slot .pc-big{width:28cqw; height:28cqw}
+.ip-card .pc-i, .tl-p .card-slot .pc-i{font-size:19cqw}
 .timer-ov.swgroup .cc-list{max-width:460px}
 .sw-r .sw-rv{display:flex; flex-direction:column; align-items:flex-end; line-height:1.1}
 .sw-r .sw-time{font-family:var(--f-display); font-weight:400; font-size:16px; color:var(--white)}
