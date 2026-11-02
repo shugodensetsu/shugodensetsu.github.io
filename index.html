@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。">
 <meta name="theme-color" content="#2a1266">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -40,6 +40,8 @@ html{background:#2a1266}</style>
   --f-body:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
 }
 html, body{height:100%; overflow:hidden; overscroll-behavior:none}
+/* a quick double tap must never zoom the page (rapid taps are half the games); scrolling stays as it is */
+html, body, body *{touch-action:manipulation}
 body{background:var(--bg); color:var(--white); font-family:var(--f-body); font-weight:500; font-size:15px; line-height:1.5; -webkit-tap-highlight-color:transparent}
 button{font:inherit; color:inherit; cursor:pointer}
 button:disabled{cursor:not-allowed; opacity:.5}
@@ -2165,7 +2167,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 'use strict';
 
 /* ---------- page source, captured before anything renders (used to republish the page) ---------- */
-const SKELETON = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>';
+const SKELETON = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>';
 const SRC = Array.from(document.querySelectorAll('[data-src]'), el => ({ id: el.id, html: el.outerHTML }));
 
 const $ = id => document.getElementById(id);
@@ -9250,6 +9252,9 @@ function boot(data) {
     }
   } catch (_) { /* ignore */ }
   if (ui.filter !== 'all' && !catOf(ui.filter)) ui.filter = 'all';
+  /* iOS ignores user-scalable=no: stop its pinch zoom too (two people tapping at once must not zoom the table) */
+  ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
   SE.init(); BGM.init(); renderSE();
   wireEditor(); wireGame();
   checkDraft();

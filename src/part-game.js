@@ -6225,6 +6225,9 @@ function boot(data) {
     }
   } catch (_) { /* ignore */ }
   if (ui.filter !== 'all' && !catOf(ui.filter)) ui.filter = 'all';
+  /* iOS ignores user-scalable=no: stop its pinch zoom too (two people tapping at once must not zoom the table) */
+  ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
   SE.init(); BGM.init(); renderSE();
   wireEditor(); wireGame();
   checkDraft();
