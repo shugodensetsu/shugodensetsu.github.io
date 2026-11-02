@@ -46,8 +46,7 @@ jobs:
           fi
           cat > "$RUNNER_TEMP/mask.sh" <<'SH'
           #!/bin/sh
-          sed -E -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/<id>/g' \
-                 -e 's/[0-9a-f]{32}/<id>/g' \
+          sed -E -e 's/[0-9a-f]{32}/<id>/g' \
                  -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g'
           SH
           chmod +x "$RUNNER_TEMP/mask.sh"
@@ -131,7 +130,8 @@ jobs:
           if [ "$passed" != 1 ]; then
             echo "--- 調べるための情報 ---" >> "$log"
             curl -s -o /dev/null -D - --max-time 15 "$url/manifest.webmanifest" | head -n 12 | "$RUNNER_TEMP/mask.sh" >> "$log"
-            (cd "$GITHUB_WORKSPACE/server" && npx wrangler deployments list 2>&1 | tail -n 25 | "$RUNNER_TEMP/mask.sh") >> "$log"
+            (cd "$GITHUB_WORKSPACE/server" && npx wrangler deployments status 2>&1 | tail -n 12 | "$RUNNER_TEMP/mask.sh") >> "$log"
+            (cd "$GITHUB_WORKSPACE/server" && npx wrangler versions list 2>&1 | tail -n 30 | "$RUNNER_TEMP/mask.sh") >> "$log"
           fi
           [ "$passed" = 1 ]
 
@@ -161,7 +161,7 @@ jobs:
               echo
               echo "## $(basename "$f" .txt)"
               echo '```'
-              tail -n 40 "$f" | "$RUNNER_TEMP/mask.sh"
+              tail -n 70 "$f" | "$RUNNER_TEMP/mask.sh"
               echo '```'
             done
           } > "$out"
