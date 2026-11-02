@@ -10,7 +10,8 @@
 		{
 			"binding": "DB",
 			"database_name": "sakego",
-			"database_id": "2672ede5-ede3-45e8-82a7-be781527ca85"
+			"database_id": "00000000-0000-0000-0000-000000000000"
 		}
-	]
+	],
+	"preview_urls": false
 }

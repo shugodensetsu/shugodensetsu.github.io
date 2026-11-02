@@ -1,0 +1,119 @@
+# 集計サーバー（server/）を Cloudflare Workers にデプロイする。
+# 必要なもの：リポジトリの Secrets に CLOUDFLARE_API_TOKEN（「Cloudflare Workers を編集」テンプレート + D1 編集）。
+# STATS_PASSWORD も登録してあれば、集計ページのパスワードとして入れる。
+# 結果は deploy-status ブランチの status.md に書く（メールアドレスやアカウントIDは伏せる）。
+# このリポジトリは公開なので、wrangler の出力は伏せ字にしてからログに出す。
+name: 集計サーバーをデプロイ
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/server.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: server-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'shugodensetsu/shugodensetsu.github.io'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      STATS_PASSWORD: ${{ secrets.STATS_PASSWORD }}
+      WRANGLER_SEND_METRICS: 'false'
+    defaults:
+      run:
+        shell: bash
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 準備
+        id: chk
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "CLOUDFLARE_API_TOKEN がまだ登録されていません" | tee "$RUNNER_TEMP/logs/0-check.txt"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "トークンあり" | tee "$RUNNER_TEMP/logs/0-check.txt"
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+          cat > "$RUNNER_TEMP/mask.sh" <<'SH'
+          #!/bin/sh
+          sed -E -e 's/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/<id>/g' \
+                 -e 's/[0-9a-f]{32}/<id>/g' \
+                 -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g'
+          SH
+          chmod +x "$RUNNER_TEMP/mask.sh"
+
+      - uses: actions/setup-node@v4
+        if: steps.chk.outputs.ok == 'true'
+        with:
+          node-version: 22
+
+      - name: wrangler を入れる
+        id: install
+        if: steps.chk.outputs.ok == 'true'
+        run: npm install --no-audit --no-fund 2>&1 | tail -n 5 | tee "$RUNNER_TEMP/logs/1-install.txt"
+
+      - name: データベースを用意
+        id: d1
+        if: steps.chk.outputs.ok == 'true'
+        run: node tools/ensure-d1.mjs 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/2-d1.txt"
+
+      - name: 表を作る（migrations）
+        id: migrate
+        if: steps.chk.outputs.ok == 'true'
+        run: npx wrangler d1 migrations apply DB --remote 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/3-migrate.txt"
+
+      - name: Worker をデプロイ
+        id: deploy
+        if: steps.chk.outputs.ok == 'true'
+        run: npx wrangler deploy 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4-deploy.txt"
+
+      - name: パスワードを入れる
+        id: secret
+        if: steps.chk.outputs.ok == 'true' && env.STATS_PASSWORD != ''
+        run: printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/5-secret.txt"
+
+      - name: 結果を deploy-status に書く
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          out="$RUNNER_TEMP/status.md"
+          {
+            echo "# 集計サーバーのデプロイ結果"
+            echo
+            echo "- 日時: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S') (JST)"
+            echo "- コミット: ${GITHUB_SHA::7}"
+            echo "- 準備: ${{ steps.chk.outcome }} / トークン: ${{ steps.chk.outputs.ok }}"
+            echo "- wrangler: ${{ steps.install.outcome }}"
+            echo "- データベース: ${{ steps.d1.outcome }}"
+            echo "- 表: ${{ steps.migrate.outcome }}"
+            echo "- デプロイ: ${{ steps.deploy.outcome }}"
+            echo "- パスワード: ${{ steps.secret.outcome }}"
+            echo
+            echo "## URL"
+            grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP"/logs/*.txt 2>/dev/null | sort -u || true
+            for f in "$RUNNER_TEMP"/logs/*.txt; do
+              [ -f "$f" ] || continue
+              echo
+              echo "## $(basename "$f" .txt)"
+              echo '```'
+              tail -n 40 "$f" | "$RUNNER_TEMP/mask.sh"
+              echo '```'
+            done
+          } > "$out"
+          cat "$out"
+          cd "$RUNNER_TEMP" && rm -rf st && mkdir st && cd st
+          git init -q && git checkout -q -b deploy-status
+          cp "$out" status.md && git add status.md
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q -m "集計サーバーのデプロイ結果 ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" deploy-status

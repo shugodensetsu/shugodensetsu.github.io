@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://shugodensetsu-github-io.shugodensetsu.workers.dev; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
@@ -8173,7 +8173,7 @@ const cardKind = c => (c ? toolOf(c) || (/^ch_/.test(c.fx || '') ? 'chal' : c.fx
    送るのは数だけ: 人数・ラウンド数・ターン数・杯数の合計・遊んだ時間、出た組み込みカードの番号と回数（自作・書きかえたカードは枚数だけ）、
    ミニゲーム・特殊ルールの種類と回数、ホーム画面から開いたか、タブレットか、この端末で何回目のゲームか.
    名前・カードの文章・端末を見分けるIDは送らない（sid はゲーム1回ごとの使い捨ての乱数）. STAT_URL が空のあいだと、アプリ版以外では何も送らない ---------- */
-const STAT_URL = 'https://shugodensetsu-github-io.shugodensetsu.workers.dev/v1/p';   /* server/ の Worker（作り方は server/README.md）。空にすると何も送らない */
+const STAT_URL = '';   /* server/ の Worker（GitHub Actions がデプロイ。server/README.md）の URL + /v1/p。空のあいだは何も送らない */
 const STAT_OFF_KEY = 'sakego-stat-off';
 const statOff = () => { try { return localStorage.getItem(STAT_OFF_KEY) === '1'; } catch (_) { return false; } };
 const statOn = () => IS_APP && !!STAT_URL && !statOff();

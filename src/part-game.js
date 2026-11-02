@@ -5073,7 +5073,7 @@ const cardKind = c => (c ? toolOf(c) || (/^ch_/.test(c.fx || '') ? 'chal' : c.fx
    送るのは数だけ: 人数・ラウンド数・ターン数・杯数の合計・遊んだ時間、出た組み込みカードの番号と回数（自作・書きかえたカードは枚数だけ）、
    ミニゲーム・特殊ルールの種類と回数、ホーム画面から開いたか、タブレットか、この端末で何回目のゲームか.
    名前・カードの文章・端末を見分けるIDは送らない（sid はゲーム1回ごとの使い捨ての乱数）. STAT_URL が空のあいだと、アプリ版以外では何も送らない ---------- */
-const STAT_URL = 'https://shugodensetsu-github-io.shugodensetsu.workers.dev/v1/p';   /* server/ の Worker（作り方は server/README.md）。空にすると何も送らない */
+const STAT_URL = '';   /* server/ の Worker（GitHub Actions がデプロイ。server/README.md）の URL + /v1/p。空のあいだは何も送らない */
 const STAT_OFF_KEY = 'sakego-stat-off';
 const statOff = () => { try { return localStorage.getItem(STAT_OFF_KEY) === '1'; } catch (_) { return false; } };
 const statOn = () => IS_APP && !!STAT_URL && !statOff();
