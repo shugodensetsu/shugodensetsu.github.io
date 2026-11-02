@@ -1052,6 +1052,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .wn-svg.lv2 .wn-lid{animation:none; transform:scaleY(.3)}
 .wn-svg.tense .wn-lid{animation:none; transform:scaleY(.22)}
 .wn-svg.bite .wn-lid{animation:none; transform:scaleY(1)}
+.wn-shut{opacity:0} .wn-svg.bite .wn-shut{opacity:1; transition:opacity .1s .08s}
 .wn-svg.phew .wn-lid{animation:none; transform:scaleY(.12)}
 .wn-cheek{opacity:.85}
 .wn-svg.tense .wn-cheek{opacity:1; animation:wnBlush .5s ease-in-out infinite alternate}
@@ -1319,6 +1320,97 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .rc-pad.foul{background:#5d5370; color:var(--white)}
 @keyframes rcGo{from{transform:scale(1.06)} to{transform:none}}
 .rc-foul{color:#ff8b98; font-size:12px}
+
+/* ---------- 負け演出 ---------- */
+.hush-veil{position:absolute; inset:0; z-index:25; pointer-events:none; background:radial-gradient(ellipse at 50% 50%, rgba(5,2,15,.15) 0, rgba(5,2,15,.82) 75%); animation:hushIn .25s ease-out both}
+.hush-veil.white{background:radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.55) 0, rgba(255,255,255,.92) 80%); animation:hushIn .08s ease-out both}
+.hush-veil.off{animation:hushOut .35s ease-in forwards}
+.tm-box > .hush-veil{inset:0 -100vw; background:rgba(5,2,15,.72)}
+.tm-box > .hush-veil.white{background:rgba(255,255,255,.88)}
+.hushed{z-index:26} .hushed-rel{position:relative}
+@keyframes hushIn{from{opacity:0}}
+@keyframes hushOut{to{opacity:0}}
+.lose-stamp{position:absolute; inset:0; z-index:30; display:grid; place-items:center; pointer-events:none; padding:16px}
+.ls-in{max-width:92%; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 22px 12px; background:rgba(255,250,238,.94); color:#d8172f;
+  border:6px solid #d8172f; border-radius:20px; box-shadow:inset 0 0 0 3px rgba(255,250,238,.94), inset 0 0 0 6px #d8172f, 0 10px 30px rgba(0,0,0,.45);
+  transform:rotate(-8deg); animation:lsSlam .5s cubic-bezier(.2,1.5,.4,1) both, lsAway .45s 1.9s ease-in forwards}
+.ls-names{display:flex; flex-wrap:wrap; justify-content:center; gap:2px 12px; font-family:var(--f-display); font-size:min(46px, 11vw); line-height:1.15}
+.ls-names.many{font-size:min(30px, 7.4vw)}
+.ls-names span{max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-decoration:underline; text-decoration-color:var(--p); text-decoration-thickness:5px; text-underline-offset:6px}
+.ls-word{font-family:var(--f-display); font-weight:400; font-size:min(34px, 8.4vw); letter-spacing:.04em}
+@keyframes lsSlam{0%{transform:rotate(-8deg) scale(3.2); opacity:0} 60%{transform:rotate(-8deg) scale(.92); opacity:1} 100%{transform:rotate(-8deg) scale(1)}}
+@keyframes lsAway{to{transform:rotate(-8deg) scale(.55) translateY(-46vh); opacity:0}}
+.l-spot{position:relative; z-index:4; animation:spotIn .6s cubic-bezier(.2,1.5,.4,1) both !important; box-shadow:0 0 0 4px #fff, 0 0 26px 10px rgba(255,255,255,.6), 0 0 60px 20px rgba(255,61,79,.45) !important}
+@keyframes spotIn{0%{transform:scale(1)} 40%{transform:scale(1.14)} 100%{transform:scale(1.06)}}
+.dimmed{opacity:.32; filter:grayscale(.75); transition:opacity .4s, filter .4s}
+.bonk{animation:bonk .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes bonk{0%{transform:none} 25%{transform:translateY(5px) scale(1.15, .85)} 55%{transform:translateY(-3px) scale(.95, 1.05)} 100%{transform:none}}
+.fx-fly{position:absolute; left:0; top:0; z-index:28; pointer-events:none; display:block; will-change:transform}
+.fx-oyaji{width:58px; height:46px; overflow:visible; display:block}
+.fx-cork{width:30px; height:40px; display:block}
+/* 酒樽: rocks when few holes are left, the oyaji peeks; trembles hard before it goes; the flight in slow motion */
+.tr-svg.lv1:not(.thud):not(.pop):not(.brink) .tr-barrel{animation:trRock 2.4s ease-in-out infinite}
+@keyframes trRock{25%{transform:rotate(-1.2deg)} 75%{transform:rotate(1.2deg)}}
+.tr-svg.lv2:not(.thud):not(.pop):not(.brink) .tr-barrel{animation:tremble .12s linear infinite}
+.tr-svg.lv2:not(.pop) .tr-fly{animation:trPeek 1.7s ease-in-out infinite}
+@keyframes trPeek{0%, 55%, 100%{transform:none} 70%{transform:translateY(-16px)} 82%{transform:translateY(-10px)}}
+.tr-svg.brink .tr-barrel{animation:tremble .06s linear infinite}
+.tr-svg.brink .tr-fly{transform:translateY(-12px)}
+.tr-svg.pop.slow .tr-fly{animation:trFlyUp 1.5s cubic-bezier(.12,.75,.35,1) forwards}
+@keyframes trFlyUp{0%{transform:none} 70%{opacity:1} 100%{transform:translate(-30px,-560px) rotate(-560deg); opacity:0}}
+/* ワニ: a smirk near the end */
+.wn-brow{opacity:0; transition:opacity .2s}
+.wn-svg.smug .wn-brow{opacity:1}
+.wn-svg.smug .wn-lid{animation:none; transform:scaleY(.42)}
+/* 地雷原 */
+.mn-c.warn .mn-n{animation:mnPop .3s cubic-bezier(.2,1.6,.4,1), mnWarn .5s .3s ease-in-out 3; text-shadow:0 0 8px rgba(255,61,79,.9)}
+@keyframes mnWarn{50%{transform:scale(1.25)}}
+.mn-c.armed{background:radial-gradient(circle, #2a2a2a 0 34%, #4a2a12 62%, #2e1a0b); z-index:3; animation:mnArmed .12s linear infinite}
+@keyframes mnArmed{0%,100%{transform:translateY(3px) translateX(-1px)} 50%{transform:translateY(3px) translateX(1px)}}
+.mn-blast.sm{width:30px; height:30px; margin:-15px 0 0 -15px}
+/* ドクロめくり: the riskier the card, the more it trembles; the skull fills the screen */
+.sk-card.lift.risk1 .flip{animation:skLiftR .9s ease-in-out}
+.sk-card.lift.risk2 .flip{animation:skLiftR2 1.35s ease-in-out}
+@keyframes skLiftR{0%{transform:none} 10%, 30%, 50%, 70%, 90%{transform:translateY(-9px) scale(1.08) rotate(-4deg)} 20%, 40%, 60%, 80%{transform:translateY(-9px) scale(1.08) rotate(4deg)} 100%{transform:translateY(-3px) scale(1.03)}}
+@keyframes skLiftR2{0%{transform:none} 5%, 15%, 25%, 35%, 45%, 55%, 65%, 75%, 85%{transform:translateY(-12px) scale(1.12) rotate(-6deg)} 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%{transform:translateY(-12px) scale(1.12) rotate(6deg)} 100%{transform:translateY(-4px) scale(1.05)}}
+.sk-giant{left:50%; top:50%; width:min(78vw, 46vh); aspect-ratio:1; transform:translate(-50%,-50%); animation:skGiant 2.2s cubic-bezier(.2,1.2,.4,1) forwards}
+.sk-giant .sk-face{position:static; width:100%; height:100%; display:grid; place-items:center; background:radial-gradient(circle, rgba(60,0,90,.85), rgba(10,0,20,.0) 70%); border:0; box-shadow:none}
+.sk-giant .sk-face svg{width:86%; height:86%; animation:skCackle .14s steps(2) infinite}
+.sk-giant .sk-face b{display:none}
+@keyframes skGiant{0%{transform:translate(-50%,-50%) scale(.15) rotate(-30deg); opacity:0} 25%{transform:translate(-50%,-50%) scale(1.15) rotate(6deg); opacity:1} 80%{transform:translate(-50%,-50%) scale(1); opacity:1} 100%{transform:translate(-50%,-50%) scale(1.6); opacity:0}}
+@keyframes skCackle{0%{transform:rotate(-4deg) translateY(0)} 100%{transform:rotate(4deg) translateY(-4px)}}
+/* 風船・シャンパン */
+.bl-svg.brink .bl-tight{animation:blTight .05s linear infinite}
+.bl-svg.popped.slow .bl-sh{animation-duration:2.2s}
+.bl-svg.popped.slow .bl-bang-in{animation-duration:2s}
+.ch-svg.brink .ch-bottle{animation:tremble .07s linear infinite}
+.ch-svg.brink .ch-cork{animation:chWiggle .08s linear infinite}
+@keyframes chWiggle{0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-4px) rotate(3deg)}}
+.ch-svg.flown .ch-cork{animation:none; opacity:0}
+/* 爆弾: smoke clears on a charred name */
+.bm-name.loser.charred{position:relative; color:#2a2224; background:#4a3a36; text-shadow:0 0 1px #000, 2px 2px 0 rgba(0,0,0,.4), 0 0 12px rgba(255,120,40,.6); filter:contrast(1.2);
+  animation:slam .55s cubic-bezier(.2,1.4,.4,1), bmCool .7s 2.1s ease-out forwards}
+@keyframes bmCool{to{color:var(--ink); background:var(--p); text-shadow:none; filter:none}}
+.bm-wisp{position:absolute; left:30%; top:0; width:14px; height:30px; border-radius:50%; background:radial-gradient(circle, rgba(120,120,120,.8), rgba(120,120,120,0) 70%); animation:bmWisp 1.6s ease-out infinite; pointer-events:none}
+.bm-wisp.w2{left:64%; animation-delay:.6s}
+@keyframes bmWisp{from{transform:translateY(0) scale(.6); opacity:.9} to{transform:translateY(-40px) scale(1.8); opacity:0}}
+.bm-smokeveil{position:absolute; inset:-50px -30px; z-index:2; pointer-events:none; background:radial-gradient(ellipse at 45% 50%, rgba(66,64,70,.98) 0, rgba(50,48,54,.94) 42%, rgba(40,38,44,.6) 62%, rgba(40,38,44,0) 78%); animation:bmClear 1.6s .2s ease-in forwards}
+@keyframes bmClear{to{opacity:0; transform:scale(1.4)}}
+/* チンチロ: the bowl turns over */
+.tool-ov .dice3d.flipbowl{animation:flipBowl 1.4s cubic-bezier(.3,.2,.3,1)}
+@keyframes flipBowl{0%{transform:none} 30%{transform:translateY(-30px) rotate(170deg)} 45%{transform:translateY(0) rotate(180deg)} 75%{transform:rotate(180deg)} 100%{transform:none}}
+/* サイコロ: the number shivers before it shows */
+.shiver{animation:tremble .07s linear infinite}
+/* ダーツ: the last dart in slow motion with the board following it; a miss falls from above */
+.dt-dart.slow{animation-duration:1.1s, .5s !important; animation-delay:0s, 1.1s !important}
+.dt-board{transition:transform .9s cubic-bezier(.3,.1,.3,1)}
+.dt-board.chase{transform:scale(1.7)}
+.dt-missfall{position:absolute; left:50%; top:0; z-index:5; transform:translateX(-50%); font-family:var(--f-display); font-size:min(54px, 13vw); color:#ff5a6e; text-shadow:3px 3px 0 var(--ink); pointer-events:none; animation:dtMissFall .9s cubic-bezier(.5,0,.7,.4) both, dtMissBounce .5s .9s cubic-bezier(.2,1.6,.4,1), dtMissOut .4s 2.1s ease-in forwards}
+@keyframes dtMissOut{to{opacity:0}}
+@keyframes dtMissFall{from{transform:translate(-50%, -120%); opacity:0} 20%{opacity:1} to{transform:translate(-50%, 60%)}}
+@keyframes dtMissBounce{0%{transform:translate(-50%, 60%) scale(1.3, .7)} 100%{transform:translate(-50%, 60%)}}
+/* 10秒ストップ: the counting number */
+.sw-time.counting{color:var(--yellow)}
 /* ハイ&ロー: casino felt, playing cards with 3D flips */
 .chal-ov.casino{background:radial-gradient(circle at 50% 44%, #22a05a 0, #0e5530 55%, #052414 100%)}
 .chal-ov.casino::before{background:repeating-conic-gradient(from 0deg, transparent 0deg 8deg, rgba(255,216,61,.1) 8deg 16deg)}
@@ -1463,6 +1555,8 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .bm-acts{display:flex; gap:10px}
 .bm-acts .pbtn{flex:1}
 .bm-acts .pbtn.main{flex:2}
+.bm-acts.late{animation:bmLate .35s 1.2s both}
+@keyframes bmLate{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
 .bm-pass{position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; gap:2px; padding:min(18px, 2.6vh) 10px; border:4px solid var(--ink); border-radius:22px;
   background:linear-gradient(#ffe066, #ffb627); color:var(--ink); box-shadow:0 8px 0 var(--ink); touch-action:manipulation; user-select:none; -webkit-user-select:none}
 .bm-pass:active{transform:translateY(6px); box-shadow:0 2px 0 var(--ink)}
