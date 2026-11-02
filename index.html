@@ -172,7 +172,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
   .mix-row button{padding:3px 8px 4px}
   .mix-row b, .round-row button{font-size:16px}
   .round-row button{padding:3px 0}
-  .s-setup .setup-info{font-size:11.5px; line-height:1.4}
+  .s-setup .setup-info{font-size:11.5px; line-height:1.5}
 }
 .p-h{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; flex-wrap:wrap}
 .num-badge{width:24px; height:24px; border-radius:50%; background:var(--pink); color:var(--white); border:2.5px solid var(--ink); display:grid; place-items:center; font-size:13px; flex:none}
@@ -198,6 +198,10 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .setup-info{margin:0; text-align:center; font-size:12.5px; font-weight:800; color:var(--muted)}
 .setup-info b{color:var(--yellow); font-family:var(--f-display); font-weight:400}
 .setup-info.bad{color:var(--red)}
+.setup-info.one{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0}
+.setup-info.marquee{text-overflow:clip; text-align:left; -webkit-mask-image:linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image:linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent)}
+.setup-info.marquee .si-run{display:inline-block; padding-left:100%; animation:siRun var(--si-dur, 10s) linear infinite}
+@keyframes siRun{from{transform:translateX(0)} to{transform:translateX(-100%)}}
 .row-btns{display:flex; gap:10px; flex:none}
 .row-btns .grow{flex:1}
 
@@ -4088,7 +4092,7 @@ function renderSetup(full) {
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
   $('roundPanel').hidden = mini; $('mixPanel').hidden = mini; $('coachRow').hidden = mini;
   if (mini) {
-    $('setupInfo').classList.remove('bad');
+    $('setupInfo').classList.remove('bad', 'one', 'marquee');
     $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>';
     $('startGame').disabled = false;
     return;
@@ -4098,12 +4102,25 @@ function renderSetup(full) {
   info.classList.toggle('bad', pool === 0);
   const live = MIX_KEYS.map(k => catOf(k)).filter(c => c && c.on);
   const liveOff = setup.mix === 'lively' && pool > 0 && !eligibleCards(setup.count).some(c => MIX_KEYS.includes(c.cat));
-  info.innerHTML = pool
+  /* one line, always the same height (so the name list never shrinks); when it doesn't fit it scrolls right to left */
+  info.classList.add('one');
+  info.innerHTML = '<span class="si-run">' + (pool
     ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）') +
-      (setup.mix !== 'lively' ? '' : liveOff ? '<br>にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
-        : '<br>にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
-    : 'この人数で使えるカードがありません。カード編集でONにしてね';
+      (setup.mix !== 'lively' ? '' : liveOff ? ' ・ にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
+        : ' ・ にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
+    : 'この人数で使えるカードがありません。カード編集でONにしてね') + '</span>';
   $('startGame').disabled = pool === 0;
+  fitInfo();
+}
+function fitInfo() {
+  const info = $('setupInfo'), run = info.querySelector('.si-run');
+  info.classList.remove('marquee');
+  if (!run || !info.classList.contains('one') || screen !== 'setup') return;
+  const w = run.getBoundingClientRect().width, box = info.clientWidth;
+  if (w > box + 1 && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    info.style.setProperty('--si-dur', Math.max(7, (w + box) / 55).toFixed(1) + 's');
+    info.classList.add('marquee');
+  }
 }
 function beginGame() {
   if (setup.mode === 'mini') { beginMini(); return; }
@@ -9576,7 +9593,7 @@ function wireGame() {
     else { statPause(); if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } } }
   });
   window.addEventListener('pagehide', statPause);
-  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }

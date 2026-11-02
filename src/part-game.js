@@ -959,7 +959,7 @@ function renderSetup(full) {
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
   $('roundPanel').hidden = mini; $('mixPanel').hidden = mini; $('coachRow').hidden = mini;
   if (mini) {
-    $('setupInfo').classList.remove('bad');
+    $('setupInfo').classList.remove('bad', 'one', 'marquee');
     $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>';
     $('startGame').disabled = false;
     return;
@@ -969,12 +969,25 @@ function renderSetup(full) {
   info.classList.toggle('bad', pool === 0);
   const live = MIX_KEYS.map(k => catOf(k)).filter(c => c && c.on);
   const liveOff = setup.mix === 'lively' && pool > 0 && !eligibleCards(setup.count).some(c => MIX_KEYS.includes(c.cat));
-  info.innerHTML = pool
+  /* one line, always the same height (so the name list never shrinks); when it doesn't fit it scrolls right to left */
+  info.classList.add('one');
+  info.innerHTML = '<span class="si-run">' + (pool
     ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）') +
-      (setup.mix !== 'lively' ? '' : liveOff ? '<br>にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
-        : '<br>にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
-    : 'この人数で使えるカードがありません。カード編集でONにしてね';
+      (setup.mix !== 'lively' ? '' : liveOff ? ' ・ にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
+        : ' ・ にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
+    : 'この人数で使えるカードがありません。カード編集でONにしてね') + '</span>';
   $('startGame').disabled = pool === 0;
+  fitInfo();
+}
+function fitInfo() {
+  const info = $('setupInfo'), run = info.querySelector('.si-run');
+  info.classList.remove('marquee');
+  if (!run || !info.classList.contains('one') || screen !== 'setup') return;
+  const w = run.getBoundingClientRect().width, box = info.clientWidth;
+  if (w > box + 1 && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    info.style.setProperty('--si-dur', Math.max(7, (w + box) / 55).toFixed(1) + 's');
+    info.classList.add('marquee');
+  }
 }
 function beginGame() {
   if (setup.mode === 'mini') { beginMini(); return; }
@@ -6447,7 +6460,7 @@ function wireGame() {
     else { statPause(); if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } } }
   });
   window.addEventListener('pagehide', statPause);
-  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }
