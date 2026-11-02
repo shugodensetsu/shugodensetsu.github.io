@@ -3075,7 +3075,7 @@ function smpLoad(A) {
     } catch (_) { /* that one stays synthesized */ }
   });
 }
-/* play one recording: o = { g, rate, vary (± random pitch, default 4%), lp, hp, rv, d (cut off after d seconds) } */
+/* play one recording: o = { g, rate, vary (± random pitch, default 4%), lp, hp, drive (grit), rv, d (cut off after d seconds) } */
 function smp(A, t, k, o) {
   if (Array.isArray(k)) k = k[Math.floor(Math.random() * k.length)];
   const s = SMP.buf[k];
@@ -3087,6 +3087,7 @@ function smp(A, t, k, o) {
   let node = src;
   if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; node.connect(f); node = f; }
   if (o.hp) { const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = o.hp; node.connect(f); node = f; }
+  if (o.drive) { const ws = c.createWaveShaper(); ws.curve = distCurve(o.drive); node.connect(ws); node = ws; }
   node.connect(g);
   const gv = o.g == null ? 0.8 : o.g;
   g.gain.setValueAtTime(gv, t);
@@ -3389,59 +3390,95 @@ const SOUNDS = {
 /* the recorded versions: [the recordings they need, how they play]. A sound plays this way once all of its recordings
    are decoded, and its synthesized version (SOUNDS) until then */
 const FLIP = ['cFlip1', 'cFlip2', 'cFlip3'], SLIDE = ['cSlide1', 'cSlide2'], WOODL = ['woodL1', 'woodL2'], GLASSL = ['glassL1', 'glassL2'];
+/* game feel over realism: the recording is only the texture; on top go a whip of air on it, a deep drop under it,
+   a ring or a shimmer after it and a room around it, so every hit lands big */
+const swish = (A, t, d, g, f1, f2, ar) => noise(A, t, { d, g, type: 'bandpass', f: f1 || 500, f2: f2 || 5000, q: 0.8, a: d * (ar || 0.3) });
+const drop = (A, t, g, f1, f2, d) => tone(A, t, { type: 'sine', f: f1 || 120, f2: f2 || 32, bend: (d || 0.55) * 0.75, d: d || 0.55, g: g || 0.8 });
+const tail = (A, t, g, d) => noise(A, t, { d: d || 1.2, g, type: 'lowpass', f: 1600, f2: 70, q: 0.4, rv: 0.5 });
 const REAL = {
   /* 負け演出 */
-  hanko: [['softH', 'paper', 'woodH'], (A, t) => { smp(A, t, 'softH', { g: 1, rate: 0.85, vary: 0.02 }); smp(A, t, 'paper', { g: 0.75 }); smp(A, t, 'woodH', { g: 0.55, rate: 0.8 }); kick(A, t, 0.55); }],
-  mnPop: [['boomS'], (A, t) => { smp(A, t, 'boomS', { g: 0.55, rate: 1.25, vary: 0.12, d: 0.55 }); kick(A, t, 0.6); }],
-  corkBonk: [WOODL, (A, t) => { smp(A, t, WOODL, { g: 0.8, rate: 1.7 }); tone(A, t, { type: 'sine', f: 620, f2: 300, bend: 0.06, d: 0.16, g: 0.18 }); }],
-  dropLand: [['softM', 'woodM'], (A, t) => { tone(A, t, { type: 'sine', f: 1600, f2: 400, bend: 0.5, d: 0.55, g: 0.07 }); smp(A, t + 0.55, 'softM', { g: 0.9 }); smp(A, t + 0.55, 'woodM', { g: 0.6, rate: 0.9 }); }],
-  missFall: [['thud', 'softM'], (A, t) => { tone(A, t, { type: 'sine', f: 1800, f2: 250, bend: 0.55, d: 0.6, g: 0.09 }); smp(A, t + 0.6, 'softM', { g: 0.85, rate: 0.9 }); smp(A, t + 0.6, 'thud', { g: 0.6 }); }],
-  mgMark: [GLASSL.concat('softM'), (A, t) => { smp(A, t, GLASSL, { g: 0.55, rate: 1.15 }); smp(A, t, 'softM', { g: 0.35 }); }],
-  cupIn: [['glassM', 'glassL2'], (A, t) => { smp(A, t, 'glassM', { g: 0.75 }); smp(A, t + 0.06, 'glassL2', { g: 0.5, rate: 1.3 }); SOUNDS.cupIn(A, t + 0.02); }],
+  hanko: [['softH', 'paper', 'woodH'], (A, t) => {
+    swish(A, t, 0.14, 0.18, 300, 2400);
+    smp(A, t, 'softH', { g: 1, rate: 0.72, vary: 0.02, drive: 2 }); smp(A, t, 'paper', { g: 0.9, rate: 0.9 }); smp(A, t, 'woodH', { g: 0.8, rate: 0.7 });
+    kick(A, t, 1.3); drop(A, t, 0.9, 95, 28, 0.8); snare(A, t, 0.4); crash(A, t, 0.32); tail(A, t, 0.25, 0.9);
+  }],
+  mnPop: [['boomS'], (A, t) => { smp(A, t, 'boomS', { g: 0.75, rate: 1.1, vary: 0.12, d: 0.6, drive: 1.5 }); kick(A, t, 1); drop(A, t, 0.5, 100, 35, 0.4); }],
+  corkBonk: [WOODL, (A, t) => { smp(A, t, WOODL, { g: 1, rate: 1.6, drive: 1 }); tone(A, t, { type: 'sine', f: 700, f2: 300, bend: 0.07, d: 0.2, g: 0.3 }); kick(A, t, 0.5); bellHit(A, t + 0.02, 2349.3, 0.4, 0.05); }],
+  dropLand: [['softM', 'woodM'], (A, t) => {
+    tone(A, t, { type: 'sine', f: 1700, f2: 380, bend: 0.5, d: 0.55, g: 0.09 });
+    const h = t + 0.55; smp(A, h, 'softM', { g: 1, rate: 0.8 }); smp(A, h, 'woodM', { g: 0.8, rate: 0.75, drive: 1.5 }); kick(A, h, 1.1); drop(A, h, 0.6, 110, 40, 0.4); crash(A, h, 0.16);
+  }],
+  missFall: [['thud', 'softM'], (A, t) => {
+    tone(A, t, { type: 'sine', f: 1900, f2: 240, bend: 0.55, d: 0.6, g: 0.1 });
+    const h = t + 0.6; smp(A, h, 'softM', { g: 1, rate: 0.75 }); smp(A, h, 'thud', { g: 0.7, rate: 0.8 }); kick(A, h, 1); drop(A, h, 0.5, 100, 36, 0.4);
+  }],
+  mgMark: [GLASSL.concat('softM'), (A, t) => { smp(A, t, GLASSL, { g: 0.7, rate: 1.15, rv: 0.3 }); smp(A, t, 'softM', { g: 0.5 }); kick(A, t, 0.5); bellHit(A, t + 0.01, 2637, 0.6, 0.06); }],
+  cupIn: [['glassM', 'glassL2'], (A, t) => { smp(A, t, 'glassM', { g: 0.85, rv: 0.4 }); smp(A, t + 0.06, 'glassL2', { g: 0.6, rate: 1.3, rv: 0.4 }); SOUNDS.cupIn(A, t + 0.02); drop(A, t, 0.5, 110, 40, 0.5); }],
   /* ミニゲーム・パーティーゲーム */
-  skFlip: [FLIP, (A, t) => smp(A, t, FLIP, { g: 0.65 })],
-  mnTick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 1.1, vary: 0.1 })],
-  mnBoom: [['boomL', 'rumble'], (A, t) => { smp(A, t, 'boomL', { g: 1, vary: 0.03 }); smp(A, t, 'rumble', { g: 1, rate: 0.9 }); kick(A, t, 1); crash(A, t, 0.25); }],
-  cdShuffle: [['cFan'], (A, t) => smp(A, t, 'cFan', { g: 0.55 })],
-  cdFlip: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 0.95 }); bellHit(A, t + 0.04, 2093, 0.4, 0.035); }],
-  ipDeal: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.7 })],
-  ipPeek: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 0.8 }); [659.25, 830.61, 987.77].forEach((f, i) => tone(A, t + 0.05 + i * 0.07, { type: 'triangle', f, d: 0.3, g: 0.06, rv: 0.3 })); }],
-  ipHide: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.5, rate: 1.1, d: 0.4 })],
-  ipToss: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.85, rate: 1.3 })],
-  ipOpen: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 1 }); kick(A, t, 0.8); crash(A, t, 0.22); }],
-  dcThrow: [['dThrow1', 'dThrow2'], (A, t) => smp(A, t, ['dThrow1', 'dThrow2'], { g: 0.7 })],
-  dcLand: [['dDie1', 'dDie2'], (A, t) => smp(A, t, ['dDie1', 'dDie2'], { g: 0.8 })],
-  dcOut: [['dDie1'], (A, t) => { smp(A, t, 'dDie1', { g: 0.7, rate: 0.9 }); tone(A, t + 0.05, { type: 'sawtooth', f: 220, f2: 110, d: 0.4, g: 0.08, lp: 1200 }); }],
-  dcRattle: [['dShake'], (A, t) => smp(A, t, 'dShake', { g: 0.75, d: 0.6 })],
-  ccThrow: [['dThrow2', 'plateL'], (A, t) => { smp(A, t, 'dThrow2', { g: 0.7 }); smp(A, t + 0.08, 'plateL', { g: 0.4, rate: 1.15 }); }],
-  ccRattle: [['chip2', 'plateL'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.06 + Math.random() * 0.02, 'chip2', { g: 0.25, rate: 1.5, vary: 0.2 }); smp(A, t, 'plateL', { g: 0.3, rate: 1.25 }); }],
-  ccTick: [['plateL'], (A, t) => smp(A, t, 'plateL', { g: 0.22, rate: 1.5, vary: 0.15, d: 0.25 })],
-  clink: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.38, rate: 1.25, vary: 0.15, d: 0.32 }); smp(A, t, 'chip2', { g: 0.28 }); }],
-  clinks: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.18, rate: 1.6, vary: 0.15, d: 0.2 }); smp(A, t, 'chip2', { g: 0.16, rate: 1.25 }); }],
-  dtHit: [['plank', 'woodL1'], (A, t) => { smp(A, t, 'plank', { g: 0.55, rate: 1.2, d: 0.35 }); smp(A, t, 'woodL1', { g: 0.5, rate: 1.1 }); }],
-  dtMiss: [['thud'], (A, t) => { tone(A, t, { type: 'sine', f: 500, f2: 180, d: 0.3, g: 0.1 }); smp(A, t + 0.25, 'thud', { g: 0.6, rate: 0.85 }); }],
-  swClick: [['click'], (A, t) => smp(A, t, 'click', { g: 0.95, rate: 1.1 })],
-  swClack: [['latch'], (A, t) => smp(A, t, 'latch', { g: 0.4 })],
-  stab: [['shing', 'woodM', 'knife'], (A, t) => { smp(A, t, 'shing', { g: 0.5, rate: 1.1 }); smp(A, t + 0.06, 'woodM', { g: 0.95 }); smp(A, t + 0.06, 'knife', { g: 0.25, rate: 1.3, d: 0.2 }); }],
-  tooth: [['latch'], (A, t) => smp(A, t, 'latch', { g: 0.3, rate: 1.4 })],
-  bite: [['chop', 'punch', 'softH'], (A, t) => { smp(A, t, 'chop', { g: 1 }); smp(A, t, 'punch', { g: 0.7 }); smp(A, t + 0.01, 'softH', { g: 0.5, rate: 1.1 }); }],
-  dig: [['grass', 'snow', 'softM'], (A, t) => { smp(A, t, 'grass', { g: 0.75 }); smp(A, t, 'snow', { g: 0.25, rate: 0.9 }); smp(A, t, 'softM', { g: 0.3, rate: 0.8 }); }],
-  draw: [['cTake', 'cFlip3'], (A, t) => { smp(A, t, 'cTake', { g: 0.85 }); smp(A, t + 0.24, 'cFlip3', { g: 0.7 }); kick(A, t + 0.26, 0.6); brass(A, t + 0.26, [392, 523.25, 659.25], 0.32, 0.06, { lp: 1500, lp2: 3800 }); }],
-  wings: [['flap'], (A, t) => [0, 0.34].forEach(dt => smp(A, t + dt, 'flap', { g: 0.45, rate: 0.85, rv: 0.3 }))],
-  bats: [['flap'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.09 + Math.random() * 0.03, 'flap', { g: 0.22, rate: 1.7, vary: 0.15, d: 0.2 }); }],
-  poof: [['flap'], (A, t) => { smp(A, t, 'flap', { g: 0.4, rate: 1.4 }); tone(A, t, { type: 'sine', f: 900, f2: 300, d: 0.25, g: 0.08 }); }],
-  flip: [FLIP, (A, t) => smp(A, t, FLIP, { g: 0.85 })],
-  deal: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.6, d: 0.4 })],
-  tick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.55, vary: 0.05 })],
-  rlTick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 1.2, vary: 0.06 })],
-  select: [['uiSel'], (A, t) => smp(A, t, 'uiSel', { g: 0.28, vary: 0.02 })],
-  tick2: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, vary: 0.02 })],
-  tock: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 0.75, vary: 0.02 })],
-  strike: [['rumble'], (A, t) => { SOUNDS.strike(A, t); smp(A, t + 0.02, 'rumble', { g: 0.7, rate: 0.8 }); }],
+  skFlip: [FLIP, (A, t) => { swish(A, t, 0.08, 0.14, 1500, 6000); smp(A, t, FLIP, { g: 0.9, drive: 1 }); tone(A, t, { type: 'sine', f: 700, f2: 1300, bend: 0.05, d: 0.08, g: 0.1 }); }],
+  mnBoom: [['boomL', 'rumble', 'boomS'], (A, t) => {
+    smp(A, t, 'boomL', { g: 1, rate: 0.85, vary: 0.03, drive: 2, rv: 0.3 }); smp(A, t, 'rumble', { g: 1, rate: 0.8 }); smp(A, t + 0.05, 'boomS', { g: 0.6, rate: 0.7 });
+    kick(A, t, 1.6); drop(A, t, 1, 80, 20, 1.8); crash(A, t, 0.5); tail(A, t, 0.55, 2.4);
+  }],
+  cdShuffle: [['cFan'], (A, t) => { smp(A, t, 'cFan', { g: 0.75 }); swish(A, t, 0.55, 0.12, 800, 6000); }],
+  cdFlip: [FLIP, (A, t) => {
+    swish(A, t, 0.09, 0.15, 1200, 6000); smp(A, t, FLIP, { g: 0.85, drive: 1.2 });
+    kick(A, t, 0.35); tone(A, t, { type: 'sine', f: 800, f2: 1600, bend: 0.05, d: 0.08, g: 0.12 }); bellHit(A, t + 0.03, 2093, 0.6, 0.06);
+  }],
+  ipDeal: [SLIDE, (A, t) => { smp(A, t, SLIDE, { g: 0.8 }); swish(A, t, 0.2, 0.12, 900, 5000); }],
+  ipPeek: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 0.9 }); [659.25, 830.61, 987.77, 1318.5].forEach((f, i) => tone(A, t + 0.05 + i * 0.06, { type: 'triangle', f, d: 0.35, g: 0.07, rv: 0.4 })); }],
+  ipHide: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.6, rate: 1.1, d: 0.4 })],
+  ipToss: [SLIDE, (A, t) => { smp(A, t, SLIDE, { g: 0.9, rate: 1.3 }); swish(A, t, 0.3, 0.18, 1500, 7000); }],
+  ipOpen: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 1, drive: 1.5 }); kick(A, t, 1.2); drop(A, t, 0.7, 110, 35, 0.6); snare(A, t, 0.35); crash(A, t, 0.4); }],
+  dcThrow: [['dThrow1', 'dThrow2'], (A, t) => {
+    swish(A, t, 0.14, 0.16, 500, 4000); smp(A, t, ['dThrow1', 'dThrow2'], { g: 0.9, rate: 0.9, drive: 1 });
+    [0, 0.13, 0.24].forEach((dt, i) => kick(A, t + dt, 0.55 - i * 0.15));
+  }],
+  dcLand: [['dDie1', 'dDie2'], (A, t) => { smp(A, t, ['dDie1', 'dDie2'], { g: 0.9, rate: 0.9 }); kick(A, t, 0.7); bellHit(A, t + 0.04, 1568, 0.7, 0.07); }],
+  dcOut: [['dDie1'], (A, t) => { smp(A, t, 'dDie1', { g: 0.8, rate: 0.85 }); tone(A, t + 0.05, { type: 'sawtooth', f: 220, f2: 90, d: 0.5, g: 0.1, lp: 1200 }); kick(A, t, 0.6); }],
+  dcRattle: [['dShake'], (A, t) => smp(A, t, 'dShake', { g: 0.85, d: 0.6 })],
+  ccThrow: [['dThrow2', 'plateL'], (A, t) => {
+    swish(A, t, 0.14, 0.16, 500, 4000); smp(A, t, 'dThrow2', { g: 0.8 }); smp(A, t + 0.06, 'plateL', { g: 0.55, rate: 1.15, rv: 0.3 });
+    kick(A, t + 0.06, 0.6); bellHit(A, t + 0.08, 2637, 0.8, 0.06);
+  }],
+  ccRattle: [['chip2', 'plateL'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.06 + Math.random() * 0.02, 'chip2', { g: 0.3, rate: 1.5, vary: 0.2 }); smp(A, t, 'plateL', { g: 0.4, rate: 1.25, rv: 0.3 }); }],
+  ccTick: [['plateL'], (A, t) => { smp(A, t, 'plateL', { g: 0.28, rate: 1.5, vary: 0.15, d: 0.25 }); bellHit(A, t, 2600 + Math.random() * 900, 0.25, 0.03); }],
+  /* dice hitting the bowl: the china's ring with a bright チン on top (チンチロリン) */
+  clink: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.45, rate: 1.25, vary: 0.15, d: 0.35, rv: 0.25 }); smp(A, t, 'chip2', { g: 0.3 }); bellHit(A, t, 2400 + Math.random() * 1400, 0.3, 0.05); }],
+  clinks: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.22, rate: 1.6, vary: 0.15, d: 0.2 }); smp(A, t, 'chip2', { g: 0.18, rate: 1.25 }); bellHit(A, t, 2800 + Math.random() * 1500, 0.15, 0.025); }],
+  dtHit: [['plank', 'woodL1', 'woodH'], (A, t) => {
+    smp(A, t, 'plank', { g: 0.8, rate: 0.9, d: 0.4, drive: 1.5 }); smp(A, t, 'woodL1', { g: 0.6 }); smp(A, t, 'woodH', { g: 0.6, rate: 0.8 });
+    kick(A, t, 1.1); drop(A, t, 0.6, 120, 40, 0.4); tone(A, t + 0.01, { type: 'triangle', f: 1400, f2: 900, d: 0.25, g: 0.04, vib: 30, vibD: 40 });
+  }],
+  dtMiss: [['thud'], (A, t) => { tone(A, t, { type: 'sine', f: 520, f2: 160, d: 0.32, g: 0.12 }); smp(A, t + 0.25, 'thud', { g: 0.8, rate: 0.75 }); kick(A, t + 0.25, 0.6); }],
+  swClick: [['click'], (A, t) => { smp(A, t, 'click', { g: 1, rate: 1.05, drive: 1 }); kick(A, t, 0.35); tone(A, t, { type: 'square', f: 1760, d: 0.05, g: 0.06 }); }],
+  swClack: [['latch'], (A, t) => { smp(A, t, 'latch', { g: 0.6 }); tone(A, t, { type: 'square', f: 1320, d: 0.05, g: 0.05 }); }],
+  stab: [['shing', 'woodM', 'knife', 'woodH'], (A, t) => {
+    smp(A, t, 'shing', { g: 0.8, rate: 1.05, rv: 0.25 }); swish(A, t, 0.07, 0.16, 2000, 7000);
+    const h = t + 0.06; smp(A, h, 'woodM', { g: 1, rate: 0.8, drive: 1.5 }); smp(A, h, 'woodH', { g: 0.7, rate: 0.75 }); smp(A, h, 'knife', { g: 0.3, rate: 1.3, d: 0.2 });
+    kick(A, h, 1); drop(A, h, 0.5, 110, 40, 0.35); bellHit(A, h, 1975.5, 0.5, 0.05);
+  }],
+  tooth: [['latch'], (A, t) => { smp(A, t, 'latch', { g: 0.45, rate: 1.4 }); tone(A, t, { type: 'sine', f: 520, f2: 760, bend: 0.05, d: 0.08, g: 0.12 }); }],
+  bite: [['chop', 'punch', 'softH'], (A, t) => {
+    swish(A, t, 0.1, 0.18, 400, 3000);
+    smp(A, t, 'chop', { g: 1, rate: 0.85, drive: 2.5 }); smp(A, t, 'punch', { g: 0.9, rate: 0.8 }); smp(A, t + 0.01, 'softH', { g: 0.8, rate: 0.85 });
+    kick(A, t, 1.4); drop(A, t, 0.9, 120, 30, 0.7); snare(A, t, 0.5); crash(A, t, 0.3); tail(A, t, 0.2, 0.8);
+  }],
+  dig: [['grass', 'snow', 'softM'], (A, t) => { smp(A, t, 'grass', { g: 0.6, rate: 0.85 }); smp(A, t, 'snow', { g: 0.25, rate: 0.85 }); smp(A, t, 'softM', { g: 0.45, rate: 0.75 }); kick(A, t, 0.5); }],
+  draw: [['cTake', 'cFlip3'], (A, t) => {
+    swish(A, t, 0.28, 0.2, 400, 6000); smp(A, t, 'cTake', { g: 0.9 }); smp(A, t + 0.24, 'cFlip3', { g: 0.9, drive: 1.2 });
+    kick(A, t + 0.26, 0.9); drop(A, t + 0.26, 0.5, 110, 40, 0.4); brass(A, t + 0.26, [392, 523.25, 659.25], 0.32, 0.07, { lp: 1600, lp2: 4000 }); crash(A, t + 0.26, 0.18);
+  }],
+  wings: [['flap'], (A, t) => [0, 0.34].forEach(dt => smp(A, t + dt, 'flap', { g: 0.55, rate: 0.85, rv: 0.4 }))],
+  bats: [['flap'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.09 + Math.random() * 0.03, 'flap', { g: 0.26, rate: 1.7, vary: 0.15, d: 0.2 }); }],
+  poof: [['flap'], (A, t) => { smp(A, t, 'flap', { g: 0.5, rate: 1.4 }); tone(A, t, { type: 'sine', f: 900, f2: 300, d: 0.25, g: 0.1 }); swish(A, t, 0.25, 0.14, 3000, 500); }],
+  flip: [FLIP, (A, t) => { swish(A, t, 0.08, 0.14, 1500, 6000); smp(A, t, FLIP, { g: 0.8, drive: 1 }); kick(A, t, 0.35); }],
+  deal: [SLIDE, (A, t) => { smp(A, t, SLIDE, { g: 0.7, d: 0.4 }); swish(A, t, 0.18, 0.1, 900, 5000); }],
+  strike: [['rumble'], (A, t) => { SOUNDS.strike(A, t); smp(A, t + 0.02, 'rumble', { g: 0.9, rate: 0.75 }); drop(A, t, 0.7, 90, 25, 1.2); }],
   boom: [['boomL', 'rumble', 'boomS'], (A, t) => {
-    smp(A, t, 'boomL', { g: 1, vary: 0.02 }); smp(A, t, 'rumble', { g: 1, rate: 0.85, vary: 0.02 }); smp(A, t + 0.12, 'boomS', { g: 0.45, rate: 0.8, rv: 0.4 });
-    kick(A, t, 1.2); crash(A, t, 0.35);
-    for (let i = 0; i < 8; i++) noise(A, t + 0.3 + Math.random() * 1.2, { d: 0.05, g: 0.06 + Math.random() * 0.12, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
+    smp(A, t, 'boomL', { g: 1, rate: 0.85, vary: 0.02, drive: 2, rv: 0.35 }); smp(A, t, 'rumble', { g: 1, rate: 0.75, vary: 0.02 }); smp(A, t + 0.1, 'boomS', { g: 0.6, rate: 0.7, rv: 0.4 });
+    kick(A, t, 1.6); drop(A, t, 1, 75, 18, 2.2); snare(A, t, 0.5); crash(A, t, 0.55); tail(A, t, 0.6, 2.8);
+    for (let i = 0; i < 10; i++) noise(A, t + 0.3 + Math.random() * 1.4, { d: 0.05, g: 0.08 + Math.random() * 0.14, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
   }],
 };
 /* a sound by name: recorded when its recordings are ready, synthesized otherwise */
@@ -3502,7 +3539,8 @@ function renderSE() {
    ===================================================================== */
 const BGM_KEY = 'nomige-bgm';
 const mf = m => 440 * Math.pow(2, (m - 69) / 12);
-function distCurve(k) { const n = 1024, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; cv[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return cv; }
+/* an odd number of points, so silence maps to exactly 0 (an even curve leaves a small DC offset that adds up) */
+function distCurve(k) { const n = 1025, cv = new Float32Array(n); for (let i = 0; i < n; i++) { const x = i * 2 / (n - 1) - 1; cv[i] = (1 + k) * x / (1 + k * Math.abs(x)); } return cv; }
 const BI = {
   kick: (B, t, g) => tone(B, t, { type: 'sine', f: 150, f2: 44, bend: 0.11, d: 0.26, g }),
   hat: (B, t, g, open) => noise(B, t, { d: open ? 0.13 : 0.035, g, type: 'highpass', f: 7600 }),
