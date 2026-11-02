@@ -72,22 +72,32 @@ jobs:
         if: steps.chk.outputs.ok == 'true'
         run: npx wrangler d1 migrations apply DB --remote 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/3-migrate.txt"
 
-      - name: Worker をデプロイ
-        id: deploy
-        if: steps.chk.outputs.ok == 'true'
-        run: npx wrangler deploy 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4-deploy.txt"
-
+      # the password goes in before the code: "secret put" makes a new version from the one that is live at that moment,
+      # so doing it after the deploy could bring an older version of the code back
       - name: パスワードを入れる
         id: secret
         if: steps.chk.outputs.ok == 'true' && env.STATS_PASSWORD != ''
-        run: printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/5-secret.txt"
+        continue-on-error: true
+        run: printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4-secret.txt"
+
+      - name: Worker をデプロイ
+        id: deploy
+        if: steps.chk.outputs.ok == 'true'
+        run: npx wrangler deploy 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/5-deploy.txt"
+
+      - name: パスワードを入れる（はじめてのデプロイのとき）
+        id: secret2
+        if: steps.chk.outputs.ok == 'true' && env.STATS_PASSWORD != '' && steps.secret.outcome == 'failure'
+        run: |
+          printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee -a "$RUNNER_TEMP/logs/4-secret.txt"
+          npx wrangler deploy 2>&1 | "$RUNNER_TEMP/mask.sh" | tee -a "$RUNNER_TEMP/logs/5-deploy.txt"
 
       - name: 動作確認
         id: check
         if: steps.deploy.outcome == 'success'
         run: |
           log="$RUNNER_TEMP/logs/6-check.txt"
-          url=$(grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP/logs/4-deploy.txt" | head -n 1)
+          url=$(grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP/logs/5-deploy.txt" | head -n 1)
           echo "URL: $url" | tee "$log"
           [ -n "$url" ] || { echo "URL が見つからない" | tee -a "$log"; exit 1; }
           code() { curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$@"; }
@@ -118,6 +128,11 @@ jobs:
             echo "（$n 回目：まだ古い版かもしれないので待つ）" >> "$log"; sleep 15
           done
           cat "$try" | tee -a "$log"
+          if [ "$passed" != 1 ]; then
+            echo "--- 調べるための情報 ---" >> "$log"
+            curl -s -o /dev/null -D - --max-time 15 "$url/manifest.webmanifest" | head -n 12 | "$RUNNER_TEMP/mask.sh" >> "$log"
+            (cd "$GITHUB_WORKSPACE/server" && npx wrangler deployments list 2>&1 | tail -n 25 | "$RUNNER_TEMP/mask.sh") >> "$log"
+          fi
           [ "$passed" = 1 ]
 
       - name: 結果を deploy-status に書く
@@ -136,7 +151,7 @@ jobs:
             echo "- データベース: ${{ steps.d1.outcome }}"
             echo "- 表: ${{ steps.migrate.outcome }}"
             echo "- デプロイ: ${{ steps.deploy.outcome }}"
-            echo "- パスワード: ${{ steps.secret.outcome }}"
+            echo "- パスワード: ${{ steps.secret.outcome }} ${{ steps.secret2.outcome }}"
             echo "- 動作確認: ${{ steps.check.outcome }}"
             echo
             echo "## URL"
