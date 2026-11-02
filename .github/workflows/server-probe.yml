@@ -1,0 +1,61 @@
+# 調査用：同じコードを別の名前（sakego-probe）でデプロイして、新しいコードが返るかを確かめ、最後に消す。
+# server/.probe を変えて push すると動く。結果は deploy-status ブランチの probe.md。
+name: 集計サーバーの調査
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/.probe']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: server-deploy
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: github.repository == 'shugodensetsu/shugodensetsu.github.io'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      WRANGLER_SEND_METRICS: 'false'
+    defaults:
+      run:
+        shell: bash
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 調べる
+        run: |
+          mask() { sed -E -e 's/[0-9a-f]{32}/<id>/g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g'; }
+          out="$RUNNER_TEMP/probe.md"
+          hdr() { curl -s -o /dev/null -D - --max-time 15 "$1" | grep -iE '^(HTTP|content-type|www-authenticate)' || echo "(no response)"; }
+          {
+            echo "# 調査 $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S')"
+            npm install --no-audit --no-fund > /dev/null 2>&1
+            node tools/ensure-d1.mjs 2>&1 | mask
+            echo '## deploy sakego-probe'; echo '```'
+            npx wrangler deploy --name sakego-probe 2>&1 | mask | tail -n 8
+            echo '```'
+            sleep 8
+            for u in https://sakego-probe.shugodensetsu.workers.dev https://sakego.shugodensetsu.workers.dev; do
+              echo "## $u/manifest.webmanifest"; echo '```'; hdr "$u/manifest.webmanifest"; echo '```'
+            done
+            echo '## sakego versions'; echo '```'
+            npx wrangler versions list --name sakego 2>&1 | mask | tail -n 14
+            npx wrangler deployments status --name sakego 2>&1 | mask | tail -n 8
+            echo '```'
+            echo '## delete probe'; echo '```'
+            npx wrangler delete --name sakego-probe --force 2>&1 | mask | tail -n 4
+            echo '```'
+          } > "$out" 2>&1 || true
+          cat "$out"
+          cd "$RUNNER_TEMP" && rm -rf st && git clone -q --depth 1 --branch deploy-status "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" st && cd st
+          cp "$out" probe.md && git add probe.md
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q -m "集計サーバーの調査" || true
+          git push -q origin deploy-status
