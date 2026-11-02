@@ -8,7 +8,7 @@ name: 集計サーバーをデプロイ
 on:
   push:
     branches: [main]
-    paths: ['server/**', '!server/.check', '!server/.probe', '.github/workflows/server.yml']
+    paths: ['server/**', '!server/.check', '!server/.probe', '!server/tools/check.sh', '.github/workflows/server.yml']
   workflow_dispatch:
 
 permissions:
@@ -95,45 +95,11 @@ jobs:
         id: check
         if: steps.deploy.outcome == 'success'
         run: |
-          log="$RUNNER_TEMP/logs/6-check.txt"
           url=$(grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP/logs/5-deploy.txt" | head -n 1)
-          echo "URL: $url" | tee "$log"
-          [ -n "$url" ] || { echo "URL が見つからない" | tee -a "$log"; exit 1; }
-          code() { curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$@"; }
-          checks() {
-            try="$RUNNER_TEMP/try.txt"; : > "$try"
-            for i in $(seq 1 18); do c=$(code "$url/"); case "$c" in 401|403) break;; esac; sleep 5; done
-            ok=1
-            want=403; [ -n "$STATS_PASSWORD" ] && want=401
-            r=$(code "$url/"); echo "集計ページ（パスワードなし）: $r（$want なら正しい）" >> "$try"; [ "$r" = "$want" ] || ok=0
-            r=$(code -X POST -H 'Origin: https://evil.example' -H 'Content-Type: text/plain' --data '{}' "$url/v1/p"); echo "よそのサイトからの報告: $r（403 なら正しい）" >> "$try"; [ "$r" = 403 ] || ok=0
-            r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data 'not json' "$url/v1/p"); echo "壊れた報告: $r（400 なら正しい）" >> "$try"; [ "$r" = 400 ] || ok=0
-            if [ -n "$STATS_PASSWORD" ]; then
-              body=$(curl -s --max-time 15 -u "check:$STATS_PASSWORD" "$url/?d=7")
-              if printf '%s' "$body" | grep -q 'の集計'; then echo "集計ページ（パスワードあり）: 表示できた（データベースもOK）" >> "$try"; else echo "集計ページ（パスワードあり）: 表示できない" >> "$try"; printf '%s' "$body" | head -c 300 | "$RUNNER_TEMP/mask.sh" >> "$try"; ok=0; fi
-              jar="$RUNNER_TEMP/jar.txt"; rm -f "$jar"
-              r=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -c "$jar" --data-urlencode "password=$STATS_PASSWORD" "$url/login")
-              body=$(curl -s --max-time 15 -b "$jar" "$url/")
-              if [ "$r" = 303 ] && printf '%s' "$body" | grep -q 'ログアウト'; then echo "ログイン画面から入る: できた（30日間ログインしたまま）" >> "$try"; else echo "ログイン画面から入る: できない（$r）" >> "$try"; ok=0; fi
-              rm -f "$jar"
-              r=$(code "$url/manifest.webmanifest"); echo "ホーム画面用の設定: $r（200 なら正しい）" >> "$try"; [ "$r" = 200 ] || ok=0
-            fi
-            [ "$ok" = 1 ]
-          }
-          # a new version can take a little while to reach every Cloudflare location: try for up to 2 minutes
-          passed=0
-          for n in $(seq 1 8); do
-            if checks; then passed=1; break; fi
-            echo "（$n 回目：まだ古い版かもしれないので待つ）" >> "$log"; sleep 15
-          done
-          cat "$try" | tee -a "$log"
-          if [ "$passed" != 1 ]; then
-            echo "--- 調べるための情報 ---" >> "$log"
-            curl -s -o /dev/null -D - --max-time 15 "$url/manifest.webmanifest" | head -n 12 | "$RUNNER_TEMP/mask.sh" >> "$log"
-            (cd "$GITHUB_WORKSPACE/server" && npx wrangler deployments status 2>&1 | tail -n 12 | "$RUNNER_TEMP/mask.sh") >> "$log"
-            (cd "$GITHUB_WORKSPACE/server" && npx wrangler versions list 2>&1 | tail -n 30 | "$RUNNER_TEMP/mask.sh") >> "$log"
-          fi
-          [ "$passed" = 1 ]
+          echo "URL: $url" | tee "$RUNNER_TEMP/logs/6-check.txt"
+          [ -n "$url" ] || { echo "URL が見つからない" | tee -a "$RUNNER_TEMP/logs/6-check.txt"; exit 1; }
+          # a new version can take several minutes to reach every Cloudflare location: up to 10 minutes
+          bash tools/check.sh "$url" 40 2>&1 | "$RUNNER_TEMP/mask.sh" | tee -a "$RUNNER_TEMP/logs/6-check.txt"
 
       - name: 結果を deploy-status に書く
         if: always()
