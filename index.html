@@ -1836,7 +1836,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
           <button type="button" class="pbtn white small" id="goEditor">カード編集</button>
           <button type="button" class="pbtn white small" id="howBtn">遊び方ガイド</button>
           <button type="button" class="pbtn white small" id="statsBtn">あそびの記録</button>
-          <button type="button" class="pbtn cyan small" id="shareBtn">友達に教える</button>
+          <button type="button" class="pbtn cyan small" id="tellBtn">友達に教える</button>
         </div>
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加して、アプリとして使う</button>
       </div>
@@ -1892,7 +1892,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="t-row">
           <button type="button" class="pbtn white small" id="changeBtn">メンバー変更</button>
           <button type="button" class="pbtn white small" id="titleBtn">タイトルへ</button>
-          <button type="button" class="pbtn cyan small" id="resShare">シェア</button>
+          <button type="button" class="pbtn cyan small" id="resTell">シェア</button>
         </div>
         <button type="button" class="res-back" id="resBack" hidden>◀ 最後のターンに戻る（記録し忘れたとき）</button>
       </div>
@@ -9205,7 +9205,7 @@ function wireGame() {
   $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
-  $('shareBtn').addEventListener('click', () => shareApp('title'));
+  $('tellBtn').addEventListener('click', () => shareApp('title'));
   $('installBtn').addEventListener('click', installApp);
   $('insClose').addEventListener('click', () => { SE.play('tap'); closeOv('installOv'); });
   $('ageActs').addEventListener('click', e => {
@@ -9215,7 +9215,7 @@ function wireGame() {
     if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
     else ageAsk(a === 'no');
   });
-  $('resShare').addEventListener('click', () => shareApp('result'));
+  $('resTell').addEventListener('click', () => shareApp('result'));
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));

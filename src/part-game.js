@@ -6105,7 +6105,7 @@ function wireGame() {
   $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
-  $('shareBtn').addEventListener('click', () => shareApp('title'));
+  $('tellBtn').addEventListener('click', () => shareApp('title'));
   $('installBtn').addEventListener('click', installApp);
   $('insClose').addEventListener('click', () => { SE.play('tap'); closeOv('installOv'); });
   $('ageActs').addEventListener('click', e => {
@@ -6115,7 +6115,7 @@ function wireGame() {
     if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
     else ageAsk(a === 'no');
   });
-  $('resShare').addEventListener('click', () => shareApp('result'));
+  $('resTell').addEventListener('click', () => shareApp('result'));
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));
