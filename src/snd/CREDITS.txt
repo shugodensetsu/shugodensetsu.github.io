@@ -1,0 +1,8 @@
+Recorded sound effects in this folder
+
+Source: Kenney (https://kenney.nl) — Casino Audio, Impact Sounds, RPG Audio, Interface Sounds, Sci-fi Sounds
+License: Creative Commons Zero (CC0) — http://creativecommons.org/publicdomain/zero/1.0/
+Credit is not required, but thank you, Kenney.
+
+The files were trimmed, normalized and converted to mono MP3 (80 kbps) for the app.
+They are built into index.html as base64 by src/build-app.js.

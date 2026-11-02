@@ -1,5 +1,7 @@
 /* =====================================================================
-   SOUND (synthesized with Web Audio — no audio files; reverb + compressor for punch)
+   SOUND: things you'd hear for real (cards, dice, a dart, a blade in wood, a bite, a blast, a stamp, glass) are short
+   recordings (Kenney, CC0); jingles and UI blips are synthesized with Web Audio. Reverb + compressor for punch.
+   Every recorded sound also has a synthesized version, played until the recordings are decoded (or if one can't be)
    ===================================================================== */
 const SE_KEY = 'nomige-se';
 function impulse(ctx, dur, decay) {
@@ -12,9 +14,65 @@ function sendOut(A, g, rv) {
   g.connect(A.o);
   if (rv) { const s = A.c.createGain(); s.gain.value = rv; g.connect(s); s.connect(A.r); }
 }
+let SOFTSQ = null;
+function softSquare(c) {
+  if (SOFTSQ && SOFTSQ.c === c) return SOFTSQ.w;
+  const N = 24, re = new Float32Array(N + 1), im = new Float32Array(N + 1);
+  for (let n = 1; n <= N; n++) im[n] = (n % 2 ? 1 : 0.16) / Math.pow(n, 1.55);
+  SOFTSQ = { c, w: c.createPeriodicWave(re, im) };
+  return SOFTSQ.w;
+}
+/* the recordings: short mono MP3s built into the page as base64 (nothing to fetch — works offline and under the CSP).
+   Decoded once the audio is unlocked */
+const SMP_DATA = __SMP_DATA__;
+const SMP = { buf: {}, started: false };
+function smpLoad(A) {
+  if (SMP.started) return;
+  SMP.started = true;
+  Object.keys(SMP_DATA).forEach(k => {
+    try {
+      const bin = atob(SMP_DATA[k]), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      const done = b => {
+        if (!b || SMP.buf[k]) return;
+        /* start where the sound starts (MP3s carry a few ms of silence up front), so hits land on time */
+        const d = b.getChannelData(0);
+        let pk = 0;
+        for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > pk) pk = v; }
+        let st = 0;
+        while (st < d.length && Math.abs(d[st]) < pk * 0.02) st++;
+        SMP.buf[k] = { b, off: Math.max(0, st - 24) / b.sampleRate };
+      };
+      const pr = A.c.decodeAudioData(u.buffer, done, () => { /* that one stays synthesized */ });
+      if (pr && pr.then) pr.then(done, () => { /* ignore */ });
+    } catch (_) { /* that one stays synthesized */ }
+  });
+}
+/* play one recording: o = { g, rate, vary (± random pitch, default 4%), lp, hp, rv, d (cut off after d seconds) } */
+function smp(A, t, k, o) {
+  if (Array.isArray(k)) k = k[Math.floor(Math.random() * k.length)];
+  const s = SMP.buf[k];
+  if (!s) return false;
+  o = o || {};
+  const c = A.c, src = c.createBufferSource(), g = c.createGain();
+  src.buffer = s.b;
+  src.playbackRate.value = (o.rate || 1) * (1 + (o.vary == null ? 0.04 : o.vary) * (Math.random() * 2 - 1));
+  let node = src;
+  if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; node.connect(f); node = f; }
+  if (o.hp) { const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = o.hp; node.connect(f); node = f; }
+  node.connect(g);
+  const gv = o.g == null ? 0.8 : o.g;
+  g.gain.setValueAtTime(gv, t);
+  if (o.d) { g.gain.setValueAtTime(gv, t + o.d * 0.6); g.gain.linearRampToValueAtTime(0.0001, t + o.d); }
+  sendOut(A, g, o.rv);
+  src.start(t, s.off);
+  if (o.d) src.stop(t + o.d + 0.02);
+  return true;
+}
 function tone(A, t, o) {
   const c = A.c, osc = c.createOscillator(), g = c.createGain();
-  osc.type = o.type || 'sine';
+  /* 'square' is a rounded square (the odd harmonics rolled off, a touch of even ones): warm instead of 8-bit buzz */
+  if (o.type === 'square') osc.setPeriodicWave(softSquare(c)); else osc.type = o.type || 'sine';
   osc.frequency.setValueAtTime(o.f, t);
   if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + (o.bend || o.d));
   if (o.det) osc.detune.value = o.det;
@@ -30,7 +88,8 @@ function tone(A, t, o) {
   g.gain.exponentialRampToValueAtTime(peak, t + a);
   if (o.sus) { const rel = Math.min(o.rel || 0.15, d - a - 0.01); g.gain.setValueAtTime(peak, t + d - rel); }
   g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-  node.connect(g); sendOut(A, g, o.rv);
+  /* the rounded-square blips (jingles, beeps) get a little room around them unless a sound says otherwise */
+  node.connect(g); sendOut(A, g, o.rv == null && o.type === 'square' ? 0.18 : o.rv);
   if (o.vib) {
     const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = o.vib; lg.gain.value = o.vibD || 6;
     l.connect(lg); lg.connect(osc.frequency); l.start(t); l.stop(t + d + 0.05);
@@ -51,7 +110,8 @@ function noise(A, t, o) {
   src.start(t, Math.random() * 1.5); src.stop(t + o.d + 0.05);
 }
 const kick = (A, t, g) => { tone(A, t, { type: 'sine', f: 165, f2: 42, bend: 0.2, d: 0.38, g: g || 0.9 }); noise(A, t, { d: 0.03, g: (g || 0.9) * 0.35, type: 'highpass', f: 3000 }); };
-const snare = (A, t, g) => { noise(A, t, { d: 0.2, g: g || 0.45, type: 'bandpass', f: 1900, q: 0.7, rv: 0.15 }); tone(A, t, { type: 'triangle', f: 220, f2: 150, d: 0.12, g: (g || 0.45) * 0.5 }); };
+/* snare: the crack (bright noise), the rattle of the wires, and the drum's body */
+const snare = (A, t, g) => { g = g || 0.45; noise(A, t, { d: 0.17, g, type: 'bandpass', f: 2300, q: 0.55, rv: 0.18 }); noise(A, t, { d: 0.05, g: g * 0.45, type: 'highpass', f: 5500 }); tone(A, t, { type: 'sine', f: 200, f2: 165, d: 0.09, g: g * 0.55 }); tone(A, t, { type: 'triangle', f: 330, f2: 260, d: 0.05, g: g * 0.2 }); };
 const crash = (A, t, g) => noise(A, t, { d: 1.7, g: g || 0.3, type: 'highpass', f: 4500, rv: 0.5 });
 const brass = (A, t, freqs, d, g, o) => { o = o || {}; freqs.forEach(f => [-9, 9].forEach(det => tone(A, t, { type: 'sawtooth', f, det, d, g: g || 0.08, a: 0.02, lp: o.lp || 900, lp2: o.lp2 || 2800, q: 1.3, sus: 1, rel: 0.14, rv: 0.25 }))); };
 const sparkle = (A, t, n) => { const P = [2093, 2349.3, 2637, 3136, 3520, 4186, 4698.6]; for (let i = 0; i < n; i++) tone(A, t + i * 0.055 + Math.random() * 0.02, { type: 'triangle', f: P[Math.floor(Math.random() * P.length)], d: 0.35, g: 0.05, rv: 0.6 }); };
@@ -163,9 +223,9 @@ const SOUNDS = {
   ccHand: (A, t) => { bellHit(A, t, 1568, 0.6, 0.1); tone(A, t, { type: 'sine', f: 784, d: 0.2, g: 0.05 }); },
   dtThrow: (A, t) => noise(A, t, { d: 0.18, g: 0.3, type: 'bandpass', f: 5000, f2: 1200, q: 1.2 }),
   dtHit: (A, t) => { noise(A, t, { d: 0.05, g: 0.5, type: 'bandpass', f: 900, q: 2 }); tone(A, t, { type: 'triangle', f: 260, f2: 180, d: 0.12, g: 0.25 }); noise(A, t + 0.02, { d: 0.02, g: 0.2, type: 'highpass', f: 4000 }); },
-  dtDouble: (A, t) => { SOUNDS.dtHit(A, t); [0.1, 0.2].forEach((dt, i) => tone(A, t + dt, { type: 'square', f: 1046.5 * (1 + i * 0.25), d: 0.09, g: 0.08 })); },
-  dtTriple: (A, t) => { SOUNDS.dtHit(A, t); [1046.5, 1318.5, 1568].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.1, g: 0.09 })); sparkle(A, t + 0.3, 8); },
-  dtBull: (A, t) => { SOUNDS.dtHit(A, t); [784, 987.77, 1174.7, 1568, 1975.5].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.12, g: 0.09 })); brass(A, t + 0.55, [783.99, 987.77, 1174.7, 1568], 0.8, 0.07, { lp: 2200, lp2: 5000 }); crash(A, t + 0.55, 0.35); kick(A, t + 0.55, 0.9); sparkle(A, t + 0.6, 14); },
+  dtDouble: (A, t) => { snd('dtHit', A, t); [0.1, 0.2].forEach((dt, i) => tone(A, t + dt, { type: 'square', f: 1046.5 * (1 + i * 0.25), d: 0.09, g: 0.08 })); },
+  dtTriple: (A, t) => { snd('dtHit', A, t); [1046.5, 1318.5, 1568].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.1, g: 0.09 })); sparkle(A, t + 0.3, 8); },
+  dtBull: (A, t) => { snd('dtHit', A, t); [784, 987.77, 1174.7, 1568, 1975.5].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.12, g: 0.09 })); brass(A, t + 0.55, [783.99, 987.77, 1174.7, 1568], 0.8, 0.07, { lp: 2200, lp2: 5000 }); crash(A, t + 0.55, 0.35); kick(A, t + 0.55, 0.9); sparkle(A, t + 0.6, 14); },
   dtMiss: (A, t) => { tone(A, t, { type: 'sine', f: 500, f2: 180, d: 0.3, g: 0.12 }); noise(A, t + 0.25, { d: 0.08, g: 0.2, type: 'lowpass', f: 600 }); },
   rcReady: (A, t) => { tone(A, t, { type: 'sine', f: 523.25, d: 0.1, g: 0.14 }); tone(A, t + 0.11, { type: 'sine', f: 659.25, d: 0.14, g: 0.14 }); },
   rcGo: (A, t) => { tone(A, t, { type: 'square', f: 1760, d: 0.18, g: 0.14 }); tone(A, t, { type: 'sine', f: 880, d: 0.25, g: 0.18 }); },
@@ -299,6 +359,70 @@ const SOUNDS = {
     for (let i = 0; i < 14; i++) noise(A, t + 0.15 + Math.random() * 1.4, { d: 0.05, g: 0.1 + Math.random() * 0.25, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
   },
 };
+/* the recorded versions: [the recordings they need, how they play]. A sound plays this way once all of its recordings
+   are decoded, and its synthesized version (SOUNDS) until then */
+const FLIP = ['cFlip1', 'cFlip2', 'cFlip3'], SLIDE = ['cSlide1', 'cSlide2'], WOODL = ['woodL1', 'woodL2'], GLASSL = ['glassL1', 'glassL2'];
+const REAL = {
+  /* 負け演出 */
+  hanko: [['softH', 'paper', 'woodH'], (A, t) => { smp(A, t, 'softH', { g: 1, rate: 0.85, vary: 0.02 }); smp(A, t, 'paper', { g: 0.75 }); smp(A, t, 'woodH', { g: 0.55, rate: 0.8 }); kick(A, t, 0.55); }],
+  mnPop: [['boomS'], (A, t) => { smp(A, t, 'boomS', { g: 0.55, rate: 1.25, vary: 0.12, d: 0.55 }); kick(A, t, 0.6); }],
+  corkBonk: [WOODL, (A, t) => { smp(A, t, WOODL, { g: 0.8, rate: 1.7 }); tone(A, t, { type: 'sine', f: 620, f2: 300, bend: 0.06, d: 0.16, g: 0.18 }); }],
+  dropLand: [['softM', 'woodM'], (A, t) => { tone(A, t, { type: 'sine', f: 1600, f2: 400, bend: 0.5, d: 0.55, g: 0.07 }); smp(A, t + 0.55, 'softM', { g: 0.9 }); smp(A, t + 0.55, 'woodM', { g: 0.6, rate: 0.9 }); }],
+  missFall: [['thud', 'softM'], (A, t) => { tone(A, t, { type: 'sine', f: 1800, f2: 250, bend: 0.55, d: 0.6, g: 0.09 }); smp(A, t + 0.6, 'softM', { g: 0.85, rate: 0.9 }); smp(A, t + 0.6, 'thud', { g: 0.6 }); }],
+  mgMark: [GLASSL.concat('softM'), (A, t) => { smp(A, t, GLASSL, { g: 0.55, rate: 1.15 }); smp(A, t, 'softM', { g: 0.35 }); }],
+  cupIn: [['glassM', 'glassL2'], (A, t) => { smp(A, t, 'glassM', { g: 0.75 }); smp(A, t + 0.06, 'glassL2', { g: 0.5, rate: 1.3 }); SOUNDS.cupIn(A, t + 0.02); }],
+  /* ミニゲーム・パーティーゲーム */
+  skFlip: [FLIP, (A, t) => smp(A, t, FLIP, { g: 0.65 })],
+  mnTick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 1.1, vary: 0.1 })],
+  mnBoom: [['boomL', 'rumble'], (A, t) => { smp(A, t, 'boomL', { g: 1, vary: 0.03 }); smp(A, t, 'rumble', { g: 1, rate: 0.9 }); kick(A, t, 1); crash(A, t, 0.25); }],
+  cdShuffle: [['cFan'], (A, t) => smp(A, t, 'cFan', { g: 0.55 })],
+  cdFlip: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 0.95 }); bellHit(A, t + 0.04, 2093, 0.4, 0.035); }],
+  ipDeal: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.7 })],
+  ipPeek: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 0.8 }); [659.25, 830.61, 987.77].forEach((f, i) => tone(A, t + 0.05 + i * 0.07, { type: 'triangle', f, d: 0.3, g: 0.06, rv: 0.3 })); }],
+  ipHide: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.5, rate: 1.1, d: 0.4 })],
+  ipToss: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.85, rate: 1.3 })],
+  ipOpen: [FLIP, (A, t) => { smp(A, t, FLIP, { g: 1 }); kick(A, t, 0.8); crash(A, t, 0.22); }],
+  dcThrow: [['dThrow1', 'dThrow2'], (A, t) => smp(A, t, ['dThrow1', 'dThrow2'], { g: 0.7 })],
+  dcLand: [['dDie1', 'dDie2'], (A, t) => smp(A, t, ['dDie1', 'dDie2'], { g: 0.8 })],
+  dcOut: [['dDie1'], (A, t) => { smp(A, t, 'dDie1', { g: 0.7, rate: 0.9 }); tone(A, t + 0.05, { type: 'sawtooth', f: 220, f2: 110, d: 0.4, g: 0.08, lp: 1200 }); }],
+  dcRattle: [['dShake'], (A, t) => smp(A, t, 'dShake', { g: 0.75, d: 0.6 })],
+  ccThrow: [['dThrow2', 'plateL'], (A, t) => { smp(A, t, 'dThrow2', { g: 0.7 }); smp(A, t + 0.08, 'plateL', { g: 0.4, rate: 1.15 }); }],
+  ccRattle: [['chip2', 'plateL'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.06 + Math.random() * 0.02, 'chip2', { g: 0.25, rate: 1.5, vary: 0.2 }); smp(A, t, 'plateL', { g: 0.3, rate: 1.25 }); }],
+  ccTick: [['plateL'], (A, t) => smp(A, t, 'plateL', { g: 0.22, rate: 1.5, vary: 0.15, d: 0.25 })],
+  clink: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.38, rate: 1.25, vary: 0.15, d: 0.32 }); smp(A, t, 'chip2', { g: 0.28 }); }],
+  clinks: [['plateL', 'chip2'], (A, t) => { smp(A, t, 'plateL', { g: 0.18, rate: 1.6, vary: 0.15, d: 0.2 }); smp(A, t, 'chip2', { g: 0.16, rate: 1.25 }); }],
+  dtHit: [['plank', 'woodL1'], (A, t) => { smp(A, t, 'plank', { g: 0.55, rate: 1.2, d: 0.35 }); smp(A, t, 'woodL1', { g: 0.5, rate: 1.1 }); }],
+  dtMiss: [['thud'], (A, t) => { tone(A, t, { type: 'sine', f: 500, f2: 180, d: 0.3, g: 0.1 }); smp(A, t + 0.25, 'thud', { g: 0.6, rate: 0.85 }); }],
+  swClick: [['click'], (A, t) => smp(A, t, 'click', { g: 0.95, rate: 1.1 })],
+  swClack: [['latch'], (A, t) => smp(A, t, 'latch', { g: 0.4 })],
+  stab: [['shing', 'woodM', 'knife'], (A, t) => { smp(A, t, 'shing', { g: 0.5, rate: 1.1 }); smp(A, t + 0.06, 'woodM', { g: 0.95 }); smp(A, t + 0.06, 'knife', { g: 0.25, rate: 1.3, d: 0.2 }); }],
+  tooth: [['latch'], (A, t) => smp(A, t, 'latch', { g: 0.3, rate: 1.4 })],
+  bite: [['chop', 'punch', 'softH'], (A, t) => { smp(A, t, 'chop', { g: 1 }); smp(A, t, 'punch', { g: 0.7 }); smp(A, t + 0.01, 'softH', { g: 0.5, rate: 1.1 }); }],
+  dig: [['grass', 'snow', 'softM'], (A, t) => { smp(A, t, 'grass', { g: 0.75 }); smp(A, t, 'snow', { g: 0.25, rate: 0.9 }); smp(A, t, 'softM', { g: 0.3, rate: 0.8 }); }],
+  draw: [['cTake', 'cFlip3'], (A, t) => { smp(A, t, 'cTake', { g: 0.85 }); smp(A, t + 0.24, 'cFlip3', { g: 0.7 }); kick(A, t + 0.26, 0.6); brass(A, t + 0.26, [392, 523.25, 659.25], 0.32, 0.06, { lp: 1500, lp2: 3800 }); }],
+  wings: [['flap'], (A, t) => [0, 0.34].forEach(dt => smp(A, t + dt, 'flap', { g: 0.45, rate: 0.85, rv: 0.3 }))],
+  bats: [['flap'], (A, t) => { for (let i = 0; i < 6; i++) smp(A, t + i * 0.09 + Math.random() * 0.03, 'flap', { g: 0.22, rate: 1.7, vary: 0.15, d: 0.2 }); }],
+  poof: [['flap'], (A, t) => { smp(A, t, 'flap', { g: 0.4, rate: 1.4 }); tone(A, t, { type: 'sine', f: 900, f2: 300, d: 0.25, g: 0.08 }); }],
+  flip: [FLIP, (A, t) => smp(A, t, FLIP, { g: 0.85 })],
+  deal: [SLIDE, (A, t) => smp(A, t, SLIDE, { g: 0.6, d: 0.4 })],
+  tick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.55, vary: 0.05 })],
+  rlTick: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 1.2, vary: 0.06 })],
+  select: [['uiSel'], (A, t) => smp(A, t, 'uiSel', { g: 0.28, vary: 0.02 })],
+  tick2: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, vary: 0.02 })],
+  tock: [['uiTick'], (A, t) => smp(A, t, 'uiTick', { g: 0.5, rate: 0.75, vary: 0.02 })],
+  strike: [['rumble'], (A, t) => { SOUNDS.strike(A, t); smp(A, t + 0.02, 'rumble', { g: 0.7, rate: 0.8 }); }],
+  boom: [['boomL', 'rumble', 'boomS'], (A, t) => {
+    smp(A, t, 'boomL', { g: 1, vary: 0.02 }); smp(A, t, 'rumble', { g: 1, rate: 0.85, vary: 0.02 }); smp(A, t + 0.12, 'boomS', { g: 0.45, rate: 0.8, rv: 0.4 });
+    kick(A, t, 1.2); crash(A, t, 0.35);
+    for (let i = 0; i < 8; i++) noise(A, t + 0.3 + Math.random() * 1.2, { d: 0.05, g: 0.06 + Math.random() * 0.12, type: 'bandpass', f: 800 + Math.random() * 2500, q: 2 });
+  }],
+};
+/* a sound by name: recorded when its recordings are ready, synthesized otherwise */
+function snd(name, A, t) {
+  const r = REAL[name];
+  if (r && r[0].every(k => SMP.buf[k])) r[1](A, t);
+  else if (SOUNDS[name]) SOUNDS[name](A, t);
+}
 const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
 const SE = {
   on: true, A: null,
@@ -319,6 +443,7 @@ const SE = {
         const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
         this.A = { c, o, r, nb };
       } catch (_) { this.A = null; return null; }
+      smpLoad(this.A);
       BGM.sync();
     }
     if (this.A.c.state === 'suspended' && document.visibilityState !== 'hidden') { try { this.A.c.resume(); } catch (_) { /* ignore */ } }
@@ -327,8 +452,8 @@ const SE = {
   play(name, delay) {
     if (!this.on) return;
     const A = this.ensure(); if (!A) return;
-    const f = SOUNDS[name]; if (!f) return;
-    try { f(A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
+    if (!SOUNDS[name]) return;
+    try { snd(name, A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
     if (!NO_DUCK.has(name)) BGM.duck(delay || 0);
   },
   toggle() {
