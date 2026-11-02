@@ -24,7 +24,7 @@ let js = ['part-head.js', 'part-editor.js', 'part-game.js'].map(f => fs.readFile
   .replace('__SMP_DATA__', () => JSON.stringify(smpData));
 /* the play-count collector (server/collector.js): its address is STAT_URL in part-game.js, and the page may talk to that one origin only.
    A test build can point it at a local stand-in:  STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test */
-if (VERSION === 'test' && process.env.STAT_TEST) js = js.replace("const STAT_URL = '';", () => 'const STAT_URL = ' + JSON.stringify(process.env.STAT_TEST) + ';');
+if (VERSION === 'test' && process.env.STAT_TEST) js = js.replace(/const STAT_URL = '[^']*';/, () => 'const STAT_URL = ' + JSON.stringify(process.env.STAT_TEST) + ';');
 const statUrl = (/const STAT_URL = '([^']*)';/.exec(js) || /const STAT_URL = "([^"]*)";/.exec(js) || [])[1];
 if (statUrl === undefined) throw new Error('STAT_URL not found');
 const statOrigin = statUrl ? new URL(statUrl).origin : '';

@@ -4,7 +4,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/shugodensetsu/shugodensetsu.github.io/tree/main/server)
 
-上のボタンから、Worker「sakego」とデータベース（D1）がまとめて作られます。集計ページのパスワードは、作成のあと Worker の「設定 ＞ 変数とシークレット」でシークレット `STATS_PASSWORD`（16文字以上）として入れます（作成画面で聞かれた場合はそこで入れても同じ）。
+上のボタンから、Worker とデータベース（D1）がまとめて作られます（Worker の名前は作成画面の初期値。いま動いているのは shugodensetsu-github-io）。集計ページのパスワードは、作成のあと Worker の「設定 ＞ 変数とシークレット」でシークレット `STATS_PASSWORD`（16文字以上）として入れます（作成画面で聞かれた場合はそこで入れても同じ）。
 
 ## しくみ
 
@@ -25,6 +25,8 @@
 
 ## 設定のあと
 
-受け口の URL（`https://sakego.〈サブドメイン〉.workers.dev/v1/p`）を `src/part-game.js` の `STAT_URL` に入れて `node src/build-app.js` を実行する。ページの CSP（connect-src）には、その URL のオリジンだけが自動で入る。
+受け口の URL（いまは `https://shugodensetsu-github-io.shugodensetsu.workers.dev/v1/p`）を `src/part-game.js` の `STAT_URL` に入れて `node src/build-app.js` を実行する。ページの CSP（connect-src）には、その URL のオリジンだけが自動で入る。
 
 ローカルで試すとき：`STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test`
+
+注意：Deploy to Cloudflare は、このフォルダを利用者の GitHub に別のリポジトリとして写し、そちらへの push で自動デプロイする。ここ（server/）を直しても、動いている Worker には自動では入らない。直したら写し先のリポジトリにも同じ変更を入れる。
