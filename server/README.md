@@ -4,7 +4,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/shugodensetsu/shugodensetsu.github.io/tree/main/server)
 
-上のボタンから、Worker「sakego」とデータベース（D1）がまとめて作られます。途中で集計ページのパスワード（`STATS_PASSWORD`、16文字以上）を聞かれます。
+上のボタンから、Worker「sakego」とデータベース（D1）がまとめて作られます。集計ページのパスワードは、作成のあと Worker の「設定 ＞ 変数とシークレット」でシークレット `STATS_PASSWORD`（16文字以上）として入れます（作成画面で聞かれた場合はそこで入れても同じ）。
 
 ## しくみ
 
