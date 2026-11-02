@@ -832,6 +832,10 @@ function normalizeGame(g) {
   g.pile = Array.isArray(g.pile) ? g.pile : [];
   g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
+  /* the play-count record: dropped if it isn't what statStart made (the collector checks everything again anyway) */
+  const st = g.st;
+  if (st && (typeof st !== 'object' || typeof st.sid !== 'string' || !['cards', 'fx', 'mini', 'sp'].every(k => st[k] && typeof st[k] === 'object' && !Array.isArray(st[k])))) delete g.st;
+  else if (st) ['seq', 'players', 'rounds', 'nth', 'turns', 'ms', 'last', 'cups', 'own', 'done'].forEach(k => { st[k] = Number(st[k]) || 0; });
   if (g.mode === 'mini') normalizeMini(g);
   return g;
 }
@@ -1029,7 +1033,7 @@ function drawCard() {
   cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': r };
   cur.phase = 'drawn';
   G.stats.cards++;
-  useTrack('card_draw', { card_id: card.id, cat: card.cat, kind: cardKind(card) });
+  useTrack('card_draw', { card_id: card.id, cat: card.cat, kind: cardKind(card), own: !builtinCard(card) });
   const fx = card.fx, gifts = [];
   if (fx === 'x2next') { G.pending.mult = Math.min(64, G.pending.mult * 2); G.pending.from = null; G.pending.src = 'カードの効果'; }
   if (fx === 'halfnext') { G.pending.half = true; if (!G.pending.src) G.pending.src = 'カードの効果'; }
@@ -1269,7 +1273,7 @@ function ruleVanish(expired) {
 const HIST_MAX = 8;
 function pushHist() {
   const copy = Object.assign({}, G, { cur: Object.assign({}, G.cur, { select: null }) });
-  delete copy.hist;
+  delete copy.hist; delete copy.st;
   G.hist = (G.hist || []).concat(JSON.stringify(copy)).slice(-HIST_MAX);
 }
 function canBack() { return !!(G && Array.isArray(G.hist) && G.hist.length); }
@@ -1294,6 +1298,7 @@ function goBack() {
   if (!canBack()) return;
   const hist = G.hist.slice(), prev = JSON.parse(hist.pop());
   prev.hist = hist;
+  if (G.st) prev.st = G.st;
   const fromResult = screen === 'result';
   closeAllOverlays();
   G = normalizeGame(prev);
@@ -4966,11 +4971,10 @@ function champPop() {
 }
 
 
-/* ---------- あそびの記録（この端末だけ）と、全員分の利用状況（Googleアナリティクス。測定IDを入れたときだけ動く）.
+/* ---------- あそびの記録（この端末だけ）と、全員分の利用状況（自前の集計サーバー server/collector.js。STAT_URL を入れたときだけ動く）.
    Only counts are kept or sent: never player names. The artifact version keeps its own device record and sends nothing ---------- */
 const USE_KEY = 'sakego-usage';
-const GA_ID = '';
-const PRIVACY_URL = 'https://shugodensetsu.github.io/privacy.html';   /* Googleアナリティクス（GA4）の測定ID「G-XXXXXXXXXX」。空のあいだは外へ何も送らない */
+const PRIVACY_URL = 'https://shugodensetsu.github.io/privacy.html';
 const USE_GAP = 10 * 60 * 1000;   /* play time: a pause longer than 10 minutes isn't counted */
 let USE = null;
 const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -5002,6 +5006,7 @@ function useTick() {
   if (U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
   U.cur = gid; U.last = now;
   useSave();
+  statTouch();
 }
 /* ホーム画面に追加: Android/Chrome give an install prompt (kept from beforeinstallprompt and shown as a button);
    iPhone/iPad Safari has none, so the button shows how to do it; inside LINE / Instagram / X's own browsers it can't be
@@ -5015,12 +5020,12 @@ function installSync() {
   if (b) b.hidden = !IS_APP || isStandalone() || !(installEvt || isIOS() || inAppBrowser());
 }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; installSync(); });
-window.addEventListener('appinstalled', () => { installEvt = null; installSync(); useTrack('install'); });
+window.addEventListener('appinstalled', () => { installEvt = null; installSync(); useTrack('install', { how: 'done' }); });
 async function installApp() {
   SE.play('tap');
   if (installEvt && !inAppBrowser()) {
     const e = installEvt; installEvt = null;
-    try { e.prompt(); const r = await e.userChoice; useTrack('install_prompt', { outcome: r && r.outcome }); } catch (_) { /* ignore */ }
+    try { e.prompt(); const r = await e.userChoice; if (r && r.outcome === 'dismissed') useTrack('install', { how: 'dismissed' }); } catch (_) { /* ignore */ }
     installSync();
     return;
   }
@@ -5030,6 +5035,7 @@ async function installApp() {
     : isIOS()
       ? '<ol class="ins-steps"><li>画面の下（iPadは上）の<b>共有ボタン</b> ' + share + ' をタップ</li><li>メニューを下へスクロールして<b>「ホーム画面に追加」</b></li><li>右上の<b>「追加」</b>で完了</li></ol>'
       : '<ol class="ins-steps"><li>ブラウザのメニュー（︙）を開く</li><li><b>「ホーム画面に追加」</b>または<b>「アプリをインストール」</b>を選ぶ</li></ol>';
+  useTrack('install', { how: inAppBrowser() ? 'guide_inapp' : isIOS() ? 'guide_ios' : 'guide' });
   openOv('installOv');
 }
 /* 友達に教える: the phone's own share sheet (LINE, X, AirDrop…); without one, the link is copied */
@@ -5056,23 +5062,91 @@ function useTrack(ev, p) {
   else if (ev === 'card_draw') { U.draws++; bump(U.cards, p.card_id); if (p.kind) bump(U.fx, p.kind); }
   else if (ev === 'mini_game') bump(U.mini, p.kind);
   else if (ev === 'special_rule') bump(U.special, p.type);
-  else if (ev === 'game_end') { if (U.ended === gid) return; U.ended = gid; U.done++; U.cups += p.cups || 0; }
+  else if (ev === 'game_end') { statDone(); if (U.ended === gid) return; U.ended = gid; U.done++; U.cups += p.cups || 0; }
   useSave();
-  if (window.gtag && !gaOff()) { try { window.gtag('event', ev, p); } catch (_) { /* ignore */ } }
+  statTrack(ev, p);
 }
 /* what a card is, for the counts: its mini game / app effect, if any */
 const cardKind = c => (c ? toolOf(c) || (/^ch_/.test(c.fx || '') ? 'chal' : c.fx === 'bomb' || c.fx === 'pick' || c.fx === 'tap' ? c.fx : timerOf(c) ? 'timer' : '') : '');
-const GA_OFF_KEY = 'sakego-ga-off';
-const gaOff = () => { try { return localStorage.getItem(GA_OFF_KEY) === '1'; } catch (_) { return false; } };
-function gaInit() {
-  if (!IS_APP || !GA_ID || gaOff() || window.gtag) return;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function () { window.dataLayer.push(arguments); };
-  window.gtag('js', new Date());
-  window.gtag('config', GA_ID);
-  const s = document.createElement('script');
-  s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
-  document.head.appendChild(s);
+
+/* ---------- 利用状況の集計: 1ゲームにつき「始まった」と「終わった（または途中でアプリをしまった）」の2通だけを、自前の受け口へ送る.
+   送るのは数だけ: 人数・ラウンド数・ターン数・杯数の合計・遊んだ時間、出た組み込みカードの番号と回数（自作・書きかえたカードは枚数だけ）、
+   ミニゲーム・特殊ルールの種類と回数、ホーム画面から開いたか、タブレットか、この端末で何回目のゲームか.
+   名前・カードの文章・端末を見分けるIDは送らない（sid はゲーム1回ごとの使い捨ての乱数）. STAT_URL が空のあいだと、アプリ版以外では何も送らない ---------- */
+const STAT_URL = '';   /* 例: https://sakego-in.〇〇.workers.dev/v1/p（server/README.md の手順で作った受け口） */
+const STAT_OFF_KEY = 'sakego-stat-off';
+const statOff = () => { try { return localStorage.getItem(STAT_OFF_KEY) === '1'; } catch (_) { return false; } };
+const statOn = () => IS_APP && !!STAT_URL && !statOff();
+let stCur = null, builtinText = null;
+/* a built-in card as it ships (not one the players added or rewrote): only these are counted by number */
+function builtinCard(c) {
+  if (!builtinText) {
+    builtinText = new Map();
+    try { JSON.parse($('deck-data').textContent).cards.forEach(x => builtinText.set(x.id, x.text)); } catch (_) { /* ignore */ }
+  }
+  return !!c && builtinText.get(c.id) === c.text;
+}
+const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number(v) || 0)));
+function statSend(o) {
+  if (!statOn()) return;
+  const body = JSON.stringify(o);
+  /* text/plain: a "simple" request, so the browser sends it straight away without asking the server first */
+  try { if (navigator.sendBeacon && navigator.sendBeacon(STAT_URL, new Blob([body], { type: 'text/plain' }))) return; } catch (_) { /* ignore */ }
+  try { fetch(STAT_URL, { method: 'POST', body, mode: 'no-cors', credentials: 'omit', keepalive: true }).catch(() => {}); } catch (_) { /* ignore */ }
+}
+/* play time grows only while the app is in use: a gap longer than USE_GAP (put away, then picked up again) counts as USE_GAP at most */
+function statTouch() {
+  const st = G && G.st;
+  if (!st) return null;
+  const now = Date.now();
+  st.ms += Math.min(Math.max(0, now - (st.last || now)), USE_GAP);
+  st.last = now;
+  st.turns = clampInt(G.turn, 0, 9999);
+  st.cups = clampInt(G.players.reduce((a, q) => a + (Number(q.total) || 0), 0), 0, 99999);
+  st.dirty = true;
+  return st;
+}
+function statEnd(st) {
+  if (!st || !st.sid) return;
+  st.seq = (st.seq || 0) + 1;
+  statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
+    turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp });
+  st.dirty = false;
+}
+function statStart(p) {
+  /* a game left unfinished and replaced by a new one: its last state goes first */
+  if (stCur && stCur !== (G && G.st) && stCur.dirty) statEnd(stCur);
+  if (!G) return;
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+  const st = G.st = {
+    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
+    form: Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone', inst: isStandalone() ? 1 : 0, nth: clampInt(useLoad().games, 1, 99999),
+    turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {},
+  };
+  stCur = st;
+  saveGame();   /* the game was saved just before this: keep the record with it, or a reopened game would lose it */
+  statSend({ k: 'start', sid: st.sid, mode: st.mode, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth });
+}
+function statDone() {
+  const st = statTouch();
+  if (st) { st.done = 1; statEnd(st); }
+}
+function statTrack(ev, p) {
+  if (ev === 'share') { statSend({ k: 'ev', kind: 'share', detail: p.from === 'result' ? 'result' : 'title' }); return; }
+  if (ev === 'install') { statSend({ k: 'ev', kind: 'install', detail: p.how || 'done' }); return; }
+  if (ev === 'game_start') { statStart(p); return; }
+  if (ev === 'game_end') return;
+  const st = statTouch();
+  if (!st) return;
+  if (ev === 'card_draw') { if (p.own) st.own++; else bump(st.cards, String(p.card_id)); if (p.kind) bump(st.fx, p.kind); }
+  else if (ev === 'mini_game') bump(st.mini, p.kind);
+  else if (ev === 'special_rule') bump(st.sp, p.type);
+}
+/* put away mid-game (home button, screen off, app closed): send what there is so far; it is updated if the game goes on */
+function statPause() {
+  const st = G && G.st;
+  if (!st || G.done || !st.dirty) return;
+  statTouch(); statEnd(st); saveGame();
 }
 
 const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'パクッとワニ', mine: 'マインスイーパー', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
@@ -5141,18 +5215,16 @@ function renderUsage() {
     '<section class="us-card"><h3>よく出たカード<span class="us-sum">まだ出ていない ' + never + '枚 / ' + onCards.length + '枚</span></h3>' + cards + '</section>' +
     '<section class="us-card"><h3>特殊ルール・人数</h3><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
       (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
-    (IS_APP && GA_ID ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数や使われたミニゲームを匿名で集計しています（Googleアナリティクス）。名前やカードの内容は送りません。</p>' +
-      '<button type="button" class="us-opt" data-us="ga" aria-pressed="' + !gaOff() + '"><span class="us-sw"></span>' + (gaOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
+    (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
+      '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
     '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
 }
 function usageAct(a, el) {
   if (a === 'day') { usageDay = Number(el.dataset.i); renderUsage(); SE.play('tick'); return; }
-  if (a === 'ga') {
-    const off = !gaOff();
-    try { if (off) localStorage.setItem(GA_OFF_KEY, '1'); else localStorage.removeItem(GA_OFF_KEY); } catch (_) { /* ignore */ }
-    window['ga-disable-' + GA_ID] = off;
-    if (!off) gaInit();
+  if (a === 'stat') {
+    const off = !statOff();
+    try { if (off) localStorage.setItem(STAT_OFF_KEY, '1'); else localStorage.removeItem(STAT_OFF_KEY); } catch (_) { /* ignore */ }
     renderUsage(); SE.play('tap'); return;
   }
   if (a === 'reset') {
@@ -6341,9 +6413,10 @@ function wireGame() {
   });
   document.addEventListener('visibilitychange', () => {
     const A = SE.A;
-    if (document.visibilityState === 'visible') { if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
-    else if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } }
+    if (document.visibilityState === 'visible') { if (G && G.st) G.st.last = Date.now(); if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
+    else { statPause(); if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } } }
   });
+  window.addEventListener('pagehide', statPause);
   const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
@@ -6379,7 +6452,7 @@ function boot(data) {
   wireEditor(); wireGame();
   checkDraft();
   G = normalizeGame(validGame(data.G) ? data.G : loadGame());
-  gaInit();
+  stCur = (G && G.st) || null;
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';

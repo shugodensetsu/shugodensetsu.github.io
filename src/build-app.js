@@ -20,8 +20,15 @@ const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
-const js = ['part-head.js', 'part-editor.js', 'part-game.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
+let js = ['part-head.js', 'part-editor.js', 'part-game.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
   .replace('__SMP_DATA__', () => JSON.stringify(smpData));
+/* the play-count collector (server/collector.js): its address is STAT_URL in part-game.js, and the page may talk to that one origin only.
+   A test build can point it at a local stand-in:  STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test */
+if (VERSION === 'test' && process.env.STAT_TEST) js = js.replace("const STAT_URL = '';", () => 'const STAT_URL = ' + JSON.stringify(process.env.STAT_TEST) + ';');
+const statUrl = (/const STAT_URL = '([^']*)';/.exec(js) || /const STAT_URL = "([^"]*)";/.exec(js) || [])[1];
+if (statUrl === undefined) throw new Error('STAT_URL not found');
+const statOrigin = statUrl ? new URL(statUrl).origin : '';
+if (statOrigin && !/^https:\/\/[a-z0-9.-]+$/.test(statOrigin) && VERSION !== 'test') throw new Error('STAT_URL must be https: ' + statUrl);
 /* test builds only (node src/build-app.js test): a handle on the game's state for the automated phone-size tests */
 const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG };' : '';
 if (/<\/script/i.test(js)) throw new Error('page.js contains a closing script tag');
@@ -37,7 +44,7 @@ const html = `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'${statOrigin ? ' ' + statOrigin : ''}; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
