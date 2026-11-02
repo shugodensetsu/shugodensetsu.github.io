@@ -8,7 +8,7 @@ name: 集計サーバーをデプロイ
 on:
   push:
     branches: [main]
-    paths: ['server/**', '.github/workflows/server.yml']
+    paths: ['server/**', '!server/.check', '.github/workflows/server.yml']
   workflow_dispatch:
 
 permissions:

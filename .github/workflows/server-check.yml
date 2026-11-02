@@ -1,0 +1,45 @@
+# 集計サーバーが動いているかだけを確かめる（デプロイはしない）。server/.check を変えて push すると動く。
+# 結果は deploy-status ブランチの check.md に書く。
+name: 集計サーバーを確かめる
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/.check']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: server-deploy
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'shugodensetsu/shugodensetsu.github.io'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 確かめる
+        shell: bash
+        env:
+          URL: https://sakego.shugodensetsu.workers.dev
+        run: |
+          out="$RUNNER_TEMP/check.md"
+          {
+            echo "# 集計サーバーの確認"
+            echo
+            echo "- 日時: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M:%S') (JST)"
+            for p in / /manifest.webmanifest /icon-192.png "/?nocache=$RANDOM"; do
+              echo
+              echo "## $p"
+              echo '```'
+              curl -s -o /dev/null -D - --max-time 15 "$URL$p" | grep -iE '^(HTTP|content-type|www-authenticate|content-security-policy|cf-ray|age|cache)' || echo "(no response)"
+              echo '```'
+            done
+          } > "$out"
+          cat "$out"
+          cd "$RUNNER_TEMP" && rm -rf st && git clone -q --depth 1 --branch deploy-status "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" st && cd st
+          cp "$out" check.md && git add check.md
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q -m "集計サーバーの確認" || true
+          git push -q origin deploy-status
