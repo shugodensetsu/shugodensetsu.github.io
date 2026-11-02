@@ -106,6 +106,13 @@ const manifest = {
     { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
     { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
+  /* shown on Android's install sheet (and reusable for a store listing) */
+  screenshots: [
+    { src: 'screens/1-title.jpg', sizes: '1080x1920', type: 'image/jpeg', form_factor: 'narrow', label: 'タイトル画面' },
+    { src: 'screens/2-card.jpg', sizes: '1080x1920', type: 'image/jpeg', form_factor: 'narrow', label: 'カードを引いて、書いてあるとおりに遊ぶ' },
+    { src: 'screens/4-mini.jpg', sizes: '1080x1920', type: 'image/jpeg', form_factor: 'narrow', label: 'ミニゲーム14種で8番勝負' },
+    { src: 'screens/6-hanko.jpg', sizes: '1080x1920', type: 'image/jpeg', form_factor: 'narrow', label: '負けた人にはハンコをドン' },
+  ],
 };
 
 const sw = `/* 酒GO!!伝説 service worker — plays offline after the first visit.

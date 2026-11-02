@@ -1233,6 +1233,21 @@ function nextTurn(force) {
   saveGame();
   renderGame();
   if (expired.length) ruleVanish(expired); else turnFx();
+  waterCheck();
+}
+/* お水の声かけ: every 40 minutes of a game (from its start, and from the last reminder), as a turn begins */
+const WATER_EVERY = 40 * 60 * 1000;
+function waterCheck() {
+  if (!G) return;
+  const now = Date.now();
+  if (!G.water) G.water = G.gid || now;
+  if (now - G.water < WATER_EVERY) return;
+  G.water = now;
+  saveGame();
+  setTimeout(() => {
+    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>お水も一杯どうぞ</small>', 'cyan', 2600); SE.play('ding'); }
+    else G.water = now - WATER_EVERY + 60 * 1000;   /* busy right now: try again in a minute */
+  }, 1800);
 }
 /* rules vanished as this turn began: say so at once, then the person about to draw drinks 1 cup per rule
    (recorded like any other drink, so 倍倍FIGHT！/天国と地獄 can follow). Drawing waits the moment this takes */
@@ -4988,6 +5003,35 @@ function useTick() {
   U.cur = gid; U.last = now;
   useSave();
 }
+/* ホーム画面に追加: Android/Chrome give an install prompt (kept from beforeinstallprompt and shown as a button);
+   iPhone/iPad Safari has none, so the button shows how to do it; inside LINE / Instagram / X's own browsers it can't be
+   done at all, so it says to open the page in Safari/Chrome first. Hidden once it runs as an installed app */
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const inAppBrowser = () => /\bLine\/|Instagram|FBAN|FBAV|Twitter|TikTok|BytedanceWebview/i.test(navigator.userAgent);
+let installEvt = null;
+function installSync() {
+  const b = $('installBtn');
+  if (b) b.hidden = !IS_APP || isStandalone() || !(installEvt || isIOS() || inAppBrowser());
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; installSync(); });
+window.addEventListener('appinstalled', () => { installEvt = null; installSync(); useTrack('install'); });
+async function installApp() {
+  SE.play('tap');
+  if (installEvt && !inAppBrowser()) {
+    const e = installEvt; installEvt = null;
+    try { e.prompt(); const r = await e.userChoice; useTrack('install_prompt', { outcome: r && r.outcome }); } catch (_) { /* ignore */ }
+    installSync();
+    return;
+  }
+  const share = '<svg class="ins-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  $('insBody').innerHTML = inAppBrowser()
+    ? '<p>いま開いているのは<b>LINEなどのアプリの中のブラウザ</b>なので、ここからは追加できません。</p><ol class="ins-steps"><li>画面の「…」や「︙」メニューを開く</li><li>「' + (isIOS() ? 'Safari' : 'ブラウザ') + 'で開く」を選ぶ</li><li>開いた画面で、もう一度このボタンを押す</li></ol>'
+    : isIOS()
+      ? '<ol class="ins-steps"><li>画面の下（iPadは上）の<b>共有ボタン</b> ' + share + ' をタップ</li><li>メニューを下へスクロールして<b>「ホーム画面に追加」</b></li><li>右上の<b>「追加」</b>で完了</li></ol>'
+      : '<ol class="ins-steps"><li>ブラウザのメニュー（︙）を開く</li><li><b>「ホーム画面に追加」</b>または<b>「アプリをインストール」</b>を選ぶ</li></ol>';
+  openOv('installOv');
+}
 /* 友達に教える: the phone's own share sheet (LINE, X, AirDrop…); without one, the link is copied */
 const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
@@ -5291,6 +5335,7 @@ function miniNext() {
   saveGame();
   renderGame();
   miniRoundFx();
+  waterCheck();
 }
 
 /* rendering: a score board for everyone on top, the roulette list / the drawn game's name in the middle */
@@ -5692,7 +5737,7 @@ const onlyOv = id => { const open = Array.from(document.querySelectorAll('.ov:no
 const COACH = [
   { k: 'draw', when: () => noOv() && G.cur.phase === 'before' && !picking, at: '#dock [data-g="draw"]', above: '#gLog', html: () =>
     '<span class="cb-step">はじめてガイド 1/4</span><p>自分の番の人が<b>「カードを引く！」</b>をタップ。</p>' +
-    (G.cur.cospa ? '' : '<p class="sub">左の「コスパ」は、先に1杯飲んでおくと、このターンで自分が飲むことになったときの量が半分になる特殊ルール。使わなくてOK。</p>') },
+    '<p class="sub">ほかのボタンは慣れてからでOK（「？ 遊び方」でいつでも見られます）。</p>' },
   { k: 'zoom', when: () => onlyOv('zoomOv') && !!zoom, place: 'top', html: () =>
     '<span class="cb-step">2/4</span><p>カードを<b>声に出して読み上げよう！</b>書いてあるとおりに遊んだら「OK！ テーブルへ」。</p>' +
     (zoomHint().auto ? '<p class="sub">下の黄色い文字は、閉じたあとアプリがすること。飲む人が決まっているカードは<b>自動で記録</b>されます。</p>' : '') +
@@ -6061,6 +6106,8 @@ function wireGame() {
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
   $('shareBtn').addEventListener('click', () => shareApp('title'));
+  $('installBtn').addEventListener('click', installApp);
+  $('insClose').addEventListener('click', () => { SE.play('tap'); closeOv('installOv'); });
   $('ageActs').addEventListener('click', e => {
     const b = e.target.closest('[data-age]'); if (!b) return;
     const a = b.dataset.age;
@@ -6287,7 +6334,7 @@ function wireGame() {
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
     if (tool) { closeTool(false); return; }
     if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
-    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
+    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'installOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
     if (G && G.cur && G.cur.select && screen === 'game') { G.cur.select = null; renderGame(); }
@@ -6340,6 +6387,7 @@ function boot(data) {
   else if (want === 'result' && G && G.done) showScreen('result');
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
+  installSync();
   if (!ageOk()) ageAsk(false);
   FXC.size();
 }

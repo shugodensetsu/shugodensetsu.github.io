@@ -34,5 +34,35 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "screens/1-title.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "タイトル画面"
+    },
+    {
+      "src": "screens/2-card.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "カードを引いて、書いてあるとおりに遊ぶ"
+    },
+    {
+      "src": "screens/4-mini.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "ミニゲーム14種で8番勝負"
+    },
+    {
+      "src": "screens/6-hanko.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "負けた人にはハンコをドン"
+    }
   ]
 }

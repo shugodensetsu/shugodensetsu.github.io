@@ -315,6 +315,15 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dialog-acts{display:flex; gap:8px}
 .dialog-acts .pbtn{flex:1}
 .dialog-acts.col{flex-direction:column}
+.t-install{align-self:center; background:none; border:2px dashed rgba(255,255,255,.55); border-radius:999px; color:var(--white); font-weight:800; font-size:13px; padding:6px 14px; cursor:pointer}
+.t-install:active{transform:scale(.97)}
+.ins-box{max-width:380px}
+.ins-lead{color:var(--ink-muted)}
+.ins-lead b{color:var(--ink)}
+.ins-steps{margin:0; padding-left:1.4em; display:flex; flex-direction:column; gap:8px; font-weight:800; font-size:15px; line-height:1.5}
+.ins-steps b{color:var(--pink)}
+.ins-ic{width:22px; height:22px; vertical-align:-5px; color:#0a84ff}
+#insBody p{margin:0 0 8px}
 .age-ov{z-index:95; background:radial-gradient(circle at 50% 40%, #3a1d88 0, var(--bg-deep) 75%)}
 .age-box{max-width:360px; align-items:center; text-align:center; gap:14px; padding:24px 20px 20px}
 .age-box h2{font-size:24px}
@@ -1777,6 +1786,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
           <button type="button" class="pbtn white small" id="statsBtn">あそびの記録</button>
           <button type="button" class="pbtn cyan small" id="shareBtn">友達に教える</button>
         </div>
+        <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加して、アプリとして使う</button>
       </div>
       <p class="fine">20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
     </section>
@@ -2021,6 +2031,15 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <h2 id="confirmTitle">ゲームを終わる？</h2>
       <p>ここまでの記録で結果発表に進みます。</p>
       <div class="dialog-acts"><button type="button" class="pbtn white small" id="confirmNo">続ける</button><button type="button" class="pbtn small" id="confirmYes">結果発表へ</button></div>
+    </div>
+  </div>
+
+  <div class="ov center" id="installOv" hidden>
+    <div class="dialog ins-box" role="dialog" aria-modal="true" aria-labelledby="insTitle">
+      <h2 id="insTitle">ホーム画面に追加</h2>
+      <p class="ins-lead">アプリのように全画面で遊べて、一度開けば<b>オフラインでもOK</b>。</p>
+      <div id="insBody"></div>
+      <div class="dialog-acts"><button type="button" class="pbtn small" id="insClose">わかった</button></div>
     </div>
   </div>
 
