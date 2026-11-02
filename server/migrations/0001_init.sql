@@ -1,5 +1,5 @@
 -- 酒GO!!伝説 play counts (Cloudflare D1). Only counts — no names, no card text, no IP addresses, no device IDs.
--- Run once in the D1 console.
+-- Applied by `wrangler d1 migrations apply DB --remote` (the predeploy script) the first time the Worker is deployed.
 
 -- one row per game: written when it starts, updated when it ends (or when the app is put away mid-game)
 CREATE TABLE IF NOT EXISTS games (

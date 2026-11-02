@@ -1,0 +1,16 @@
+{
+	"name": "sakego",
+	"main": "src/index.js",
+	"compatibility_date": "2025-10-08",
+	"workers_dev": true,
+	"observability": {
+		"enabled": false
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "sakego",
+			"database_id": "2672ede5-ede3-45e8-82a7-be781527ca85"
+		}
+	]
+}

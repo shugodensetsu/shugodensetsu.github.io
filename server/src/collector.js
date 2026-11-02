@@ -1,4 +1,4 @@
-/* 酒GO!!伝説 — the play-count collector (Cloudflare Worker "sakego-in", D1 binding "DB").
+/* 酒GO!!伝説 — the play-count collector, served at POST /v1/p by the Worker (src/index.js). D1 binding "DB".
    The app sends two small reports per game: when it starts, and when it ends (or is put away mid-game).
    Only counts are accepted: no names, no card text, no device IDs. IP addresses are never stored — they are only
    held in memory for a minute to stop one sender flooding the counts.
@@ -36,9 +36,6 @@ export default {
     const okOrigin = ORIGINS.includes(origin) || (env.EXTRA_ORIGIN && origin === env.EXTRA_ORIGIN);
     if (request.method === 'OPTIONS') {
       return okOrigin ? new Response(null, { status: 204, headers: { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400', 'vary': 'Origin' } }) : reply(403);
-    }
-    if (request.method === 'GET' && url.pathname === '/') {   // a quick "is it up?" check from a browser
-      return new Response('sakego-in: ok', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
     }
     if (url.pathname !== '/v1/p') return reply(404);
     if (request.method !== 'POST' || !okOrigin) return reply(403);

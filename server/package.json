@@ -1,0 +1,22 @@
+{
+	"name": "sakego-server",
+	"description": "酒GO!!伝説の利用状況を数える小さなサーバー（Cloudflare Workers + D1）",
+	"private": true,
+	"scripts": {
+		"predeploy": "wrangler d1 migrations apply DB --remote",
+		"deploy": "wrangler deploy"
+	},
+	"devDependencies": {
+		"wrangler": "4.136.1"
+	},
+	"cloudflare": {
+		"bindings": {
+			"STATS_PASSWORD": {
+				"description": "集計ページを開くためのパスワード。16文字以上（短いと集計ページは開けません）"
+			},
+			"DB": {
+				"description": "遊んだ回数を保存するデータベース"
+			}
+		}
+	}
+}
