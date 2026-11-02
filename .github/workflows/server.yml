@@ -82,6 +82,27 @@ jobs:
         if: steps.chk.outputs.ok == 'true' && env.STATS_PASSWORD != ''
         run: printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/5-secret.txt"
 
+      - name: 動作確認
+        id: check
+        if: steps.deploy.outcome == 'success'
+        run: |
+          log="$RUNNER_TEMP/logs/6-check.txt"
+          url=$(grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP/logs/4-deploy.txt" | head -n 1)
+          echo "URL: $url" | tee "$log"
+          [ -n "$url" ] || { echo "URL が見つからない" | tee -a "$log"; exit 1; }
+          code() { curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$@"; }
+          for i in $(seq 1 18); do c=$(code "$url/"); case "$c" in 401|403) break;; esac; sleep 5; done
+          ok=1
+          want=403; [ -n "$STATS_PASSWORD" ] && want=401
+          r=$(code "$url/"); echo "集計ページ（パスワードなし）: $r（$want なら正しい）" | tee -a "$log"; [ "$r" = "$want" ] || ok=0
+          r=$(code -X POST -H 'Origin: https://evil.example' -H 'Content-Type: text/plain' --data '{}' "$url/v1/p"); echo "よそのサイトからの報告: $r（403 なら正しい）" | tee -a "$log"; [ "$r" = 403 ] || ok=0
+          r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data 'not json' "$url/v1/p"); echo "壊れた報告: $r（400 なら正しい）" | tee -a "$log"; [ "$r" = 400 ] || ok=0
+          if [ -n "$STATS_PASSWORD" ]; then
+            body=$(curl -s --max-time 15 -u "check:$STATS_PASSWORD" "$url/?d=7")
+            if printf '%s' "$body" | grep -q 'の集計'; then echo "集計ページ（パスワードあり）: 表示できた（データベースもOK）" | tee -a "$log"; else echo "集計ページ（パスワードあり）: 表示できない" | tee -a "$log"; printf '%s' "$body" | head -c 300 | "$RUNNER_TEMP/mask.sh" | tee -a "$log"; ok=0; fi
+          fi
+          [ "$ok" = 1 ]
+
       - name: 結果を deploy-status に書く
         if: always()
         env:
@@ -99,6 +120,7 @@ jobs:
             echo "- 表: ${{ steps.migrate.outcome }}"
             echo "- デプロイ: ${{ steps.deploy.outcome }}"
             echo "- パスワード: ${{ steps.secret.outcome }}"
+            echo "- 動作確認: ${{ steps.check.outcome }}"
             echo
             echo "## URL"
             grep -ho 'https://[a-z0-9.-]*workers\.dev' "$RUNNER_TEMP"/logs/*.txt 2>/dev/null | sort -u || true
