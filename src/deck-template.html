@@ -1031,22 +1031,38 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .tr-svg.pop .tr-fly{animation:trFly 1.55s forwards}
 @keyframes trFly{0%{transform:none; animation-timing-function:cubic-bezier(.2,.8,.4,1)} 38%{transform:translate(-14px,-250px) rotate(-320deg); animation-timing-function:cubic-bezier(.5,0,.8,.4)} 100%{transform:translate(-112px,236px) rotate(-760deg)}}
 /* ワニの歯 */
-.wn-svg{width:min(96cqw, calc(96cqh * 320 / 304)); height:auto}
+.wn-svg{width:min(96cqw, calc(96cqh * 320 / 304)); height:auto; transform-origin:50% 50%; transition:transform .5s cubic-bezier(.3,1,.4,1)}
+.wn-svg.zoom{transform:scale(1.55) translate(var(--zx, 0), var(--zy, 0))}
+.pg-wani{overflow:hidden}
 .wn-tooth{transform-box:fill-box; transform-origin:50% 100%; transition:transform .12s ease-out}
 .wn-tooth.down{transform:translateY(9px) scaleY(.55)}
-.wn-tooth.down path:first-child{fill:#d6ccb0}
+.wn-tooth.down path:first-child{fill:#e6def0}
 .wn-top{transform-box:view-box; transform-origin:160px 60px; transition:transform .09s cubic-bezier(.6,0,.9,.4)}
 .wn-svg.bite .wn-top{transform:translateY(74px)}
 .wn-mouth{transition:opacity .05s .06s}
 .wn-svg.bite .wn-mouth{opacity:0}
 .wn-growl{transform-box:view-box}
-.wn-svg.lv1:not(.bite) .wn-growl{animation:wnGrowl .5s ease-in-out infinite}
-@keyframes wnGrowl{50%{transform:translateY(3px)}}
+.wn-svg.lv1:not(.bite):not(.zoom) .wn-growl{animation:wnGrowl .5s ease-in-out infinite}
+.wn-svg.tense .wn-growl{animation:wnTense .16s ease-in-out infinite}
+@keyframes wnTense{0%,100%{transform:translateY(0)} 50%{transform:translateY(2.5px)}}
 .wn-pupil{transform:translateX(var(--lx, 0px)); transition:transform .25s}
+.wn-svg.tense .wn-pupil{animation:wnLook 1s ease-in-out infinite}
+@keyframes wnLook{0%,100%{transform:translateX(var(--lx, 0px))} 30%{transform:translateX(-7px) translateY(2px)} 65%{transform:translateX(7px) translateY(2px)}}
 .wn-lid{transform-box:fill-box; transform-origin:50% 0%; transform:scaleY(0); animation:wnBlink 4.2s infinite}
+.wn-svg.lv2 .wn-lid{animation:none; transform:scaleY(.3)}
+.wn-svg.tense .wn-lid{animation:none; transform:scaleY(.22)}
+.wn-svg.bite .wn-lid{animation:none; transform:scaleY(1)}
+.wn-svg.phew .wn-lid{animation:none; transform:scaleY(.12)}
+.wn-cheek{opacity:.85}
+.wn-svg.tense .wn-cheek{opacity:1; animation:wnBlush .5s ease-in-out infinite alternate}
+@keyframes wnBlush{to{opacity:.55}}
+.wn-sweat{opacity:0; transform-box:fill-box; transform-origin:50% 0}
+.wn-svg.tense .wn-sweat{opacity:1; animation:wnSweat 1s ease-in infinite}
+@keyframes wnSweat{0%{transform:translateY(-4px) scale(.6); opacity:0} 30%{opacity:1} 100%{transform:translateY(16px) scale(1); opacity:0}}
+@keyframes wnGrowl{50%{transform:translateY(3px)}}
 @keyframes wnBlink{0%, 90%, 100%{transform:scaleY(0)} 94%{transform:scaleY(1)}}
-.wn-svg.lv2 .wn-lid{animation:none; transform:scaleY(.75)}
-.wn-svg.bite .wn-lid{animation:none; transform:scaleY(.35)}
+.wn-hmm{display:inline-block; animation:wnHmm .7s ease-in-out infinite alternate}
+@keyframes wnHmm{from{transform:rotate(-3deg)} to{transform:rotate(3deg) scale(1.06)}}
 /* 地雷原 */
 .mn-field{position:relative; width:min(92cqw, 78cqh); box-sizing:border-box; padding:10px 10px 12px; border-radius:18px; background:linear-gradient(#5f3e20, #3d2713); border:3px solid var(--ink); box-shadow:0 6px 0 var(--ink), inset 0 0 0 4px rgba(255,255,255,.06)}
 .mn-field::after{content:""; position:absolute; left:-8px; right:-8px; bottom:-12px; height:12px; background:repeating-linear-gradient(-45deg, #ffd23f 0 11px, #1b1b1b 11px 22px); border:2.5px solid var(--ink); border-radius:4px; transform:rotate(-1.2deg)}

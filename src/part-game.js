@@ -98,6 +98,76 @@ function laugh(A, t) {
 const heart = (A, t, g) => { tone(A, t, { type: 'sine', f: 78, f2: 40, bend: 0.09, d: 0.2, g: g || 1 }); tone(A, t + 0.17, { type: 'sine', f: 66, f2: 36, bend: 0.09, d: 0.24, g: (g || 1) * 0.75 }); };
 const bellHit = (A, t, f, d, g) => { tone(A, t, { type: 'sine', f, d, g, rv: 0.6 }); tone(A, t, { type: 'sine', f: f * 2.76, d: d * 0.5, g: g * 0.45, rv: 0.6 }); tone(A, t, { type: 'sine', f: f * 5.4, d: d * 0.25, g: g * 0.25, rv: 0.6 }); };
 const SOUNDS = {
+  /* ミニゲームモード */
+  mgStart: (A, t) => { [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568].forEach((f, i) => tone(A, t + i * 0.06, { type: 'square', f, d: 0.09, g: 0.07 })); brass(A, t + 0.38, [523.25, 659.25, 783.99, 1046.5], 0.6, 0.06, { lp: 1800, lp2: 4200 }); kick(A, t + 0.38, 0.8); crash(A, t + 0.38, 0.3); sparkle(A, t + 0.4, 10); },
+  mgRound: (A, t) => [0, 0.3].forEach(dt => { [1180, 2310, 3540].forEach((f, i) => tone(A, t + dt, { type: 'sine', f, d: 1.1 - i * 0.3, g: 0.17 / (i + 1), rv: 0.4 })); noise(A, t + dt, { d: 0.03, g: 0.3, type: 'highpass', f: 3000 }); }),
+  rlTick: (A, t) => { tone(A, t, { type: 'triangle', f: 1350, f2: 900, d: 0.035, g: 0.13 }); noise(A, t, { d: 0.02, g: 0.1, type: 'bandpass', f: 2500, q: 3 }); },
+  rlStop: (A, t) => { bellHit(A, t, 1568, 0.6, 0.14); tone(A, t, { type: 'square', f: 784, d: 0.12, g: 0.08 }); },
+  rlLand: (A, t) => { [784, 987.77, 1174.7].forEach((f, i) => tone(A, t + i * 0.09, { type: 'square', f, d: 0.1, g: 0.09 })); brass(A, t + 0.3, [587.33, 739.99, 880, 1174.7], 0.7, 0.07, { lp: 2000, lp2: 5000 }); snare(A, t + 0.3, 0.35); kick(A, t + 0.3, 0.9); crash(A, t + 0.3, 0.3); sparkle(A, t + 0.32, 12); },
+  mgMark: (A, t) => { kick(A, t, 0.7); noise(A, t, { d: 0.08, g: 0.35, type: 'lowpass', f: 1200 }); tone(A, t + 0.02, { type: 'triangle', f: 330, f2: 220, d: 0.15, g: 0.15 }); },
+  mgRewind: (A, t) => { tone(A, t, { type: 'sawtooth', f: 1800, f2: 250, d: 0.4, g: 0.07, lp: 3000 }); noise(A, t, { d: 0.4, g: 0.12, type: 'bandpass', f: 3000, f2: 400, q: 1.5 }); },
+  cupIn: (A, t) => { bellHit(A, t, 2637, 0.5, 0.12); bellHit(A, t + 0.07, 3136, 0.5, 0.1); kick(A, t, 1); crash(A, t, 0.35); brass(A, t + 0.05, [392, 493.88, 587.33, 783.99], 0.8, 0.08, { lp: 1600, lp2: 4500 }); noise(A, t + 0.05, { d: 1.3, g: 0.2, type: 'bandpass', f: 1100, q: 0.5, a: 0.12, rv: 0.4 }); sparkle(A, t + 0.1, 14); },
+  glug: (A, t) => [0, 0.11, 0.22, 0.33].forEach((dt, i) => { tone(A, t + dt, { type: 'sine', f: 300 - i * 25, f2: 160, d: 0.09, g: 0.22 }); noise(A, t + dt, { d: 0.06, g: 0.08, type: 'bandpass', f: 600, q: 3 }); }),
+  /* each game's own "you lost" stinger */
+  loseTaru: (A, t) => { tone(A, t, { type: 'sine', f: 300, f2: 900, bend: 0.25, d: 0.5, g: 0.22, vib: 9, vibD: 40 }); brass(A, t + 0.55, [392, 493.88], 0.14, 0.07); brass(A, t + 0.8, [261.63, 329.63, 392], 0.5, 0.07); kick(A, t + 0.55, 0.5); kick(A, t + 0.8, 0.7); },
+  loseWani: (A, t) => { noise(A, t, { d: 0.05, g: 0.5, type: 'highpass', f: 2500 }); kick(A, t, 1); [110, 130.81, 155.56].forEach(f => tone(A, t + 0.15, { type: 'triangle', f, d: 1.6, g: 0.22, rv: 0.5 })); tone(A, t + 0.15, { type: 'sawtooth', f: 55, d: 1.4, g: 0.15, lp: 600, lp2: 120 }); },
+  loseMine: (A, t) => { tone(A, t, { type: 'sine', f: 1800, f2: 300, bend: 0.7, d: 0.75, g: 0.12 }); kick(A, t + 0.75, 1.2); noise(A, t + 0.75, { d: 1, g: 0.4, type: 'lowpass', f: 1500, f2: 80 }); for (let i = 0; i < 6; i++) noise(A, t + 0.85 + i * 0.09, { d: 0.04, g: 0.15, type: 'bandpass', f: 1200 + i * 300, q: 3 }); },
+  loseSkull: (A, t) => { [146.83, 174.61, 220, 277.18].forEach(f => tone(A, t, { type: 'square', f, d: 1.6, g: 0.05, lp: 1400, lp2: 500, sus: 1, rel: 0.5, vib: 6, vibD: 4, rv: 0.6 })); tone(A, t, { type: 'sine', f: 73.42, d: 1.6, g: 0.3, rv: 0.4 }); bellHit(A, t + 0.3, 880, 1.4, 0.06); },
+  loseBalloon: (A, t) => { tone(A, t, { type: 'sawtooth', f: 900, f2: 120, bend: 1.1, d: 1.2, g: 0.12, lp: 2500, lp2: 600, vib: 18, vibD: 60 }); noise(A, t, { d: 1.1, g: 0.12, type: 'bandpass', f: 1500, f2: 400, q: 2 }); },
+  loseChamp: (A, t) => { tone(A, t, { type: 'square', f: 350, f2: 520, bend: 0.12, d: 0.55, g: 0.1, lp: 2000, vib: 7, vibD: 12 }); noise(A, t, { d: 0.6, g: 0.1, type: 'highpass', f: 5000 }); sparkle(A, t + 0.1, 8); kick(A, t + 0.6, 0.6); brass(A, t + 0.6, [233.08, 293.66], 0.6, 0.06); },
+  loseChin: (A, t) => { bellHit(A, t, 1760, 2.2, 0.2); bellHit(A, t, 2637, 1.6, 0.08); kick(A, t + 0.02, 1.1); tone(A, t + 0.02, { type: 'sine', f: 90, f2: 50, d: 0.6, g: 0.6 }); },
+  loseDice: (A, t) => [0, 0.2].forEach((dt, i) => { kick(A, t + dt, 0.9); (i ? [98, 146.83] : [116.54, 174.61]).forEach(f => tone(A, t + dt, { type: 'sawtooth', f, d: i ? 1.2 : 0.18, g: 0.12, lp: 1800, lp2: 300, rv: 0.4 })); if (i) crash(A, t + dt, 0.3); }),
+  loseCards: (A, t) => { [783.99, 659.25, 523.25, 392].forEach((f, i) => tone(A, t + i * 0.13, { type: 'triangle', f, d: 0.6, g: 0.14, rv: 0.5 })); tone(A, t + 0.55, { type: 'triangle', f: 196, d: 1, g: 0.12, rv: 0.5 }); },
+  loseIndian: (A, t) => { stab(A, t, [110, 130.81, 164.81, 220], 1.4, 0.45, { lp: 5000, lp2: 500, drive: 2, rv: 0.6 }); kick(A, t, 1.1); timpani(A, t, 55, 0.8); },
+  loseDarts: (A, t) => [0, 0.22].forEach((dt, i) => tone(A, t + dt, { type: 'square', f: i ? 123.47 : 146.83, d: i ? 0.55 : 0.17, g: 0.14, lp: 2200, sus: 1, rel: 0.05 })),
+  loseReact: (A, t) => { tone(A, t, { type: 'sine', f: 2000, f2: 350, bend: 0.6, d: 0.65, g: 0.14, vib: 6, vibD: 15 }); kick(A, t + 0.65, 0.6); tone(A, t + 0.65, { type: 'triangle', f: 180, f2: 90, d: 0.3, g: 0.2 }); },
+  loseStop: (A, t) => [0, 0.6].forEach(dt => [196, 392, 587.33, 880].forEach((f, i) => tone(A, t + dt, { type: 'sine', f, d: 1.4 - i * 0.25, g: 0.14 / (i + 1) + 0.02, rv: 0.5 }))),
+  loseBomb: (A, t) => { noise(A, t, { d: 1.5, g: 0.2, type: 'lowpass', f: 900, f2: 120, rv: 0.4 }); [392, 369.99, 349.23, 329.63].forEach((f, i) => tone(A, t + 0.2 + i * 0.2, { type: 'triangle', f, d: 0.35, g: 0.1 })); },
+  /* in-game sounds that used to be shared */
+  skLift: (A, t) => { tone(A, t, { type: 'sawtooth', f: 140, f2: 190, d: 0.45, g: 0.06, lp: 900, vib: 23, vibD: 10 }); noise(A, t, { d: 0.45, g: 0.05, type: 'bandpass', f: 700, q: 6 }); },
+  skFlip: (A, t) => { noise(A, t, { d: 0.06, g: 0.4, type: 'highpass', f: 2200 }); tone(A, t, { type: 'triangle', f: 600, f2: 1100, d: 0.06, g: 0.08 }); },
+  skSafe: (A, t) => { bellHit(A, t, 1046.5, 0.5, 0.12); tone(A, t + 0.08, { type: 'sine', f: 1568, d: 0.4, g: 0.08, rv: 0.3 }); },
+  skPlus: (A, t) => { noise(A, t, { d: 0.5, g: 0.35, type: 'bandpass', f: 400, f2: 2600, q: 0.8, a: 0.05 }); tone(A, t, { type: 'sawtooth', f: 110, f2: 220, d: 0.4, g: 0.08, lp: 700 }); },
+  skDoom: (A, t) => { [155.56, 164.81, 233.08, 246.94].forEach(f => tone(A, t, { type: 'sawtooth', f, d: 1.2, g: 0.07, lp: 3000, lp2: 400, rv: 0.6 })); noise(A, t, { d: 0.08, g: 0.6, type: 'highpass', f: 2500 }); kick(A, t, 1.2); tone(A, t, { type: 'sine', f: 2600, f2: 2400, d: 1, g: 0.04, vib: 9, vibD: 30 }); },
+  mnTick: (A, t) => { tone(A, t, { type: 'sine', f: 1250 + Math.random() * 200, d: 0.05, g: 0.1 }); noise(A, t, { d: 0.03, g: 0.08, type: 'bandpass', f: 900, q: 2 }); },
+  mnBoom: (A, t) => { kick(A, t, 1.5); tone(A, t, { type: 'sine', f: 60, f2: 25, bend: 1, d: 1.4, g: 0.9 }); noise(A, t, { d: 1.6, g: 0.7, type: 'lowpass', f: 2500, f2: 60, rv: 0.3 }); noise(A, t + 0.1, { d: 1.2, g: 0.25, type: 'bandpass', f: 300, f2: 900, q: 0.7 }); for (let i = 0; i < 10; i++) noise(A, t + 0.3 + Math.random(), { d: 0.06, g: 0.12 + Math.random() * 0.15, type: 'lowpass', f: 600 + Math.random() * 900 }); },
+  cdShuffle: (A, t) => { for (let i = 0; i < 14; i++) noise(A, t + i * 0.03, { d: 0.02, g: 0.12 + 0.1 * i / 14, type: 'highpass', f: 3500 }); },
+  cdFlip: (A, t) => { noise(A, t, { d: 0.05, g: 0.5, type: 'bandpass', f: 3200, q: 1.5 }); tone(A, t, { type: 'sine', f: 900, f2: 1700, d: 0.05, g: 0.08 }); bellHit(A, t + 0.04, 1760, 0.4, 0.06); },
+  ipDeal: (A, t) => noise(A, t, { d: 0.22, g: 0.22, type: 'bandpass', f: 600, f2: 2500, q: 0.6 }),
+  ipPeek: (A, t) => { noise(A, t, { d: 0.2, g: 0.2, type: 'highpass', f: 3000 }); [659.25, 830.61, 987.77].forEach((f, i) => tone(A, t + i * 0.07, { type: 'triangle', f, d: 0.5, g: 0.07, rv: 0.6 })); },
+  ipHide: (A, t) => noise(A, t, { d: 0.25, g: 0.18, type: 'bandpass', f: 2500, f2: 600, q: 1 }),
+  ipToss: (A, t) => { noise(A, t, { d: 0.3, g: 0.25, type: 'bandpass', f: 1500, f2: 5000, q: 0.8 }); tone(A, t, { type: 'sine', f: 500, f2: 250, d: 0.25, g: 0.06 }); },
+  ipDrum: (A, t) => { for (let i = 0; i < 30; i++) snare(A, t + i * 0.036, 0.05 + 0.25 * i / 30); timpani(A, t, 82, 0.5); },
+  ipOpen: (A, t) => { kick(A, t, 1); crash(A, t, 0.3); noise(A, t, { d: 0.06, g: 0.4, type: 'highpass', f: 2500 }); },
+  ipJoker: (A, t) => { [523.25, 415.3, 523.25, 329.63].forEach((f, i) => tone(A, t + i * 0.12, { type: 'square', f, d: 0.1, g: 0.08 })); tone(A, t + 0.45, { type: 'sawtooth', f: 65.41, d: 1, g: 0.15, lp: 500 }); },
+  dcThrow: (A, t) => { for (let i = 0; i < 8; i++) noise(A, t + i * 0.045 + Math.random() * 0.01, { d: 0.03, g: 0.18, type: 'bandpass', f: 2200 + Math.random() * 1500, q: 4 }); },
+  dcLand: (A, t) => { noise(A, t, { d: 0.04, g: 0.35, type: 'bandpass', f: 2800, q: 3 }); bellHit(A, t + 0.05, 1174.7, 0.6, 0.1); tone(A, t + 0.05, { type: 'square', f: 587.33, d: 0.1, g: 0.06 }); },
+  dcOut: (A, t) => { tone(A, t, { type: 'sawtooth', f: 220, f2: 110, d: 0.4, g: 0.12, lp: 1200 }); noise(A, t, { d: 0.1, g: 0.2, type: 'bandpass', f: 1500, q: 2 }); },
+  dcRattle: (A, t) => { for (let i = 0; i < 14; i++) noise(A, t + i * 0.04, { d: 0.025, g: 0.12, type: 'bandpass', f: 2400 + Math.random() * 1800, q: 4 }); },
+  ccThrow: (A, t) => { noise(A, t, { d: 0.2, g: 0.2, type: 'bandpass', f: 1800, f2: 800, q: 1 }); bellHit(A, t + 0.1, 2200, 0.3, 0.05); },
+  ccRattle: (A, t) => { for (let i = 0; i < 18; i++) bellHit(A, t + i * 0.035, 1800 + Math.random() * 1400, 0.08, 0.04); },
+  ccTick: (A, t) => bellHit(A, t, 2400 + Math.random() * 600, 0.12, 0.05),
+  ccMenashi: (A, t) => { tone(A, t, { type: 'triangle', f: 330, f2: 220, d: 0.35, g: 0.12 }); noise(A, t, { d: 0.2, g: 0.1, type: 'lowpass', f: 800 }); },
+  ccGreat: (A, t) => { [1318.5, 1568, 2093].forEach((f, i) => bellHit(A, t + i * 0.1, f, 1, 0.12)); kick(A, t + 0.2, 0.9); tone(A, t + 0.2, { type: 'sine', f: 110, f2: 60, d: 0.5, g: 0.5 }); sparkle(A, t + 0.25, 12); crash(A, t + 0.2, 0.3); },
+  ccBad: (A, t) => { [0, 0.18].forEach(dt => { tone(A, t + dt, { type: 'sine', f: 100, f2: 50, d: 0.5, g: 0.6 }); noise(A, t + dt, { d: 0.12, g: 0.25, type: 'lowpass', f: 700 }); }); tone(A, t + 0.3, { type: 'triangle', f: 220, f2: 110, d: 0.8, g: 0.1, rv: 0.4 }); },
+  ccHand: (A, t) => { bellHit(A, t, 1568, 0.6, 0.1); tone(A, t, { type: 'sine', f: 784, d: 0.2, g: 0.05 }); },
+  dtThrow: (A, t) => noise(A, t, { d: 0.18, g: 0.3, type: 'bandpass', f: 5000, f2: 1200, q: 1.2 }),
+  dtHit: (A, t) => { noise(A, t, { d: 0.05, g: 0.5, type: 'bandpass', f: 900, q: 2 }); tone(A, t, { type: 'triangle', f: 260, f2: 180, d: 0.12, g: 0.25 }); noise(A, t + 0.02, { d: 0.02, g: 0.2, type: 'highpass', f: 4000 }); },
+  dtDouble: (A, t) => { SOUNDS.dtHit(A, t); [0.1, 0.2].forEach((dt, i) => tone(A, t + dt, { type: 'square', f: 1046.5 * (1 + i * 0.25), d: 0.09, g: 0.08 })); },
+  dtTriple: (A, t) => { SOUNDS.dtHit(A, t); [1046.5, 1318.5, 1568].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.1, g: 0.09 })); sparkle(A, t + 0.3, 8); },
+  dtBull: (A, t) => { SOUNDS.dtHit(A, t); [784, 987.77, 1174.7, 1568, 1975.5].forEach((f, i) => tone(A, t + 0.1 + i * 0.08, { type: 'square', f, d: 0.12, g: 0.09 })); brass(A, t + 0.55, [783.99, 987.77, 1174.7, 1568], 0.8, 0.07, { lp: 2200, lp2: 5000 }); crash(A, t + 0.55, 0.35); kick(A, t + 0.55, 0.9); sparkle(A, t + 0.6, 14); },
+  dtMiss: (A, t) => { tone(A, t, { type: 'sine', f: 500, f2: 180, d: 0.3, g: 0.12 }); noise(A, t + 0.25, { d: 0.08, g: 0.2, type: 'lowpass', f: 600 }); },
+  rcReady: (A, t) => { tone(A, t, { type: 'sine', f: 523.25, d: 0.1, g: 0.14 }); tone(A, t + 0.11, { type: 'sine', f: 659.25, d: 0.14, g: 0.14 }); },
+  rcGo: (A, t) => { tone(A, t, { type: 'square', f: 1760, d: 0.18, g: 0.14 }); tone(A, t, { type: 'sine', f: 880, d: 0.25, g: 0.18 }); },
+  rcFoul: (A, t) => [0, 0.12, 0.24].forEach(dt => tone(A, t + dt, { type: 'sawtooth', f: 180, d: 0.1, g: 0.15, lp: 1500 })),
+  rcHit: (A, t) => { tone(A, t, { type: 'triangle', f: 1200, f2: 1800, d: 0.08, g: 0.14 }); bellHit(A, t + 0.06, 2349.3, 0.4, 0.07); },
+  swClick: (A, t) => { noise(A, t, { d: 0.02, g: 0.5, type: 'highpass', f: 3500 }); tone(A, t, { type: 'square', f: 2400, d: 0.015, g: 0.08 }); noise(A, t + 0.04, { d: 0.015, g: 0.25, type: 'highpass', f: 5000 }); },
+  swClack: (A, t) => { noise(A, t, { d: 0.03, g: 0.5, type: 'bandpass', f: 2000, q: 2 }); tone(A, t, { type: 'square', f: 1600, d: 0.02, g: 0.08 }); },
+  swDrum: (A, t) => { for (let i = 0; i < 10; i++) tone(A, t + i * 0.08, { type: 'square', f: i % 2 ? 1400 : 1100, d: 0.02, g: 0.05 + 0.06 * i / 10 }); },
+  swShow: (A, t) => bellHit(A, t, 1318.5, 0.4, 0.09),
+  /* ワニ: the suspense while it decides, the relief when it doesn't bite */
+  wnHmm: (A, t) => { heart(A, t, 0.7); heart(A, t + 0.62, 0.8); heart(A, t + 1.2, 0.95); [0, 0.31, 0.62, 0.93, 1.24, 1.55].forEach((dt, i) => tone(A, t + dt, { type: 'triangle', f: i % 2 ? 392 : 440, d: 0.12, g: 0.05 })); },
+  wnSafe: (A, t) => { tone(A, t, { type: 'sine', f: 660, f2: 990, bend: 0.12, d: 0.25, g: 0.14 }); bellHit(A, t + 0.1, 1567.98, 0.6, 0.09); noise(A, t, { d: 0.3, g: 0.08, type: 'bandpass', f: 900, f2: 400, q: 0.8 }); },
   /* パーティーゲーム */
   stab: (A, t) => { tone(A, t, { type: 'sine', f: 2600, f2: 1800, d: 0.07, g: 0.07 }); noise(A, t + 0.03, { d: 0.12, g: 0.55, type: 'bandpass', f: 700, f2: 300, q: 1.2 }); tone(A, t + 0.03, { type: 'triangle', f: 180, f2: 80, bend: 0.1, d: 0.2, g: 0.45 }); },
   boing: (A, t) => { tone(A, t, { type: 'sine', f: 140, f2: 760, bend: 0.28, d: 0.75, g: 0.32, vib: 13, vibD: 35 }); noise(A, t, { d: 0.06, g: 0.5, type: 'highpass', f: 1500 }); kick(A, t, 0.8); sparkle(A, t + 0.2, 6); },
@@ -2807,7 +2877,7 @@ function explodeBomb() {
       '<p class="bm-verdict ol">' + amtTxt(b.cups) + '！</p><p class="bm-meta"><span>パス ' + b.passes + '回</span><span>' + b.T.toFixed(1) + '秒で爆発</span></p>';
     $('bombBottom').innerHTML = '<div class="bm-acts"><button type="button" class="pbtn big main" data-b="rec">OK！ ' + amtTxt(b.cups) + 'を記録</button></div>';
     b.resultAt = performance.now();
-    SE.play('hell');
+    SE.play('loseBomb');
   }, 1400);
   const ov = $('bombOv');
   ov.classList.remove('lit', 'heat0', 'heat1', 'heat2', 'heat3', 'heat4', 'heat5', 'flare');
@@ -3023,7 +3093,7 @@ function swPress() {
     b.textContent = 'ストップ！'; b.classList.add('run');
     $('swT' + i).textContent = '計測中'; $('swP' + i).classList.add('measuring');
     $('tmSub').innerHTML = '画面を見ないで！<br>心の中でカウント…';
-    SE.play('select'); BGM.level(0, 0.15); vibrate(30);
+    SE.play('swClick'); BGM.level(0, 0.15); vibrate(30);
     T.cap = tmLater(swPress, (T.sec * 3 + 5) * 1000);
     return;
   }
@@ -3034,7 +3104,7 @@ function swPress() {
   $('swT' + i).textContent = '??.??';
   $('swP' + i).classList.remove('measuring');
   b.disabled = true;
-  SE.play('pop'); vibrate(30);
+  SE.play('swClack'); vibrate(30);
   if (i + 1 < T.ps.length) { T.k++; $('tmSub').innerHTML = '記録OK！<br>次の人にスマホを渡して'; tmLater(swTurn, 900); }
   else tmLater(swReveal, 600);
 }
@@ -3045,14 +3115,14 @@ function swReveal() {
   T.ps.forEach((_, j) => $('swP' + j).classList.remove('now', 'wait'));
   $('tmSub').innerHTML = '<b>結果発表…！</b>';
   BGM.level(0.3, 0.2);
-  SE.play('roll');
+  SE.play('swDrum');
   const diffs = T.times.map(t => Math.abs(t - T.sec));
   const gap = T.ps.length > 2 ? 320 : 450;
   T.ps.forEach((_, j) => tmLater(() => {
     const el = $('swT' + j);
     el.textContent = T.times[j].toFixed(2); el.classList.add('show');
     $('swD' + j).textContent = (T.ps.length > 2 ? '差 ' : fmtSec(T.sec) + 'との差 ') + diffs[j].toFixed(2) + '秒';
-    SE.play('flip');
+    SE.play('swShow');
   }, 800 + j * gap));
   tmLater(() => swResult(diffs), 800 + T.ps.length * (T.ps.length > 2 ? 320 : 450) + 300);
 }
@@ -3071,7 +3141,7 @@ function swResult(diffs) {
     const lj = T.ps.map((_, j) => j).filter(j => ds[j] === mx);
     T.ps.forEach((_, j) => $('swP' + j).classList.add(lj.includes(j) ? 'lose' : 'win'));
     const best = ds.indexOf(Math.min.apply(null, ds));
-    SE.play('bigheaven'); setTimeout(() => SE.play('hell'), 350); vibrate([60, 40, 60]);
+    SE.play('loseStop'); vibrate([60, 40, 60]);
     const q = relPos($('swP' + best)); FXC.burst(q.x, q.y, 50, { colors: GOLD, star: true, speed: 10 });
     if (lj.length === 1) {
       T.loser = T.ps[lj[0]];
@@ -3088,7 +3158,7 @@ function swResult(diffs) {
   if (d0 === d1) {
     T.ps.forEach((_, j) => $('swP' + j).classList.add('lose'));
     $('tmSub').innerHTML = 'まさかの同じ差！ 2人とも <b>' + amtTxt(T.cups) + '</b>';
-    SE.play('hell'); flash('#e8233f');
+    SE.play('loseStop'); flash('#e8233f');
     tmActs('<button type="button" class="pbtn big main" data-tm="multi">OK！ 2人に' + amtTxt(T.cups) + 'ずつ記録</button>');
     return;
   }
@@ -3096,7 +3166,7 @@ function swResult(diffs) {
   T.loser = T.ps[lose];
   $('swP' + lose).classList.add('lose'); $('swP' + win).classList.add('win');
   $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + amtTxt(T.cups);
-  SE.play('bigheaven'); vibrate([60, 40, 60]);
+  SE.play('loseStop'); vibrate([60, 40, 60]);
   const q = relPos($('swP' + win)); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 11 });
   tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>');
 }
@@ -3428,7 +3498,7 @@ const TOOL_INFO = {
   indian: { title: 'インディアンポーカー', act: 'アプリでインディアンポーカー！', cls: 'casino', stake: '低い方が（JOKERは2人とも）' },
   darts: { title: 'ダーツ勝負', act: 'アプリでダーツ！', cls: 'darts', stake: '得点の低い方が' },
   taru: { title: '酒樽危機一髪', act: '酒樽危機一髪スタート！', cls: 'taru pg', stake: '親父を飛ばした人が', btn: 'pink' },
-  wani: { title: 'ワニの歯', act: 'ワニの歯スタート！', cls: 'wani pg', stake: '噛まれた人が', btn: 'pink' },
+  wani: { title: 'パクッとワニ', act: 'パクッとワニスタート！', cls: 'wani pg', stake: 'パクッとされた人が', btn: 'pink' },
   mine: { title: '地雷原', act: '地雷原スタート！', cls: 'mine pg', stake: '地雷を踏んだ人が', btn: 'pink' },
   skull: { title: 'ドクロめくり', act: 'ドクロめくりスタート！', cls: 'skull pg', stake: 'ドクロを引いた人が', btn: 'pink' },
   balloon: { title: '風船パンク', act: '風船パンクスタート！', cls: 'balloon pg', stake: '割った人が', btn: 'pink' },
@@ -3509,8 +3579,10 @@ function toolFinish(losers, msg, panel) {
     if (!lose && !reduceMotion) { const q = relPos(el); FXC.burst(q.x, q.y, 40, { colors: GOLD, star: true, speed: 10 }); }
   });
   $('toolSub').innerHTML = msg;
-  if (losers.length === T.ps.length) { SE.play('hell'); flash('#e8233f'); shake(false); }
-  else { SE.play('bigheaven'); setTimeout(() => SE.play('hell'), 350); }
+  /* every game has its own losing stinger */
+  const ls = LOSE_SE[T.kind] || 'hell';
+  if (losers.length === T.ps.length) { SE.play(ls); flash('#e8233f'); shake(false); }
+  else SE.play(ls);
   vibrate([60, 40, 120]);
   BGM.level(0.15, 0.05);
   toolActs(losers.length === 1
@@ -3529,6 +3601,8 @@ function loseLine(T, losers, tie) {
 const SUIT_CH = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const cardTxt = c => '<span class="' + (c.s === 'h' || c.s === 'd' ? 'cs-red' : 'cs-blk') + '">' + SUIT_CH[c.s] + '</span>' + rankName(c);
 const GROUP_STAKE = { dice: 'いちばん小さい目の人が', cards: 'いちばん低い人（A=1）が', indian: 'いちばん低い人とJOKERの人が' };
+const LOSE_SE = { taru: 'loseTaru', wani: 'loseWani', mine: 'loseMine', skull: 'loseSkull', balloon: 'loseBalloon', champ: 'loseChamp', chinchiro: 'loseChin',
+  dice: 'loseDice', cards: 'loseCards', indian: 'loseIndian', darts: 'loseDarts', react: 'loseReact' };
 const stakeLine = T => '<p class="tl-stake">' + ((tlGroup(T) && GROUP_STAKE[T.kind]) || TOOL_INFO[T.kind].stake) + ' <b>' + amtTxt(T.cups) + '</b></p>';
 
 /* dice faces */
@@ -3590,7 +3664,7 @@ function duelDraw() {
   T.busy = true;
   toolActs('', false);
   if (T.kind === 'indian') {
-    T.ps.forEach((_, j) => { T.res[j] = T.deck.pop(); toolLater(() => { const box = $('tlS' + j); box.innerHTML = flipCard('tlC' + j, null, false); box.firstElementChild.classList.add('deal'); SE.play('deal'); }, j * 380); });
+    T.ps.forEach((_, j) => { T.res[j] = T.deck.pop(); toolLater(() => { const box = $('tlS' + j); box.innerHTML = flipCard('tlC' + j, null, false); box.firstElementChild.classList.add('deal'); SE.play(T.kind === 'indian' ? 'ipDeal' : 'deal'); }, j * 380); });
     toolLater(() => { T.busy = false; T.k = 0; indianPeekTurn(); }, Math.max(1000, T.ps.length * 380 + 300));
     return;
   }
@@ -3598,17 +3672,17 @@ function duelDraw() {
   const after = () => { T.busy = false; if (i + 1 < T.ps.length) { T.k++; toolLater(duelTurn, 700); } else toolLater(duelResult, 750); };
   if (T.kind === 'dice') {
     const v = 1 + Math.floor(Math.random() * 6);
-    SE.play('roll');
-    rollDie($('tlS' + i), v, 13, () => { T.res[i] = v; const el = $('tlV' + i); el.textContent = v; tmPop(el); SE.play('ding'); after(); });
+    SE.play('dcRattle');
+    rollDie($('tlS' + i), v, 13, () => { T.res[i] = v; const el = $('tlV' + i); el.textContent = v; tmPop(el); SE.play('dcLand'); after(); });
     return;
   }
   const c = T.deck.pop(), box = $(tlGroup(T) ? 'tlC' : 'tlC' + i);
   T.res[i] = c;
-  box.classList.add('suspense'); SE.play('roll');
+  box.classList.add('suspense'); SE.play('cdShuffle');
   toolLater(() => {
     box.classList.remove('suspense');
     box.querySelector('.flip-f').innerHTML = pcardFace(c);
-    box.classList.add('open'); SE.play('flip');
+    box.classList.add('open'); SE.play('cdFlip');
     const el = $('tlV' + i); el.innerHTML = tlGroup(T) ? cardTxt(c) : rankName(c); tmPop(el);
     after();
   }, 850);
@@ -3641,14 +3715,14 @@ function indianPeek() {
       b.querySelector('.flip-f').innerHTML = cj.joker ? jokerFace() : pcardFace(cj);
       b.classList.add('open'); $('tlP' + j).classList.add('peek');
     });
-    SE.play('flip');
+    SE.play('ipPeek');
     $('toolSub').innerHTML = 'みんなのカードはこれ！<small>覚えたら閉じて' + (last ? '、引き直すか決めよう' : '、スマホを ' + esc(pname(T.ps[i + 1])) + ' に渡そう') + '</small>';
     toolActs('<button type="button" class="pbtn big main" data-tl="hide">' + (last ? '見た！ 次へ' : '見た！ ' + esc(pname(T.ps[i + 1])) + ' に渡す') + '</button>');
     return;
   }
   box.querySelector('.flip-f').innerHTML = c.joker ? jokerFace() : pcardFace(c);
   box.classList.add('open'); $('tlP' + o).classList.add('peek');
-  SE.play('flip');
+  SE.play('ipPeek');
   $('toolSub').innerHTML = ipName(o) + ' のカードはこれ！<small>覚えたら閉じて' + (i ? '、引き直すか決めよう' : '、スマホを ' + esc(pname(T.ps[o])) + ' に渡そう') + '</small>';
   toolActs('<button type="button" class="pbtn big main" data-tl="hide">' + (i ? '見た！ 次へ' : '見た！ ' + esc(pname(T.ps[o])) + ' に渡す') + '</button>');
 }
@@ -3657,7 +3731,7 @@ function indianHide() {
   if (T.phase !== 'peeking') return;
   if (tlGroup(T)) {
     T.ps.forEach((_, j) => { $('tlC' + j).classList.remove('open'); $('tlP' + j).classList.remove('peek'); });
-    SE.play('swoosh');
+    SE.play('ipHide');
     toolActs('', false);
     toolLater(() => {
       T.ps.forEach((_, j) => { $('tlC' + j).querySelector('.flip-f').innerHTML = ''; });
@@ -3666,7 +3740,7 @@ function indianHide() {
     return;
   }
   $('tlC' + o).classList.remove('open'); $('tlP' + o).classList.remove('peek');
-  SE.play('swoosh');
+  SE.play('ipHide');
   toolActs('', false);
   /* wait for the card to turn back over before the next person sees the screen */
   toolLater(() => { $('tlC' + o).querySelector('.flip-f').innerHTML = ''; if (i === 0) { T.k = 1; indianPeekTurn(); } else indianRedrawPhase(); }, 520);
@@ -3692,10 +3766,10 @@ function indianRedraw(j) {
   $('tlA' + j).innerHTML = '';
   const box = $('tlS' + j);
   box.firstElementChild.classList.add('toss');
-  SE.play('swoosh');
+  SE.play('ipToss');
   toolLater(() => {
     box.innerHTML = flipCard('tlC' + j, null, false);
-    box.firstElementChild.classList.add('deal'); SE.play('deal');
+    box.firstElementChild.classList.add('deal'); SE.play('ipDeal');
     ipRedrawBtn(j);
     T.busy = false;
     $('toolSub').innerHTML = ipName(j) + ' が引き直した！<small>' + (T.redrawn.every(Boolean) ? (tlGroup(T) ? '全員' : '2人とも') + '引き直したら、いざ勝負！' : (tlGroup(T) ? 'ほかに引き直す人は？' : 'もう1人も引き直す？') + ' このままでよければ「勝負！」') + '</small>';
@@ -3708,7 +3782,7 @@ function indianOpen() {
   T.ps.forEach((_, j) => { $('tlA' + j).innerHTML = ''; });
   toolActs('', false);
   $('toolSub').innerHTML = '<b>せーの…！</b>';
-  SE.play('roll');
+  SE.play('ipDrum');
   T.ps.forEach((_, j) => $('tlC' + j).classList.add('suspense'));
   toolLater(() => {
     T.ps.forEach((_, j) => {
@@ -3718,8 +3792,8 @@ function indianOpen() {
       box.classList.add('open');
       $('tlV' + j).innerHTML = c.joker ? 'JOKER' : tlGroup(T) ? cardTxt(c) : rankName(c);
     });
-    SE.play('flip');
-    if (T.res.some(c => c.joker)) { flash('#b17cff'); telop('JOKER!!', 'devil', 1500); SE.play('devil'); }
+    SE.play('ipOpen');
+    if (T.res.some(c => c.joker)) { flash('#b17cff'); telop('JOKER!!', 'devil', 1500); SE.play('ipJoker'); }
     toolLater(duelResult, T.res.some(c => c.joker) ? 1500 : 900);
   }, 1200);
 }
@@ -3828,7 +3902,7 @@ function dartsThrow() {
   const ex = at.x + (Math.random() - 0.5) * 12, ey = at.y + (Math.random() - 0.5) * 12;
   const hit = dartScore(ex, ey);
   T.res[i] = hit.score;
-  SE.play('swoosh');
+  SE.play('dtThrow');
   $('dtAim').hidden = true;
   const x = dartPct(ex), y = dartPct(ey);
   /* it flies in from the thrower (below the board, big and close), shrinks onto the spot and sticks with a little wobble */
@@ -3843,19 +3917,19 @@ function dartsThrow() {
     tmPop(el);
     const board = $('dtBoard'), q = relPos(board);
     if (hit.kind === 'bull') {
-      SE.play('bigheaven'); flash('#ffd83d');
+      SE.play('dtBull'); flash('#ffd83d');
       board.classList.remove('lit'); void board.offsetWidth; board.classList.add('lit');
       FXC.burst(q.x, q.y, 90, { colors: GOLD, star: true, speed: 13 });
       telop('BULL!!', 'angel', 1400);
     } else if (hit.kind === 'triple') {
-      SE.play('ding'); SE.play('coin', 0.1);
+      SE.play('dtTriple');
       FXC.burst(q.x, q.y, 40, { colors: ['#35e0ff', '#ffffff', '#ff4fa3'], star: true, speed: 9 });
       telop('TRIPLE!<small>' + hit.label + ' ' + hit.score + '点</small>', 'cyan sm', 1200);
     } else if (hit.kind === 'double') {
-      SE.play('ding');
+      SE.play('dtDouble');
       telop('DOUBLE!<small>' + hit.label + ' ' + hit.score + '点</small>', 'lime sm', 1200);
-    } else if (hit.kind === 'miss') SE.play('buzz');
-    else { SE.play('pop'); SE.play('tick', 0.05); }
+    } else if (hit.kind === 'miss') SE.play('dtMiss');
+    else { SE.play('dtHit'); }
     vibrate(hit.kind === 'bull' ? [60, 40, 90] : 40);
     if (i + 1 < T.ps.length) { T.k++; toolLater(dartsTurn, 1400); }
     else toolLater(() => {
@@ -3888,7 +3962,7 @@ function diceThrow() {
   const done = v => {
     T.res[i] = v;
     const el = $('tlV' + i); el.textContent = v; tmPop(el);
-    SE.play('ding');
+    SE.play('dcLand');
     $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[i])) + '</b>：<b class="big-v">' + v + '</b>！';
     T.busy = false;
     if (i + 1 < T.ps.length) { T.k++; toolLater(diceTurn, 1300); } else toolLater(diceResult, 1100);
@@ -3897,15 +3971,15 @@ function diceThrow() {
   T.bowlReady.then(() => {
     if (tool !== T) return;
     if (T.bowl) {
-      SE.play('swoosh');
+      SE.play('dcThrow');
       T.bowl.throwDice(1).then(res => {
         if (tool !== T) return;
-        if (res.out[0]) { T.busy = false; $('toolSub').innerHTML = '<b>お椀の外に出た！</b> もう一回振ってね'; SE.play('buzz'); toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>'); return; }
+        if (res.out[0]) { T.busy = false; $('toolSub').innerHTML = '<b>お椀の外に出た！</b> もう一回振ってね'; SE.play('dcOut'); toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>'); return; }
         done(res.values[0]);
       });
     } else {
       const v = 1 + Math.floor(Math.random() * 6);
-      SE.play('roll');
+      SE.play('dcRattle');
       rollDie($('tlDie'), v, 13, () => done(v));
     }
   });
@@ -3961,16 +4035,16 @@ function chinRoll() {
   T.bowlReady.then(() => {
     if (tool !== T) return;
     if (T.bowl) {
-      SE.play('swoosh');
+      SE.play('ccThrow');
       T.bowl.throwDice(3).then(res => { if (tool === T) chinJudge(res.values, res.out); });
       return;
     }
     const d = [0, 1, 2].map(() => 1 + Math.floor(Math.random() * 6));
-    SE.play('roll');
+    SE.play('ccRattle');
     const bowl = $('ccBowl');
     if (bowl && !reduceMotion) bowl.classList.add('shake');
     let left = 3;
-    d.forEach((v, j) => rollDie($('ccD' + j), v, 10 + j * 4, () => { SE.play('tick'); if (--left === 0) { if (bowl) bowl.classList.remove('shake'); toolLater(() => chinJudge(d, null), 250); } }));
+    d.forEach((v, j) => rollDie($('ccD' + j), v, 10 + j * 4, () => { SE.play('ccTick'); if (--left === 0) { if (bowl) bowl.classList.remove('shake'); toolLater(() => chinJudge(d, null), 250); } }));
   });
 }
 function chinJudge(d, out) {
@@ -3981,7 +4055,7 @@ function chinJudge(d, out) {
   const shown = sho ? '' : '（' + d.join('・') + '）';
   if (!h && T.tries < 3) {
     $('toolSub').innerHTML = d.join('・') + ' は<b>目なし</b>…！ あと<b>' + (3 - T.tries) + '</b>回振れる';
-    SE.play('poof');
+    SE.play('ccMenashi');
     toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">もう一回振る！</button>');
     return;
   }
@@ -3993,14 +4067,14 @@ function chinJudge(d, out) {
   tmPop(el);
   $('toolSub').innerHTML = '<b>' + esc(pname(p)) + '</b>：' + (sho ? 'サイコロがお椀の外へ！ <b>ションベン</b>…' : d.join('・') + ' → <b>' + hand.name + '</b>' + (hand.rank >= 80 ? '！！' : hand.rank <= 0 ? '…' : ''));
   if (hand.rank >= 80) {
-    SE.play('bigheaven');
+    SE.play('ccGreat');
     const q = relPos($('tlBowl')); FXC.burst(q.x, q.y, 70, { colors: GOLD, star: true, speed: 12 });
     telop(hand.rank === 100 ? 'ピンゾロ！！<small>負けた人は×5</small>' : hand.name === 'シゴロ' ? 'シゴロ！<small>負けた人は×2</small>' : hand.name + '！<small>負けた人は×3</small>', hand.rank === 100 ? 'angel' : 'sm', 1500);
   } else if (hand.rank <= 0) {
-    SE.play('hell'); flash('#e8233f');
+    SE.play('ccBad'); flash('#e8233f');
     if (hand.rank < 0) telop('ヒフミ……<small>負けたら×2</small>', 'devil', 1500);
     else if (sho) telop('ションベン！', 'red sm', 1300);
-  } else SE.play('ding');
+  } else SE.play('ccHand');
   if (i + 1 < T.ps.length) toolActs('<button type="button" class="pbtn big main" data-tl="next">次は ' + esc(pname(T.ps[i + 1])) + ' ▶</button>');
   else toolLater(chinResult, 1300);
 }
@@ -4024,7 +4098,7 @@ const PARTY_HINT = {
   taru: '穴をタップして、剣を1本刺す', wani: '歯を1本タップして押す', mine: 'マスを1つタップして掘る',
   skull: '好きな枚数めくって「次の人へ」（1枚以上）', balloon: '空気を1〜3回入れて「次の人へ」', champ: 'ボトルを1〜5回振って「次の人へ」',
 };
-const PARTY_LOSE = { taru: 'が親父を飛ばした！', wani: 'が噛まれた！', mine: 'が地雷を踏んだ！', skull: 'がドクロを引いた！', balloon: 'が風船を割った！', champ: 'が栓を飛ばした！' };
+const PARTY_LOSE = { taru: 'が親父を飛ばした！', wani: 'がパクッとされた！', mine: 'が地雷を踏んだ！', skull: 'がドクロを引いた！', balloon: 'が風船を割った！', champ: 'が栓を飛ばした！' };
 const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pips = (n, max) => '●'.repeat(n) + '○'.repeat(Math.max(0, max - n));
 const pgNow = () => tool.ps[tool.k % tool.ps.length];
@@ -4170,69 +4244,92 @@ function taruPop() {
   partyLose(1800);
 }
 
-/* ワニの歯: a crocodile with its mouth wide open and 10 teeth; one hidden tooth snaps the jaw shut */
+/* パクッとワニ: a cute crocodile with its mouth wide open and 10 teeth; one hidden tooth makes it snap shut (パクッ).
+   Pressing a tooth zooms in on it for about 2 seconds — どっちかな〜 — before it either lets you off or bites */
 const WANI_N = 10;
 const WANI_TEETH = (() => { const out = []; for (let k = 0; k < WANI_N; k++) { const ph = (162 - k * 16) * Math.PI / 180; out.push({ x: 160 + 115 * Math.cos(ph), y: 171 + 46 * Math.sin(ph), s: 0.82 + 0.3 * Math.sin(ph) }); } return out; })();
 function waniSVG() {
+  const INK = '#150733';
   const qb = t => { const u = 1 - t; return [u * u * 296 + 2 * u * t * 160 + t * t * 24, u * u * 150 + 2 * u * t * 108 + t * t * 150]; };
+  /* little round teeth along the upper jaw */
   let top = '';
-  for (let k = 1; k <= 9; k++) { const [x, y] = qb(k / 10); top += '<path d="M' + (x - 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' L' + x.toFixed(1) + ' ' + (y + 13).toFixed(1) + ' L' + (x + 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' Z" fill="#fffdf2" stroke="#9e9682" stroke-width="1.3" stroke-linejoin="round"/>'; }
+  for (let k = 1; k <= 9; k++) { const [x, y] = qb(k / 10); top += '<path d="M' + (x - 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' Q' + (x - 7).toFixed(1) + ' ' + (y + 11).toFixed(1) + ' ' + x.toFixed(1) + ' ' + (y + 11).toFixed(1) + ' Q' + (x + 7).toFixed(1) + ' ' + (y + 11).toFixed(1) + ' ' + (x + 7).toFixed(1) + ' ' + (y - 2).toFixed(1) + ' Z" fill="#fff" stroke="#cfc6dd" stroke-width="1.4"/>'; }
   const teeth = WANI_TEETH.map((t, i) => '<g transform="translate(' + t.x.toFixed(1) + ' ' + t.y.toFixed(1) + ') scale(' + t.s.toFixed(2) + ')"><g class="wn-tooth" id="wnT' + i + '">' +
-    '<path d="M-10 3 C -10 -10, -5 -24, 0 -28 C 5 -24, 10 -10, 10 3 Z" fill="#fffdf2" stroke="#8f8771" stroke-width="1.6"/><path d="M-4 -3 C -4 -12, -2 -19, 0 -22" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/></g></g>').join('');
+    '<path d="M-10 3 L-10 -12 Q-10 -25 0 -25 Q10 -25 10 -12 L10 3 Z" fill="#fff" stroke="#c9bfd9" stroke-width="1.8"/><path d="M-4.5 -4 L-4.5 -14 Q-4.5 -19 -1 -20.5" stroke="#eef3ff" stroke-width="3" fill="none" stroke-linecap="round"/></g></g>').join('');
   /* a round tap area per tooth, as big as it can be without reaching into the next tooth's */
   const hits = WANI_TEETH.map((t, i) => {
     const near = WANI_TEETH.filter((_, j) => Math.abs(j - i) === 1).map(u => Math.hypot(u.x - t.x, u.y - t.y));
     return '<circle cx="' + t.x.toFixed(1) + '" cy="' + (t.y - 12 * t.s).toFixed(1) + '" r="' + Math.min(19, Math.min.apply(null, near) / 2).toFixed(1) + '" class="pg-hit" data-tl="hit" data-i="' + i + '"/>';
   }).join('');
-  const eye = x => '<g transform="translate(' + x + ' 42)"><circle r="27" fill="url(#wnSkin)" stroke="#0d3a17" stroke-width="3"/><circle r="18" fill="url(#wnIris)" stroke="#0d3a17" stroke-width="2"/>' +
-    '<g class="wn-pupil"><ellipse rx="4" ry="13" fill="#150733"/><circle cx="-6" cy="-7" r="3.2" fill="#fff"/></g>' +
-    '<path class="wn-lid" d="M-19.5 0 A19.5 19.5 0 0 1 19.5 0 Z" fill="#43b552" stroke="#0d3a17" stroke-width="2"/></g>';
-  let ridge = '';
-  [[128, 64], [146, 58], [160, 56], [174, 58], [192, 64]].forEach(([x, y]) => { ridge += '<path d="M' + (x - 7) + ' ' + (y + 4) + ' L' + x + ' ' + (y - 6) + ' L' + (x + 7) + ' ' + (y + 4) + ' Z" fill="#2a8a3e" stroke="#0d3a17" stroke-width="1.8" stroke-linejoin="round"/>'; });
+  /* big round eyes on top of the head, shiny pupils, blinking lids */
+  const eye = x => '<g class="wn-eye" transform="translate(' + x + ' 40)"><circle r="31" fill="url(#wnSkin)" stroke="' + INK + '" stroke-width="3.2"/>' +
+    '<circle r="23" fill="#fff" stroke="' + INK + '" stroke-width="2.4"/>' +
+    '<g class="wn-pupil"><circle r="13.5" fill="' + INK + '"/><circle cx="-5" cy="-5.5" r="5" fill="#fff"/><circle cx="4.5" cy="4.5" r="2.2" fill="#fff"/></g>' +
+    '<path class="wn-lid" d="M-24 0 A24 24 0 0 1 24 0 A24 24 0 0 1 -24 0 Z" fill="#7fdc78" stroke="' + INK + '" stroke-width="2.4"/></g>';
   return '<svg class="wn-svg" id="wnSvg" viewBox="0 0 320 304" role="img" aria-label="ワニ">' +
-    '<defs><linearGradient id="wnSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7be07c"/><stop offset=".55" stop-color="#36a64a"/><stop offset="1" stop-color="#1d7a33"/></linearGradient>' +
-    '<linearGradient id="wnSkin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3fae4f"/><stop offset="1" stop-color="#1b6e2e"/></linearGradient>' +
-    '<radialGradient id="wnIris" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#fff59a"/><stop offset=".6" stop-color="#f4c531"/><stop offset="1" stop-color="#c98a0a"/></radialGradient>' +
-    '<radialGradient id="wnMouth" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#7a1030"/><stop offset=".55" stop-color="#e04772"/><stop offset="1" stop-color="#ff86a6"/></radialGradient></defs>' +
-    '<ellipse cx="160" cy="294" rx="140" ry="10" fill="rgba(0,0,0,.3)"/>' +
-    '<g class="wn-mouth"><ellipse cx="160" cy="166" rx="125" ry="56" fill="url(#wnMouth)" stroke="#0d3a17" stroke-width="3"/>' +
-    '<path d="M108 204 Q160 150 212 204 Q160 226 108 204 Z" fill="#ff9db4" stroke="#b3264d" stroke-width="2"/><path d="M160 178 L160 214" stroke="#d94f73" stroke-width="2"/></g>' +
-    '<path d="M30 172 A130 52 0 0 0 290 172 C 292 236, 236 290, 160 292 C 84 290, 28 236, 30 172 Z" fill="url(#wnSkin2)" stroke="#0d3a17" stroke-width="3"/>' +
-    '<path d="M74 246 Q160 274 246 246 M92 266 Q160 288 228 266" fill="none" stroke="#bff09a" stroke-width="5" stroke-linecap="round" opacity=".55"/>' +
-    '<circle cx="58" cy="214" r="5" fill="#1d7a33"/><circle cx="262" cy="214" r="5" fill="#1d7a33"/><circle cx="76" cy="230" r="3.5" fill="#1d7a33"/><circle cx="244" cy="230" r="3.5" fill="#1d7a33"/>' +
+    '<defs><linearGradient id="wnSkin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b6f5a0"/><stop offset=".55" stop-color="#78d977"/><stop offset="1" stop-color="#4fbf63"/></linearGradient>' +
+    '<linearGradient id="wnSkin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fdc78"/><stop offset="1" stop-color="#47b45c"/></linearGradient>' +
+    '<radialGradient id="wnMouth" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#b8325b"/><stop offset=".6" stop-color="#ff6f93"/><stop offset="1" stop-color="#ffa5bd"/></radialGradient></defs>' +
+    '<ellipse cx="160" cy="294" rx="140" ry="10" fill="rgba(0,0,0,.25)"/>' +
+    '<g class="wn-mouth"><ellipse cx="160" cy="166" rx="125" ry="56" fill="url(#wnMouth)" stroke="' + INK + '" stroke-width="3"/>' +
+    '<path d="M112 206 Q160 158 208 206 Q160 230 112 206 Z" fill="#ffc0cf" stroke="#d94f73" stroke-width="2.2"/><path d="M160 186 L160 214" stroke="#ef7d9a" stroke-width="2.2" stroke-linecap="round"/></g>' +
+    /* lower jaw: a soft round chin with a cream belly */
+    '<path d="M30 172 A130 52 0 0 0 290 172 C 292 236, 236 290, 160 292 C 84 290, 28 236, 30 172 Z" fill="url(#wnSkin2)" stroke="' + INK + '" stroke-width="3"/>' +
+    '<path d="M78 236 Q160 268 242 236 Q228 280 160 282 Q92 280 78 236 Z" fill="#fff6c9" stroke="' + INK + '" stroke-width="2.2" opacity=".95"/>' +
+    '<path d="M104 252 Q160 270 216 252 M124 268 Q160 278 196 268" fill="none" stroke="#f0d98a" stroke-width="3" stroke-linecap="round"/>' +
     teeth +
     '<g class="wn-top" id="wnTop"><g class="wn-growl">' +
-    '<path d="M24 150 C 20 96, 72 50, 160 48 C 248 50, 300 96, 296 150 Q 160 108 24 150 Z" fill="url(#wnSkin)" stroke="#0d3a17" stroke-width="3"/>' + top +
-    '<ellipse cx="96" cy="100" rx="9" ry="5" fill="#2a8a3e"/><ellipse cx="224" cy="100" rx="9" ry="5" fill="#2a8a3e"/><ellipse cx="128" cy="86" rx="6" ry="4" fill="#2a8a3e"/><ellipse cx="192" cy="86" rx="6" ry="4" fill="#2a8a3e"/>' +
-    '<path d="M128 116 Q160 98 192 116 Q160 126 128 116 Z" fill="#4cc25c" stroke="#0d3a17" stroke-width="2.4"/>' +
-    '<ellipse cx="148" cy="112.5" rx="5.5" ry="3.4" fill="#0d3a17"/><ellipse cx="172" cy="112.5" rx="5.5" ry="3.4" fill="#0d3a17"/>' +
-    ridge + eye(100) + eye(220) + '</g></g>' + hits + '</svg>';
+    '<path d="M24 150 C 20 96, 72 50, 160 48 C 248 50, 300 96, 296 150 Q 160 108 24 150 Z" fill="url(#wnSkin)" stroke="' + INK + '" stroke-width="3"/>' + top +
+    /* soft spots, a round snout with two little nostrils, pink cheeks */
+    '<circle cx="92" cy="104" r="7" fill="#a8ef94"/><circle cx="228" cy="104" r="7" fill="#a8ef94"/><circle cx="118" cy="90" r="4.5" fill="#a8ef94"/><circle cx="202" cy="90" r="4.5" fill="#a8ef94"/>' +
+    '<ellipse cx="160" cy="108" rx="30" ry="13" fill="#8ee485" stroke="' + INK + '" stroke-width="2.4"/>' +
+    '<ellipse cx="149" cy="107" rx="4.2" ry="5.4" fill="' + INK + '"/><ellipse cx="171" cy="107" rx="4.2" ry="5.4" fill="' + INK + '"/>' +
+    '<ellipse class="wn-cheek" cx="66" cy="126" rx="15" ry="8" fill="#ff9fbf"/><ellipse class="wn-cheek" cx="254" cy="126" rx="15" ry="8" fill="#ff9fbf"/>' +
+    eye(104) + eye(216) + '<g class="wn-sweat"><path d="M268 58 Q276 72 268 80 Q260 72 268 58 Z" fill="#9fe2ff" stroke="' + INK + '" stroke-width="2"/></g>' +
+    '</g></g>' + hits + '</svg>';
 }
 PARTY.wani = {
   init(T) { T.trap = rint(0, WANI_N - 1); T.down = []; },
-  info: T => 'のこりの歯 <b>' + (WANI_N - T.down.length) + '</b>（噛む歯は1本）',
+  info: T => 'のこりの歯 <b>' + (WANI_N - T.down.length) + '</b>（パクッとする歯は1本）',
   art: () => waniSVG(),
   hit(T, i) {
     if (T.down.includes(i)) return;
     T.busy = true; T.down.push(i);
     const t = WANI_TEETH[i], svg = $('wnSvg');
     $('wnT' + i).classList.add('down');
+    /* the eyes look at the tooth; the zoom heads most of the way toward it */
     svg.style.setProperty('--lx', ((t.x - 160) / 22).toFixed(1) + 'px');
+    svg.style.setProperty('--zx', ((160 - t.x) / 320 * 70).toFixed(1) + '%');
+    svg.style.setProperty('--zy', ((150 - (t.y - 10)) / 304 * 40).toFixed(1) + '%');
     SE.play('tooth'); vibrate(20);
     partyStake();
-    if (i === T.trap) { toolLater(waniBite, 300); return; }
-    const left = WANI_N - T.down.length;
-    svg.classList.toggle('lv1', left <= 5); svg.classList.toggle('lv2', left <= 3);
-    toolLater(() => partyNext(420), 380);
+    toolLater(() => { svg.classList.add('zoom', 'tense'); SE.play('wnHmm'); $('toolSub').innerHTML = '<b class="wn-hmm">どっちかな〜…</b>'; }, 150);
+    toolLater(() => {
+      if (i === T.trap) { waniBite(); return; }
+      svg.classList.remove('tense');
+      svg.classList.add('phew');
+      SE.play('wnSafe'); vibrate(15);
+      $('toolSub').innerHTML = '<b>セーフ！</b>';
+      const q = relPos(svg); FXC.burst(q.x, q.y, 24, { colors: ['#ffffff', '#b6f5a0', '#ffd83d'], star: true, speed: 7 });
+      toolLater(() => {
+        svg.classList.remove('zoom', 'phew');
+        const left = WANI_N - T.down.length;
+        svg.classList.toggle('lv1', left <= 5); svg.classList.toggle('lv2', left <= 3);
+        toolLater(() => partyNext(300), 450);
+      }, 650);
+    }, 2150);
   },
 };
 function waniBite() {
   const svg = $('wnSvg');
+  svg.classList.remove('tense');
   svg.classList.add('bite');
+  $('toolSub').innerHTML = '<b>パクッ！！</b>';
   SE.play('bite'); flash('#ff2a3a'); shake(true);
   toolLater(() => { const q = relPos(svg); FXC.burst(q.x, q.y + q.h * 0.15, 40, { colors: ['#ffffff', '#ff2a3a', '#ffd23f'], star: true, speed: 11 }); }, 90);
-  telop('ガブッ！！', 'red', 1300);
-  partyLose(1700);
+  toolLater(() => svg.classList.remove('zoom'), 900);
+  telop('パクッ！！', 'red', 1300);
+  partyLose(1900);
 }
 
 /* 地雷原: 5×5 ground, 6 mines (never under the first spade); an opened square shows how many mines touch it */
@@ -4275,10 +4372,10 @@ function mineBoom(T, i, el) {
   const f = $('pgArt'), r = el.getBoundingClientRect(), fr = f.getBoundingClientRect(), q = relPos(el);
   const at = 'left:' + (r.left - fr.left + r.width / 2).toFixed(0) + 'px;top:' + (r.top - fr.top + r.height / 2).toFixed(0) + 'px';
   f.insertAdjacentHTML('beforeend', '<i class="mn-blast" style="' + at + '"></i>' + [[-46, -64], [38, -72], [4, -100], [-10, -40]].map(([x, y], k) => '<i class="mn-smoke" style="' + at + ';--sx:' + x + 'px;--sy:' + y + 'px;animation-delay:' + (k * 0.08) + 's"></i>').join(''));
-  SE.play('boom'); flash('#ff7a1a'); shake(true);
+  SE.play('mnBoom'); flash('#ff7a1a'); shake(true);
   FXC.burst(q.x, q.y, 80, { colors: ['#ffe066', '#ff9f1c', '#ff3b30', '#6b6b6b', '#2b2b2b'], speed: 14 });
   telop('ドカーン！！', 'red', 1400);
-  T.mines.filter(m => m !== i).forEach((m, k) => toolLater(() => { const c = $('mnGrid').children[m]; c.classList.add('op', 'mine'); c.innerHTML = MINE_SVG; c.disabled = true; SE.play('tick'); }, 750 + k * 130));
+  T.mines.filter(m => m !== i).forEach((m, k) => toolLater(() => { const c = $('mnGrid').children[m]; c.classList.add('op', 'mine'); c.innerHTML = MINE_SVG; c.disabled = true; SE.play('mnTick'); }, 750 + k * 130));
   partyLose(2000);
 }
 
@@ -4308,9 +4405,9 @@ PARTY.skull = {
     toolActs(TOOL_CLOSE, false);
     const f = T.faces[i], box = $('skC' + i);
     box.querySelector('.flip-f').innerHTML = isMini() ? SK_FACE[f].replace('+1杯', '+1') : SK_FACE[f];
-    el.classList.add('lift'); SE.play('roll');
+    el.classList.add('lift'); SE.play('skLift');
     toolLater(() => {
-      box.classList.add('open'); SE.play('flip');
+      box.classList.add('open'); SE.play('skFlip');
       toolLater(() => skullResult(T, f, el), 420);
     }, 560);
   },
@@ -4319,7 +4416,7 @@ function skullResult(T, f, el) {
   partyStake();
   if (f === 'skull') {
     el.classList.add('hit-skull');
-    SE.play('devil'); flash('#7a1fff'); shake(true);
+    SE.play('skDoom'); flash('#7a1fff'); shake(true);
     telop('ドクロ……！', 'devil', 1500);
     partyLose(1800);
     return;
@@ -4327,9 +4424,9 @@ function skullResult(T, f, el) {
   if (f === 'plus') {
     T.cups++;
     partyStake(); tmPop($('pgCups'));
-    SE.play('coin');
+    SE.play('skPlus');
     telop((isMini() ? '+1！' : '+1杯！') + '<small>ドクロが重くなった…</small>', 'sm', 1200);
-  } else SE.play('ding');
+  } else SE.play('skSafe');
   /* still your turn: flip another, or hand it on */
   T.busy = false;
   partyButtons();
@@ -4525,7 +4622,7 @@ function gaInit() {
   document.head.appendChild(s);
 }
 
-const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'ワニの歯', mine: '地雷原', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
+const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'パクッとワニ', mine: '地雷原', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
   indian: 'インディアンポーカー', darts: 'ダーツ勝負', bomb: '爆弾パス回し', chal: 'チャレンジ', pick: '名前ルーレット', tap: '早押し対決', timer: 'タイマー' };
 const SPECIAL_NAMES = [['double', '倍倍FIGHT！'], ['heaven_hell', '天国と地獄'], ['cospa', 'コスパ'], ['ticket', '券']];
 function fmtDur(ms) {
@@ -4629,7 +4726,7 @@ const isMini = () => !!(G && G.mode === 'mini');
 const amtTxt = n => (isMini() ? '+' + n : n + '杯');
 const MG = {
   taru: { short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
-  wani: { short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。噛まれた人の負け' },
+  wani: { short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。パクッとされた人の負け' },
   mine: { short: '地雷', text: '{引いた人}から順番に、マスを1つずつ掘る。地雷を踏んだ人の負け' },
   skull: { short: 'ドクロ', text: '{引いた人}から順番に、カードを好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人の負け（「+1」が出るたびに重くなる）' },
   balloon: { short: '風船', text: '{引いた人}から順番に、風船へ空気を1〜3回入れて次の人へ。割った人の負け' },
@@ -4666,7 +4763,7 @@ function beginMini() {
   coachEnd(false);
   bgmDelay = 2.6;
   showScreen('game');
-  SE.play('start');
+  SE.play('mgStart');
   telop('ミニゲームモード！<small>負けたら+2・3つで1杯</small>', '', 1800);
   FXC.rain(90);
   requestWake();
@@ -4684,7 +4781,7 @@ function normalizeMini(g) {
 function miniRoundFx() {
   const last = G.turn + 1 === G.mini.total;
   telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1200);
-  SE.play('turn');
+  SE.play('mgRound');
 }
 const miniAvail = () => {
   const M = G.mini;
@@ -4706,10 +4803,10 @@ function miniPick() {
     document.querySelectorAll('#mgList .hot').forEach(e => e.classList.remove('hot'));
     el = document.querySelector('#mgList [data-k="' + avail[s % avail.length] + '"]');
     if (el) el.classList.add('hot');
-    SE.play('tick');
+    SE.play('rlTick');
     if (s < steps) { s++; const f = s / steps; setTimeout(tick, 38 + 250 * f * f * f + (steps - s < 2 ? 140 : 0)); return; }
     if (el) el.classList.add('win');
-    SE.play('ding'); vibrate(40);
+    SE.play('rlStop'); vibrate(40);
     setTimeout(() => miniLand(cur, kind), 800);
   };
   tick();
@@ -4726,7 +4823,7 @@ function miniLand(cur, kind) {
   saveGame();
   renderGame('draw');
   if (screen !== 'game') return;
-  SE.play('bigheaven');
+  SE.play('rlLand');
   const q = relPos($('mgStage')); if (!reduceMotion) FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 });
 }
 /* 「別のゲーム」: put this one aside for the rest of the game and spin again */
@@ -4762,7 +4859,7 @@ function miniRecord(losers, amt) {
   saveGame();
   renderGame();
   items.forEach((it, k) => setTimeout(() => { if (G && G.cur === cur) floatAt(it.p, '+' + it.amt); }, k * 220));
-  SE.play('tap');
+  SE.play('mgMark');
   miniPour(cur, items);
 }
 function miniUndo() {
@@ -4773,7 +4870,7 @@ function miniUndo() {
   cur.mres = null; cur.msnap = null; cur.phase = 'drawn'; cur.bombDone = false; cur.drinks = [];
   saveGame();
   renderGame();
-  SE.play('poof');
+  SE.play('mgRewind');
 }
 function miniNext() {
   const cur = G.cur;
@@ -4836,7 +4933,7 @@ function miniPour(cur, items) {
         c.classList.remove('cupfx'); void c.offsetWidth; c.classList.add('cupfx');
         const q = relPos(c); FXC.burst(q.x, q.y, 80, { colors: GOLD, star: true, speed: 13 });
         floatAt(it.p, '1杯！');
-        SE.play('bigheaven'); vibrate([60, 40, 160]);
+        SE.play('cupIn'); vibrate([60, 40, 160]);
         if (first) {
           first = false;
           flash('#ffd83d'); shake(false);
@@ -4844,7 +4941,7 @@ function miniPour(cur, items) {
           const many = cupped.some(x => x.cups > 1);
           telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(x => x.cups)) + '杯！' : 'グラスが満タン！ 1杯！') + '</small>', 'red', 1800);
         }
-        later(() => { show(0, null, Math.floor(pts / MINI_PER_CUP)); SE.play('gulp'); later(step, 500); }, 1400);
+        later(() => { show(0, null, Math.floor(pts / MINI_PER_CUP)); SE.play('glug'); later(step, 500); }, 1400);
       }, 750);
     };
     later(step, 500 + k * 350);
@@ -4972,12 +5069,12 @@ function reactPress() {
   if (T.rc === 'ready') {
     T.rc = 'wait';
     pad.className = 'rc-pad wait'; $('rcBig').textContent = 'まだ…'; $('rcSmall').textContent = 'ガマン！';
-    SE.play('select');
+    SE.play('rcReady');
     T.goT = toolLater(() => {
       if (T.rc !== 'wait') return;
       T.rc = 'go'; T.goAt = performance.now();
       pad.className = 'rc-pad go'; $('rcBig').textContent = 'タップ！'; $('rcSmall').textContent = '';
-      SE.play('go'); vibrate(30);
+      SE.play('rcGo'); vibrate(30);
     }, 1500 + Math.random() * 3000);
     return;
   }
@@ -4986,7 +5083,7 @@ function reactPress() {
     T.times[i] = Infinity; T.rc = 'gap';
     pad.className = 'rc-pad foul'; $('rcBig').textContent = 'フライング！'; $('rcSmall').textContent = '';
     const el = $('tlV' + i); el.innerHTML = '<span class="rc-foul">フライング</span>'; tmPop(el);
-    SE.play('buzz'); vibrate([80, 40, 80]);
+    SE.play('rcFoul'); vibrate([80, 40, 80]);
     reactNext();
     return;
   }
@@ -4995,7 +5092,7 @@ function reactPress() {
     T.times[i] = ms; T.rc = 'gap';
     pad.className = 'rc-pad hit'; $('rcBig').textContent = (ms / 1000).toFixed(3) + '秒'; $('rcSmall').textContent = ms < 250 ? 'はやい！' : ms < 380 ? 'いい反応！' : 'おそい…';
     const el = $('tlV' + i); el.textContent = (ms / 1000).toFixed(3) + '秒'; tmPop(el);
-    SE.play('ding');
+    SE.play('rcHit');
     reactNext();
   }
 }
@@ -5127,7 +5224,7 @@ const GUIDE = [
       '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
     gCard('パーティーゲーム', '<p>引いた人から順番に<b>スマホを回して</b>遊ぶゲームです。カードの<b>「〇〇スタート！」</b>ボタンから始めて、ハズレを引いた人が負け。負けた人は自動で記録。</p><div class="gd-rows">' +
-      [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['ワニの歯', '歯を1本ずつ押す。噛まれた人が負け（噛む歯は1本）'],
+      [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['パクッとワニ', 'ワニの歯を1本ずつ押す。押すとワニがじっと考えて…パクッとされた人が負け（パクッとする歯は1本）'],
         ['地雷原', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
