@@ -5,12 +5,44 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。">
+<meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<link rel="canonical" href="https://shugodensetsu.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:site_name" content="酒GO!!伝説">
+<meta property="og:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<meta property="og:url" content="https://shugodensetsu.github.io/">
+<meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="酒GO!!伝説 — 引いたが最後！ 天国か、地獄か。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
+<meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="酒GO!!伝説">
+<script>
+/* tablets: lay the app out at a phone-like size and let the browser scale it up, so it fills an iPad instead of
+   sitting small in the middle (portrait gains the most; phones are left exactly as they are) */
+(function () {
+  var m = document.querySelector('meta[name=viewport]'), base = m.content;
+  function fit() {
+    var a = Math.min(screen.width, screen.height), b = Math.max(screen.width, screen.height);
+    if (a < 700) { if (m.content !== base) m.content = base; return; }
+    var land = window.matchMedia && matchMedia('(orientation: landscape)').matches;
+    var w = land ? b : a, h = (land ? a : b) * 0.9;
+    var s = Math.max(1, Math.min(w / 430, h / 660, 1.8));
+    m.content = 'width=' + Math.round(w / s) + ',viewport-fit=cover,user-scalable=no';
+  }
+  fit();
+  addEventListener('orientationchange', function () { setTimeout(fit, 150); });
+})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -117,6 +149,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .t-actions{width:min(100%, 360px); display:flex; flex-direction:column; gap:min(12px, 1.6cqh)}
 .t-row{display:flex; gap:10px}
 .t-row .pbtn{flex:1}
+.t-grid{display:grid; grid-template-columns:1fr 1fr; gap:min(10px, 1.4cqh) 10px}
 .fine{margin:0; font-size:11px; line-height:1.5; color:var(--muted); max-width:34em}
 
 /* ---------- setup ---------- */
@@ -264,6 +297,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .stat b{font-family:var(--f-display); font-weight:400; font-size:17px; color:var(--yellow)}
 .stat span{font-size:10.5px; font-weight:800; color:var(--muted)}
 .res-actions{flex:none; display:flex; flex-direction:column; gap:8px}
+.res-actions .t-row .pbtn{min-width:0; padding-inline:6px; font-size:min(14px, 3.6vw); white-space:nowrap}
 
 /* ---------- overlays ---------- */
 .ov{position:absolute; inset:0; z-index:50; display:flex; align-items:flex-end; justify-content:center; background:var(--scrim); animation:fadeIn .2s ease-out}
@@ -331,6 +365,14 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .dialog-acts{display:flex; gap:8px}
 .dialog-acts .pbtn{flex:1}
 .dialog-acts.col{flex-direction:column}
+.age-ov{z-index:95; background:radial-gradient(circle at 50% 40%, #3a1d88 0, var(--bg-deep) 75%)}
+.age-box{max-width:360px; align-items:center; text-align:center; gap:14px; padding:24px 20px 20px}
+.age-box h2{font-size:24px}
+.age-box p{font-weight:700; line-height:1.65; color:var(--ink-muted)}
+.age-box .dialog-acts{align-self:stretch}
+.age-mark{width:92px; height:92px; border-radius:50%; background:var(--yellow); border:4px solid var(--ink); box-shadow:0 5px 0 var(--ink); display:grid; place-content:center; line-height:1; transform:rotate(-6deg)}
+.age-mark b{font-family:var(--f-display); font-weight:400; font-size:40px; color:var(--ink)}
+.age-mark small{font-weight:800; font-size:12px; color:var(--ink)}
 
 /* ---------- 「誰が飲む？」「誰を指名する？」: choose the drinkers, then drink or use a special rule ---------- */
 .decide{gap:10px}
@@ -1626,7 +1668,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
   animation:telop var(--t, 1.5s) cubic-bezier(.2,1,.3,1) forwards}
 .telop small{display:block; font-size:.42em; color:var(--white)}
 .telop.pink{color:var(--pink)} .telop.cyan{color:var(--cyan)} .telop.red{color:var(--red)} .telop.white{color:var(--white)} .telop.lime{color:var(--lime)}
-.telop.sm{font-size:min(34px, 8vw)}
+.telop.sm{font-size:min(34px, 8vw); white-space:normal; width:max-content; max-width:92%}
 .telop.devil, .telop.angel{top:30%; font-size:min(64px, 13.5vw); line-height:1.1; animation:telop var(--t, 1.5s) cubic-bezier(.2,1,.3,1) forwards, jitter .08s steps(2) infinite}
 .telop.devil{color:#ff2a3a; text-shadow:3px 0 0 var(--ink),-3px 0 0 var(--ink),0 3px 0 var(--ink),0 -3px 0 var(--ink),2.5px 2.5px 0 var(--ink),-2.5px 2.5px 0 var(--ink),2.5px -2.5px 0 var(--ink),-2.5px -2.5px 0 var(--ink),0 7px 0 var(--ink),0 0 30px #ff0000,0 0 60px #ff0000}
 .telop.angel{color:#ffffff; animation:telop var(--t, 1.5s) cubic-bezier(.2,1,.3,1) forwards;
@@ -1781,10 +1823,11 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
         <button type="button" class="pbtn pink" id="goMini">ミニゲームモード</button>
         <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
-        <div class="t-row">
+        <div class="t-row t-grid">
           <button type="button" class="pbtn white small" id="goEditor">カード編集</button>
           <button type="button" class="pbtn white small" id="howBtn">遊び方ガイド</button>
           <button type="button" class="pbtn white small" id="statsBtn">あそびの記録</button>
+          <button type="button" class="pbtn cyan small" id="shareBtn">友達に教える</button>
         </div>
       </div>
       <p class="fine">20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
@@ -1839,6 +1882,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="t-row">
           <button type="button" class="pbtn white small" id="changeBtn">メンバー変更</button>
           <button type="button" class="pbtn white small" id="titleBtn">タイトルへ</button>
+          <button type="button" class="pbtn cyan small" id="resShare">シェア</button>
         </div>
         <button type="button" class="res-back" id="resBack" hidden>◀ 最後のターンに戻る（記録し忘れたとき）</button>
       </div>
@@ -2029,6 +2073,15 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <h2 id="confirmTitle">ゲームを終わる？</h2>
       <p>ここまでの記録で結果発表に進みます。</p>
       <div class="dialog-acts"><button type="button" class="pbtn white small" id="confirmNo">続ける</button><button type="button" class="pbtn small" id="confirmYes">結果発表へ</button></div>
+    </div>
+  </div>
+
+  <div class="ov center age-ov" id="ageOv" hidden>
+    <div class="dialog age-box" role="dialog" aria-modal="true" aria-labelledby="ageTitle">
+      <div class="age-mark" aria-hidden="true"><b>20</b><small>歳以上</small></div>
+      <h2 id="ageTitle">20歳以上ですか？</h2>
+      <p id="ageText"></p>
+      <div class="dialog-acts col" id="ageActs"></div>
     </div>
   </div>
 
@@ -3495,6 +3548,7 @@ const SE = {
   on: true, A: null,
   init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
   ensure() {
+    audioSessionSync();
     if (!this.A) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
@@ -3526,9 +3580,15 @@ const SE = {
   toggle() {
     this.on = !this.on;
     try { localStorage.setItem(SE_KEY, this.on ? '1' : '0'); } catch (_) { /* ignore */ }
+    audioSessionSync();
     if (this.on) this.play('coin');
   },
 };
+/* iPhone (Safari 16.4+): play even with the ring/silent switch on silent — at a party most phones are on silent.
+   With both sound and music off, the phone's audio is handed back to whatever else wants it */
+function audioSessionSync() {
+  try { if (navigator.audioSession) navigator.audioSession.type = (SE.on || BGM.on) ? 'playback' : 'auto'; } catch (_) { /* ignore */ }
+}
 function renderSE() {
   $('seBtn').setAttribute('aria-pressed', String(SE.on));
   $('seLabel').textContent = SE.on ? '効果音 ON' : '効果音 OFF';
@@ -3693,6 +3753,7 @@ const BGM = {
   toggle() {
     this.on = !this.on;
     try { localStorage.setItem(BGM_KEY, this.on ? '1' : '0'); } catch (_) { /* ignore */ }
+    audioSessionSync();
     if (this.on) SE.ensure();
     this.sync();
   },
@@ -3816,8 +3877,24 @@ const anyDur = () => G.players.some(pl => pl.hand.some(h => h.kind === 'dur'));
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function eligibleCards(n) { return deck.cards.filter(c => { const cat = catOf(c.cat); return c.on && cat && cat.on && c.min <= n && c.text.trim(); }); }
-function saveGame() { try { if (G && !G.done) sessionStorage.setItem(GAME_KEY, JSON.stringify(G)); else sessionStorage.removeItem(GAME_KEY); } catch (_) { /* ignore */ } }
-function loadGame() { try { const s = sessionStorage.getItem(GAME_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
+/* the game in progress is kept on the phone (not just in the tab), so closing the app, a dead battery or the phone
+   killing the tab doesn't lose the night's game — 「続きから再開」 brings it back. Forgotten after 12 hours */
+const GAME_AT_KEY = 'nomige-game-at', GAME_TTL = 12 * 3600 * 1000;
+function saveGame() {
+  try {
+    if (G && !G.done) { localStorage.setItem(GAME_KEY, JSON.stringify(G)); localStorage.setItem(GAME_AT_KEY, String(Date.now())); }
+    else { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); }
+  } catch (_) { /* ignore */ }
+}
+function loadGame() {
+  try {
+    sessionStorage.removeItem(GAME_KEY);   /* from before: the game used to live in the tab only */
+    const s = localStorage.getItem(GAME_KEY), at = Number(localStorage.getItem(GAME_AT_KEY)) || 0;
+    if (!s) return null;
+    if (Date.now() - at > GAME_TTL) { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); return null; }
+    return JSON.parse(s);
+  } catch (_) { return null; }
+}
 const validGame = g => !!(g && Array.isArray(g.players) && g.players.length >= 2 && g.cur && typeof g.turn === 'number' && g.pending);
 function normalizeGame(g) {
   if (!validGame(g)) return null;
@@ -3850,7 +3927,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
+const FULL_OV = ['ageOv', 'wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -3870,6 +3947,18 @@ function closeOv(id) {
   coachQueue();
   if (!document.querySelector('.ov:not([hidden])') && lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
 }
+/* 20歳以上の確認: asked once on this phone, before anything else; 「いいえ」 keeps the game closed */
+const AGE_KEY = 'sakego-age';
+function ageOk() { try { return localStorage.getItem(AGE_KEY) === '1'; } catch (_) { return false; } }
+function ageAsk(no) {
+  $('ageTitle').textContent = no ? '20歳になったら遊んでね' : '20歳以上ですか？';
+  $('ageText').innerHTML = no ? 'お酒は20歳になってから。それまでは、ジュースで遊べるゲームで楽しもう！'
+    : '酒GO!!伝説は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。';
+  $('ageActs').innerHTML = no ? '<button type="button" class="pbtn white small" data-age="back">もどる</button>'
+    : '<button type="button" class="pbtn" data-age="yes">はい、20歳以上です</button><button type="button" class="pbtn white small" data-age="no">いいえ</button>';
+  $('ageOv').hidden = false;
+  syncCover();
+}
 function closeAllOverlays() {
   if (picking) { clearTimeout(picking.timer); picking = null; }
   if (tap) { tap.timers.forEach(clearTimeout); tap = null; }
@@ -3879,7 +3968,7 @@ function closeAllOverlays() {
   if (timer) stopTimerWork(timer);
   if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); if (tool.bowl) tool.bowl.dispose(); }
   wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null; ask = null;
-  document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
+  document.querySelectorAll('.ov:not(#ageOv)').forEach(o => { o.hidden = true; });
   syncCover();
 }
 function showScreen(name) {
@@ -7980,6 +8069,21 @@ function useTick() {
   U.cur = gid; U.last = now;
   useSave();
 }
+/* 友達に教える: the phone's own share sheet (LINE, X, AirDrop…); without one, the link is copied */
+const SHARE_URL = 'https://shugodensetsu.github.io/';
+async function shareApp(from) {
+  SE.play('tap');
+  const text = from === 'result'
+    ? '「酒GO!!伝説」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「酒GO!!伝説」。スマホ1台で2〜8人、無料・広告なし！';
+  useTrack('share', { from });
+  if (navigator.share) {
+    try { await navigator.share({ title: '酒GO!!伝説', text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(text + '\n' + SHARE_URL); telop('リンクをコピーしました<small>LINEなどに貼り付けて送ってね</small>', 'white sm', 2000); }
+  catch (_) { telop(SHARE_URL, 'white sm', 3000); }
+}
 function useTrack(ev, p) {
   p = p || {};
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
@@ -8416,11 +8520,11 @@ function renderMiniResult() {
   $('resSub').textContent = 'ミニゲームモード ・ ' + G.mini.log.length + '戦しました';
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.pts > p.pts).length;
-    const title = spread && p.pts === maxP ? '酒豪！' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
+    const title = spread && p.pts === maxP ? '不運王' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
     const delay = reduceMotion ? 0 : 1.5 + (n - 1 - idx) * 0.35;
     const left = p.pts % MINI_PER_CUP;
     return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
-      '<span class="res-rank">' + rank + (spread && rank === 1 ? '<span class="crown"></span>' : '') + '</span>' +
+      '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">負け ' + p.loss + '回 ・ カウント合計 ' + p.pts + (left ? ' ・ のこり' + glassSVG(left, { cls: 'sm' }) : '') + '</span></span>' +
       '<span class="res-total">' + p.total + '<small>杯</small></span></li>';
@@ -8625,7 +8729,7 @@ const GUIDE = [
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
     gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
-    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん飲んだ人は「酒豪！」、いちばん少ない人は「セーフ王」。</p>') +
+    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
     gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>' +
       '<p class="sub">「飲む人の決め方」は、ふつうは「自動で判定」のままでOK。「{左隣}は1杯グイ」のような文章なら自動で記録、それ以外は「誰が飲む？」画面になります。</p>') +
     gCard('音と案内', '<p>画面右上の「BGM」「効果音」で、それぞれON/OFF。メンバー登録画面の「操作の案内を出す」にチェックを入れると、1ターン目に操作の案内がもう一度出ます。</p>') +
@@ -8974,10 +9078,10 @@ function renderResult() {
   $('resSub').textContent = G.turn + 'ターン（' + Math.ceil(G.turn / n) + '周）遊びました';
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.total > p.total).length;
-    const title = spread && p.total === maxT ? '酒豪！' : spread && p.total === minT ? 'セーフ王' : '';
+    const title = spread && p.total === maxT ? '不運王' : spread && p.total === minT ? 'セーフ王' : '';
     const delay = reduceMotion ? 0 : 1.5 + (n - 1 - idx) * 0.35;
     return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
-      '<span class="res-rank">' + rank + (spread && rank === 1 ? '<span class="crown"></span>' : '') + '</span>' +
+      '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">倍倍' + p.dbl + ' ・ 天国と地獄' + p.hh + ' ・ コスパ' + p.cospa + '</span></span>' +
       '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small></span></li>';
@@ -9037,6 +9141,15 @@ function wireGame() {
   $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
+  $('shareBtn').addEventListener('click', () => shareApp('title'));
+  $('ageActs').addEventListener('click', e => {
+    const b = e.target.closest('[data-age]'); if (!b) return;
+    const a = b.dataset.age;
+    SE.play('tap');
+    if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
+    else ageAsk(a === 'no');
+  });
+  $('resShare').addEventListener('click', () => shareApp('result'));
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));
@@ -9308,6 +9421,7 @@ function boot(data) {
   else if (want === 'result' && G && G.done) showScreen('result');
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
+  if (!ageOk()) ageAsk(false);
   FXC.size();
 }
 const hot = window.claude && window.claude.hot;

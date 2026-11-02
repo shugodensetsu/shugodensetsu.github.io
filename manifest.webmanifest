@@ -1,7 +1,12 @@
 {
+  "id": "./",
   "name": "酒GO!!伝説",
   "short_name": "酒GO!!伝説",
-  "description": "飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。",
+  "description": "飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
   "lang": "ja",
   "dir": "ltr",
   "start_url": "./",

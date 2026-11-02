@@ -40,12 +40,44 @@ const html = `<!doctype html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。">
+<meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<link rel="canonical" href="https://shugodensetsu.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:site_name" content="酒GO!!伝説">
+<meta property="og:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード106枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<meta property="og:url" content="https://shugodensetsu.github.io/">
+<meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="酒GO!!伝説 — 引いたが最後！ 天国か、地獄か。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
+<meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="酒GO!!伝説">
+<script>
+/* tablets: lay the app out at a phone-like size and let the browser scale it up, so it fills an iPad instead of
+   sitting small in the middle (portrait gains the most; phones are left exactly as they are) */
+(function () {
+  var m = document.querySelector('meta[name=viewport]'), base = m.content;
+  function fit() {
+    var a = Math.min(screen.width, screen.height), b = Math.max(screen.width, screen.height);
+    if (a < 700) { if (m.content !== base) m.content = base; return; }
+    var land = window.matchMedia && matchMedia('(orientation: landscape)').matches;
+    var w = land ? b : a, h = (land ? a : b) * 0.9;
+    var s = Math.max(1, Math.min(w / 430, h / 660, 1.8));
+    m.content = 'width=' + Math.round(w / s) + ',viewport-fit=cover,user-scalable=no';
+  }
+  fit();
+  addEventListener('orientationchange', function () { setTimeout(fit, 150); });
+})();
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -64,8 +96,9 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => { naviga
 `;
 
 const manifest = {
-  name: '酒GO!!伝説', short_name: '酒GO!!伝説',
-  description: '飲み会を盛り上げるカードゲーム。引いたが最後！ 天国か、地獄か。',
+  id: './', name: '酒GO!!伝説', short_name: '酒GO!!伝説',
+  description: '飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。',
+  categories: ['games', 'entertainment'],
   lang: 'ja', dir: 'ltr', start_url: './', scope: './', display: 'standalone', orientation: 'portrait',
   background_color: '#2a1266', theme_color: '#2a1266',
   icons: [

@@ -467,6 +467,7 @@ const SE = {
   on: true, A: null,
   init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
   ensure() {
+    audioSessionSync();
     if (!this.A) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
@@ -498,9 +499,15 @@ const SE = {
   toggle() {
     this.on = !this.on;
     try { localStorage.setItem(SE_KEY, this.on ? '1' : '0'); } catch (_) { /* ignore */ }
+    audioSessionSync();
     if (this.on) this.play('coin');
   },
 };
+/* iPhone (Safari 16.4+): play even with the ring/silent switch on silent — at a party most phones are on silent.
+   With both sound and music off, the phone's audio is handed back to whatever else wants it */
+function audioSessionSync() {
+  try { if (navigator.audioSession) navigator.audioSession.type = (SE.on || BGM.on) ? 'playback' : 'auto'; } catch (_) { /* ignore */ }
+}
 function renderSE() {
   $('seBtn').setAttribute('aria-pressed', String(SE.on));
   $('seLabel').textContent = SE.on ? '効果音 ON' : '効果音 OFF';
@@ -665,6 +672,7 @@ const BGM = {
   toggle() {
     this.on = !this.on;
     try { localStorage.setItem(BGM_KEY, this.on ? '1' : '0'); } catch (_) { /* ignore */ }
+    audioSessionSync();
     if (this.on) SE.ensure();
     this.sync();
   },
@@ -788,8 +796,24 @@ const anyDur = () => G.players.some(pl => pl.hand.some(h => h.kind === 'dur'));
 
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function eligibleCards(n) { return deck.cards.filter(c => { const cat = catOf(c.cat); return c.on && cat && cat.on && c.min <= n && c.text.trim(); }); }
-function saveGame() { try { if (G && !G.done) sessionStorage.setItem(GAME_KEY, JSON.stringify(G)); else sessionStorage.removeItem(GAME_KEY); } catch (_) { /* ignore */ } }
-function loadGame() { try { const s = sessionStorage.getItem(GAME_KEY); return s ? JSON.parse(s) : null; } catch (_) { return null; } }
+/* the game in progress is kept on the phone (not just in the tab), so closing the app, a dead battery or the phone
+   killing the tab doesn't lose the night's game — 「続きから再開」 brings it back. Forgotten after 12 hours */
+const GAME_AT_KEY = 'nomige-game-at', GAME_TTL = 12 * 3600 * 1000;
+function saveGame() {
+  try {
+    if (G && !G.done) { localStorage.setItem(GAME_KEY, JSON.stringify(G)); localStorage.setItem(GAME_AT_KEY, String(Date.now())); }
+    else { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); }
+  } catch (_) { /* ignore */ }
+}
+function loadGame() {
+  try {
+    sessionStorage.removeItem(GAME_KEY);   /* from before: the game used to live in the tab only */
+    const s = localStorage.getItem(GAME_KEY), at = Number(localStorage.getItem(GAME_AT_KEY)) || 0;
+    if (!s) return null;
+    if (Date.now() - at > GAME_TTL) { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); return null; }
+    return JSON.parse(s);
+  } catch (_) { return null; }
+}
 const validGame = g => !!(g && Array.isArray(g.players) && g.players.length >= 2 && g.cur && typeof g.turn === 'number' && g.pending);
 function normalizeGame(g) {
   if (!validGame(g)) return null;
@@ -822,7 +846,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
+const FULL_OV = ['ageOv', 'wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -842,6 +866,18 @@ function closeOv(id) {
   coachQueue();
   if (!document.querySelector('.ov:not([hidden])') && lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
 }
+/* 20歳以上の確認: asked once on this phone, before anything else; 「いいえ」 keeps the game closed */
+const AGE_KEY = 'sakego-age';
+function ageOk() { try { return localStorage.getItem(AGE_KEY) === '1'; } catch (_) { return false; } }
+function ageAsk(no) {
+  $('ageTitle').textContent = no ? '20歳になったら遊んでね' : '20歳以上ですか？';
+  $('ageText').innerHTML = no ? 'お酒は20歳になってから。それまでは、ジュースで遊べるゲームで楽しもう！'
+    : '酒GO!!伝説は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。';
+  $('ageActs').innerHTML = no ? '<button type="button" class="pbtn white small" data-age="back">もどる</button>'
+    : '<button type="button" class="pbtn" data-age="yes">はい、20歳以上です</button><button type="button" class="pbtn white small" data-age="no">いいえ</button>';
+  $('ageOv').hidden = false;
+  syncCover();
+}
 function closeAllOverlays() {
   if (picking) { clearTimeout(picking.timer); picking = null; }
   if (tap) { tap.timers.forEach(clearTimeout); tap = null; }
@@ -851,7 +887,7 @@ function closeAllOverlays() {
   if (timer) stopTimerWork(timer);
   if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); if (tool.bowl) tool.bowl.dispose(); }
   wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null; ask = null;
-  document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
+  document.querySelectorAll('.ov:not(#ageOv)').forEach(o => { o.hidden = true; });
   syncCover();
 }
 function showScreen(name) {
@@ -4952,6 +4988,21 @@ function useTick() {
   U.cur = gid; U.last = now;
   useSave();
 }
+/* 友達に教える: the phone's own share sheet (LINE, X, AirDrop…); without one, the link is copied */
+const SHARE_URL = 'https://shugodensetsu.github.io/';
+async function shareApp(from) {
+  SE.play('tap');
+  const text = from === 'result'
+    ? '「酒GO!!伝説」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「酒GO!!伝説」。スマホ1台で2〜8人、無料・広告なし！';
+  useTrack('share', { from });
+  if (navigator.share) {
+    try { await navigator.share({ title: '酒GO!!伝説', text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
+    return;
+  }
+  try { await navigator.clipboard.writeText(text + '\n' + SHARE_URL); telop('リンクをコピーしました<small>LINEなどに貼り付けて送ってね</small>', 'white sm', 2000); }
+  catch (_) { telop(SHARE_URL, 'white sm', 3000); }
+}
 function useTrack(ev, p) {
   p = p || {};
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
@@ -5388,11 +5439,11 @@ function renderMiniResult() {
   $('resSub').textContent = 'ミニゲームモード ・ ' + G.mini.log.length + '戦しました';
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.pts > p.pts).length;
-    const title = spread && p.pts === maxP ? '酒豪！' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
+    const title = spread && p.pts === maxP ? '不運王' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
     const delay = reduceMotion ? 0 : 1.5 + (n - 1 - idx) * 0.35;
     const left = p.pts % MINI_PER_CUP;
     return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
-      '<span class="res-rank">' + rank + (spread && rank === 1 ? '<span class="crown"></span>' : '') + '</span>' +
+      '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">負け ' + p.loss + '回 ・ カウント合計 ' + p.pts + (left ? ' ・ のこり' + glassSVG(left, { cls: 'sm' }) : '') + '</span></span>' +
       '<span class="res-total">' + p.total + '<small>杯</small></span></li>';
@@ -5597,7 +5648,7 @@ const GUIDE = [
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
     gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
-    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん飲んだ人は「酒豪！」、いちばん少ない人は「セーフ王」。</p>') +
+    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
     gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>' +
       '<p class="sub">「飲む人の決め方」は、ふつうは「自動で判定」のままでOK。「{左隣}は1杯グイ」のような文章なら自動で記録、それ以外は「誰が飲む？」画面になります。</p>') +
     gCard('音と案内', '<p>画面右上の「BGM」「効果音」で、それぞれON/OFF。メンバー登録画面の「操作の案内を出す」にチェックを入れると、1ターン目に操作の案内がもう一度出ます。</p>') +
@@ -5946,10 +5997,10 @@ function renderResult() {
   $('resSub').textContent = G.turn + 'ターン（' + Math.ceil(G.turn / n) + '周）遊びました';
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.total > p.total).length;
-    const title = spread && p.total === maxT ? '酒豪！' : spread && p.total === minT ? 'セーフ王' : '';
+    const title = spread && p.total === maxT ? '不運王' : spread && p.total === minT ? 'セーフ王' : '';
     const delay = reduceMotion ? 0 : 1.5 + (n - 1 - idx) * 0.35;
     return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
-      '<span class="res-rank">' + rank + (spread && rank === 1 ? '<span class="crown"></span>' : '') + '</span>' +
+      '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">倍倍' + p.dbl + ' ・ 天国と地獄' + p.hh + ' ・ コスパ' + p.cospa + '</span></span>' +
       '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small></span></li>';
@@ -6009,6 +6060,15 @@ function wireGame() {
   $('coachOpt').addEventListener('change', e => { setup.coach = e.target.checked; SE.play('tap'); });
   $('howClose').addEventListener('click', () => closeOv('howOv'));
   $('statsBtn').addEventListener('click', () => { SE.play('tap'); openUsage(); });
+  $('shareBtn').addEventListener('click', () => shareApp('title'));
+  $('ageActs').addEventListener('click', e => {
+    const b = e.target.closest('[data-age]'); if (!b) return;
+    const a = b.dataset.age;
+    SE.play('tap');
+    if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
+    else ageAsk(a === 'no');
+  });
+  $('resShare').addEventListener('click', () => shareApp('result'));
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));
@@ -6280,6 +6340,7 @@ function boot(data) {
   else if (want === 'result' && G && G.done) showScreen('result');
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
+  if (!ageOk()) ageAsk(false);
   FXC.size();
 }
 const hot = window.claude && window.claude.hot;
