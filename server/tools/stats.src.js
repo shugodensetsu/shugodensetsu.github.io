@@ -10,6 +10,7 @@
 
 const CARDS = __CARDS__;   // card number -> text (the built-in deck)
 const NAMES = __NAMES__;   // mini game / app effect / special rule -> name
+const KQ = __KQ__;         // 王様ゲームの命令・恋バナの質問: number -> text
 const ICONS = __ICONS__;   // home-screen icons: name -> base64 PNG
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -158,8 +159,8 @@ export default {
     const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
     const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ? AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
-    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws] = await Promise.all([
-      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?', from),
+    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv] = await Promise.all([
+      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?', from),
       q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ? GROUP BY day', from),
       q('SELECT players k, COUNT(*) n FROM games WHERE day >= ? GROUP BY players ORDER BY players', from),
       q(each('cards') + ' LIMIT 15', from),
@@ -169,7 +170,11 @@ export default {
       q(each('sp'), from),
       q('SELECT kind k, detail d, COUNT(*) n FROM events WHERE day >= ? GROUP BY kind, detail ORDER BY n DESC', from),
       one('SELECT SUM(json_extract(data, \'$.own\')) own, (SELECT SUM(j.value) FROM games g, json_each(g.data, \'$.cards\') j WHERE g.day >= ?) built FROM games WHERE day >= ?', from, from),
+      q(each('q', ' AND g.mode = \'king\'') + ' LIMIT 12', from),
+      q(each('q', ' AND g.mode = \'koi\'') + ' LIMIT 12', from),
+      q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ? AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
     ]);
+    const LV = { mild: '王様：ふつう', hot: '王様：盛り上げ', mix: '恋バナ：ミックス', koi: '恋バナ：恋バナだけ', bare: '恋バナ：暴露だけ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
     const ownN = (draws && draws.own) || 0, allDraws = ownN + ((draws && draws.built) || 0);
     const tile = (v, l, s) => '<div class="tile"><b>' + v + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>';
@@ -201,7 +206,7 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 <header><h1>酒GO!!伝説 の集計</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}" aria-label="最新にする">↻</a></nav></header>
 <p class="sub">${esc(from)} 〜 今日（日本時間）・${new Date(Date.now() + 9 * 3600e3).toISOString().slice(11, 16)} 時点${g.who ? '・' + esc(g.who) : ''}</p>
 <div class="tiles">
-${tile(n, 'ゲーム数', 'うちミニゲーム ' + (tot.mini || 0))}
+${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 恋バナ ' + (tot.koi || 0))}
 ${tile(pct(tot.done || 0, n), '最後まで遊んだ', (tot.done || 0) + 'ゲーム')}
 ${tile(tot.first || 0, 'はじめて遊んだ端末', '2回目以降のゲーム ' + (tot.again || 0))}
 ${tile(tot.pl ? (Math.round(tot.pl * 10) / 10) + '人' : '—', '平均人数')}
@@ -213,6 +218,12 @@ ${tile(pct(tot.lively || 0, tot.mixn || 0), 'にぎやかモード', '出かた�
 ${tile(pct(tot.unone || 0, tot.unitn || 0), 'お酒なしで遊んだ', '一口 ' + pct(tot.uone || 0, tot.unitn || 0) + ' ・ 半分 ' + pct(tot.uhalf || 0, tot.unitn || 0))}
 ${tile(pct(ownN, allDraws), '自作・書きかえたカード', '引いたカード ' + allDraws + '枚のうち')}
 </div>
+<section><h2>プレミアム<small>お支払いの受付前：画面を開いた回数と、選ばれたプラン</small></h2><div class="tiles">
+${tile(evN('plus', d => d.startsWith('open_')), '画面を開いた', 'タイトルから ' + evN('plus', d => d === 'open_title') + ' ・ お試し切れ ' + evN('plus', d => d === 'open_limit'))}
+${tile(evN('plus', d => d === 'plan_year'), '年額を選んだ')}
+${tile(evN('plus', d => d === 'plan_month'), '月額を選んだ')}
+${tile(evN('plus', d => d === 'plan_pass'), '24時間パスを選んだ')}
+</div></section>
 <section><h2>日ごとのゲーム数</h2>${daily(perDay, days)}</section>
 <div class="grid2">
 <section><h2>人数</h2>${bars(players, r => r.k + '人')}</section>
@@ -220,6 +231,9 @@ ${tile(pct(ownN, allDraws), '自作・書きかえたカード', '引いたカ�
 <section><h2>カードから遊ばれたミニゲーム・アプリ機能</h2>${played(miniC, fx)}</section>
 <section><h2>よく出たカード<small>組み込みのカードだけ</small></h2>${bars(cards, r => (CARDS[r.k] ? 'No.' + r.k + ' ' + CARDS[r.k] : 'No.' + r.k))}</section>
 <section><h2>特殊ルール</h2>${bars(sp, r => NAMES[r.k] || r.k)}</section>
+<section><h2>王様・恋バナの設定</h2>${bars(lv, r => LV[r.k] || r.m + ':' + r.k)}</section>
+<section><h2>よく選ばれた命令<small>王様ゲーム</small></h2>${bars(kingQ, r => KQ.king[r.k] || 'No.' + r.k)}</section>
+<section><h2>よく出た質問<small>恋バナ・暴露</small></h2>${bars(koiQ, r => KQ.koi[r.k] || 'No.' + r.k)}</section>
 </div>
 <footer>名前・カードの文章・端末を見分けるIDは集めていません。数字は「集計に協力する」がオンの端末のぶんです。${g.cookie ? ' <a href="/logout">ログアウト</a>' : ''}</footer>
 </main></body></html>`;

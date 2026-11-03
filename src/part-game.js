@@ -860,6 +860,7 @@ function normalizeGame(g) {
   if (st && (typeof st !== 'object' || typeof st.sid !== 'string' || !['cards', 'fx', 'mini', 'sp'].every(k => st[k] && typeof st[k] === 'object' && !Array.isArray(st[k])))) delete g.st;
   else if (st) ['seq', 'players', 'rounds', 'nth', 'turns', 'ms', 'last', 'cups', 'own', 'done'].forEach(k => { st[k] = Number(st[k]) || 0; });
   if (g.mode === 'mini') normalizeMini(g);
+  else if (PM_MODES.includes(g.mode)) normalizePM(g);
   return g;
 }
 async function requestWake() {
@@ -933,6 +934,7 @@ function showScreen(name) {
 function renderTitle() {
   $('resumeBtn').hidden = !(validGame(G) && !G.done);
   $('howBtn').classList.toggle('first', !lsGet(GUIDE_SEEN_KEY));
+  titleModes();
 }
 function loadSetup() {
   if (setup.loaded) return;
@@ -945,15 +947,20 @@ function loadSetup() {
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
       if (s.mix === 'lively' || s.mix === 'even') setup.mix = s.mix;
       if (UNITS[s.unit]) setup.unit = s.unit;
+      if (typeof s.king === 'string') setup.king = s.king;
+      if (typeof s.koi === 'string') setup.koi = s.koi;
     }
   } catch (_) { /* ignore */ }
 }
 function renderSetup(full) {
   let h = '';
-  for (let n = 2; n <= 8; n++) h += '<button type="button" id="cnt-' + n + '" data-cnt="' + n + '" aria-pressed="' + (setup.count === n) + '" aria-label="' + n + '人">' + n + '</button>';
+  const pm = PM_MODES.includes(setup.mode) ? setup.mode : null, minN = pm ? PM[pm].min : 2;
+  for (let n = 2; n <= 8; n++) h += '<button type="button" id="cnt-' + n + '" data-cnt="' + n + '" aria-pressed="' + (setup.count === n) + '" aria-label="' + n + '人"' + (n < minN ? ' disabled' : '') + '>' + n + '</button>';
   $('countGrid').innerHTML = h;
   $('roundGrid').innerHTML = ROUND_OPTS.map(r => '<button type="button" id="rnd-' + r + '" data-rnd="' + r + '" aria-pressed="' + (setup.rounds === r) + '">' + (r ? r + '周' : '∞') + '</button>').join('');
-  $('mixGrid').innerHTML =
+  $('mixGrid').classList.toggle('three', !!pm && PM[pm].opts.length === 3);
+  $('mixGrid').setAttribute('aria-label', pm ? PM[pm].optHead : 'カードの出かた');
+  $('mixGrid').innerHTML = pm ? pmSetupOpts(pm) :
     '<button type="button" id="mix-even" data-mix="even" aria-pressed="' + (setup.mix !== 'lively') + '"><b>バランス</b><small>全カードが均等に出る</small></button>' +
     '<button type="button" id="mix-lively" data-mix="lively" aria-pressed="' + (setup.mix === 'lively') + '"><b>にぎやか</b><small>ゲーム・ルール系が多め</small></button>';
   if (full) {
@@ -964,10 +971,11 @@ function renderSetup(full) {
   if (setup.coach == null) setup.coach = lsGet(COACH_KEY) !== 'done';
   $('coachOpt').checked = !!setup.coach;
   const mini = setup.mode === 'mini';
-  $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
+  $('setupTitle').textContent = mini ? 'ミニゲームモード' : pm ? PM[pm].title : 'メンバー登録';
   $('unitSel').innerHTML = UNIT_KEYS.map(k => '<option value="' + k + '"' + (setup.unit === k ? ' selected' : '') + '>' + UNITS[k].btn + '</option>').join('');
-  $('roundPanel').hidden = mini; $('mixGrid').hidden = mini; $('coachRow').hidden = mini;
-  $('mixNum').textContent = mini ? '3' : '4'; $('mixHead').textContent = mini ? 'お酒の量' : 'カードの出かた';
+  $('roundPanel').hidden = mini; $('mixGrid').hidden = mini; $('coachRow').hidden = mini || !!pm;
+  $('mixNum').textContent = mini ? '3' : '4'; $('mixHead').textContent = mini ? 'お酒の量' : pm ? PM[pm].optHead : 'カードの出かた';
+  if (pm) { pmSetupInfo(pm); return; }
   if (mini) {
     $('setupInfo').classList.remove('bad', 'one', 'marquee');
     $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>' + (setup.unit !== 'cup' ? '（1杯＝' + UNITS[setup.unit].long + '）' : '');
@@ -1000,12 +1008,16 @@ function fitInfo() {
     info.classList.add('marquee');
   }
 }
+function saveNames() {
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: setup.count, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit, king: setup.king, koi: setup.koi })); } catch (_) { /* ignore */ }
+}
 function beginGame() {
   if (setup.mode === 'mini') { beginMini(); return; }
+  if (PM_MODES.includes(setup.mode)) { beginPM(setup.mode); return; }
   const n = setup.count;
   if (!eligibleCards(n).length) { renderSetup(false); return; }
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit })); } catch (_) { /* ignore */ }
+  saveNames();
   G = {
     v: 2, gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
@@ -1372,7 +1384,7 @@ function finishGame() {
 /* ---------- drinks ---------- */
 function addDrink(p, amt) { if (!amt) return; G.players[p].total += amt; G.players[p].times++; G.last = p; }
 function floatAt(p, text, safe) {
-  const seat = (isMini() ? $('mgBoard') : $('seats')).querySelector('[data-seat="' + p + '"]');
+  const seat = (isMini() || isPM() ? $('mgBoard') : $('seats')).querySelector('[data-seat="' + p + '"]');
   if (!seat) return;
   const pos = relPos(seat);
   const el = document.createElement('div');
@@ -3839,7 +3851,7 @@ function openTool(force) {
   openOv('toolOv');
   BGM.play('tension'); BGM.level(0.7, 0.3);
   SE.play('pop');
-  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else if (kind === 'react') reactSetup(); else duelSetup();
+  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else if (kind === 'react') reactSetup(); else if (kind === 'memo') memoSetup(); else duelSetup();
 }
 function closeTool(mode) {
   const T = tool;
@@ -3863,6 +3875,7 @@ function toolAct(a, el) {
   if (a === 'rec' || a === 'special') { closeTool(a); return; }
   if (PARTY_FX.includes(T.kind)) { partyAct(a, el); return; }
   if (T.kind === 'react') { reactAct(a); return; }
+  if (T.kind === 'memo') { memoAct(a); return; }
   if (T.kind === 'indian' && a === 'peek') { indianPeek(); return; }
   if (T.kind === 'indian' && a === 'hide') { indianHide(); return; }
   if (T.kind === 'indian' && a === 'redraw') { indianRedraw(+el.dataset.j); return; }
@@ -5034,7 +5047,7 @@ function useLoad() {
   const num = x => (Number.isFinite(Number(x)) ? Number(x) : 0);
   ['first', 'games', 'done', 'draws', 'ms', 'cups', 'cur', 'last', 'ended'].forEach(k => { USE[k] = num(USE[k]); });
   if (!USE.first) USE.first = Date.now();
-  ['days', 'players', 'cards', 'fx', 'mini', 'special'].forEach(k => {
+  ['days', 'players', 'cards', 'fx', 'mini', 'special', 'modes'].forEach(k => {
     const o = USE[k] && typeof USE[k] === 'object' ? USE[k] : {}, clean = {};
     Object.keys(o).forEach(j => { if (/^[\w-]{1,24}$/.test(j)) clean[j] = num(o[j]); });
     USE[k] = clean;
@@ -5127,7 +5140,7 @@ async function resultImage(hide) {
   outlined('結果発表！！', 6, 8, '112px ' + DISP, pink, ink, 22);
   outlined('結果発表！！', 0, 0, '112px ' + DISP, '#ffffff', ink, 14);
   c.restore();
-  const d = new Date(), sub = [d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(), n + '人', mini ? 'ミニゲーム' + G.mini.log.length + '戦' : G.turn + 'ターン'];
+  const d = new Date(), sub = [d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(), n + '人', mini ? 'ミニゲーム' + G.mini.log.length + '戦' : isPM() ? PM[G.mode].title + ' ' + G.turn + PM[G.mode].word : G.turn + 'ターン'];
   if (unitNote(G)) sub.push(unitNote(G));
   c.font = '800 34px ' + BODY; c.fillStyle = cssVar('--muted', '#c7b8f5'); c.textAlign = 'center'; c.fillText(sub.join(' ・ '), W / 2, 318);
   /* layout: the 不運王 (most drunk) gets a big card of their own, then everyone's ranking; the block sits in the middle */
@@ -5279,7 +5292,7 @@ function useTrack(ev, p) {
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
   if (gid && U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
   if (gid) { U.cur = gid; U.last = now; }
-  if (ev === 'game_start') { U.games++; bump(U.days, dayKey(now)); bump(U.players, p.players); }
+  if (ev === 'game_start') { U.games++; bump(U.days, dayKey(now)); bump(U.players, p.players); bump(U.modes, p.mode || 'card'); }
   else if (ev === 'card_draw') { U.draws++; bump(U.cards, p.card_id); if (p.kind) bump(U.fx, p.kind); }
   else if (ev === 'mini_game') bump(U.mini, p.kind);
   else if (ev === 'special_rule') bump(U.special, p.type);
@@ -5368,7 +5381,7 @@ function statEnd(st, away) {
   if (!st || !st.sid) return;
   st.seq = (st.seq || 0) + 1;
   statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, mix: st.mix || undefined, unit: st.unit || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
-    turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp }, away);
+    turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp, q: st.q && Object.keys(st.q).length ? st.q : undefined }, away);
   st.dirty = false;
 }
 function statStart(p) {
@@ -5377,9 +5390,9 @@ function statStart(p) {
   if (!G) return;
   const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
   const st = G.st = {
-    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', mix: G.mode === 'mini' ? null : G.mix, unit: unitOf(G), players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
+    sid: id, seq: 0, mode: G.mode === 'mini' || isPM() ? G.mode : 'card', mix: G.mode === 'mini' ? null : isPM() ? G.lvl : G.mix, unit: unitOf(G), players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
     form: Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone', inst: isStandalone() ? 1 : 0, nth: clampInt(useLoad().games, 1, 99999),
-    turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {},
+    turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {}, q: {},
   };
   stCur = st;
   saveGame();   /* the game was saved just before this: keep the record with it, or a reopened game would lose it */
@@ -5392,6 +5405,7 @@ function statDone() {
 function statTrack(ev, p) {
   if (ev === 'share') { statSend({ k: 'ev', kind: 'share', detail: ['result', 'image'].includes(p.from) ? p.from : 'title' }); return; }
   if (ev === 'install') { statSend({ k: 'ev', kind: 'install', detail: p.how || 'done' }); return; }
+  if (ev === 'plus') { statSend({ k: 'ev', kind: 'plus', detail: p.d }); return; }
   if (ev === 'game_start') { statStart(p); return; }
   if (ev === 'game_end') return;
   const st = statTouch();
@@ -5399,6 +5413,7 @@ function statTrack(ev, p) {
   if (ev === 'card_draw') { if (p.own) st.own++; else bump(st.cards, String(p.card_id)); if (p.kind) bump(st.fx, p.kind); }
   else if (ev === 'mini_game') bump(st.mini, p.kind);
   else if (ev === 'special_rule') bump(st.sp, p.type);
+  else if (ev === 'pm_item') { if (!st.q || typeof st.q !== 'object') st.q = {}; bump(st.q, String(p.id)); }
 }
 /* put away mid-game (home button, screen off, app closed): send what there is so far; it is updated if the game goes on */
 function statPause() {
@@ -5460,6 +5475,7 @@ function renderUsage() {
   const cards = top.length ? '<div class="us-grid cards">' + top.map(([id, n]) => '<div class="us-row"><span class="us-nm">' + esc(plain(byId.get(id).text)) + '</span><span class="us-track"><i style="width:' + (n / cMax * 100) + '%"></i></span><span class="us-v">' + n + '回</span></div>').join('') + '</div>'
     : '<p class="us-none">まだカードを引いていません</p>';
   const special = SPECIAL_NAMES.map(([k, l]) => '<span class="us-chip">' + l + '<b>' + (U.special[k] || 0) + '</b></span>').join('');
+  const modes = [['card', 'カード'], ['mini', 'ミニゲーム'], ['king', '王様ゲーム'], ['koi', '恋バナ・暴露']].map(([k, l]) => '<span class="us-chip' + (U.modes[k] ? '' : ' zero') + '">' + l + '<b>' + (U.modes[k] || 0) + '</b></span>').join('');
   const people = [2, 3, 4, 5, 6, 7, 8].map(n => '<span class="us-chip' + (U.players[n] ? '' : ' zero') + '">' + n + '人<b>' + (U.players[n] || 0) + '</b></span>').join('');
   const since = new Date(U.first);
   $('statsBody').innerHTML =
@@ -5471,7 +5487,7 @@ function renderUsage() {
       '<div class="us-bars">' + bars + '</div></section>' +
     '<section class="us-card"><h3>ミニゲーム<span class="us-sum">遊んだ回数 ・ カードが出たときに遊んだ割合</span></h3>' + minis + '</section>' +
     '<section class="us-card"><h3>よく出たカード<span class="us-sum">まだ出ていない ' + never + '枚 / ' + onCards.length + '枚</span></h3>' + cards + '</section>' +
-    '<section class="us-card"><h3>特殊ルール・人数</h3><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
+    '<section class="us-card"><h3>モード・特殊ルール・人数</h3><div class="us-chips">' + modes + '</div><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
       (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
       '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
@@ -5532,7 +5548,7 @@ let mSpin = null;
 function beginMini() {
   const n = setup.count;
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit })); } catch (_) { /* ignore */ }
+  saveNames();
   mSpin = null;
   G = {
     v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
@@ -5568,9 +5584,10 @@ function miniRoundFx() {
 }
 const miniAvail = () => {
   const M = G.mini;
-  let a = MG_ORDER.filter(k => !M.used.includes(k) && !M.skip.includes(k));
-  if (!a.length) a = MG_ORDER.filter(k => !M.skip.includes(k));
-  return a.length ? a : MG_ORDER.slice();
+  const all = MG_ORDER.filter(k => !mgLocked(k));
+  let a = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
+  if (!a.length) a = all.filter(k => !M.skip.includes(k));
+  return a.length ? a : all;
 };
 /* the roulette: a highlight runs down the list of games still to play (two or three laps, slowing down) and stops on the drawn one */
 function miniPick() {
@@ -5601,6 +5618,7 @@ function miniLand(cur, kind) {
   cur.names = { '引いた人': d, '左隣': (d + 1) % n, '右隣': (d - 1 + n) % n, 'ランダム': (d + 1) % n };
   cur.card = { id: 0, cat: 'mini', text: mgText(kind), cups: [MINI_LOSS], dur: false, note: '', fx: kind, catName: 'ミニゲーム', mark: '遊', color: 8 };
   cur.mkind = kind; cur.mres = null; cur.msnap = null; cur.bombDone = false; cur.drinks = [];
+  mgTry(kind);
   cur.phase = 'drawn';
   G.mini.used.push(kind);
   saveGame();
@@ -5624,7 +5642,7 @@ function miniStart() {
   const cur = G.cur;
   if (!isMini() || cur.phase !== 'drawn' || mSpin) return;
   const k = cur.mkind;
-  if (k === 'bomb') openBomb(); else if (k === 'stop') openTimer(); else if (k === 'tap') openTool('react'); else openTool();
+  if (k === 'bomb') openBomb(); else if (k === 'stop') openTimer(); else if (k === 'tap') openTool('react'); else openTool(k);
 }
 /* the result of a round: +2 counts each, turned into cups at 3 */
 function miniRecord(losers, amt) {
@@ -5743,9 +5761,11 @@ function miniBoard() {
 function miniStageHTML(anim) {
   const cur = G.cur, M = G.mini;
   if (cur.phase === 'before') {
-    return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList">' + MG_ORDER.map(k => {
-      const used = M.used.includes(k), skip = M.skip.includes(k);
-      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : '') + '" data-k="' + k + '"><span class="mg-it">' + esc(mgTitle(k)) + '</span>' + (used ? '<i>済</i>' : skip ? '<i>パス</i>' : '') + '</li>';
+    const rows = MG_ORDER.length;
+    return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList" style="--rows:' + rows + ';--rows2:' + Math.ceil(rows / 2) + '">' + MG_ORDER.map(k => {
+      const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), plus = PLUS_MG.includes(k);
+      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"><span class="mg-it">' + (plus ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
+        (used ? '<i>済</i>' : skip ? '<i>パス</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
     }).join('') + '</ol>';
   }
   const k = cur.mkind, done = cur.phase === 'done';
@@ -5787,6 +5807,7 @@ function renderMini(anim) {
   board.style.setProperty('--cols', cols);
   board.classList.toggle('c4', cols === 4);
   board.innerHTML = miniBoard();
+  $('mgStage').className = 'mg-stage';
   $('mgStage').innerHTML = miniStageHTML(anim);
   $('dock').innerHTML = miniDock();
   const box = $('gLog');
@@ -6283,6 +6304,8 @@ function renderLog() {
 function renderGame(anim) {
   if (!validGame(G)) { showScreen('title'); return; }
   if (isMini()) { renderMini(anim); return; }
+  if (isPM()) { renderPM(anim); return; }
+  $('mgStage').className = 'mg-stage';
   $('tableWrap').hidden = false; $('mgWrap').hidden = true;
   const n = G.players.length, d = G.cur.drawer;
   const round = Math.floor(G.turn / n) + 1;
@@ -6369,6 +6392,7 @@ function renderResult() {
   if (!validGame(G)) { showScreen('title'); return; }
   $('resBack').hidden = !canBack();
   if (isMini()) { renderMiniResult(); return; }
+  if (isPM()) { renderPMResult(); return; }
   const n = G.players.length;
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.total - a.total || a.i - b.i);
   const maxT = order[0].total, minT = order[order.length - 1].total, spread = maxT > minT;
@@ -6412,6 +6436,12 @@ function wireGame() {
   document.addEventListener('keydown', unlock, true);
   $('goSetup').addEventListener('click', () => { loadSetup(); setup.mode = 'card'; SE.play('tap'); showScreen('setup'); });
   $('goMini').addEventListener('click', () => { loadSetup(); setup.mode = 'mini'; SE.play('tap'); showScreen('setup'); });
+  ['king', 'koi'].forEach(m => $(m === 'king' ? 'goKing' : 'goKoi').addEventListener('click', () => {
+    loadSetup(); setup.mode = m; if (setup.count < PM[m].min) setup.count = PM[m].min;
+    SE.play('tap'); showScreen('setup');
+  }));
+  $('plusBtn').addEventListener('click', () => openPlus('title'));
+  $('plusBox').addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b) plusAct(b.dataset.pl); });
   $('resumeBtn').addEventListener('click', () => { if (validGame(G) && !G.done) { SE.play('tap'); showScreen('game'); requestWake(); } });
   $('goEditor').addEventListener('click', () => { SE.play('tap'); showScreen('editor'); });
   $('howBtn').addEventListener('click', () => openGuide('start'));
@@ -6474,6 +6504,8 @@ function wireGame() {
     setup.unit = e.target.value; renderSetup(false); SE.play('pop');
   });
   $('mixGrid').addEventListener('click', e => {
+    const o = e.target.closest('button[data-opt]');
+    if (o && PM_MODES.includes(setup.mode)) { setup[setup.mode] = o.dataset.opt; renderSetup(false); SE.play('pop'); const again = $(o.id); if (again) again.focus({ preventScroll: true }); return; }
     const b = e.target.closest('button[data-mix]'); if (!b) return;
     setup.mix = b.dataset.mix === 'lively' ? 'lively' : 'even'; renderSetup(false); SE.play('pop');
     const again = $(b.id); if (again) again.focus({ preventScroll: true });
@@ -6492,8 +6524,9 @@ function wireGame() {
   $('setupBack').addEventListener('click', () => showScreen('title'));
   $('startGame').addEventListener('click', beginGame);
 
-  const gameAct = g => {
+  const gameAct = (g, el) => {
     if (!G) return;
+    if (pmAct(g, el)) return;
     if (g === 'draw') drawCard();
     else if (g === 'mpick') miniPick();
     else if (g === 'mstart') miniStart();
@@ -6522,8 +6555,12 @@ function wireGame() {
     else if (g === 'chal') openChallenge();
     else if (g === 'bomb') openBomb();
   };
-  const onGame = e => { const b = e.target.closest('[data-g]'); if (b && !b.disabled) gameAct(b.dataset.g); };
+  const onGame = e => { const b = e.target.closest('[data-g]'); if (b && !b.disabled) gameAct(b.dataset.g, b); };
   $('center').addEventListener('click', onGame);
+  $('mgStage').addEventListener('click', onGame);
+  $('mgStage').addEventListener('keydown', e => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-g="mstart"]')) { e.preventDefault(); miniStart(); }
+  });
   $('center').addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     if (e.target.closest('[data-g="zoom"]')) { e.preventDefault(); openZoom(false); }
@@ -6543,7 +6580,7 @@ function wireGame() {
   $('confirmYes').addEventListener('click', () => { closeOv('confirmOv'); finishGame(); });
   const sameMembers = () => {
     if (!validGame(G)) return;
-    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.unit = unitOf(G); setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
+    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.unit = unitOf(G); setup.loaded = true; setup.mode = G.mode === 'mini' || PM_MODES.includes(G.mode) ? G.mode : 'card'; if (PM_MODES.includes(G.mode)) setup[G.mode] = G.lvl;
   };
   $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
@@ -6628,6 +6665,7 @@ function wireGame() {
   backdrop('catOv', () => closeOv('catOv'));
   backdrop('confirmOv', () => closeOv('confirmOv'));
   backdrop('backOv', () => closeOv('backOv'));
+  backdrop('plusOv', () => plusAct('close'));
 
   $('wheelSpin').addEventListener('click', spinWheel);
   $('wheelOk').addEventListener('click', confirmWheel);
@@ -6683,6 +6721,7 @@ function wireGame() {
     if (tool) { closeTool(false); return; }
     if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
     if (!$('shotOv').hidden) { closeShot(); return; }
+    if (!$('plusOv').hidden) { plusAct('close'); return; }
     for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'installOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
@@ -6700,57 +6739,3 @@ function wireGame() {
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }
 
-/* =====================================================================
-   BOOT
-   ===================================================================== */
-let booted = false;
-function boot(data) {
-  if (booted) return;
-  booted = true;
-  data = data || {};
-  try {
-    const u = data.ui;
-    if (u) {
-      if (typeof u.players === 'number') ui.players = Math.min(8, Math.max(2, u.players));
-      if (u.mode === 'tag' || u.mode === 'name') ui.mode = u.mode;
-      if (typeof u.filter === 'string') ui.filter = u.filter;
-    }
-    const s = data.setup;
-    if (s && Array.isArray(s.names)) {
-      setup.names = s.names.slice(0, 8).map(String); setup.loaded = true;
-      if (s.count >= 2 && s.count <= 8) setup.count = s.count;
-      if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
-    }
-  } catch (_) { /* ignore */ }
-  if (ui.filter !== ANY_CAT && !catOf(ui.filter)) ui.filter = ANY_CAT;
-  /* iOS ignores user-scalable=no: stop its pinch zoom too (two people tapping at once must not zoom the table) */
-  ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
-  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
-  SE.init(); BGM.init(); renderSE();
-  wireEditor(); wireGame();
-  checkDraft();
-  G = normalizeGame(validGame(data.G) ? data.G : loadGame());
-  stCur = (G && G.st) || null;
-  setTimeout(statFlush, 4000);
-  let ret = null;
-  try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
-  const want = data.screen || ret || 'title';
-  if (want === 'game' && G && !G.done) showScreen('game');
-  else if (want === 'result' && G && G.done) showScreen('result');
-  else if (want === 'editor' || want === 'setup') showScreen(want);
-  else showScreen('title');
-  installSync();
-  if (!ageOk()) ageAsk(false);
-  FXC.size();
-}
-const hot = window.claude && window.claude.hot;
-try {
-  if (hot && typeof hot.snapshot === 'function') {
-    hot.snapshot(() => ({ ui: Object.assign({}, ui), setup: { count: setup.count, names: setup.names.slice(), rounds: setup.rounds }, screen, G }));
-  }
-} catch (_) { /* ignore */ }
-if (hot && typeof hot.ready === 'function') {
-  try { hot.ready(boot); } catch (_) { boot({}); }
-  setTimeout(() => boot({}), 1500);
-} else boot((hot && hot.data) || {});
-})();

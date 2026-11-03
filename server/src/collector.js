@@ -53,17 +53,18 @@ export default {
 
     try {
       if (r.k === 'ev') {
-        if (!['share', 'install'].includes(r.kind)) return reply(400, origin);
+        if (!['share', 'install', 'plus'].includes(r.kind)) return reply(400, origin);   // plus: プレミアム画面を開いた・プランを選んだ
         const detail = typeof r.detail === 'string' && KEY.test(r.detail) ? r.detail : null;
         await env.DB.prepare('INSERT INTO events (day, at, kind, detail) VALUES (?, ?, ?, ?)').bind(day, now, r.kind, detail).run();
         return reply(204, origin);
       }
       if (r.k !== 'start' && r.k !== 'end') return reply(400, origin);
       const sid = typeof r.sid === 'string' && SID.test(r.sid) ? r.sid : null;
-      const mode = r.mode === 'card' || r.mode === 'mini' ? r.mode : null;
+      const mode = ['card', 'mini', 'king', 'koi'].includes(r.mode) ? r.mode : null;   // カード・ミニゲーム・王様ゲーム・恋バナ/暴露
       const players = int(r.players, 2, 8), rounds = int(r.rounds ?? 0, 0, 99);
       const form = r.form === 'tablet' ? 'tablet' : 'phone', installed = r.inst ? 1 : 0, nth = int(r.nth ?? 1, 1, 99999);
-      const mix = mode === 'card' && (r.mix === 'even' || r.mix === 'lively') ? r.mix : null;   // カードの出かた
+      const MIXES = { card: ['even', 'lively'], king: ['mild', 'hot'], koi: ['mix', 'koi', 'bare'] };   // カードの出かた・命令のレベル・質問のジャンル
+      const mix = MIXES[mode] && MIXES[mode].includes(r.mix) ? r.mix : null;
       const unit = ['one', 'half', 'cup', 'none'].includes(r.unit) ? r.unit : null;            // 1杯の量
       if (!sid || !mode || players == null || rounds == null || nth == null) return reply(400, origin);
       if (r.k === 'start') {
@@ -72,7 +73,7 @@ export default {
         return reply(204, origin);
       }
       const seq = int(r.seq ?? 1, 1, 99999), turns = int(r.turns ?? 0, 0, 9999), ms = int(r.ms ?? 0, 0, 24 * 3600e3), cups = int(r.cups ?? 0, 0, 99999), own = int(r.own ?? 0, 0, 9999), done = r.done ? 1 : 0;
-      const data = { cards: counts(r.cards, CARD, 200), fx: counts(r.fx, KEY, 40), mini: counts(r.mini, KEY, 40), sp: counts(r.sp, KEY, 20) };
+      const data = { cards: counts(r.cards, CARD, 200), fx: counts(r.fx, KEY, 40), mini: counts(r.mini, KEY, 40), sp: counts(r.sp, KEY, 20), q: counts(r.q, CARD, 200) };   // q: 王様の命令・恋バナの質問の番号
       if (seq == null || turns == null || ms == null || cups == null || own == null || Object.values(data).some(v => v === null)) return reply(400, origin);
       data.own = own;   // cards the players added or rewrote: how many were drawn, nothing more
       await env.DB.prepare(
