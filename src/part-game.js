@@ -773,7 +773,13 @@ const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
-const setup = { count: 4, names: [], rounds: 3, mix: 'even', loaded: false, coach: null, mode: 'card' };
+const setup = { count: 4, names: [], rounds: 3, mix: 'even', unit: 'cup', loaded: false, coach: null, mode: 'card' };
+/* 1杯の量: what one 「杯」 in the game means. Only a guide shown during the game and on the results — the counting stays the same */
+const UNITS = { one: { btn: '一口', short: '一口', long: '一口' }, half: { btn: '半分', short: '半分', long: 'グラス半分' }, cup: { btn: '1杯', short: '1杯', long: 'グラス1杯' }, none: { btn: 'お酒なし', short: 'ソフドリ一口', long: 'ソフトドリンク一口' } };
+const UNIT_KEYS = ['one', 'half', 'cup', 'none'];
+const unitOf = g => (g && UNITS[g.unit] && g.unit) || 'cup';
+const unitNote = g => (unitOf(g) === 'cup' ? '' : '1杯＝' + UNITS[unitOf(g)].long);
+const unitBadge = g => (unitOf(g) === 'cup' ? '' : '<span class="g-unit">1杯＝' + UNITS[unitOf(g)].short + '</span>');
 /* カードの出かた: バランス = every card equally likely; にぎやか = these categories come up more often */
 const MIX_KEYS = ['app', 'rule', 'chal', 'c1'], MIX_WEIGHT = 2.5;
 const cardWeight = (c, mix) => (mix === 'lively' && MIX_KEYS.includes(c.cat) ? MIX_WEIGHT : 1);
@@ -846,6 +852,7 @@ function normalizeGame(g) {
   g.hist = Array.isArray(g.hist) ? g.hist.filter(h => typeof h === 'string').slice(-HIST_MAX) : [];
   g.pile = Array.isArray(g.pile) ? g.pile : [];
   g.mix = g.mix === 'lively' ? 'lively' : 'even';
+  g.unit = UNITS[g.unit] ? g.unit : 'cup';
   g.recent = Array.isArray(g.recent) ? g.recent : [];
   delete g.rules;
   /* the play-count record: dropped if it isn't what statStart made (the collector checks everything again anyway) */
@@ -892,7 +899,7 @@ function ageOk() { try { return localStorage.getItem(AGE_KEY) === '1'; } catch (
 function ageAsk(no) {
   $('ageTitle').textContent = no ? '20歳になったら遊んでね' : '20歳以上ですか？';
   $('ageText').innerHTML = no ? 'お酒は20歳になってから。それまでは、ジュースで遊べるゲームで楽しもう！'
-    : '酒GO!!伝説は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。';
+    : '酒GO!!伝説は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。<br><small class="age-terms">「はい」で、<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>に同意したものとみなします</small>';
   $('ageActs').innerHTML = no ? '<button type="button" class="pbtn white small" data-age="back">もどる</button>'
     : '<button type="button" class="pbtn" data-age="yes">はい、20歳以上です</button><button type="button" class="pbtn white small" data-age="no">いいえ</button>';
   $('ageOv').hidden = false;
@@ -937,6 +944,7 @@ function loadSetup() {
       if (s.count >= 2 && s.count <= 8) setup.count = s.count;
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
       if (s.mix === 'lively' || s.mix === 'even') setup.mix = s.mix;
+      if (UNITS[s.unit]) setup.unit = s.unit;
     }
   } catch (_) { /* ignore */ }
 }
@@ -957,10 +965,12 @@ function renderSetup(full) {
   $('coachOpt').checked = !!setup.coach;
   const mini = setup.mode === 'mini';
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : 'メンバー登録';
-  $('roundPanel').hidden = mini; $('mixPanel').hidden = mini; $('coachRow').hidden = mini;
+  $('unitSel').innerHTML = UNIT_KEYS.map(k => '<option value="' + k + '"' + (setup.unit === k ? ' selected' : '') + '>' + UNITS[k].btn + '</option>').join('');
+  $('roundPanel').hidden = mini; $('mixGrid').hidden = mini; $('coachRow').hidden = mini;
+  $('mixNum').textContent = mini ? '3' : '4'; $('mixHead').textContent = mini ? 'お酒の量' : 'カードの出かた';
   if (mini) {
     $('setupInfo').classList.remove('bad', 'one', 'marquee');
-    $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>';
+    $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>' + (setup.unit !== 'cup' ? '（1杯＝' + UNITS[setup.unit].long + '）' : '');
     $('startGame').disabled = false;
     return;
   }
@@ -973,6 +983,7 @@ function renderSetup(full) {
   info.classList.add('one');
   info.innerHTML = '<span class="si-run">' + (pool
     ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）') +
+      (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
       (setup.mix !== 'lively' ? '' : liveOff ? ' ・ にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
         : ' ・ にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
     : 'この人数で使えるカードがありません。カード編集でONにしてね') + '</span>';
@@ -994,9 +1005,9 @@ function beginGame() {
   const n = setup.count;
   if (!eligibleCards(n).length) { renderSetup(false); return; }
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit })); } catch (_) { /* ignore */ }
   G = {
-    v: 2, gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [] })),
   };
@@ -5011,7 +5022,7 @@ function champPop() {
 /* ---------- あそびの記録（この端末だけ）と、全員分の利用状況（自前の集計サーバー server/collector.js。STAT_URL を入れたときだけ動く）.
    Only counts are kept or sent: never player names. The artifact version keeps its own device record and sends nothing ---------- */
 const USE_KEY = 'sakego-usage';
-const PRIVACY_URL = 'https://shugodensetsu.github.io/privacy.html';
+const PRIVACY_URL = 'https://shugodensetsu.github.io/privacy.html', TERMS_URL = 'https://shugodensetsu.github.io/terms.html';
 const USE_GAP = 10 * 60 * 1000;   /* play time: a pause longer than 10 minutes isn't counted */
 let USE = null;
 const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -5075,6 +5086,179 @@ async function installApp() {
   useTrack('install', { how: inAppBrowser() ? 'guide_inapp' : isIOS() ? 'guide_ios' : 'guide' });
   openOv('installOv');
 }
+/* 結果を画像でシェア: the ranking drawn on a canvas (1080×1350), previewed in a dialog, then sent through the phone's
+   share sheet as a picture. Where pictures can't be shared (LINE's own browser, a computer…) it is saved instead,
+   or, on iPhone, kept on screen to be saved by a long press. Names can be swapped for プレイヤー1・2… first */
+let shot = null;
+function cssVar(name, fb) { try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fb; } catch (_) { return fb; } }
+function rrect(x, c, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function fitFont(c, text, weight, size, family, maxW, min) {
+  let s = size;
+  for (; s > min; s -= 2) { c.font = weight + ' ' + s + 'px ' + family; if (c.measureText(text).width <= maxW) break; }
+  return s;
+}
+async function resultImage(hide) {
+  const W = 1080, H = 1350, cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  const DISP = '"Dela Gothic One","Hiragino Sans","Noto Sans JP",sans-serif', BODY = '"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif';
+  const mini = isMini(), n = G.players.length;
+  const key = p => (mini ? p.pts : p.total);
+  const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => key(b) - key(a) || a.i - b.i);
+  const maxK = key(order[0]), minK = key(order[order.length - 1]), spread = maxK > minK;
+  const names = order.map(p => (hide ? 'プレイヤー' + (p.i + 1) : String(p.name)));
+  try {
+    await Promise.all([document.fonts.load('80px "Dela Gothic One"', '酒GO!!伝説結果発表0123456789杯'), document.fonts.load('800 44px "M PLUS Rounded 1c"', names.join('') + '不運王セーフ王無敗')]);
+  } catch (_) { /* the fallback fonts are fine */ }
+  const ink = cssVar('--ink', '#150733'), paper = cssVar('--paper', '#fffaf0'), yellow = cssVar('--yellow', '#ffd83d'), pink = cssVar('--pink', '#ff4fa3'), cyan = cssVar('--cyan', '#35e0ff');
+  /* background: deep purple with rays from the top, like the app */
+  c.fillStyle = cssVar('--bg', '#2a1266'); c.fillRect(0, 0, W, H);
+  c.save(); c.translate(W / 2, 250); c.fillStyle = cssVar('--bg-ray', '#33197a');
+  for (let k = 0; k < 18; k++) { c.rotate(Math.PI / 9); c.beginPath(); c.moveTo(0, 0); c.lineTo(-90, -1700); c.lineTo(90, -1700); c.closePath(); c.fill(); }
+  c.restore();
+  c.fillStyle = 'rgba(255,255,255,.07)';
+  for (let y = 8; y < H; y += 30) for (let x = 8 + ((y / 30) % 2) * 15; x < W; x += 30) { c.beginPath(); c.arc(x, y, 2.6, 0, 7); c.fill(); }
+  const outlined = (t, x, y, font, fill, stroke, lw, align) => {
+    c.font = font; c.textAlign = align || 'center'; c.textBaseline = 'alphabetic'; c.lineJoin = 'round';
+    c.lineWidth = lw; c.strokeStyle = stroke; c.strokeText(t, x, y); c.fillStyle = fill; c.fillText(t, x, y);
+  };
+  outlined('酒GO!!伝説', W / 2, 112, '64px ' + DISP, yellow, ink, 14);
+  c.save(); c.translate(W / 2, 246); c.rotate(-0.03);
+  outlined('結果発表！！', 6, 8, '112px ' + DISP, pink, ink, 22);
+  outlined('結果発表！！', 0, 0, '112px ' + DISP, '#ffffff', ink, 14);
+  c.restore();
+  const d = new Date(), sub = [d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(), n + '人', mini ? 'ミニゲーム' + G.mini.log.length + '戦' : G.turn + 'ターン'];
+  if (unitNote(G)) sub.push(unitNote(G));
+  c.font = '800 34px ' + BODY; c.fillStyle = cssVar('--muted', '#c7b8f5'); c.textAlign = 'center'; c.fillText(sub.join(' ・ '), W / 2, 318);
+  /* layout: the 不運王 (most drunk) gets a big card of their own, then everyone's ranking; the block sits in the middle */
+  const areaTop = 345, areaBottom = H - 170, pad = 24;
+  const heroH = spread ? (n >= 7 ? 190 : 230) : 0, heroGap = spread ? (n >= 7 ? 22 : 28) : 0;
+  const rowH = Math.min(124, (areaBottom - areaTop - heroH - heroGap - pad * 2) / n);
+  const listH = n * rowH + pad * 2, blockH = heroH + heroGap + listH;
+  let y0 = areaTop + Math.max(0, (areaBottom - areaTop - blockH) / 2);
+  const cardX = 60, cardW = W - 120;
+  const shadowCard = (y, h, fill) => {
+    c.fillStyle = ink; rrect(cardX, c, y + 12, cardW, h, 44); c.fill();
+    c.fillStyle = fill; c.strokeStyle = ink; c.lineWidth = 8; rrect(cardX, c, y, cardW, h, 44); c.fill(); c.stroke();
+  };
+  const totalOf = p => (mini ? String(p.total) : fmtAmt(p.total));
+  if (spread) {
+    const p = order[0], nm = names[0], y = y0, h = heroH;
+    shadowCard(y, h, yellow);
+    /* badge */
+    c.font = '800 34px ' + BODY; const bw = c.measureText('不運王').width + 40;
+    c.fillStyle = pink; rrect(cardX + 40, c, y + 30, bw, 54, 27); c.fill(); c.lineWidth = 5; c.strokeStyle = ink; c.stroke();
+    c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('不運王', cardX + 40 + bw / 2, y + 58);
+    c.font = '800 28px ' + BODY; c.fillStyle = ink; c.textAlign = 'left'; c.fillText(mini ? 'いちばん負けたのは…' : 'いちばん飲んだのは…', cardX + 60 + bw, y + 58);
+    /* total on the right */
+    const tt = totalOf(p), right = cardX + cardW - 44;
+    c.textBaseline = 'alphabetic'; c.textAlign = 'right';
+    c.font = '800 46px ' + BODY; const cw = c.measureText('杯').width;
+    const tBase = unitOf(G) !== 'cup' ? y + h - 64 : y + h - 40;
+    c.fillStyle = ink; c.fillText('杯', right, tBase);
+    c.font = '120px ' + DISP; const tw = c.measureText(tt).width; c.fillText(tt, right - cw - 6, tBase);
+    if (unitOf(G) !== 'cup') { c.font = '800 28px ' + BODY; c.fillStyle = cssVar('--ink-muted', '#5d4f7c'); c.fillText(UNITS[unitOf(G)].long + '×' + tt, right, y + h - 26); }
+    /* the name, as big as fits */
+    const nx = cardX + 44, maxW = right - cw - tw - 40 - nx;
+    const sz = fitFont(c, nm, '', 84, DISP, maxW, 36);
+    let shown = nm; c.font = sz + 'px ' + DISP;
+    while (c.measureText(shown).width > maxW && shown.length > 1) shown = shown.slice(0, -1);
+    if (shown !== nm) shown = shown.slice(0, -1) + '…';
+    c.textAlign = 'left'; c.fillStyle = ink; c.fillText(shown, nx, y + h - 46);
+    y0 += heroH + heroGap;
+  }
+  const top = y0;
+  shadowCard(top, listH, paper);
+  order.forEach((p, idx) => {
+    const k = key(p), rank = 1 + order.filter(q => key(q) > k).length;
+    const title = spread && k === maxK ? '不運王' : spread && k === minK ? (mini && !p.loss ? '無敗！' : 'セーフ王') : '';
+    const y = top + pad + idx * rowH, h = rowH - Math.min(12, rowH * 0.1), x = cardX + 26, w = cardW - 52;
+    c.fillStyle = spread && rank === 1 ? 'rgba(255,216,61,.55)' : 'rgba(21,7,51,.05)'; rrect(x, c, y, w, h, 24); c.fill();
+    const cy = y + h / 2, r = Math.min(40, h * 0.36);
+    c.fillStyle = cssVar('--p' + ((p.i % 8) + 1), pink); c.beginPath(); c.arc(x + 22 + r, cy, r, 0, 7); c.fill();
+    c.lineWidth = 6; c.strokeStyle = ink; c.stroke();
+    c.font = Math.round(r * 1.05) + 'px ' + DISP; c.fillStyle = ink; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(rank), x + 22 + r, cy + 2);
+    const total = totalOf(p), numSize = Math.min(64, h * 0.6);
+    c.font = Math.round(numSize) + 'px ' + DISP; const numW = c.measureText(total).width;
+    c.font = '800 ' + Math.round(numSize * 0.5) + 'px ' + BODY; const cupW = c.measureText('杯').width;
+    const right = x + w - 26;
+    c.textBaseline = 'alphabetic'; c.textAlign = 'right'; c.fillStyle = ink;
+    const unitLine = unitOf(G) !== 'cup' && h > 70;
+    const base = unitLine ? cy + numSize * 0.22 : cy + numSize * 0.36;
+    c.fillText('杯', right, base);
+    c.font = Math.round(numSize) + 'px ' + DISP; c.fillText(total, right - cupW - 4, base);
+    if (unitLine) { c.font = '800 ' + Math.round(Math.min(24, h * 0.2)) + 'px ' + BODY; c.fillStyle = cssVar('--ink-muted', '#5d4f7c'); c.fillText(UNITS[unitOf(G)].long + '×' + total, right, base + Math.min(30, h * 0.26)); }
+    /* name, shrunk to fit, then the title badge */
+    const nameX = x + 22 + r * 2 + 22, nameMax = Math.max(120, right - cupW - numW - 40 - nameX - (title ? 150 : 0));
+    const ns = fitFont(c, names[idx], '800', Math.min(46, h * 0.42), BODY, nameMax, 22);
+    c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillStyle = ink; c.font = '800 ' + ns + 'px ' + BODY;
+    let nm = names[idx];
+    while (c.measureText(nm).width > nameMax && nm.length > 1) nm = nm.slice(0, -1);
+    if (nm !== names[idx]) nm = nm.slice(0, -1) + '…';
+    c.fillText(nm, nameX, cy + 2);
+    if (title) {
+      const tx = nameX + c.measureText(nm).width + 14, ts = Math.round(Math.min(28, h * 0.26));
+      c.font = '800 ' + ts + 'px ' + BODY; const tw = c.measureText(title).width + 24;
+      c.fillStyle = title === '不運王' ? pink : cyan; rrect(tx, c, cy - ts * 0.75, tw, ts * 1.5, ts * 0.75); c.fill();
+      c.lineWidth = 4; c.strokeStyle = ink; c.stroke();
+      c.fillStyle = title === '不運王' ? '#ffffff' : ink; c.textAlign = 'center'; c.fillText(title, tx + tw / 2, cy + 2);
+    }
+  });
+  /* footer: what this is and where to get it */
+  c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。飲み会が盛り上がるパーティーゲーム', W / 2, H - 92);
+  outlined(SHARE_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''), W / 2, H - 40, '36px ' + DISP, yellow, ink, 10);
+  return new Promise(ok => cv.toBlob(b => ok(b), 'image/png'));
+}
+async function shotRender() {
+  if (!shot) return;
+  const n = ++shot.n;
+  $('shotSend').disabled = true;
+  const blob = await resultImage($('shotHide').checked);
+  if (!shot || n !== shot.n || !blob) return;
+  if (shot.url) URL.revokeObjectURL(shot.url);
+  shot.blob = blob; shot.url = URL.createObjectURL(blob);
+  $('shotImg').src = shot.url;
+  $('shotSend').disabled = false;
+}
+function openShot() {
+  if (!validGame(G)) return;
+  SE.play('tap');
+  shot = { n: 0, blob: null, url: null };
+  $('shotHint').hidden = true;
+  $('shotImg').removeAttribute('src');
+  openOv('shotOv');
+  shotRender();
+}
+function closeShot() {
+  closeOv('shotOv');
+  if (shot && shot.url) setTimeout(() => URL.revokeObjectURL(shot && shot.url), 60000);
+  shot = null;
+}
+async function sendShot() {
+  if (!shot || !shot.blob) return;
+  SE.play('tap');
+  const file = new File([shot.blob], 'sakego-result.png', { type: 'image/png' });
+  useTrack('share', { from: 'image' });
+  if (!inAppBrowser() && navigator.canShare && navigator.share) {
+    let can = false;
+    try { can = navigator.canShare({ files: [file] }); } catch (_) { can = false; }
+    if (can) {
+      try { await navigator.share({ files: [file], text: '「酒GO!!伝説」で遊んだよ！ ' + SHARE_URL }); } catch (_) { /* closed without sharing */ }
+      return;
+    }
+  }
+  const hint = $('shotHint');
+  if (isIOS() || inAppBrowser()) {
+    hint.innerHTML = '上の画像を<b>長押し</b>して「写真に保存」や「共有」を選んでね';
+  } else {
+    const a = document.createElement('a');
+    a.href = shot.url; a.download = 'sakego-result.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    hint.textContent = '画像を保存しました。LINE や X に貼って送ってね';
+  }
+  hint.hidden = false;
+}
 /* 友達に教える: the phone's own share sheet (LINE, X, AirDrop…); without one, the link is copied */
 const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
@@ -5124,12 +5308,49 @@ function builtinCard(c) {
   return !!c && builtinText.get(c.id) === c.text;
 }
 const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(Number(v) || 0)));
-function statSend(o) {
+/* reports that couldn't go out (no signal in a basement bar, say) wait on the phone and go when the signal is back.
+   Each report carries the time it was made (at), so it's counted on the right day. At most 100 wait, for 7 days */
+const STAT_Q_KEY = 'sakego-stat-q', STAT_Q_MAX = 100, STAT_Q_DAYS = 7;
+function statQ() {
+  try { const q = JSON.parse(localStorage.getItem(STAT_Q_KEY) || '[]'); return Array.isArray(q) ? q.filter(x => typeof x === 'string') : []; } catch (_) { return []; }
+}
+function statQSave(q) {
+  try { if (q.length) localStorage.setItem(STAT_Q_KEY, JSON.stringify(q.slice(-STAT_Q_MAX))); else localStorage.removeItem(STAT_Q_KEY); } catch (_) { /* ignore */ }
+}
+const statKeep = body => statQSave(statQ().concat(body));
+/* one report, the slow way: so we know whether it arrived. 2xx = done; 4xx other than 429 = never will (dropped) */
+async function statPost(body) {
+  try {
+    const r = await fetch(STAT_URL, { method: 'POST', body, mode: 'cors', credentials: 'omit', keepalive: true, headers: { 'content-type': 'text/plain' } });
+    return r.ok || (r.status >= 400 && r.status < 500 && r.status !== 429) ? 'done' : 'later';
+  } catch (_) { return 'later'; }
+}
+let statFlushing = false;
+async function statFlush() {
+  if (statFlushing || !statOn() || navigator.onLine === false) return;
+  statFlushing = true;
+  try {
+    const old = Date.now() - STAT_Q_DAYS * 86400e3;
+    let q = statQ().filter(b => { try { return (JSON.parse(b).at || 0) > old; } catch (_) { return false; } });
+    statQSave(q);
+    while (q.length) {
+      if (await statPost(q[0]) === 'later') break;
+      q = statQ().slice(1); statQSave(q);   /* re-read: a new report may have been kept meanwhile */
+    }
+  } finally { statFlushing = false; }
+}
+/* away: the page may be closing, so sendBeacon (it outlives the page). Otherwise a normal request, kept for later if it fails */
+function statSend(o, away) {
   if (!statOn()) return;
+  o.at = Date.now();
   const body = JSON.stringify(o);
-  /* text/plain: a "simple" request, so the browser sends it straight away without asking the server first */
-  try { if (navigator.sendBeacon && navigator.sendBeacon(STAT_URL, new Blob([body], { type: 'text/plain' }))) return; } catch (_) { /* ignore */ }
-  try { fetch(STAT_URL, { method: 'POST', body, mode: 'no-cors', credentials: 'omit', keepalive: true }).catch(() => {}); } catch (_) { /* ignore */ }
+  if (navigator.onLine === false) { statKeep(body); return; }
+  if (away) {
+    /* text/plain: a "simple" request, so the browser sends it straight away without asking the server first */
+    try { if (navigator.sendBeacon && navigator.sendBeacon(STAT_URL, new Blob([body], { type: 'text/plain' }))) return; } catch (_) { /* ignore */ }
+    statKeep(body); return;
+  }
+  statPost(body).then(r => { if (r === 'later') statKeep(body); else statFlush(); });
 }
 /* play time grows only while the app is in use: a gap longer than USE_GAP (put away, then picked up again) counts as USE_GAP at most */
 function statTouch() {
@@ -5143,11 +5364,11 @@ function statTouch() {
   st.dirty = true;
   return st;
 }
-function statEnd(st) {
+function statEnd(st, away) {
   if (!st || !st.sid) return;
   st.seq = (st.seq || 0) + 1;
-  statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, mix: st.mix || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
-    turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp });
+  statSend({ k: 'end', sid: st.sid, seq: st.seq, mode: st.mode, mix: st.mix || undefined, unit: st.unit || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth,
+    turns: st.turns, done: st.done, ms: clampInt(st.ms, 0, 864e5), cups: st.cups, own: clampInt(st.own, 0, 9999), cards: st.cards, fx: st.fx, mini: st.mini, sp: st.sp }, away);
   st.dirty = false;
 }
 function statStart(p) {
@@ -5156,20 +5377,20 @@ function statStart(p) {
   if (!G) return;
   const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
   const st = G.st = {
-    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', mix: G.mode === 'mini' ? null : G.mix, players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
+    sid: id, seq: 0, mode: G.mode === 'mini' ? 'mini' : 'card', mix: G.mode === 'mini' ? null : G.mix, unit: unitOf(G), players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
     form: Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone', inst: isStandalone() ? 1 : 0, nth: clampInt(useLoad().games, 1, 99999),
     turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {},
   };
   stCur = st;
   saveGame();   /* the game was saved just before this: keep the record with it, or a reopened game would lose it */
-  statSend({ k: 'start', sid: st.sid, mode: st.mode, mix: st.mix || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth });
+  statSend({ k: 'start', sid: st.sid, mode: st.mode, mix: st.mix || undefined, unit: st.unit || undefined, players: st.players, rounds: st.rounds, form: st.form, inst: st.inst, nth: st.nth });
 }
 function statDone() {
   const st = statTouch();
   if (st) { st.done = 1; statEnd(st); }
 }
 function statTrack(ev, p) {
-  if (ev === 'share') { statSend({ k: 'ev', kind: 'share', detail: p.from === 'result' ? 'result' : 'title' }); return; }
+  if (ev === 'share') { statSend({ k: 'ev', kind: 'share', detail: ['result', 'image'].includes(p.from) ? p.from : 'title' }); return; }
   if (ev === 'install') { statSend({ k: 'ev', kind: 'install', detail: p.how || 'done' }); return; }
   if (ev === 'game_start') { statStart(p); return; }
   if (ev === 'game_end') return;
@@ -5183,7 +5404,7 @@ function statTrack(ev, p) {
 function statPause() {
   const st = G && G.st;
   if (!st || G.done || !st.dirty) return;
-  statTouch(); statEnd(st); saveGame();
+  statTouch(); statEnd(st, true); saveGame();
 }
 
 const MINI_NAMES = { taru: '酒樽危機一髪', wani: 'パクッとワニ', mine: 'マインスイーパー', skull: 'ドクロめくり', balloon: '風船パンク', champ: 'シャンパン振り', chinchiro: 'チンチロ', dice: 'サイコロ勝負', cards: 'トランプ勝負',
@@ -5254,7 +5475,7 @@ function renderUsage() {
       (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
       '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
-    '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
+    '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a> ・ <a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
 }
 function usageAct(a, el) {
@@ -5311,10 +5532,10 @@ let mSpin = null;
 function beginMini() {
   const n = setup.count;
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: n, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit })); } catch (_) { /* ignore */ }
   mSpin = null;
   G = {
-    v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], pts: 0, loss: 0 })),
     mini: { total: MINI_TOTAL, used: [], skip: [], log: [] },
@@ -5556,8 +5777,8 @@ function miniLog() {
 function renderMini(anim) {
   const n = G.players.length;
   if (mAnim) { mAnim.timers.forEach(clearTimeout); mAnim = null; }
-  $('gRound').innerHTML = (G.turn + 1) + '<small>/' + G.mini.total + '戦</small>';
-  $('gPending').hidden = true;
+  $('gRound').innerHTML = (G.turn + 1) + '<small>/' + G.mini.total + '戦</small>' + unitBadge(G);
+  $('gPending').hidden = true; $('gPending').parentNode.classList.remove('has-pend');
   $('gRules').hidden = true;
   $('tableWrap').hidden = true;
   $('mgWrap').hidden = false;
@@ -5590,7 +5811,8 @@ function renderMiniResult() {
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.pts - a.pts || a.i - b.i);
   const maxP = order[0].pts, minP = order[order.length - 1].pts, spread = maxP > minP;
   const cups = G.players.reduce((s, p) => s + p.total, 0), losses = G.players.reduce((s, p) => s + p.loss, 0);
-  $('resSub').textContent = 'ミニゲームモード ・ ' + G.mini.log.length + '戦しました';
+  $('resSub').textContent = 'ミニゲームモード ・ ' + G.mini.log.length + '戦しました' + (unitNote(G) ? ' ・ ' + unitNote(G) : '');
+  const unitX = t => (unitOf(G) === 'cup' ? '' : '<small class="res-unit">' + UNITS[unitOf(G)].long + '×' + t + '</small>');
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.pts > p.pts).length;
     const title = spread && p.pts === maxP ? '不運王' : spread && p.pts === minP ? (p.loss ? 'セーフ王' : '無敗！') : '';
@@ -5600,7 +5822,7 @@ function renderMiniResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">負け ' + p.loss + '回 ・ カウント合計 ' + p.pts + (left ? ' ・ のこり' + glassSVG(left, { cls: 'sm' }) : '') + '</span></span>' +
-      '<span class="res-total">' + p.total + '<small>杯</small></span></li>';
+      '<span class="res-total">' + p.total + '<small>杯</small>' + unitX(p.total) + '</span></li>';
   }).join('');
   $('resStats').innerHTML = '<div class="stat"><b>' + cups + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.mini.log.length + '</b><span>ミニゲーム</span></div>' +
     '<div class="stat"><b>' + losses + '</b><span>負けの合計</span></div><div class="stat"><b>' + G.players.filter(p => !p.loss).length + '</b><span>無敗の人</span></div>';
@@ -5700,7 +5922,7 @@ const gCard = (title, body, num) => '<section class="gd-card"><h3>' + (num ? '<s
 const GUIDE = [
   { k: 'start', tab: 'はじめに', html: () =>
     '<p class="gd-lead">スマホ1台をみんなで回して遊ぶカードゲームです。アプリは<b>「カードを出す係」</b>と<b>「飲んだ量を記録する係」</b>。飲む人が決まっているカードは<b>アプリが自動で記録</b>、ジャンケンなどの勝ち負けはみんなで判定して、アプリに教えてあげます。</p>' +
-    gCard('メンバーを登録', '<p>人数・名前・何周あそぶか・カードの出かたを決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
+    gCard('メンバーを登録', '<p>人数・名前・何周あそぶか・カードの出かた・1杯の量を決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
     gCard('カードを引く', '<div class="gd-mock">' + gBtn('カードを引く！', 'big') + '</div><p>自分の番の人がタップ。カードが大きく出るので<b>声に出して読み上げ</b>、書いてあるとおりに遊びます。</p>', 2) +
     gCard('飲む人の記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + '<span class="gd-tok">+1<small>杯</small></span>' + gSeat('サキ', 1, 1, 'ランダム') + '</div>' +
       '<p>「左隣は1杯」のように<b>飲む人が決まっているカードは、閉じると自動で記録</b>されます。</p>' +
@@ -5802,6 +6024,7 @@ const GUIDE = [
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
     gCard('カードの出かた', '<p><b>バランス</b>：どのカードも同じくらい出ます。</p><p><b>にぎやか</b>：「アプリならでは」「ルール追加」「チャレンジ」「遊び系」のカードが、ほかの2倍以上出やすくなります。ミニゲームや特殊ルールで盛り上がりたいときに。</p>') +
+    gCard('1杯の量', '<p>カードの「1杯」をどれくらいにするかの目安です。<b>一口</b>・<b>半分</b>（グラス半分）・<b>1杯</b>（グラス1杯）・<b>お酒なし</b>（ソフトドリンク一口）から選べます。</p><p>ゲーム中は画面の上に「1杯＝一口」のように出て、結果発表にも「一口×8」のように出ます。飲めない人がいる日や、ゆっくり飲みたい日に。</p>') +
     gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
     gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
     gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>' +
@@ -6063,8 +6286,9 @@ function renderGame(anim) {
   $('tableWrap').hidden = false; $('mgWrap').hidden = true;
   const n = G.players.length, d = G.cur.drawer;
   const round = Math.floor(G.turn / n) + 1;
-  $('gRound').innerHTML = round + '<small>' + (G.rounds ? '/' + G.rounds + '周' : '周目') + '</small>';
+  $('gRound').innerHTML = round + '<small>' + (G.rounds ? '/' + G.rounds + '周' : '周目') + '</small>' + unitBadge(G);
   const pe = $('gPending');
+  pe.parentNode.classList.toggle('has-pend', pendingActive());
   if (pendingActive()) {
     pe.hidden = false;
     pe.textContent = 'NEXT ' + (G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '');
@@ -6149,7 +6373,8 @@ function renderResult() {
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.total - a.total || a.i - b.i);
   const maxT = order[0].total, minT = order[order.length - 1].total, spread = maxT > minT;
   const sum = G.players.reduce((s, p) => s + p.total, 0);
-  $('resSub').textContent = G.turn + 'ターン（' + Math.ceil(G.turn / n) + '周）遊びました';
+  $('resSub').textContent = G.turn + 'ターン（' + Math.ceil(G.turn / n) + '周）遊びました' + (unitNote(G) ? ' ・ ' + unitNote(G) : '');
+  const unitX = t => (unitOf(G) === 'cup' ? '' : '<small class="res-unit">' + UNITS[unitOf(G)].long + '×' + fmtAmt(t) + '</small>');
   $('resList').innerHTML = order.map((p, idx) => {
     const rank = 1 + order.filter(q => q.total > p.total).length;
     const title = spread && p.total === maxT ? '不運王' : spread && p.total === minT ? 'セーフ王' : '';
@@ -6158,7 +6383,7 @@ function renderResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">倍倍' + p.dbl + ' ・ 天国と地獄' + p.hh + ' ・ コスパ' + p.cospa + '</span></span>' +
-      '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small></span></li>';
+      '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small>' + unitX(p.total) + '</span></li>';
   }).join('');
   $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.stats.cards + '</b><span>引いたカード</span></div>' +
     '<div class="stat"><b>' + G.stats.devil + '</b><span>デビル</span></div><div class="stat"><b>' + G.stats.angel + '</b><span>大天使</span></div>';
@@ -6218,6 +6443,10 @@ function wireGame() {
   $('tellBtn').addEventListener('click', () => shareApp('title'));
   $('installBtn').addEventListener('click', installApp);
   $('insClose').addEventListener('click', () => { SE.play('tap'); closeOv('installOv'); });
+  $('shotClose').addEventListener('click', () => { SE.play('tap'); closeShot(); });
+  $('shotSend').addEventListener('click', sendShot);
+  $('shotLink').addEventListener('click', () => shareApp('result'));
+  $('shotHide').addEventListener('change', () => { SE.play('tap'); shotRender(); });
   $('ageActs').addEventListener('click', e => {
     const b = e.target.closest('[data-age]'); if (!b) return;
     const a = b.dataset.age;
@@ -6225,7 +6454,7 @@ function wireGame() {
     if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
     else ageAsk(a === 'no');
   });
-  $('resTell').addEventListener('click', () => shareApp('result'));
+  $('resTell').addEventListener('click', openShot);
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
   $('editorBack').addEventListener('click', () => showScreen('title'));
@@ -6239,6 +6468,10 @@ function wireGame() {
     const b = e.target.closest('button[data-rnd]'); if (!b) return;
     setup.rounds = Number(b.dataset.rnd); renderSetup(false); SE.play('pop');
     const again = $(b.id); if (again) again.focus({ preventScroll: true });
+  });
+  $('unitSel').addEventListener('change', e => {
+    if (!UNITS[e.target.value]) return;
+    setup.unit = e.target.value; renderSetup(false); SE.play('pop');
   });
   $('mixGrid').addEventListener('click', e => {
     const b = e.target.closest('button[data-mix]'); if (!b) return;
@@ -6310,7 +6543,7 @@ function wireGame() {
   $('confirmYes').addEventListener('click', () => { closeOv('confirmOv'); finishGame(); });
   const sameMembers = () => {
     if (!validGame(G)) return;
-    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
+    setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.unit = unitOf(G); setup.loaded = true; setup.mode = G.mode === 'mini' ? 'mini' : 'card';
   };
   $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
@@ -6449,6 +6682,7 @@ function wireGame() {
     if (!$('wheelOv').hidden) { if (wheel && wheel.done) confirmWheel(); else cancelWheel(); return; }
     if (tool) { closeTool(false); return; }
     if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
+    if (!$('shotOv').hidden) { closeShot(); return; }
     for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'installOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
@@ -6456,10 +6690,11 @@ function wireGame() {
   });
   document.addEventListener('visibilitychange', () => {
     const A = SE.A;
-    if (document.visibilityState === 'visible') { if (G && G.st) G.st.last = Date.now(); if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
+    if (document.visibilityState === 'visible') { if (G && G.st) G.st.last = Date.now(); setTimeout(statFlush, 2000); if (screen === 'game') requestWake(); if (A && A.c.state === 'suspended') { try { A.c.resume(); } catch (_) { /* ignore */ } } }
     else { statPause(); if (A && A.c.state === 'running') { try { A.c.suspend(); } catch (_) { /* ignore */ } } }
   });
   window.addEventListener('pagehide', statPause);
+  window.addEventListener('online', () => setTimeout(statFlush, 1500));
   const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
@@ -6496,6 +6731,7 @@ function boot(data) {
   checkDraft();
   G = normalizeGame(validGame(data.G) ? data.G : loadGame());
   stCur = (G && G.st) || null;
+  setTimeout(statFlush, 4000);
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';

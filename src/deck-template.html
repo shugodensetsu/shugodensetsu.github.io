@@ -145,6 +145,14 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .mix-row button[aria-pressed="true"]{background:var(--cyan); transform:translateY(-2px) rotate(-2deg)}
 .mix-row button[aria-pressed="true"] small{color:var(--ink)}
 #mix-lively[aria-pressed="true"]{background:var(--yellow)}
+#mixPanel .p-h{flex-wrap:nowrap; white-space:nowrap}
+.unit-sel{margin-left:auto; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800}
+.unit-sel select{appearance:none; -webkit-appearance:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink); background:var(--lime) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23150733' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center / 10px 6px;
+  border:2.5px solid var(--ink); border-radius:999px; padding:2px 24px 2px 10px; box-shadow:0 2px 0 var(--ink); cursor:pointer}
+.unit-sel select:focus-visible{outline:3px solid var(--cyan); outline-offset:2px}
+.g-unit{text-shadow:none; -webkit-text-stroke:0; paint-order:normal; display:inline-block; margin-left:6px; font-family:var(--f-body); font-size:11px; font-weight:800; color:var(--ink); background:var(--lime); border-radius:999px; padding:1px 7px; vertical-align:3px}
+@media (max-width: 420px){ .g-top.has-pend .g-unit{display:none} }
+.res-unit{display:block; font-size:10.5px; font-weight:800; color:var(--ink-muted); text-align:right; line-height:1.1}
 .setup-info{margin:0; text-align:center; font-size:12.5px; font-weight:800; color:var(--muted)}
 .setup-info b{color:var(--yellow); font-family:var(--f-display); font-weight:400}
 .setup-info.bad{color:var(--red)}
@@ -355,7 +363,17 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .ins-steps b{color:var(--pink)}
 .ins-ic{width:22px; height:22px; vertical-align:-5px; color:#0a84ff}
 #insBody p{margin:0 0 8px}
+.shot-box{max-width:400px; gap:10px}
+.shot-box h2{margin:0; font-size:18px}
+.shot-img{background:var(--bg-deep); border:3px solid var(--ink); border-radius:14px; overflow:hidden; aspect-ratio:4 / 5; display:flex; align-items:center; justify-content:center; max-height:52vh}
+.shot-img img{display:block; width:100%; height:100%; object-fit:contain; -webkit-touch-callout:default; user-select:auto}
+.shot-opt{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:800}
+.shot-opt input{width:20px; height:20px; accent-color:var(--pink); margin:0}
+.shot-hint{margin:0; font-size:13px; font-weight:800; color:var(--pink); line-height:1.5}
+.dialog-acts .grow{flex:1}
 .age-ov{z-index:95; background:radial-gradient(circle at 50% 40%, #3a1d88 0, var(--bg-deep) 75%)}
+.age-terms{display:block; margin-top:6px; font-size:12px; color:var(--ink-muted)}
+.age-terms a{color:var(--pink)}
 .age-box{max-width:360px; align-items:center; text-align:center; gap:14px; padding:24px 20px 20px}
 .age-box h2{font-size:24px}
 .age-box p{font-weight:700; line-height:1.65; color:var(--ink-muted)}
@@ -1819,7 +1837,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         </div>
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加して、アプリとして使う</button>
       </div>
-      <p class="fine">20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+      <p class="fine">20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
     </section>
 
     <section class="screen s-setup" id="scr-setup" aria-label="メンバー登録" hidden>
@@ -1837,7 +1855,8 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="round-row" id="roundGrid" role="group" aria-label="終了条件"></div>
       </div>
       <div class="panel" id="mixPanel">
-        <div class="p-h"><span class="num-badge">4</span>カードの出かた</div>
+        <div class="p-h"><span class="num-badge" id="mixNum">4</span><span id="mixHead">カードの出かた</span>
+          <label class="unit-sel"><span>1杯の量</span><select id="unitSel" aria-label="1杯の量"></select></label></div>
         <div class="mix-row" id="mixGrid" role="group" aria-label="カードの出かた"></div>
       </div>
       <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>1ターン目に、操作の案内を出す（はじめての人向け）</span></label>
@@ -2075,6 +2094,19 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
       <p class="ins-lead">アプリのように全画面で遊べて、一度開けば<b>オフラインでもOK</b>。</p>
       <div id="insBody"></div>
       <div class="dialog-acts"><button type="button" class="pbtn small" id="insClose">わかった</button></div>
+    </div>
+  </div>
+
+  <div class="ov center" id="shotOv" hidden>
+    <div class="dialog shot-box" role="dialog" aria-modal="true" aria-labelledby="shotTitle">
+      <h2 id="shotTitle">結果を画像でシェア</h2>
+      <div class="shot-img"><img id="shotImg" alt="結果発表の画像"></div>
+      <label class="shot-opt"><input type="checkbox" id="shotHide"><span>名前をかくす（プレイヤー1・2…にする）</span></label>
+      <p class="shot-hint" id="shotHint" hidden></p>
+      <div class="dialog-acts col">
+        <button type="button" class="pbtn" id="shotSend">画像を送る</button>
+        <div class="dialog-acts"><button type="button" class="pbtn white small grow" id="shotLink">リンクだけ送る</button><button type="button" class="pbtn white small grow" id="shotClose">閉じる</button></div>
+      </div>
     </div>
   </div>
 
