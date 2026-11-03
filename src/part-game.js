@@ -924,7 +924,7 @@ function showScreen(name) {
   if (screen === 'title') renderTitle();
   else if (screen === 'setup') renderSetup(true);
   else if (screen === 'game') { renderGame(); resumeDraw(); }
-  else if (screen === 'result') renderResult();
+  else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
   if (coach.on) coachQueue();
   sceneBGM();
@@ -6412,6 +6412,12 @@ function renderResult() {
   $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.stats.cards + '</b><span>引いたカード</span></div>' +
     '<div class="stat"><b>' + G.stats.devil + '</b><span>デビル</span></div><div class="stat"><b>' + G.stats.angel + '</b><span>大天使</span></div>';
 }
+function fitResults() {
+  const L = $('resList');
+  L.classList.remove('tight');
+  const it = L.querySelector('.res-item');
+  if (it && screen === 'result' && it.offsetHeight < 46) L.classList.add('tight');   /* offsetHeight: the rows fly in rotated, which would inflate a bounding box */
+}
 function playResultFx() {
   const n = G.players.length;
   SE.play('drumroll');
@@ -6735,7 +6741,7 @@ function wireGame() {
   });
   window.addEventListener('pagehide', statPause);
   window.addEventListener('online', () => setTimeout(statFlush, 1500));
-  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (screen === 'result') fitResults(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }

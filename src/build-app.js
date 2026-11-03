@@ -88,6 +88,20 @@ const html = `<!doctype html>
   fit();
   addEventListener('orientationchange', function () { setTimeout(fit, 150); });
 })();
+/* iPhone, opened from the home screen: the page is drawn under the status bar (black-translucent), but iOS still sizes 100% / 100vh
+   as if the status bar took space, so the app came out about 60px short — a blank strip at the bottom, and the title squeezed upward
+   until the top was cut off. There the app always fills the whole screen, so its height is set from the screen itself */
+(function () {
+  var d = document.documentElement, mq = function (q) { return !!(window.matchMedia && matchMedia(q).matches); };
+  if (!/iP(hone|od)/.test(navigator.userAgent) || !(navigator.standalone === true || mq('(display-mode: standalone)'))) return;
+  function fixH() {
+    var full = mq('(orientation: landscape)') ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+    d.style.height = Math.max(window.innerHeight || 0, full) + 'px';
+  }
+  fixH();
+  addEventListener('resize', fixH);
+  addEventListener('orientationchange', function () { setTimeout(fixH, 200); });
+})();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">

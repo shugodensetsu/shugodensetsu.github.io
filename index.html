@@ -42,6 +42,20 @@
   fit();
   addEventListener('orientationchange', function () { setTimeout(fit, 150); });
 })();
+/* iPhone, opened from the home screen: the page is drawn under the status bar (black-translucent), but iOS still sizes 100% / 100vh
+   as if the status bar took space, so the app came out about 60px short — a blank strip at the bottom, and the title squeezed upward
+   until the top was cut off. There the app always fills the whole screen, so its height is set from the screen itself */
+(function () {
+  var d = document.documentElement, mq = function (q) { return !!(window.matchMedia && matchMedia(q).matches); };
+  if (!/iP(hone|od)/.test(navigator.userAgent) || !(navigator.standalone === true || mq('(display-mode: standalone)'))) return;
+  function fixH() {
+    var full = mq('(orientation: landscape)') ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+    d.style.height = Math.max(window.innerHeight || 0, full) + 'px';
+  }
+  fixH();
+  addEventListener('resize', fixH);
+  addEventListener('orientationchange', function () { setTimeout(fixH, 200); });
+})();
 </script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -94,6 +108,16 @@ button:disabled{cursor:not-allowed; opacity:.5}
 /* while an opaque full-screen overlay (roulette / challenge / bomb / tap duel) is up, stop drawing what is hidden under it */
 .app.covered .bg-burst{visibility:hidden; animation-play-state:paused}
 .app.covered .bg-dots, .app.covered .screen{visibility:hidden}
+.brand, .se-btn{white-space:nowrap}
+/* narrow phones (360px Android and the like): everything in the top bar stays on one line */
+@media (max-width: 384px){
+  .topbar{gap:6px; padding-inline:10px}
+  .brand{font-size:18px; letter-spacing:.02em}
+  .top-r{gap:5px}
+  .se-btn{font-size:11.5px; padding:2px 9px 2px 7px; gap:4px}
+  .se-btn svg{width:15px; height:15px}
+}
+@media (max-width: 330px){ .se-btn span{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap} }
 .topbar{flex:none; height:46px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding-inline:12px}
 .brand{background:none; border:0; padding:0; font-family:var(--f-display); font-size:21px; color:var(--yellow); letter-spacing:.04em}
 .top-r{display:flex; gap:7px}
@@ -124,11 +148,15 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .pbtn .sub{display:block; font-family:var(--f-body); font-weight:800; font-size:11px; letter-spacing:0; opacity:.85}
 
 /* ---------- title ---------- */
-.s-title{justify-content:center; align-items:center; text-align:center; gap:min(16px, 2.2cqh)}
-.t-cards{position:relative; width:100%; height:min(190px, 24cqh)}
-.t-card{position:absolute; left:50%; bottom:0; width:min(104px, 13.5cqh); height:min(146px, 19cqh); margin-left:calc(min(104px, 13.5cqh) / -2); box-sizing:border-box;
+.s-title{justify-content:flex-start; align-items:center; text-align:center; gap:min(16px, 2.2cqh); overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain}
+/* centred while it fits (auto margins); when the buttons need more room (続きから再開, ホーム画面に追加, a short screen) the cards shrink first,
+   and if it still doesn't fit the screen scrolls instead of cutting the top off */
+.s-title > :first-child{margin-top:auto}
+.s-title > :last-child{margin-bottom:auto}
+.t-cards{position:relative; width:100%; flex:0 1 min(190px, 24cqh); height:min(190px, 24cqh); min-height:0; container-type:size}
+.t-card{position:absolute; left:50%; bottom:0; width:min(104px, 54.7cqh); height:min(146px, 76.8cqh); margin-left:calc(min(104px, 54.7cqh) / -2); box-sizing:border-box;
   border:3px solid var(--ink); border-radius:14px; box-shadow:0 5px 0 var(--ink); background:var(--paper); display:grid; place-items:center}
-.t-card b{width:62%; aspect-ratio:1; border-radius:50%; border:3px solid var(--ink); display:grid; place-items:center; font-family:var(--f-display); font-weight:400; font-size:min(32px, 4.4cqh); color:var(--ink)}
+.t-card b{width:62%; aspect-ratio:1; border-radius:50%; border:3px solid var(--ink); display:grid; place-items:center; font-family:var(--f-display); font-weight:400; font-size:min(32px, 16.8cqh); color:var(--ink)}
 .t-card.c-a{--r:-17deg; --x:-78%; animation:floaty 3.2s ease-in-out infinite}
 .t-card.c-a b{background:var(--c1)}
 .t-card.c-b{--r:15deg; --x:78%; animation:floaty 3.6s ease-in-out -1.2s infinite}
@@ -136,7 +164,9 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .t-card.c-back{--r:-2deg; --x:0%; z-index:1; animation:floaty 2.8s ease-in-out -.6s infinite;
   background:var(--pink) repeating-linear-gradient(45deg, transparent 0 9px, var(--pink-2) 9px 18px); box-shadow:inset 0 0 0 5px var(--paper), inset 0 0 0 8px var(--ink), 0 5px 0 var(--ink)}
 .t-card.c-back b{background:var(--yellow)}
-@keyframes floaty{0%,100%{transform:translateX(var(--x)) rotate(var(--r)) translateY(0)} 50%{transform:translateX(var(--x)) rotate(calc(var(--r) * 1.2)) translateY(-8px)}}
+@keyframes floaty{0%,100%{transform:translateX(var(--x)) rotate(var(--r)) translateY(0)} 50%{transform:translateX(var(--x)) rotate(calc(var(--r) * 1.2)) translateY(-4.2cqh)}}
+/* when the cards' box has been squeezed very low (a short screen with every button showing), they go rather than show cut off */
+@container (max-height: 70px){ .t-cards .t-card{display:none} }
 .logo{margin:0; font-family:var(--f-display); font-weight:400; font-size:min(78px, 15.5cqw, 11cqh); line-height:1.05; align-items:baseline; color:var(--yellow); letter-spacing:.02em; display:flex; justify-content:center}
 .logo span{display:inline-block; animation:letterIn .7s cubic-bezier(.2,1.6,.4,1) both, wob 2.4s ease-in-out infinite; animation-delay:calc(var(--i) * .09s), calc(.8s + var(--i) * .15s);
   text-shadow:3px 0 0 var(--ink),-3px 0 0 var(--ink),0 3px 0 var(--ink),0 -3px 0 var(--ink),2px 2px 0 var(--ink),-2px 2px 0 var(--ink),2px -2px 0 var(--ink),-2px -2px 0 var(--ink),0 8px 0 var(--ink),0 9px 0 var(--pink)}
@@ -158,12 +188,17 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .panel.grow{flex:1 1 auto; overflow:auto}
 #roundPanel, #mixPanel, .s-setup > .panel:first-of-type{flex-shrink:0}
 .s-setup .panel.grow{min-height:96px}
+/* the names never scroll inside their panel (a half-hidden row looks cut off): on a short screen the whole setup scrolls, the start button stays */
+.s-setup .panel.grow{flex:1 0 auto; overflow:visible}
 .s-setup{overflow-y:auto; overscroll-behavior:contain}
 /* short screens (iPhone SE and the like): tighter setup so all four panels and the start button fit */
 /* when it still doesn't fit (landscape, very small phones) the screen scrolls, and the start button stays at the bottom */
 .s-setup .row-btns{position:sticky; bottom:-12px; margin-top:auto; padding:8px 0 12px; margin-bottom:-12px; background:linear-gradient(rgba(42,18,102,0), var(--bg) 40%)}
-@container (max-height: 700px){
+@container (max-height: 820px){
   .s-setup{gap:6px}
+  .s-setup .names{gap:5px}
+  .s-setup .nm-in{padding:3px 2px}
+  .s-setup .nm-idx{width:24px; height:24px}
   .s-setup .panel{padding:5px 10px 7px; gap:4px}
   .s-setup .p-hint{display:none}
   .s-setup .panel.grow{min-height:80px}
@@ -173,6 +208,20 @@ button:disabled{cursor:not-allowed; opacity:.5}
   .mix-row b, .round-row button{font-size:16px}
   .round-row button{padding:3px 0}
   .s-setup .setup-info:not(.one){font-size:11.5px; line-height:1.5}
+}
+/* really short screens (iPhone SE in the home-screen app): smaller still, so 8 names need as little scrolling as possible */
+@container (max-height: 660px){
+  .s-setup .scr-title{font-size:21px}
+  .s-setup .nm-in{padding:2px; font-size:15px}
+  .s-setup .count-row button{max-height:34px; font-size:17px}
+  .s-setup .p-h{font-size:14px}
+  .s-setup .num-badge{width:21px; height:21px; font-size:12px}
+  .s-setup .coach-opt{font-size:12px}
+  .s-setup .panel{padding:4px 10px 6px}
+  .s-setup .row-btns{padding:6px 0 12px}
+  .s-setup .row-btns .pbtn.big{padding-block:9px}
+  .s-setup .round-row button{padding:2px 0}
+  .s-setup{gap:5px}
 }
 .p-h{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; flex-wrap:wrap}
 .num-badge{width:24px; height:24px; border-radius:50%; background:var(--pink); color:var(--white); border:2.5px solid var(--ink); display:grid; place-items:center; font-size:13px; flex:none}
@@ -202,6 +251,11 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .unit-sel select:focus-visible{outline:3px solid var(--cyan); outline-offset:2px}
 .g-unit{text-shadow:none; -webkit-text-stroke:0; paint-order:normal; display:inline-block; margin-left:6px; font-family:var(--f-body); font-size:11px; font-weight:800; color:var(--ink); background:var(--lime); border-radius:999px; padding:1px 7px; vertical-align:3px}
 @media (max-width: 420px){ .g-top.has-pend .g-unit{display:none} }
+/* the top row of the game never wraps (a two-line 「？ 遊び方」 was cut off at the top); on the narrowest phones the 1杯 badge makes room */
+.g-top-r .pbtn{white-space:nowrap}
+@media (max-width: 359px){ .g-unit{display:none} }
+/* the big dock button keeps its whole label on narrow phones */
+.dock-row .pbtn.big{font-size:min(24px, 4.2cqh, 6vw)}
 .res-unit{display:block; font-size:10.5px; font-weight:800; color:var(--ink-muted); text-align:right; line-height:1.1}
 .setup-info{margin:0; text-align:center; font-size:12.5px; font-weight:800; color:var(--muted)}
 .setup-info b{color:var(--yellow); font-family:var(--f-display); font-weight:400}
@@ -265,6 +319,10 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .pn{background:var(--p); border:2px solid var(--ink); border-radius:7px; padding:0 .18em; -webkit-box-decoration-break:clone; box-decoration-break:clone}
 .gc-foot{flex:none; display:flex; justify-content:space-between; align-items:flex-end; gap:6px; padding:calc(var(--cw) * .02) calc(var(--cw) * .045) calc(var(--cw) * .035); border-top:2.5px dashed var(--paper-line)}
 .gc-dur{background:var(--ink); color:var(--yellow); border-radius:8px; padding:0 8px; font-size:calc(var(--cw) * .048); font-weight:800; white-space:nowrap}
+/* a small card (a short screen): the label gives way (…) so the cups / SAFE stamp is never pushed off the card */
+.gc-foot > span:first-child{min-width:0; overflow:hidden}
+.gc-foot .gc-dur{display:inline-block; max-width:100%; box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; vertical-align:bottom}
+.gc-foot > .gc-cups{flex:none}
 .gc-cups{font-family:var(--f-display); font-size:calc(var(--cw) * .15); line-height:1; white-space:nowrap; text-shadow:3px 3px 0 var(--c)}
 .gc-cups small{font-family:var(--f-body); font-weight:800; font-size:.38em; margin-left:2px; text-shadow:none}
 .gc-cups.safe{color:var(--white); background:var(--c); border:3px solid var(--ink); border-radius:10px; padding:2px 10px; transform:rotate(-6deg); text-shadow:none; font-size:calc(var(--cw) * .11); box-shadow:0 3px 0 var(--ink)}
@@ -325,6 +383,8 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .crown{position:absolute; top:-14px; left:50%; width:26px; height:16px; margin-left:-13px; background:var(--yellow); border:0; clip-path:polygon(0 100%, 0 20%, 25% 60%, 50% 0, 75% 60%, 100% 20%, 100% 100%); filter:drop-shadow(0 0 0 var(--ink))}
 .res-item.first .crown{background:var(--pink)}
 .res-mid{display:flex; flex-direction:column; min-width:0}
+/* many players on a short screen (set by fitResults): each row is too low for the second line, so only the name and the total are shown */
+.res-list.tight .res-sub2, .res-list.tight .res-unit{display:none}
 .res-name{display:flex; align-items:center; gap:6px; min-width:0; font-weight:800; font-size:min(16px, 2.6cqh); line-height:1.3}
 .res-nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0}
 .res-title{flex:none; font-size:10.5px; font-weight:800; color:var(--white); background:var(--pink); border:1.5px solid var(--ink); border-radius:6px; padding:0 5px; line-height:1.5}
@@ -4331,7 +4391,7 @@ function showScreen(name) {
   if (screen === 'title') renderTitle();
   else if (screen === 'setup') renderSetup(true);
   else if (screen === 'game') { renderGame(); resumeDraw(); }
-  else if (screen === 'result') renderResult();
+  else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
   if (coach.on) coachQueue();
   sceneBGM();
@@ -9819,6 +9879,12 @@ function renderResult() {
   $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.stats.cards + '</b><span>引いたカード</span></div>' +
     '<div class="stat"><b>' + G.stats.devil + '</b><span>デビル</span></div><div class="stat"><b>' + G.stats.angel + '</b><span>大天使</span></div>';
 }
+function fitResults() {
+  const L = $('resList');
+  L.classList.remove('tight');
+  const it = L.querySelector('.res-item');
+  if (it && screen === 'result' && it.offsetHeight < 46) L.classList.add('tight');   /* offsetHeight: the rows fly in rotated, which would inflate a bounding box */
+}
 function playResultFx() {
   const n = G.players.length;
   SE.play('drumroll');
@@ -10142,7 +10208,7 @@ function wireGame() {
   });
   window.addEventListener('pagehide', statPause);
   window.addEventListener('online', () => setTimeout(statFlush, 1500));
-  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (screen === 'result') fitResults(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }
