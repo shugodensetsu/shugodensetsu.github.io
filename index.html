@@ -2888,8 +2888,12 @@ function addCategory() {
   const used = new Set(deck.categories.map(c => c.color));
   let color = (deck.categories.length % COLORS) + 1;
   for (let i = 1; i <= COLORS; i++) if (!used.has(i)) { color = i; break; }
+  /* never reuse the key of a built-in category, even one the players deleted: the key carries meaning elsewhere
+     (遊び系 is 'c1' and counts toward にぎやか) */
+  let builtin = [];
+  try { builtin = (JSON.parse($('deck-data').textContent).categories || []).map(c => c.key); } catch (_) { builtin = []; }
   let n = 1;
-  while (deck.categories.some(c => c.key === 'c' + n)) n++;
+  while (deck.categories.some(c => c.key === 'c' + n) || builtin.includes('c' + n)) n++;
   const cat = { key: 'c' + n, name: '新しい系統', mark: '新', color, on: true };
   deck.categories.push(cat);
   lastAction = '系統を追加しました';

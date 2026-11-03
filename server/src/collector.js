@@ -6,7 +6,7 @@
 
 const ORIGINS = ['https://shugodensetsu.github.io'];   // where the app lives
 const MAX_BODY = 4096;                                    // bytes; a real report is well under 1 KB
-const PER_MINUTE = 30;                                    // reports per sender per minute
+const PER_MINUTE = 120;                                   // reports per sender per minute (phone carriers put many people behind one address)
 const KEY = /^[a-z_]{1,16}$/, CARD = /^\d{1,4}$/, SID = /^[a-z0-9]{8,24}$/;
 
 const seen = new Map();   // sender -> [minute, count], memory only (gone when this instance stops)
