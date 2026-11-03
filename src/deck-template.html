@@ -122,7 +122,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
   .mix-row button{padding:3px 8px 4px}
   .mix-row b, .round-row button{font-size:16px}
   .round-row button{padding:3px 0}
-  .s-setup .setup-info{font-size:11.5px; line-height:1.5}
+  .s-setup .setup-info:not(.one){font-size:11.5px; line-height:1.5}
 }
 .p-h{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; flex-wrap:wrap}
 .num-badge{width:24px; height:24px; border-radius:50%; background:var(--pink); color:var(--white); border:2.5px solid var(--ink); display:grid; place-items:center; font-size:13px; flex:none}
@@ -148,9 +148,11 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .setup-info{margin:0; text-align:center; font-size:12.5px; font-weight:800; color:var(--muted)}
 .setup-info b{color:var(--yellow); font-family:var(--f-display); font-weight:400}
 .setup-info.bad{color:var(--red)}
-.setup-info.one{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0}
+/* the one-line note is a fixed box: whatever text is in it (and whether it scrolls), the panels above keep their size */
+.setup-info.one{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:0 0 auto; height:18px; line-height:18px; font-size:12px}
+.setup-info.one b{line-height:1}
 .setup-info.marquee{text-overflow:clip; text-align:left; -webkit-mask-image:linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent); mask-image:linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent)}
-.setup-info.marquee .si-run{display:inline-block; padding-left:100%; animation:siRun var(--si-dur, 10s) linear infinite}
+.setup-info.marquee .si-run{display:inline-block; vertical-align:top; height:18px; line-height:18px; padding-left:100%; animation:siRun var(--si-dur, 10s) linear infinite}
 @keyframes siRun{from{transform:translateX(0)} to{transform:translateX(-100%)}}
 .row-btns{display:flex; gap:10px; flex:none}
 .row-btns .grow{flex:1}
