@@ -8,6 +8,9 @@
      true にするときは、build-app.js の説明文・shareApp の文の「無料」を「基本無料」に直し、特定商取引法の表示ページを用意する
    ===================================================================== */
 const PLUS_SALE = false;
+/* アプリ版（ホーム画面・shugodensetsu.github.io）では、まだ遊べない（ボタンはグレーで Coming soon）。claude.ai 版だけで先行体験。
+   アプリ版でも出すときは true にする */
+const PLUS_OPEN = !IS_APP;
 const PLUS_KEY = 'sakego-plus', TRY_KEY = 'sakego-try', PLUS_TRY = 5;
 const PLUS_PLANS = [
   { k: 'year', name: '年額プラン', price: '2,980円', per: '/年', note: '月あたり約248円', best: true },
@@ -35,6 +38,7 @@ function tryUse(mode) { if (plusFree()) return; const s = tryLoad(); s[mode]++; 
 const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.includes(k);
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }
 function isPM() { return !!(G && PM_MODES.includes(G.mode)); }
+const mgSoon = k => PLUS_MG.includes(k) && !PLUS_OPEN;
 
 const CROWN_SVG = '<svg class="ic-crown" viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/><circle cx="8.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/><circle cx="23.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/></svg>';
 const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><path d="M7 7.5 Q8.5 5 11 5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".8"/></svg>';
@@ -236,6 +240,7 @@ function pmSetupInfo(mode) {
 /* ---------- a game ---------- */
 function beginPM(mode) {
   const n = setup.count, P = PM[mode];
+  if (!PLUS_OPEN) { showScreen('title'); return; }
   if (n < P.min) { renderSetup(false); return; }
   if (tryLeft(mode) <= 0) { openPlus('limit'); return; }
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
@@ -611,6 +616,7 @@ function renderPlus(msg) {
   $('plusBox').innerHTML = '<button type="button" class="gd-x pl-x" data-pl="close" aria-label="閉じる">×</button>' +
     '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">酒GO!!プレミアム</h2>' +
     (on ? '<p class="pl-lead"><b>プレミアム利用中</b>（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）</p>'
+      : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(CROWN_SVG, '王様ゲームモード', '王様と番号はアプリが決める。命令もおまかせ') + feat(HEART_SVG, '恋バナ・暴露モード', '答えるか、飲むか。指さし質問も') +
@@ -637,15 +643,16 @@ function plusAct(a) {
   SE.play('coin');
   statTrack('plus', { d: 'plan_' + plan.k });
   /* お支払いをつなぐまでは、気持ちだけ受け取る（どのプランが選ばれたかを数える） */
-  renderPlus('ありがとう！ <b>' + plan.name + '</b>のお支払いは準備中です。' + (PLUS_SALE ? '' : 'いまは先行体験で、全部無料で遊べます。'));
+  renderPlus('ありがとう！ <b>' + plan.name + '</b>のお支払いは準備中です。' + (!PLUS_OPEN ? 'もうしばらくお待ちください。' : PLUS_SALE ? '' : 'いまは先行体験で、全部無料で遊べます。'));
   const b = $('plusBox').querySelector('[data-pl="' + a + '"]');
   if (b) { b.classList.add('chosen'); b.focus({ preventScroll: true }); }
 }
 function titleModes() {
-  const tag = PLUS_SALE ? (plusOn() ? '' : 'プレミアム') : 'NEW';
+  const tag = !PLUS_OPEN ? 'Coming soon' : PLUS_SALE ? (plusOn() ? '' : 'プレミアム') : 'NEW';
   ['kingTag', 'koiTag'].forEach(id => { const el = $(id); if (el) { el.textContent = tag; el.hidden = !tag; } });
+  ['goKing', 'goKoi'].forEach(id => { const el = $(id); if (el) { el.classList.toggle('soon', !PLUS_OPEN); el.setAttribute('aria-disabled', String(!PLUS_OPEN)); } });
   const b = $('plusBtn');
-  if (b) b.innerHTML = CROWN_SVG + (plusOn() ? '<b>プレミアム利用中</b>' : PLUS_SALE ? '<b>酒GO!!プレミアム</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
+  if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>酒GO!!プレミアム</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : PLUS_SALE ? '<b>酒GO!!プレミアム</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
 }
 
 /* =====================================================================
@@ -824,7 +831,7 @@ function memoTap(v) {
 function memoAct(a) { if (a === 'watch') memoShow(); }
 
 /* 遊び方ガイド: the new modes get a page of their own (after ミニゲーム) */
-GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '王様・恋バナ', html: () =>
+if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '王様・恋バナ', html: () =>
   '<p class="gd-lead">タイトル画面の<b>「王様ゲーム」「恋バナ・暴露」</b>から遊べるモードです。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
   gCard('王様ゲーム（3人から）', '<p>「くじを引く！」で<b>王様と番号</b>が決まります。だれが何番かは<b>アプリだけが知っている</b>ので、王様は番号で命令。命令は3つの中から選ぶか、自分で考えてもOK。</p>' +
     '<p>「番号オープン！」で番号の人がわかります。<b>できなかった・パスした人をタップ</b>して「次へ」。乾杯などの命令は、飲む人が最初から選ばれています。</p>' +

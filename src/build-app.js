@@ -27,6 +27,8 @@ let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'pa
 if (VERSION === 'test' && process.env.STAT_TEST) js = js.replace(/const STAT_URL = '[^']*';/, () => 'const STAT_URL = ' + JSON.stringify(process.env.STAT_TEST) + ';');
 /* a test build can also try the paid state (free trial limits):  PLUS_SALE_TEST=1 node src/build-app.js test */
 if (VERSION === 'test' && process.env.PLUS_SALE_TEST) js = js.replace('const PLUS_SALE = false;', 'const PLUS_SALE = true;');
+/* …and the new modes as claude.ai shows them (the app build keeps them as Coming soon):  PLUS_OPEN_TEST=1 */
+if (VERSION === 'test' && process.env.PLUS_OPEN_TEST) js = js.replace('const PLUS_OPEN = !IS_APP;', 'const PLUS_OPEN = true;');
 const statUrl = (/const STAT_URL = '([^']*)';/.exec(js) || /const STAT_URL = "([^"]*)";/.exec(js) || [])[1];
 if (statUrl === undefined) throw new Error('STAT_URL not found');
 const statOrigin = statUrl ? new URL(statUrl).origin : '';

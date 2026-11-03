@@ -1806,6 +1806,10 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .t-actions .t-mode{position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px; padding:min(7px, 1cqh) 2px min(8px, 1.1cqh); font-size:min(15px, 3.9vw); line-height:1.15; white-space:nowrap; letter-spacing:0}
 .t-mode svg{width:min(26px, 3.4cqh); height:min(26px, 3.4cqh); flex:none}
 .t-mode > span{max-width:100%; overflow:hidden; text-overflow:ellipsis}
+.t-actions .t-mode.soon{background:#8d86a6; color:#3b355a; box-shadow:0 5px 0 var(--ink); cursor:default}
+.t-actions .t-mode.soon:active{transform:none; box-shadow:0 5px 0 var(--ink)}
+.t-mode.soon svg{filter:grayscale(1); opacity:.6}
+.t-mode.soon .t-new{background:var(--white); color:var(--ink-muted); font-size:9.5px; letter-spacing:.02em; transform:rotate(5deg)}
 .t-new{position:absolute; top:-11px; right:-5px; background:var(--yellow); color:var(--ink); border:2px solid var(--ink); border-radius:999px; font-family:var(--f-body); font-style:normal; font-weight:800; font-size:10px; line-height:1.45; padding:0 6px; transform:rotate(7deg); box-shadow:0 2px 0 var(--ink)}
 .t-plus{align-self:center; max-width:100%; display:inline-flex; align-items:center; justify-content:center; gap:7px; background:linear-gradient(100deg, #fff1a8, #ffd83d 45%, #ffb627); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink); padding:3px 14px 3px 10px; font-family:var(--f-body); cursor:pointer; white-space:nowrap}
 .t-plus b{font-weight:800; font-size:13px}

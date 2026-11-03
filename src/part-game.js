@@ -5584,7 +5584,7 @@ function miniRoundFx() {
 }
 const miniAvail = () => {
   const M = G.mini;
-  const all = MG_ORDER.filter(k => !mgLocked(k));
+  const all = MG_ORDER.filter(k => !mgLocked(k) && !mgSoon(k));
   let a = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
   if (!a.length) a = all.filter(k => !M.skip.includes(k));
   return a.length ? a : all;
@@ -5763,9 +5763,9 @@ function miniStageHTML(anim) {
   if (cur.phase === 'before') {
     const rows = MG_ORDER.length;
     return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList" style="--rows:' + rows + ';--rows2:' + Math.ceil(rows / 2) + '">' + MG_ORDER.map(k => {
-      const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), plus = PLUS_MG.includes(k);
-      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"><span class="mg-it">' + (plus ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
-        (used ? '<i>済</i>' : skip ? '<i>パス</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
+      const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), soon = mgSoon(k), plus = PLUS_MG.includes(k);
+      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock || soon ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"><span class="mg-it">' + (plus && !soon ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
+        (used ? '<i>済</i>' : skip ? '<i>パス</i>' : soon ? '<i>Coming soon</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
     }).join('') + '</ol>';
   }
   const k = cur.mkind, done = cur.phase === 'done';
@@ -6437,6 +6437,7 @@ function wireGame() {
   $('goSetup').addEventListener('click', () => { loadSetup(); setup.mode = 'card'; SE.play('tap'); showScreen('setup'); });
   $('goMini').addEventListener('click', () => { loadSetup(); setup.mode = 'mini'; SE.play('tap'); showScreen('setup'); });
   ['king', 'koi'].forEach(m => $(m === 'king' ? 'goKing' : 'goKoi').addEventListener('click', () => {
+    if (!PLUS_OPEN) { SE.play('tap'); telop('Coming soon！<small>もうすぐ遊べるようになります</small>', 'white sm', 1600); return; }
     loadSetup(); setup.mode = m; if (setup.count < PM[m].min) setup.count = PM[m].min;
     SE.play('tap'); showScreen('setup');
   }));
