@@ -20,7 +20,7 @@ const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
-let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
+let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
   .replace('__SMP_DATA__', () => JSON.stringify(smpData));
 /* the play-count collector (server/collector.js): its address is STAT_URL in part-game.js, and the page may talk to that one origin only.
    A test build can point it at a local stand-in:  STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test */

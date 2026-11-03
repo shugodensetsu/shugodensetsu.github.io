@@ -1175,6 +1175,7 @@ function openZoom(entry) {
   const zh = zoomHint();
   $('zHint').className = 'z-hint' + (zh.auto ? ' auto' : '');
   $('zHint').innerHTML = zh.html;
+  zoomWords(c);
   const acts = cardActs();
   $('zActs').innerHTML = acts.map(a => '<button type="button" class="pbtn ' + a[2] + ' small" data-z="' + a[0] + '">' + a[1] + '</button>').join('') +
     '<button type="button" class="pbtn ' + (acts.length ? 'white small' : 'big') + ' z-ok" data-z="ok">OK！ テーブルへ</button>';
@@ -1196,7 +1197,8 @@ function sizeZoom() {
   const ov = $('zoomOv'), card = $('zCard');
   const W = ov.clientWidth, H = ov.clientHeight;
   if (!W || !H) return;
-  const avail = H - $('zStamp').offsetHeight - $('zActs').offsetHeight - $('zHint').offsetHeight - 58;
+  const gl = $('zGloss'), glH = gl && !gl.hidden ? gl.offsetHeight + 12 : 0;
+  const avail = H - $('zStamp').offsetHeight - $('zActs').offsetHeight - $('zHint').offsetHeight - glH - 58;
   const cw = Math.max(140, Math.min(W - 36, avail * 0.72, 560));
   card.style.setProperty('--cw', cw.toFixed(1) + 'px');
   card.style.setProperty('--ch', (cw / 0.72).toFixed(1) + 'px');
@@ -1205,6 +1207,7 @@ function sizeZoom() {
 function closeZoom(then) {
   if (!zoom) return;
   const z = zoom; zoom = null;
+  if (G && G.cur && G.cur.card) wordsMark(wordsIn(G.cur.card).map(x => x.k));   /* asked once: next time only the small button */
   if (then) z.after.unshift(then);
   const ov = $('zoomOv'), card = $('zCard');
   let finished = false;
@@ -1914,7 +1917,7 @@ function renderDecide() {
       '<button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '飲む！<span class="sub">' + esc(names) + '</span>' : d.kind === 'pick' ? '指名してね' : '飲む人をタップ') + '</button></div>';
   const none = !who && d.kind === 'judge' ? '<button type="button" class="dc-none" data-d="none">誰も飲まなかった</button>' : '';
   $('decideBox').innerHTML = '<div class="dc-head"><h2 id="decideTitle">' + title + '</h2><button type="button" class="dc-later" data-d="later">' + (who && d.kind !== 'who' ? 'もどる' : who ? 'とじる' : 'あとで') + '</button></div>' +
-    (d.item && !who ? '<p class="dc-card">' + esc(d.item.text) + '</p>' : c && !who && d.kind !== 'free' ? '<p class="dc-card">' + fillGame(c.text) + '</p>' : '') +
+    (d.item && !who ? '<p class="dc-card">' + esc(d.item.text) + '</p>' + wordsBtn(d.item.text) : c && !who && d.kind !== 'free' ? '<p class="dc-card">' + fillGame(c.text) + '</p>' + wordsBtn(c.text) : '') +
     '<p class="dc-sub">' + sub + '</p><div class="dc-players">' + list.map(btn).join('') + '</div>' + pend + amtRow + range + acts + none;
 }
 function decideSel(i) {
@@ -2212,7 +2215,7 @@ function openRuleInfo(i, h) {
     : h.fx === 'nodouble' ? '<b>' + esc(pname(i)) + '</b>は、倍倍FIGHT！の「次の人×2」がかかりません（自動）。'
     : h.pick && h.who != null ? '「' + esc(h.title) + '」は <b>' + esc(pname(h.who)) + '</b>。' : '';
   $('infoBox').innerHTML = '<h2 id="infoTitle">継続中のルール</h2><p class="back-card">' + esc(h.text) + '</p>' +
-    (extra ? '<p class="note-s">' + extra + '</p>' : '') +
+    (extra ? '<p class="note-s">' + extra + '</p>' : '') + wordsNote(h.text) +
     '<p class="note-s"><span class="sh-mini" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>が引いたカード ・ <b>' + ruleAge(h) + '</b>ターン目</p>' +
     '<p class="note-s">4〜10ターンのどこかで<b>突然消えます</b>。消えた瞬間、次にカードを引く人が<b>1杯</b>！</p>' +
     '<div class="dialog-acts"><button type="button" class="pbtn small" data-if="close">閉じる</button></div>';
@@ -6575,6 +6578,8 @@ function wireGame() {
   });
   $('zoomOv').addEventListener('click', e => {
     if (!zoom) return;
+    const gl = e.target.closest('[data-gl]');
+    if (gl) { wordsAct(gl); return; }
     const b = e.target.closest('[data-z]');
     const z = b ? b.dataset.z : 'ok';
     closeZoom(z === 'ok' ? null : () => gameAct(z));
@@ -6616,6 +6621,8 @@ function wireGame() {
   });
   const decideLater = () => { if (!decide) return; if (decide.step === 'who' && decide.kind !== 'who') { decide.step = null; renderDecide(); SE.play('tap'); } else closeDecide(); };
   $('decideBox').addEventListener('click', e => {
+    const g = e.target.closest('[data-gl]');
+    if (g) { wordsAct(g); return; }
     const b = e.target.closest('button[data-d]'); if (!b || !decide || b.disabled) return;
     const a = b.dataset.d, d = decide;
     const refocus = sel => { const x = $('decideBox').querySelector(sel); if (x && !x.disabled) x.focus({ preventScroll: true }); };
@@ -6673,6 +6680,8 @@ function wireGame() {
   backdrop('confirmOv', () => closeOv('confirmOv'));
   backdrop('backOv', () => closeOv('backOv'));
   backdrop('plusOv', () => plusAct('close'));
+  backdrop('glossOv', closeWords);
+  $('glossBox').addEventListener('click', e => { const b = e.target.closest('[data-gl]'); if (b) wordsAct(b); });
 
   $('wheelSpin').addEventListener('click', spinWheel);
   $('wheelOk').addEventListener('click', confirmWheel);
@@ -6719,6 +6728,7 @@ function wireGame() {
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
+    if (!$('glossOv').hidden) { closeWords(); return; }
     if (zoom) { closeZoom(); return; }
     if (chal) { closeChallenge(false); return; }
     if (timer) { closeTimer(); return; }
