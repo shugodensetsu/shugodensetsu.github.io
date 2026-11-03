@@ -5249,8 +5249,8 @@ async function sendShot() {
     }
   }
   const hint = $('shotHint');
-  if (isIOS() || inAppBrowser()) {
-    hint.innerHTML = '上の画像を<b>長押し</b>して「写真に保存」や「共有」を選んでね';
+  if (!IS_APP || isIOS() || inAppBrowser()) {
+    hint.innerHTML = isIOS() || inAppBrowser() ? '上の画像を<b>長押し</b>して「写真に保存」や「共有」を選んでね' : '上の画像を<b>右クリック</b>（スマホは長押し）して保存してね';
   } else {
     const a = document.createElement('a');
     a.href = shot.url; a.download = 'sakego-result.png';
