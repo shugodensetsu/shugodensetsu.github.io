@@ -6487,7 +6487,7 @@ function boot(data) {
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
     }
   } catch (_) { /* ignore */ }
-  if (ui.filter !== 'all' && !catOf(ui.filter)) ui.filter = 'all';
+  if (ui.filter !== ANY_CAT && !catOf(ui.filter)) ui.filter = ANY_CAT;
   /* iOS ignores user-scalable=no: stop its pinch zoom too (two people tapping at once must not zoom the table) */
   ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });

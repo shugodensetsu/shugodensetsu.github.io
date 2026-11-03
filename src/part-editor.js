@@ -5,7 +5,9 @@ const saved = normalize(parseEmbedded());
 const SAVED_STR = serialize(saved);
 const clone = d => normalize(JSON.parse(serialize(d)));
 let deck = clone(saved);
-const ui = { filter: 'all', players: 4, mode: 'tag' };
+/* the chip that shows every category. Not 'all': that is the key of the built-in category 全員 */
+const ANY_CAT = '*';
+const ui = { filter: ANY_CAT, players: 4, mode: 'tag' };
 let editing = null;          // { id, isNew, card?, draft?, err?, confirmDelete? }
 let lastField = 'ed-text';
 let lastAction = '';
@@ -76,7 +78,7 @@ function renderDeckbar() {
   }).join('');
 }
 function renderChips() {
-  let h = '<button type="button" class="chip" id="chip-any" data-cat="all" aria-pressed="' + (ui.filter === 'all') + '">すべて <span class="n">' + deck.cards.length + '</span></button>';
+  let h = '<button type="button" class="chip" id="chip-any" data-cat="' + ANY_CAT + '" aria-pressed="' + (ui.filter === ANY_CAT) + '">すべて <span class="n">' + deck.cards.length + '</span></button>';
   h += deck.categories.map(cat => {
     const n = deck.cards.filter(c => c.cat === cat.key).length;
     return '<button type="button" class="chip' + (cat.on ? '' : ' is-off') + '" id="chip-' + esc(cat.key) + '" data-cat="' + esc(cat.key) +
@@ -217,7 +219,7 @@ function renderGrid() {
   const order = new Map(deck.categories.map((c, i) => [c.key, i]));
   const editId = editing && !editing.isNew ? editing.id : null;
   const list = deck.cards
-    .filter(c => ui.filter === 'all' || c.cat === ui.filter || c.id === editId)
+    .filter(c => ui.filter === ANY_CAT || c.cat === ui.filter || c.id === editId)
     .sort((a, b) => (order.has(a.cat) ? order.get(a.cat) : 999) - (order.has(b.cat) ? order.get(b.cat) : 999));
   let h = editing && editing.isNew ? formCard(editing.card, true) : '';
   h += list.map(c => (c.id === editId ? formCard(c, false) : viewCard(c))).join('');
@@ -360,7 +362,7 @@ function deleteCard() {
 }
 function addCard() {
   if (editing && !commitEdit()) { focusEditor(); return; }
-  const cat = ui.filter !== 'all' && catOf(ui.filter) ? ui.filter : (deck.categories[0] ? deck.categories[0].key : null);
+  const cat = ui.filter !== ANY_CAT && catOf(ui.filter) ? ui.filter : (deck.categories[0] ? deck.categories[0].key : null);
   if (!cat) { addCategory(); return; }
   const id = nextId();
   editing = { id, isNew: true, card: { id, cat, text: '', cups: [1], min: 2, dur: null, note: null, on: true, fx: null, drink: null } };
@@ -486,7 +488,7 @@ function discard() {
   }
   discardArmed = false; clearTimeout(discardTimer);
   deck = clone(saved); editing = null; lastAction = ''; saveNote = '';
-  if (ui.filter !== 'all' && !catOf(ui.filter)) ui.filter = 'all';
+  if (ui.filter !== ANY_CAT && !catOf(ui.filter)) ui.filter = ANY_CAT;
   stashDraft();
   renderAll(true);
 }
@@ -595,7 +597,7 @@ function wireEditor() {
     } else if (b.dataset.act === 'catdel') {
       if (deck.cards.some(c => c.cat === cat.key) || deck.categories.length <= 1) return;
       deck.categories = deck.categories.filter(c => c !== cat);
-      if (ui.filter === cat.key) ui.filter = 'all';
+      if (ui.filter === cat.key) ui.filter = ANY_CAT;
       lastAction = '系統「' + catName(cat) + '」を削除しました';
       changed(true);
       $('addCat').focus({ preventScroll: true });
@@ -608,7 +610,7 @@ function wireEditor() {
   $('restoreYes').addEventListener('click', () => {
     if (pendingRestore) {
       deck = pendingRestore; editing = null; lastAction = '保存していない編集を復元しました';
-      if (ui.filter !== 'all' && !catOf(ui.filter)) ui.filter = 'all';
+      if (ui.filter !== ANY_CAT && !catOf(ui.filter)) ui.filter = ANY_CAT;
     }
     pendingRestore = null; $('restoreBar').hidden = true;
     changed(true);
