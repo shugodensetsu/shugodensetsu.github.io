@@ -1,7 +1,7 @@
 
 /* =====================================================================
    酒GO!!プレミアム: 王様ゲームモード・恋バナ/暴露モード・新作ミニゲーム
-   - カード106枚・カード編集・ミニゲーム14種は、ずっと無料のまま
+   - カード104枚・カード編集・ミニゲーム14種は、ずっと無料のまま
    - PLUS_SALE が false のあいだは「先行体験」: プレミアムの中身も全部無料で、制限なし
    - true にすると、無料の人は「お試し」（王様・恋バナは1日 PLUS_TRY ラウンドずつ、新作ミニゲームは1日1回ずつ）。
      お支払い（Google Play の課金 / Stripe）をつないだら、購入の結果を PLUS_KEY に { plan, until } で入れる。
@@ -621,7 +621,7 @@ function renderPlus(msg) {
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(CROWN_SVG, '王様ゲームモード', '王様と番号はアプリが決める。命令もおまかせ') + feat(HEART_SVG, '恋バナ・暴露モード', '答えるか、飲むか。指さし質問も') +
       feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
-    '<p class="pl-free">カード106枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
+    '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
     (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：王様ゲーム あと<b>' + left('king') + '</b>回 ・ 恋バナ あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
       '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '">' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +

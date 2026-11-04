@@ -195,6 +195,12 @@ const DECK_FIXES = [
   [115, '{引いた人}から順番に「ワニの歯」。歯を1本ずつ押して、噛まれた人が2杯', '{引いた人}から順番に「パクッとワニ」。歯を1本ずつ押して、パクッとされた人が2杯'],
   [116, '{引いた人}から順番に「地雷原」。マスを1つずつ掘って、地雷を踏んだ人が2杯', '{引いた人}から順番に「マインスイーパー」。マスを1つずつ掘って、地雷を踏んだ人が2杯'],
   [117, '{引いた人}から順番に「ドクロめくり」。カードを1枚ずつめくって、ドクロを引いた人が1杯（+1カードが出るたびに増える）', '{引いた人}から順番に「ドクロめくり」。好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が1杯（+1カードが出るたびに増える）'],
+  [26, '{引いた人}と{ランダム}で「あぶりびかるび」を3回言う。噛んだ方が1杯', '{引いた人}と{ランダム}で「あぶりかるび」を3回言う。噛んだ方が1杯'],
+];
+/* built-in cards taken out later: dropped from a deck saved on the device too — only while still exactly as shipped */
+const DECK_DROPS = [
+  [47, '全員で信頼ジャンケン。グーで揃った場合はセーフ。それ以外は該当者が1杯グイ'],
+  [61, '{引いた人}から時計回りに1から2つずつ数える。3の倍数と3がつく数字は、数字を言わずに手を叩く。間違えた人が1杯'],
 ];
 /* built-in cards added later: put into a deck saved on the device once (a card the user then deletes stays deleted) */
 const DECK_ADDS = [114, 115, 116, 117, 118, 119];
@@ -205,6 +211,7 @@ function appDeck() {
     const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null');
     if (!(d && Array.isArray(d.cards) && Array.isArray(d.categories))) return null;
     DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
+    d.cards = d.cards.filter(c => !(c && DECK_DROPS.some(([id, text]) => c.id === id && c.text === text)));
     let done = [];
     try { done = JSON.parse(localStorage.getItem(DECK_ADDS_KEY) || '[]'); } catch (_) { done = []; }
     const todo = DECK_ADDS.filter(id => !done.includes(id));
