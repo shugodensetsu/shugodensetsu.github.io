@@ -156,23 +156,27 @@ export default {
     }
     const days = [7, 30, 90].includes(Number(url.searchParams.get('d'))) ? Number(url.searchParams.get('d')) : 30;
     const from = jstDay(Date.now() - (days - 1) * 86400e3);
+    /* ふだんは「自分の端末」（開発・テスト用）の分を外して数える。?me=1 でその分だけを見る */
+    const me = url.searchParams.get('me') === '1', qs = '&me=' + (me ? 1 : 0);
+    const SC = me ? ' AND dev IS NOT NULL' : ' AND dev IS NULL', SCg = me ? ' AND g.dev IS NOT NULL' : ' AND g.dev IS NULL';
     const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
-    const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ? AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
-    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv] = await Promise.all([
-      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?', from),
-      q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ? GROUP BY day', from),
-      q('SELECT players k, COUNT(*) n FROM games WHERE day >= ? GROUP BY players ORDER BY players', from),
+    const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ?' + SCg + ' AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
+    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other] = await Promise.all([
+      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?' + SC + '', from),
+      q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY day', from),
+      q('SELECT players k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' GROUP BY players ORDER BY players', from),
       q(each('cards') + ' LIMIT 15', from),
       q(each('mini', ' AND g.mode = \'mini\''), from),
       q(each('mini', ' AND g.mode = \'card\''), from),
       q(each('fx'), from),
       q(each('sp'), from),
-      q('SELECT kind k, detail d, COUNT(*) n FROM events WHERE day >= ? GROUP BY kind, detail ORDER BY n DESC', from),
-      one('SELECT SUM(json_extract(data, \'$.own\')) own, (SELECT SUM(j.value) FROM games g, json_each(g.data, \'$.cards\') j WHERE g.day >= ?) built FROM games WHERE day >= ?', from, from),
+      q('SELECT kind k, detail d, COUNT(*) n FROM events WHERE day >= ?' + SC + ' GROUP BY kind, detail ORDER BY n DESC', from),
+      one('SELECT SUM(json_extract(data, \'$.own\')) own, (SELECT SUM(j.value) FROM games g, json_each(g.data, \'$.cards\') j WHERE g.day >= ?' + SCg + ') built FROM games WHERE day >= ?' + SC + '', from, from),
       q(each('q', ' AND g.mode = \'king\'') + ' LIMIT 12', from),
       q(each('q', ' AND g.mode = \'koi\'') + ' LIMIT 12', from),
-      q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ? AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
+      q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
+      one('SELECT COUNT(*) n FROM games WHERE day >= ?' + (me ? ' AND dev IS NULL' : ' AND dev IS NOT NULL'), from),
     ]);
     const LV = { mild: '王様：ふつう', hot: '王様：盛り上げ', mix: '恋バナ：ミックス', koi: '恋バナ：恋バナだけ', bare: '恋バナ：暴露だけ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
@@ -201,10 +205,13 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 .bars li{display:grid; grid-template-columns:minmax(0, 46%) 1fr auto; align-items:center; gap:10px; font-size:13.5px}
 .bl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap} .bt{height:10px; background:var(--bar2); border-radius:6px; overflow:hidden} .bt i{display:block; height:100%; background:var(--bar); border-radius:6px}
 .bars b{font-variant-numeric:tabular-nums; min-width:2.5em; text-align:right}
+.scope{margin:-6px 0 14px; font-size:12.5px; color:var(--muted)} .scope a{color:var(--ink); margin-left:6px} h1 .me{font-size:12px; font-weight:700; background:#ffd83d; color:#150733; border-radius:999px; padding:2px 10px; margin-left:8px; vertical-align:3px}
 .none{color:var(--muted); margin:0} footer{color:var(--muted); font-size:12px; margin-top:18px} footer a{color:var(--muted)}
 </style></head><body><main>
-<header><h1>酒GO!!伝説 の集計</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}" aria-label="最新にする">↻</a></nav></header>
+<header><h1>酒GO!!伝説 の集計${me ? '<small class="me">自分の端末</small>' : ''}</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + qs + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}${qs}" aria-label="最新にする">↻</a></nav></header>
 <p class="sub">${esc(from)} 〜 今日（日本時間）・${new Date(Date.now() + 9 * 3600e3).toISOString().slice(11, 16)} 時点${g.who ? '・' + esc(g.who) : ''}</p>
+<p class="scope">${me ? '「自分の端末」をオンにした端末で遊んだ分だけを表示中（ふつうの集計には入っていません）。<a href="/?d=' + days + '&me=0">ふつうの集計に戻る</a>'
+  : '自分の端末で遊んだ分（別枠）は入っていません：' + ((other && other.n) || 0) + 'ゲーム。<a href="/?d=' + days + '&me=1">自分の端末の分を見る</a>'}</p>
 <div class="tiles">
 ${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 恋バナ ' + (tot.koi || 0))}
 ${tile(pct(tot.done || 0, n), '最後まで遊んだ', (tot.done || 0) + 'ゲーム')}

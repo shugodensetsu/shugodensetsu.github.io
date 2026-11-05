@@ -50,12 +50,13 @@ export default {
        A time that is in the future or more than 8 days old (a wrong clock) is replaced by now */
     const recv = Date.now();
     const now = Number.isInteger(r.at) && r.at <= recv + 5 * 60e3 && r.at >= recv - 8 * 86400e3 ? r.at : recv, day = jstDay(now);
+    const dev = r.dev === 1 ? 1 : null;   // 「自分の端末」（開発・テスト用）から: 集計ページでは別枠
 
     try {
       if (r.k === 'ev') {
         if (!['share', 'install', 'plus'].includes(r.kind)) return reply(400, origin);   // plus: プレミアム画面を開いた・プランを選んだ
         const detail = typeof r.detail === 'string' && KEY.test(r.detail) ? r.detail : null;
-        await env.DB.prepare('INSERT INTO events (day, at, kind, detail) VALUES (?, ?, ?, ?)').bind(day, now, r.kind, detail).run();
+        await env.DB.prepare('INSERT INTO events (day, at, kind, detail, dev) VALUES (?, ?, ?, ?, ?)').bind(day, now, r.kind, detail, dev).run();
         return reply(204, origin);
       }
       if (r.k !== 'start' && r.k !== 'end') return reply(400, origin);
@@ -68,8 +69,8 @@ export default {
       const unit = ['one', 'half', 'cup', 'none'].includes(r.unit) ? r.unit : null;            // 1杯の量
       if (!sid || !mode || players == null || rounds == null || nth == null) return reply(400, origin);
       if (r.k === 'start') {
-        await env.DB.prepare('INSERT INTO games (sid, day, started, mode, mix, unit, players, rounds, form, installed, nth, done) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0) ON CONFLICT(sid) DO NOTHING')
-          .bind(sid, day, now, mode, mix, unit, players, rounds, form, installed, nth).run();
+        await env.DB.prepare('INSERT INTO games (sid, day, started, mode, mix, unit, players, rounds, form, installed, nth, done, dev) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?) ON CONFLICT(sid) DO NOTHING')
+          .bind(sid, day, now, mode, mix, unit, players, rounds, form, installed, nth, dev).run();
         return reply(204, origin);
       }
       const seq = int(r.seq ?? 1, 1, 99999), turns = int(r.turns ?? 0, 0, 9999), ms = int(r.ms ?? 0, 0, 24 * 3600e3), cups = int(r.cups ?? 0, 0, 99999), own = int(r.own ?? 0, 0, 9999), done = r.done ? 1 : 0;
@@ -77,10 +78,10 @@ export default {
       if (seq == null || turns == null || ms == null || cups == null || own == null || Object.values(data).some(v => v === null)) return reply(400, origin);
       data.own = own;   // cards the players added or rewrote: how many were drawn, nothing more
       await env.DB.prepare(
-        'INSERT INTO games (sid, day, started, mode, mix, unit, players, rounds, form, installed, nth, seq, ended, turns, done, ms, cups, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
-        'ON CONFLICT(sid) DO UPDATE SET mix = COALESCE(games.mix, excluded.mix), unit = COALESCE(games.unit, excluded.unit), seq = excluded.seq, ended = excluded.ended, turns = excluded.turns, done = MAX(COALESCE(games.done, 0), excluded.done), ms = excluded.ms, cups = excluded.cups, data = excluded.data ' +
+        'INSERT INTO games (sid, day, started, mode, mix, unit, players, rounds, form, installed, nth, seq, ended, turns, done, ms, cups, data, dev) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ' +
+        'ON CONFLICT(sid) DO UPDATE SET mix = COALESCE(games.mix, excluded.mix), unit = COALESCE(games.unit, excluded.unit), dev = COALESCE(games.dev, excluded.dev), seq = excluded.seq, ended = excluded.ended, turns = excluded.turns, done = MAX(COALESCE(games.done, 0), excluded.done), ms = excluded.ms, cups = excluded.cups, data = excluded.data ' +
         'WHERE excluded.seq >= COALESCE(games.seq, 0)')   // a late-arriving older report never overwrites a newer one
-        .bind(sid, day, now - ms, mode, mix, unit, players, rounds, form, installed, nth, seq, now, turns, done, ms, cups, JSON.stringify(data)).run();
+        .bind(sid, day, now - ms, mode, mix, unit, players, rounds, form, installed, nth, seq, now, turns, done, ms, cups, JSON.stringify(data), dev).run();
       return reply(204, origin);
     } catch (_) {
       return reply(500, origin);   // e.g. the free plan's daily limit: the game itself is unaffected

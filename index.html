@@ -8809,6 +8809,10 @@ const STAT_URL = 'https://sakego.shugodensetsu.workers.dev/v1/p';   /* server/ �
 const STAT_OFF_KEY = 'sakego-stat-off';
 const statOff = () => { try { return localStorage.getItem(STAT_OFF_KEY) === '1'; } catch (_) { return false; } };
 const statOn = () => IS_APP && !!STAT_URL && !statOff();
+/* 「自分の端末」: the owner's own phone (testing). Its reports carry dev:1 and the dashboard counts them apart.
+   The switch is hidden: tap 「あそびの記録」 (the title of the record screen) 5 times to show it */
+const STAT_DEV_KEY = 'sakego-stat-dev';
+const statDev = () => { try { return localStorage.getItem(STAT_DEV_KEY) === '1'; } catch (_) { return false; } };
 let stCur = null, builtinText = null;
 /* a built-in card as it ships (not one the players added or rewrote): only these are counted by number */
 function builtinCard(c) {
@@ -8854,6 +8858,7 @@ async function statFlush() {
 function statSend(o, away) {
   if (!statOn()) return;
   o.at = Date.now();
+  if (statDev()) o.dev = 1;
   const body = JSON.stringify(o);
   if (navigator.onLine === false) { statKeep(body); return; }
   if (away) {
@@ -8928,7 +8933,7 @@ function fmtDur(ms) {
   if (m < 1) return ms > 0 ? '1分未満' : '0分';
   return m >= 60 ? Math.floor(m / 60) + '時間' + (m % 60 ? (m % 60) + '分' : '') : m + '分';
 }
-let usageReset = false, usageDay = null;
+let usageReset = false, usageDay = null, usageDevShow = false, usageDevTaps = [];
 function openUsage() {
   USE = null;   /* read it fresh: another tab may have written to it */
   usageReset = false; usageDay = null;
@@ -8988,7 +8993,10 @@ function renderUsage() {
     '<section class="us-card"><h3>モード・特殊ルール・人数</h3><div class="us-chips">' + modes + '</div><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
       (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
-      '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button></section>' : '') +
+      '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button>' +
+      (usageDevShow || statDev() ? '<button type="button" class="us-opt us-dev" data-us="dev" aria-pressed="' + statDev() + '"><span class="us-sw"></span>この端末は「自分の端末」</button>' +
+        '<p class="us-note">' + (statDev() ? 'この端末で遊んだ分は、集計ページの<b>「自分の端末」</b>の別枠に入ります。ふだんの集計には入りません。' : 'オンにすると、この端末で遊んだ分は集計ページで「自分の端末」の別枠に入り、ふだんの集計には入らなくなります（開発・テスト用）。') + '</p>' : '') +
+      '</section>' : '') +
     '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a> ・ <a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
 }
@@ -8998,6 +9006,11 @@ function usageAct(a, el) {
     const off = !statOff();
     try { if (off) localStorage.setItem(STAT_OFF_KEY, '1'); else localStorage.removeItem(STAT_OFF_KEY); } catch (_) { /* ignore */ }
     renderUsage(); SE.play('tap'); return;
+  }
+  if (a === 'dev') {
+    const on = !statDev();
+    try { if (on) localStorage.setItem(STAT_DEV_KEY, '1'); else localStorage.removeItem(STAT_DEV_KEY); } catch (_) { /* ignore */ }
+    renderUsage(); SE.play(on ? 'coin' : 'tap'); return;
   }
   if (a === 'reset') {
     if (!usageReset) { usageReset = true; renderUsage(); return; }
@@ -9992,6 +10005,12 @@ function wireGame() {
   $('resTell').addEventListener('click', openShot);
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
+  /* the hidden 「自分の端末」 switch: 5 taps on the title within 3 seconds */
+  $('statsTitle').addEventListener('click', () => {
+    const now = Date.now();
+    usageDevTaps = usageDevTaps.filter(t => now - t < 3000).concat(now);
+    if (usageDevTaps.length >= 5 && !usageDevShow) { usageDevShow = true; usageDevTaps = []; renderUsage(); SE.play('pop'); const b = $('statsBody').querySelector('.us-dev'); if (b) b.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  });
   $('editorBack').addEventListener('click', () => showScreen('title'));
 
   $('countGrid').addEventListener('click', e => {
