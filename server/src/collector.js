@@ -59,6 +59,22 @@ export default {
         await env.DB.prepare('INSERT INTO events (day, at, kind, detail, dev) VALUES (?, ?, ?, ?, ?)').bind(day, now, r.kind, detail, dev).run();
         return reply(204, origin);
       }
+      /* 「自分の端末」をオンにした端末が、それより前にその端末で遊んだ分も別枠へ移す。
+         端末には「どの日に何回遊んだか」しか残っていないので、「その日の、この端末の n〜m 回目（nth）」で指す。
+         印（dev = 1）を付けるだけで、何も消さない。form が同じものだけ（別の端末と取り違えにくくする） */
+      if (r.k === 'claim') {
+        if (dev !== 1 || !Array.isArray(r.ranges) || !r.ranges.length || r.ranges.length > 120) return reply(400, origin);
+        const form = r.form === 'tablet' ? 'tablet' : 'phone', stmts = [];
+        for (const x of r.ranges) {
+          const d0 = Array.isArray(x) && x.length === 3 && typeof x[0] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x[0]) ? Date.parse(x[0] + 'T00:00:00+09:00') : NaN;
+          const a = Array.isArray(x) ? int(x[1], 1, 99999) : null, b = Array.isArray(x) ? int(x[2], 1, 99999) : null;
+          if (Number.isNaN(d0) || a == null || b == null || b < a || b - a > 500) return reply(400, origin);
+          /* by when it started (Japan time), not by day: a game past midnight whose first report was lost is filed on the day it ended */
+          stmts.push(env.DB.prepare('UPDATE games SET dev = 1 WHERE dev IS NULL AND form = ? AND nth BETWEEN ? AND ? AND started >= ? AND started < ?').bind(form, a, b, d0, d0 + 86400e3));
+        }
+        await env.DB.batch(stmts);
+        return reply(204, origin);
+      }
       if (r.k !== 'start' && r.k !== 'end') return reply(400, origin);
       const sid = typeof r.sid === 'string' && SID.test(r.sid) ? r.sid : null;
       const mode = ['card', 'mini', 'king', 'koi'].includes(r.mode) ? r.mode : null;   // カード・ミニゲーム・王様ゲーム・恋バナ/暴露
