@@ -196,6 +196,12 @@ const DECK_FIXES = [
   [116, '{引いた人}から順番に「地雷原」。マスを1つずつ掘って、地雷を踏んだ人が2杯', '{引いた人}から順番に「マインスイーパー」。マスを1つずつ掘って、地雷を踏んだ人が2杯'],
   [117, '{引いた人}から順番に「ドクロめくり」。カードを1枚ずつめくって、ドクロを引いた人が1杯（+1カードが出るたびに増える）', '{引いた人}から順番に「ドクロめくり」。好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が1杯（+1カードが出るたびに増える）'],
   [26, '{引いた人}と{ランダム}で「あぶりびかるび」を3回言う。噛んだ方が1杯', '{引いた人}と{ランダム}で「あぶりかるび」を3回言う。噛んだ方が1杯'],
+  [62, '{引いた人}と{ランダム}でインディアンポーカー。負けた方がグイ JOKERは2人ともグイ', '{引いた人}と{ランダム}でインディアンポーカー。負けた方がグイ。JOKERが出たら2人ともグイ'],
+  [71, 'グラスを置くときは2回トントンする。 忘れたら1杯', 'グラスを置くときは2回トントンする。忘れたら1杯'],
+];
+/* the same for a card's small note */
+const NOTE_FIXES = [
+  [108, '1杯を選んだら、そのまま{引いた人}の席から記録。挑むなら「チャレンジ抽選！」を押す', '「素直に1杯飲む」を押すと、そのまま記録。挑むなら「チャレンジ抽選！」を押す'],
 ];
 /* built-in cards taken out later: dropped from a deck saved on the device too — only while still exactly as shipped */
 const DECK_DROPS = [
@@ -211,6 +217,7 @@ function appDeck() {
     const d = JSON.parse(localStorage.getItem(APP_DECK_KEY) || 'null');
     if (!(d && Array.isArray(d.cards) && Array.isArray(d.categories))) return null;
     DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
+    NOTE_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.note === from) c.note = to; }));
     d.cards = d.cards.filter(c => !(c && DECK_DROPS.some(([id, text]) => c.id === id && c.text === text)));
     let done = [];
     try { done = JSON.parse(localStorage.getItem(DECK_ADDS_KEY) || '[]'); } catch (_) { done = []; }

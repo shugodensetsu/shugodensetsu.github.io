@@ -1439,13 +1439,13 @@ function openSheet(p, opts) {
 function makeSheet(p, opts) {
   opts = opts || {};
   const cur = G.cur, c = cur.card;
-  const def = c && c.cups.length ? c.cups[0] : 1;
+  const def = cardDef(c, p);
   sheet = { p, base: Math.max(1, Math.min(99, opts.base || def)), dbl: false, hh: null, hhFree: false, mode: null, locked: false, ticket: null, pass: null, to: null,
     replace: null, batch: opts.batch || null, owed: !!opts.owed, src: opts.src || '' };
   const e = opts.replace != null ? cur.drinks[opts.replace] : null;
   if (e && e.kind === 'auto') {
     const it = e.items.find(x => x.p === p);
-    sheet.replace = opts.replace; sheet.base = Math.max(1, Math.min(99, e.base || def)); sheet.pend = e.pend || null; sheet.was = it ? it.amt : 0;
+    sheet.replace = opts.replace; sheet.base = Math.max(1, Math.min(99, (e.bases && e.bases[p]) || e.base || def)); sheet.pend = e.pend || null; sheet.was = it ? it.amt : 0;
   }
 }
 function renderSheet() {
@@ -1525,7 +1525,8 @@ function recordSheet() {
   /* from 「誰が飲む？」 with several people: the others drink the plain amount, recorded first (NEXT ×2 hits them too) */
   let extra = [], fix = null;
   if (s.batch && s.batch.others && s.batch.others.length) {
-    const r = autoRecord(s.batch.others, s.base, { src: s.batch.src || 'decide', quiet: true, keepPending: true, mateSkip: [p] });
+    const bs = s.batch.bases;
+    const r = autoRecord(s.batch.others, bs ? (q => bs[q] || s.base) : s.base, { src: s.batch.src || 'decide', quiet: true, keepPending: true, mateSkip: [p] });
     extra = r.e.items; s.batchUsed = r.used;
   }
   const sn = snap();
@@ -1676,13 +1677,15 @@ function autoRecord(ps, base, o) {
   if (o.mark) cur[o.mark] = true;
   const P0 = o.pend !== undefined ? o.pend : G.pending;
   const used0 = pendOn(P0) ? Object.assign({}, P0) : null;
-  const main = ps.map(p => ({ p, amt: computeAmount({ p, base, pend: o.pend }).amt }));
+  const bOf = typeof base === 'function' ? base : () => base;   /* one amount for everyone, or each person's own */
+  const main = ps.map(p => ({ p, amt: computeAmount({ p, base: bOf(p), pend: o.pend }).amt }));
   const items = main.concat(mateExtras(main, o.mateSkip));
   const before = items.map(it => G.players[it.p].total);
   let used = false;
   items.forEach(it => { if (it.mf == null && pendHits(P0, it.p)) used = true; addDrink(it.p, it.amt); });
   if (used && !o.keepPending && o.pend === undefined) G.pending = freshPending();
-  const e = { kind: 'auto', snap: sn, items, base, src: o.src || 'card', pend: used ? used0 : null };
+  const e = { kind: 'auto', snap: sn, items, base: typeof base === 'function' ? bOf(ps[0]) : base, src: o.src || 'card', pend: used ? used0 : null };
+  if (typeof base === 'function') e.bases = Object.fromEntries(ps.map(p => [p, bOf(p)]));
   cur.drinks.push(e);
   if (o.decided) cur.decided = true;
   if (!o.quiet) {
@@ -1841,6 +1844,24 @@ function openNextAsk(t) {
 /* ---------- 「誰を指名する？」「誰が飲む？」: choose people, then [飲む！] or [特殊ルール・券] ----------
    kind pick: exactly N people (the namer is shown; 「一緒に」 cards keep the namer in). judge: anyone, or 誰も飲まなかった.
    free: 追加で記録 (rule breaks …). who: one person out of a list, for 特殊ルール・券 */
+/* built-in cards where people drink different amounts. The 「誰が飲む？」 screen starts each person at the right amount
+   (only while the card is exactly as shipped — a rewritten card falls back to tapping to set each amount).
+   split: 1人なら多い方、2人以上なら少ない方ずつ ・ role: 引いた人とそれ以外で量がちがう ・ pre: はじめから選んでおく（目をそらした方はもう1回タップで +1杯） */
+const AMT_RULES = {
+  13: { text: '{引いた人}は2杯。{左隣}が肩代わりを申し出たら、2人で1杯ずつに分けられる', split: true },
+  14: { text: '{引いた人}と{ランダム}は目を合わせたまま1杯グイ。先に目をそらした方はもう1杯', pre: true },
+  30: { text: '{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1杯ずつ、1回でも負けたら{引いた人}が2杯', role: { drawer: 2, other: 1 } },
+  40: { text: '{引いた人}が1人を指名してジャンケン。勝てば相手が2杯、負ければ自分が1杯', role: { drawer: 1, other: 2 } },
+};
+const amtRule = c => { const r = c && AMT_RULES[c.id]; return r && r.text === c.text ? r : null; };
+/* the amount a seat's own record sheet starts at for this card (No.13: the drawer alone drinks 2杯 …) */
+function cardDef(c, p) {
+  if (!c || !c.cups.length) return 1;
+  const r = amtRule(c);
+  if (r && r.split) return p === G.cur.drawer ? c.cups[c.cups.length - 1] : c.cups[0];
+  if (r && r.role) return p === G.cur.drawer ? r.role.drawer : r.role.other;
+  return c.cups[0];
+}
 function openDecide(kind, o) {
   if (!G) return;
   o = o || {};
@@ -1848,7 +1869,12 @@ function openDecide(kind, o) {
   kind = kind || (pl.mode === 'pick' ? 'pick' : pl.mode === 'judge' ? 'judge' : 'free');
   const d = { kind, base: c && c.cups.length ? c.cups[0] : 1, sel: [], lock: [], step: null };
   if (kind === 'pick') Object.assign(d, { by: pl.by, need: Math.max(1, pl.n || 1), self: !!pl.self, sel: pl.self ? [pl.by] : [], lock: pl.self ? [pl.by] : [] });
-  if (kind === 'judge') d.cands = pl.cands || [];
+  if (kind === 'judge') {
+    d.cands = pl.cands || [];
+    d.per = {};
+    if (c && c.cups.length > 1) { d.lo = c.cups[0]; d.hi = c.cups[c.cups.length - 1]; d.rule = amtRule(c); }
+    if (d.rule && d.rule.pre) d.sel = d.cands.slice();
+  }
   if (kind === 'free' && Array.isArray(o.sel)) d.sel = o.sel.slice();
   if (kind === 'who') { d.list = o.list || []; d.step = 'who'; }
   if (kind === 'rule' || kind === 'durpick') {
@@ -1875,6 +1901,16 @@ function closeDecide() {
   if (G && screen === 'game') { renderDock(); renderLog(); }
 }
 const decidePicks = d => d.sel.filter(p => !d.lock.includes(p)).length;
+/* each person's amount in 「誰が飲む？」: set by tapping (range cards), else the card's rule, else the one amount for everyone */
+function decideBase(d, p) {
+  if (d.per && d.per[p] != null) return d.per[p];
+  const r = d.rule;
+  if (r && r.split) return d.sel.length <= 1 ? d.hi : d.lo;
+  if (r && r.role) return p === G.cur.drawer ? r.role.drawer : r.role.other;
+  return d.base;
+}
+const decideRange = d => d.kind === 'judge' && d.hi != null && d.hi > d.lo;
+const decideBases = d => Object.fromEntries(d.sel.map(p => [p, decideBase(d, p)]));
 const decideReady = d => (d.kind === 'pick' || d.kind === 'durpick' ? decidePicks(d) === d.need : d.sel.length > 0);
 function renderDecide() {
   const d = decide, cur = G.cur, c = cur.card;
@@ -1896,7 +1932,7 @@ function renderDecide() {
     const isBy = !who && (d.kind === 'pick' || d.kind === 'durpick') && i === d.by;
     const off = d.kind === 'durpick' && i === d.by;
     const tag = isBy ? '<span class="dc-role by">指名する人</span>' : r.length ? '<span class="dc-role">' + r.join('・') + '</span>' : '';
-    const amt = on ? computeAmount({ p: i, base: d.base }).amt : null;
+    const amt = on ? computeAmount({ p: i, base: decideBase(d, i) }).amt : null;
     const tk = ticketsOf(i).some(h => h.fx === 'avoid' || h.fx === 'push') ? '<span class="dc-tk">券あり</span>' : '';
     const cand = !who && (d.kind === 'judge' || d.kind === 'rule') && (d.cands || []).includes(i);
     return '<button type="button" class="dc-p' + (cand ? ' cand' : '') + (d.lock.includes(i) ? ' locked' : '') + '" data-d="' + (who ? 'who' : 'sel') + '" data-i="' + i + '" aria-pressed="' + on + '" style="--p:' + pc(i) + '"' + (off ? ' disabled' : '') + '>' + tag +
@@ -1906,10 +1942,15 @@ function renderDecide() {
   };
   const pend = !who && pendingActive() ? '<p class="dc-note">NEXT ' + (G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '') + ' は、選んだ人全員にかかります</p>' : '';
   const naming = d.kind === 'durpick';
-  const amtRow = who || naming ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1杯減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
+  const amtRow = who || naming || decideRange(d) ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1杯減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
     '<span class="amt-base"><b>' + d.base + '</b><small>1人あたりの杯数</small></span>' +
     '<button type="button" class="stepper" data-d="plus" aria-label="1杯増やす"' + (d.base >= 99 ? ' disabled' : '') + '>＋</button></div>';
-  const range = !who && c && c.cups.length > 1 && (d.kind === 'pick' || d.kind === 'judge') ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で合わせてね</p>' : '';
+  const r = d.rule;
+  const lead = !r ? 'このカードは<b>' + d.lo + '〜' + d.hi + '杯</b>。' : r.split ? '1人なら<b>' + d.hi + '杯</b>、2人で分けたら<b>' + d.lo + '杯ずつ</b>。'
+    : r.pre ? '2人とも<b>' + d.lo + '杯</b>。目をそらした方は、もう一度タップで<b>' + d.hi + '杯</b>。'
+    : r.role ? '<b>' + esc(pname(cur.drawer)) + 'は' + r.role.drawer + '杯</b>、相手は<b>' + r.role.other + '杯</b>。' : '';
+  const range = who ? '' : decideRange(d) ? '<p class="sh-hint">' + lead + (r && r.pre ? '' : (r ? 'ちがうときは、' : '') + '選んだ人をもう一度タップすると<b>+1杯</b>') + '（' + d.hi + '杯の次は外れる）</p>'
+    : c && c.cups.length > 1 && d.kind === 'pick' ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で合わせてね</p>' : '';
   const names = d.sel.slice().sort((a, b) => a - b).map(i => pname(i)).join('・');
   const acts = who ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="back">' + (d.kind === 'who' ? 'とじる' : 'もどる') + '</button></div>'
     : naming ? '<div class="dc-acts"><button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '決定！<span class="sub">' + esc(names) + '</span>' : '指名してね') + '</button></div>'
@@ -1924,6 +1965,14 @@ function decideSel(i) {
   const d = decide;
   if (d.lock.includes(i)) { SE.play('tap'); return; }
   const k = d.sel.indexOf(i);
+  /* range cards: another tap on someone chosen adds 1杯, up to the most the card says; then they come off */
+  if (k >= 0 && decideRange(d) && decideBase(d, i) < d.hi) {
+    d.per[i] = decideBase(d, i) + 1;
+    renderDecide(); SE.play('pop');
+    const x = $('decideBox').querySelector('[data-d="sel"][data-i="' + i + '"]'); if (x) { x.focus({ preventScroll: true }); if (!reduceMotion) x.classList.add('pop'); }
+    return;
+  }
+  if (k >= 0 && d.per) delete d.per[i];
   if (k >= 0) { d.sel.splice(k, 1); SE.play('tap'); renderDecide(); const x = $('decideBox').querySelector('[data-d="sel"][data-i="' + i + '"]'); if (x) x.focus({ preventScroll: true }); return; }
   if (d.kind === 'pick' || d.kind === 'durpick') {
     const picks = d.sel.filter(p => !d.lock.includes(p));
@@ -1949,12 +1998,13 @@ function decideGo() {
   closeOv('decideOv');
   if (d.kind === 'durpick') { setDurPick(d.owner, d.item, ps[0]); return; }
   if (d.kind === 'rule') { autoRecord(ps, d.base, { src: 'rule', from: '#gRules [data-rule="' + d.item.uid + '"]' }); return; }
-  autoRecord(ps, d.base, { src: d.kind === 'free' ? 'add' : d.kind, decided: d.kind !== 'free' });
+  const bases = decideBases(d);
+  autoRecord(ps, p => bases[p], { src: d.kind === 'free' ? 'add' : d.kind, decided: d.kind !== 'free' });
 }
 function decideSpecial() {
   const d = decide;
   if (!d || !decideReady(d)) return;
-  if (d.sel.length === 1) { decide = null; closeOv('decideOv'); openSheet(d.sel[0], { base: d.base, batch: { others: [], back: d, src: d.kind } }); return; }
+  if (d.sel.length === 1) { decide = null; closeOv('decideOv'); openSheet(d.sel[0], { base: decideBase(d, d.sel[0]), batch: { others: [], back: d, src: d.kind } }); return; }
   d.step = 'who';
   renderDecide();
   SE.play('pop');
@@ -1966,7 +2016,7 @@ function decideWho(p) {
   closeOv('decideOv');
   if (d.kind === 'who') { const x = d.list.find(y => y.p === p); if (x) openSheet(p, { replace: x.i }); return; }
   d.step = null;
-  openSheet(p, { base: d.base, batch: { others: d.sel.filter(q => q !== p), back: d, src: d.kind } });
+  openSheet(p, { base: decideBase(d, p), batch: { others: d.sel.filter(q => q !== p), back: d, src: d.kind, bases: decideBases(d) } });
 }
 function decideNone() {
   const cur = G.cur, sn = snap();
@@ -5975,7 +6025,7 @@ const GUIDE = [
     gCard('「誰が飲む？」画面', '<div class="gd-mock paper"><span class="gd-pick on" style="--p:var(--p2)">サキ<b>1杯</b></span><span class="gd-pick" style="--p:var(--p3)">ケンタ</span></div>' +
       '<p>ジャンケン・指名・お題など、遊んでみないと分からないカードでは、この画面が出ます。<b>飲む人をタップ</b>して「飲む！」。</p>' +
       '<ul class="gd-list"><li>指名のカードは<b>「誰を指名する？」</b>。指名する人に選んでもらおう</li><li>まだ遊んでいる途中なら「あとで」。画面下の「誰が飲む？」から開き直せます</li>' +
-      '<li>誰も飲まなかったら「誰も飲まなかった」</li><li>「1〜3杯」のようなカードや、負けた回数ぶん飲むときは −／＋ で杯数を合わせます</li></ul>', 2) +
+      '<li>誰も飲まなかったら「誰も飲まなかった」</li><li>「1〜3杯」のようなカードは、選んだ人を<b>もう一度タップするたびに+1杯</b>（いちばん多い杯数の次は外れる）。「1人なら2杯、2人なら1杯ずつ」のように人で量が変わるカードは、アプリが杯数を入れます</li><li>ふつうのカードで杯数を変えたいときは −／＋</li></ul>', 2) +
     gCard('特殊ルール・券を使うとき', '<p>飲む人が記録されると、すぐに<b>「特殊ルールを使う？」</b>と聞かれます。</p><ul class="gd-list">' +
       '<li><b>1人のとき</b> → 「倍倍FIGHT！」「天国と地獄」（券を持っていれば「〇〇券を使う」）を押すか、「素直に飲む」</li>' +
       '<li><b>何人もいるとき</b> → まず使う人をタップ。2人以上なら<b>順番をランダムで決めて</b>、1人ずつ選びます。先の人の倍倍FIGHT！は、次の順番の人に×2がかかります</li>' +
