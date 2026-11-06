@@ -30,6 +30,7 @@ function boot(data) {
   G = normalizeGame(validGame(data.G) ? data.G : loadGame());
   stCur = (G && G.st) || null;
   setTimeout(statFlush, 4000);
+  if (statDev() && lsGet(STAT_CLAIM_KEY) !== '1') setTimeout(statClaim, 5000);   /* 「自分の端末」 from before the past games could be moved too */
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';

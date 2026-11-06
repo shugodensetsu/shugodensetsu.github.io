@@ -8870,6 +8870,20 @@ const statOn = () => IS_APP && !!STAT_URL && !statOff();
    The switch is hidden: tap 「あそびの記録」 (the title of the record screen) 5 times to show it */
 const STAT_DEV_KEY = 'sakego-stat-dev';
 const statDev = () => { try { return localStorage.getItem(STAT_DEV_KEY) === '1'; } catch (_) { return false; } };
+/* turned on: the games this phone played before go to 「自分の端末」 too. The phone keeps only how many games it started on
+   each day, and its games are numbered 1, 2, 3 … (nth), so each day becomes "the n-th to m-th game of this phone".
+   Sent when the switch is turned on, and once for a phone that had it on before this was added */
+const STAT_CLAIM_KEY = 'sakego-stat-claim';
+function statClaim() {
+  if (!statOn() || !statDev()) return;
+  const U = useLoad(), days = Object.keys(U.days).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  let n = Math.max(0, U.games - days.reduce((a, k) => a + (U.days[k] || 0), 0));
+  const ranges = [];
+  days.forEach(k => { const c = Math.round(U.days[k] || 0); if (c > 0) ranges.push([k, n + 1, n + c]); n += Math.max(0, c); });
+  const form = Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone';
+  for (let i = 0; i < ranges.length; i += 100) statSend({ k: 'claim', ranges: ranges.slice(i, i + 100), form });
+  lsSet(STAT_CLAIM_KEY, '1');
+}
 let stCur = null, builtinText = null;
 /* a built-in card as it ships (not one the players added or rewrote): only these are counted by number */
 function builtinCard(c) {
@@ -9052,7 +9066,7 @@ function renderUsage() {
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
       '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button>' +
       (usageDevShow || statDev() ? '<button type="button" class="us-opt us-dev" data-us="dev" aria-pressed="' + statDev() + '"><span class="us-sw"></span>この端末は「自分の端末」</button>' +
-        '<p class="us-note">' + (statDev() ? 'この端末で遊んだ分は、集計ページの<b>「自分の端末」</b>の別枠に入ります。ふだんの集計には入りません。' : 'オンにすると、この端末で遊んだ分は集計ページで「自分の端末」の別枠に入り、ふだんの集計には入らなくなります（開発・テスト用）。') + '</p>' : '') +
+        '<p class="us-note">' + (statDev() ? 'この端末で遊んだ分は、<b>これまでの分も</b>集計ページの<b>「自分の端末」</b>の別枠に入ります。ふだんの集計には入りません。' : 'オンにすると、この端末で遊んだ分は<b>これまでの分も</b>集計ページで「自分の端末」の別枠に入り、ふだんの集計には入らなくなります（開発・テスト用）。') + '</p>' : '') +
       '</section>' : '') +
     '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a> ・ <a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
@@ -9067,6 +9081,7 @@ function usageAct(a, el) {
   if (a === 'dev') {
     const on = !statDev();
     try { if (on) localStorage.setItem(STAT_DEV_KEY, '1'); else localStorage.removeItem(STAT_DEV_KEY); } catch (_) { /* ignore */ }
+    if (on) statClaim();
     renderUsage(); SE.play(on ? 'coin' : 'tap'); return;
   }
   if (a === 'reset') {
@@ -11300,6 +11315,7 @@ function boot(data) {
   G = normalizeGame(validGame(data.G) ? data.G : loadGame());
   stCur = (G && G.st) || null;
   setTimeout(statFlush, 4000);
+  if (statDev() && lsGet(STAT_CLAIM_KEY) !== '1') setTimeout(statClaim, 5000);   /* 「自分の端末」 from before the past games could be moved too */
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';
