@@ -112,9 +112,22 @@ function daily(rows, days) {
   const by = Object.fromEntries(rows.map(r => [r.day, r])), list = [];
   for (let i = days - 1; i >= 0; i--) { const d = jstDay(Date.now() - i * 86400e3); list.push({ d, n: by[d] ? by[d].n : 0, done: by[d] ? by[d].done || 0 : 0 }); }
   const max = Math.max(1, ...list.map(x => x.n)), md = d => Number(d.slice(5, 7)) + '/' + Number(d.slice(8));
-  return '<div class="daily' + (days > 30 ? ' dense' : '') + '" role="img" aria-label="日ごとのゲーム数（最大 ' + max + '）"><div class="dcols">' +
-    list.map(x => '<span class="dc" title="' + md(x.d) + '：' + x.n + 'ゲーム（最後まで ' + x.done + '）"><i style="height:' + (x.n ? Math.max(2, x.n / max * 100) : 0).toFixed(1) + '%"></i></span>').join('') +
-    '</div><div class="daxis"><span>' + md(list[0].d) + '</span><span>いちばん多い日 ' + max + '</span><span>' + md(list[list.length - 1].d) + '</span></div></div>';
+  const wd = d => '日月火水木金土'[new Date(d + 'T00:00:00Z').getUTCDay()];
+  /* dates under the bars: every day for a week, otherwise every 7th (90 days: 28th) day counted back from today (today always labelled) */
+  const step = days <= 7 ? 1 : days <= 30 ? 7 : 28, last = list.length - 1;
+  const chart = '<div class="daily' + (days > 30 ? ' dense' : '') + '" role="img" aria-label="日ごとのゲーム数（最大 ' + max + '）"><div class="dcols">' +
+    list.map(x => { const h = (x.n ? Math.max(2, x.n / max * 100) : 0).toFixed(1) + '%';
+      return '<span class="dc" style="--h:' + h + '" title="' + md(x.d) + '：' + x.n + 'ゲーム（最後まで ' + x.done + '）">' +
+        (x.n && days <= 30 ? '<b class="dn">' + x.n + '</b>' : '') + '<i style="height:' + h + '"></i></span>'; }).join('') +
+    '</div><div class="dlabs">' +
+    list.map((x, i) => '<span>' + ((last - i) % step === 0 ? '<em class="' + (days <= 7 ? '' : i < 2 ? 'l' : i > last - 2 ? 'r' : '') + '">' + md(x.d) + (days <= 7 ? '<small>' + wd(x.d) + '</small>' : '') + '</em>' : '') + '</span>').join('') +
+    '</div></div>';
+  /* the days that had games, newest first: date, weekday and how many */
+  const played = list.filter(x => x.n).reverse();
+  return chart + (played.length
+    ? '<h3 class="dh">遊んだ日 <small>' + played.length + '日</small></h3><div class="dlist">' + bars(played.map(x => ({ n: x.n, d: x.d, done: x.done })), x => md(x.d) + '（' + wd(x.d) + '）', max)
+      .replace(/<b>(\d+)<\/b>/g, (m, n) => '<b>' + n + '<small>ゲーム</small></b>') + '</div>'
+    : '<p class="none">この期間はまだありません</p>');
 }
 /* mini games played from cards: how often each was played, out of how often its card came up */
 function played(rows, offered) {
@@ -197,9 +210,14 @@ nav a.on{background:var(--ink); color:var(--card)}
 .tile b{font-size:24px; line-height:1.2} .tile span{font-size:13px; color:var(--muted)} .tile small{font-size:12px; color:var(--muted)}
 section{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:14px}
 .grid2{display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px} .grid2 section{margin:0}
-.dcols{display:flex; align-items:flex-end; gap:3px; height:150px; border-bottom:1px solid var(--line)} .dense .dcols{gap:1px}
+.dcols{display:flex; align-items:flex-end; gap:3px; height:150px; padding-top:16px; border-bottom:1px solid var(--line)} .dense .dcols{gap:1px}
 .dc{flex:1; height:100%; display:flex; align-items:flex-end} .dc i{display:block; width:100%; background:var(--bar); border-radius:4px 4px 0 0} .dense .dc i{border-radius:2px 2px 0 0} .dc:hover i{background:var(--ink)}
-.daxis{display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-top:4px}
+.dc{position:relative} .dn{position:absolute; left:50%; transform:translateX(-50%); bottom:calc(var(--h, 0%) + 2px); font-size:11px; font-weight:700; color:var(--ink); line-height:1; white-space:nowrap}
+.dlabs{display:flex; gap:3px; height:28px; margin-top:4px} .dense .dlabs{gap:1px} .dlabs span{flex:1; position:relative}
+.dlabs em{position:absolute; top:0; left:50%; transform:translateX(-50%); font-style:normal; color:var(--muted); font-size:11.5px; white-space:nowrap; text-align:center; line-height:1.25}
+.dlabs em.l{left:0; transform:none; text-align:left} .dlabs em.r{left:auto; right:0; transform:none; text-align:right} .dlabs small{display:block; font-size:10.5px}
+.dlist .bars b small{display:inline; margin-left:2px} .dlist .bars b{min-width:4.5em}
+.dh{font-size:14px; margin:14px 0 8px} .dh small{font-weight:400; color:var(--muted); font-size:12px; margin-left:6px}
 h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .bars b small{display:block; font-weight:400; color:var(--muted); font-size:11px; white-space:nowrap}
 .bars{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
 .bars li{display:grid; grid-template-columns:minmax(0, 46%) 1fr auto; align-items:center; gap:10px; font-size:13.5px}
