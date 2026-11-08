@@ -129,6 +129,15 @@ function daily(rows, days) {
       .replace(/<b>(\d+)<\/b>/g, (m, n) => '<b>' + n + '<small>ゲーム</small></b>') + '</div>'
     : '<p class="none">この期間はまだありません</p>');
 }
+/* the rounds chosen (3, 5, 10 周 or ∞): how many of those games were played to the end, out of how many were started */
+function laps(rows) {
+  const ord = k => (k ? k : 1e3), list = rows.slice().sort((a, b) => ord(a.k) - ord(b.k));
+  if (!list.length) return '<p class="none">まだありません</p>';
+  const top = Math.max(1, ...list.map(r => r.done || 0));
+  return '<ol class="bars laps">' + list.map(r => { const d = r.done || 0;
+    return '<li><span class="bl">' + (r.k ? r.k + '周' : '∞') + '</span><span class="bt"><i style="width:' + (d / top * 100).toFixed(1) + '%"></i></span>' +
+      '<b>' + d + '<small class="u">ゲーム</small><small>始めた ' + r.n + ' ・ ' + pct(d, r.n) + '</small></b></li>'; }).join('') + '</ol>';
+}
 /* mini games played from cards: how often each was played, out of how often its card came up */
 function played(rows, offered) {
   const by = {};
@@ -175,7 +184,7 @@ export default {
     const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
     const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ?' + SCg + ' AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
-    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other] = await Promise.all([
+    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other, rnd] = await Promise.all([
       one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?' + SC + '', from),
       q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY day', from),
       q('SELECT players k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' GROUP BY players ORDER BY players', from),
@@ -190,6 +199,7 @@ export default {
       q(each('q', ' AND g.mode = \'koi\'') + ' LIMIT 12', from),
       q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
       one('SELECT COUNT(*) n FROM games WHERE day >= ?' + (me ? ' AND dev IS NULL' : ' AND dev IS NOT NULL'), from),
+      q('SELECT rounds k, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY rounds', from),
     ]);
     const LV = { mild: '王様：ふつう', hot: '王様：盛り上げ', mix: '恋バナ：ミックス', koi: '恋バナ：恋バナだけ', bare: '恋バナ：暴露だけ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
@@ -216,7 +226,7 @@ section{background:var(--card); border:1px solid var(--line); border-radius:14px
 .dlabs{display:flex; gap:3px; height:28px; margin-top:4px} .dense .dlabs{gap:1px} .dlabs span{flex:1; position:relative}
 .dlabs em{position:absolute; top:0; left:50%; transform:translateX(-50%); font-style:normal; color:var(--muted); font-size:11.5px; white-space:nowrap; text-align:center; line-height:1.25}
 .dlabs em.l{left:0; transform:none; text-align:left} .dlabs em.r{left:auto; right:0; transform:none; text-align:right} .dlabs small{display:block; font-size:10.5px}
-.dlist .bars b small{display:inline; margin-left:2px} .dlist .bars b{min-width:4.5em}
+.dlist .bars b small, .laps b small.u{display:inline; margin-left:2px} .dlist .bars b{min-width:4.5em} .laps b{min-width:8em}
 .dh{font-size:14px; margin:14px 0 8px} .dh small{font-weight:400; color:var(--muted); font-size:12px; margin-left:6px}
 h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .bars b small{display:block; font-weight:400; color:var(--muted); font-size:11px; white-space:nowrap}
 .bars{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
@@ -250,6 +260,7 @@ ${tile(evN('plus', d => d === 'plan_month'), '月額を選んだ')}
 ${tile(evN('plus', d => d === 'plan_pass'), '24時間パスを選んだ')}
 </div></section>
 <section><h2>日ごとのゲーム数</h2>${daily(perDay, days)}</section>
+<section><h2>最後まで遊んだゲームの周回<small>∞＝「終了」を押すまで</small></h2>${laps(rnd)}</section>
 <div class="grid2">
 <section><h2>人数</h2>${bars(players, r => r.k + '人')}</section>
 <section><h2>ミニゲームモードで遊ばれたゲーム</h2>${bars(miniM, r => NAMES[r.k] || r.k)}</section>
