@@ -138,6 +138,18 @@ function laps(rows) {
     return '<li><span class="bl">' + (r.k ? r.k + '周' : '∞') + '</span><span class="bt"><i style="width:' + (d / top * 100).toFixed(1) + '%"></i></span>' +
       '<b>' + d + '<small class="u">ゲーム</small><small>始めた ' + r.n + ' ・ ' + pct(d, r.n) + '</small></b></li>'; }).join('') + '</ol>';
 }
+/* the latest games one by one, to find your own and move them by hand. 「通しN回目」 is that phone's own game count:
+   one phone's games count up 1, 2, 3 … so a run of numbers is one phone */
+function recentList(rows, me, days) {
+  if (!rows.length) return '<p class="none">まだありません</p>';
+  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '恋バナ' };
+  const when = t => { const d = new Date(t + 9 * 3600e3); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '（' + '日月火水木金土'[d.getUTCDay()] + '）' + d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+  return '<form method="post" action="/move" class="recent"><input type="hidden" name="back" value="/?d=' + days + '&me=' + (me ? 1 : 0) + '">' +
+    '<p class="rhint">「通し○回目」は、その端末で何回目のゲームか。1台の端末なら番号が1つずつ増えていきます。' + (me ? 'ふつうの集計に戻すゲームを選んでください。' : '自分の端末で遊んだゲームを選んで、別枠に移せます。') + '</p><ul>' +
+    rows.map(r => '<li><label><input type="checkbox" name="sid" value="' + esc(r.sid) + '"><span><b>' + when(r.started) + '</b> ' + (MODE[r.mode] || esc(r.mode)) + ' ' + r.players + '人 ' + (r.rounds ? r.rounds + '周' : '∞') + (r.done ? ' ・最後まで' : '') +
+      '<small>通し' + r.nth + '回目 ・ ' + (r.installed ? 'ホーム画面' : 'ブラウザ') + (r.form === 'tablet' ? ' ・タブレット' : '') + '</small></span></label></li>').join('') +
+    '</ul><button type="submit" name="to" value="' + (me ? 'normal' : 'me') + '">' + (me ? '選んだゲームをふつうの集計に戻す' : '選んだゲームを「自分の端末」へ移す') + '</button></form>';
+}
 /* mini games played from cards: how often each was played, out of how often its card came up */
 function played(rows, offered) {
   const by = {};
@@ -170,6 +182,22 @@ export default {
       return new Response(null, { status: 303, headers: { location: '/', 'cache-control': 'no-store',
         'set-cookie': COOKIE + '=' + value + '; Path=/; Max-Age=' + DAYS * 86400 + '; HttpOnly; Secure; SameSite=Strict' } });
     }
+    /* moving games between the usual numbers and 「自分の端末」 by hand (the list at the bottom of the page).
+       Only from this page itself (same origin), after the same password check */
+    if (path === '/move') {
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: HEAD });
+      /* with 'no-referrer' the browser sends Origin: null even from this page, so Sec-Fetch-Site says where it came from */
+      const o = request.headers.get('origin'), site = request.headers.get('sec-fetch-site');
+      if (!(o === url.origin || ((!o || o === 'null') && site === 'same-origin')) || (site && site !== 'same-origin')) return new Response('Forbidden', { status: 403, headers: HEAD });
+      const g = await gate(request, env, ctx);
+      if (!g.ok) return new Response('Forbidden', { status: g.status === 429 ? 429 : 403, headers: HEAD });
+      const f = await request.formData().catch(() => null);
+      if (!f) return new Response('Bad request', { status: 400, headers: HEAD });
+      const sids = f.getAll('sid').filter(x => typeof x === 'string' && /^[a-z0-9]{8,24}$/.test(x)).slice(0, 200);
+      const to = f.get('to') === 'me' ? 1 : null, back = String(f.get('back') || '');
+      if (sids.length) await env.DB.batch(sids.map(id => env.DB.prepare('UPDATE games SET dev = ? WHERE sid = ?').bind(to, id)));
+      return new Response(null, { status: 303, headers: { location: (/^\/\?d=\d+&me=[01]$/.test(back) ? back : '/') + '#recent', 'cache-control': 'no-store' } });
+    }
     if (path !== '/') return new Response('Not found', { status: 404, headers: HEAD });
     const g = await gate(request, env, ctx);
     if (!g.ok) {
@@ -184,7 +212,7 @@ export default {
     const q = (sql, ...a) => env.DB.prepare(sql).bind(...a).all().then(r => r.results || []);
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
     const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ?' + SCg + ' AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
-    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other, rnd] = await Promise.all([
+    const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other, rnd, recent] = await Promise.all([
       one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?' + SC + '', from),
       q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY day', from),
       q('SELECT players k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' GROUP BY players ORDER BY players', from),
@@ -200,6 +228,7 @@ export default {
       q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
       one('SELECT COUNT(*) n FROM games WHERE day >= ?' + (me ? ' AND dev IS NULL' : ' AND dev IS NOT NULL'), from),
       q('SELECT rounds k, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY rounds', from),
+      q('SELECT sid, started, mode, players, rounds, done, nth, form, installed FROM games WHERE day >= ?' + SC + ' ORDER BY started DESC LIMIT 60', from),
     ]);
     const LV = { mild: '王様：ふつう', hot: '王様：盛り上げ', mix: '恋バナ：ミックス', koi: '恋バナ：恋バナだけ', bare: '恋バナ：暴露だけ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
@@ -234,6 +263,10 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 .bl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap} .bt{height:10px; background:var(--bar2); border-radius:6px; overflow:hidden} .bt i{display:block; height:100%; background:var(--bar); border-radius:6px}
 .bars b{font-variant-numeric:tabular-nums; min-width:2.5em; text-align:right}
 .scope{margin:-6px 0 14px; font-size:12.5px; color:var(--muted)} .scope a{color:var(--ink); margin-left:6px} h1 .me{font-size:12px; font-weight:700; background:#ffd83d; color:#150733; border-radius:999px; padding:2px 10px; margin-left:8px; vertical-align:3px}
+.recent ul{list-style:none; margin:0 0 12px; padding:0} .recent li{border-top:1px solid var(--line)} .recent label{display:flex; gap:10px; align-items:flex-start; padding:8px 0; font-size:13.5px; cursor:pointer}
+.recent input{width:20px; height:20px; margin:1px 0 0; flex:none; accent-color:var(--bar)} .recent small{display:block; color:var(--muted); font-size:12px}
+.recent button{width:100%; padding:12px; border:0; border-radius:12px; background:var(--bar); color:var(--card); font:inherit; font-weight:700; cursor:pointer}
+.rhint{margin:0 0 8px; font-size:12.5px; color:var(--muted)}
 .none{color:var(--muted); margin:0} footer{color:var(--muted); font-size:12px; margin-top:18px} footer a{color:var(--muted)}
 </style></head><body><main>
 <header><h1>酒GO!!伝説 の集計${me ? '<small class="me">自分の端末</small>' : ''}</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + qs + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}${qs}" aria-label="最新にする">↻</a></nav></header>
@@ -271,6 +304,7 @@ ${tile(evN('plus', d => d === 'plan_pass'), '24時間パスを選んだ')}
 <section><h2>よく選ばれた命令<small>王様ゲーム</small></h2>${bars(kingQ, r => KQ.king[r.k] || 'No.' + r.k)}</section>
 <section><h2>よく出た質問<small>恋バナ・暴露</small></h2>${bars(koiQ, r => KQ.koi[r.k] || 'No.' + r.k)}</section>
 </div>
+<section id="recent"><h2>最近のゲーム<small>新しい順 ${recent.length}件</small></h2>${recentList(recent, me, days)}</section>
 <footer>名前・カードの文章・端末を見分けるIDは集めていません。数字は「集計に協力する」がオンの端末のぶんです。${g.cookie ? ' <a href="/logout">ログアウト</a>' : ''}</footer>
 </main></body></html>`;
     return new Response(html, { headers: HEAD });

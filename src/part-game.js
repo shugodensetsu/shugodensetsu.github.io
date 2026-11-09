@@ -5379,8 +5379,21 @@ function statClaim() {
   const ranges = [];
   days.forEach(k => { const c = Math.round(U.days[k] || 0); if (c > 0) ranges.push([k, n + 1, n + c]); n += Math.max(0, c); });
   const form = Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone';
-  for (let i = 0; i < ranges.length; i += 100) statSend({ k: 'claim', ranges: ranges.slice(i, i + 100), form });
-  lsSet(STAT_CLAIM_KEY, '1');
+  const rec = { at: Date.now(), games: U.games, days: ranges.length, ok: 0 };
+  lsSet(STAT_CLAIM_KEY, JSON.stringify(rec));
+  if (!ranges.length) return;
+  /* sent the slow way, so the switch can say whether it arrived (kept for later without signal, like any report) */
+  const parts = [];
+  for (let i = 0; i < ranges.length; i += 100) parts.push({ k: 'claim', ranges: ranges.slice(i, i + 100), form, at: Date.now(), dev: 1 });
+  Promise.all(parts.map(o => { const b = JSON.stringify(o); return statPost(b).then(r => { if (r === 'later') statKeep(b); return r; }); }))
+    .then(rs => { rec.ok = rs.every(r => r === 'done') ? 1 : -1; lsSet(STAT_CLAIM_KEY, JSON.stringify(rec)); if ($('statsOv') && !$('statsOv').hidden) renderUsage(); });
+}
+function statClaimInfo() {
+  let r = null; try { r = JSON.parse(lsGet(STAT_CLAIM_KEY) || 'null'); } catch (_) { r = null; }
+  if (!r || typeof r !== 'object') return '';
+  const d = new Date(r.at), t = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+  return !r.games ? 'この端末では、まだゲームの記録がありません。' :
+    'これまでの分（この端末の1〜' + r.games + 'ゲーム目、' + r.days + '日ぶん）を' + t + 'に' + (r.ok === 1 ? '送りました' : r.ok === -1 ? '送ろうとしましたが、まだ届いていません（電波が戻ったら送ります）' : '送っています') + '。';
 }
 let stCur = null, builtinText = null;
 /* a built-in card as it ships (not one the players added or rewrote): only these are counted by number */
@@ -5564,7 +5577,9 @@ function renderUsage() {
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
       '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button>' +
       (usageDevShow || statDev() ? '<button type="button" class="us-opt us-dev" data-us="dev" aria-pressed="' + statDev() + '"><span class="us-sw"></span>この端末は「自分の端末」</button>' +
-        '<p class="us-note">' + (statDev() ? 'この端末で遊んだ分は、<b>これまでの分も</b>集計ページの<b>「自分の端末」</b>の別枠に入ります。ふだんの集計には入りません。' : 'オンにすると、この端末で遊んだ分は<b>これまでの分も</b>集計ページで「自分の端末」の別枠に入り、ふだんの集計には入らなくなります（開発・テスト用）。') + '</p>' : '') +
+        '<p class="us-note">' + (statDev() ? 'この端末で遊んだ分は、<b>これまでの分も</b>集計ページの<b>「自分の端末」</b>の別枠に入ります。ふだんの集計には入りません。' : 'オンにすると、この端末で遊んだ分は<b>これまでの分も</b>集計ページで「自分の端末」の別枠に入り、ふだんの集計には入らなくなります（開発・テスト用）。') +
+        ' ホーム画面のアプリとSafariなどのブラウザは、記録が別々です（それぞれでオンにします）。</p>' +
+        (statDev() ? '<p class="us-note">' + esc(statClaimInfo()) + (statOff() ? '<br><b>「集計に協力する」がオフなので、送っていません。</b>' : '') + '</p><button type="button" class="pbtn white small" data-us="claim">これまでの分をもう一度送る</button>' : '') : '') +
       '</section>' : '') +
     '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a> ・ <a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
     '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
@@ -5582,6 +5597,7 @@ function usageAct(a, el) {
     if (on) statClaim();
     renderUsage(); SE.play(on ? 'coin' : 'tap'); return;
   }
+  if (a === 'claim') { statClaim(); renderUsage(); telop('これまでの分を送りました', 'white sm', 1600); return; }
   if (a === 'reset') {
     if (!usageReset) { usageReset = true; renderUsage(); return; }
     try { localStorage.removeItem(USE_KEY); } catch (_) { /* ignore */ }
