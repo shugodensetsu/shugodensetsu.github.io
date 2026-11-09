@@ -5019,6 +5019,7 @@ function closeSheet() {
   const s = sheet;
   sheet = null; closeOv('sheetOv');
   if (!s || !G) return;
+  if (s.askAfter && ask) { renderAsk(); openOv('askOv'); return; }   /* back to 「特殊ルール・券を使う？」 */
   if (s.owed) autoRecord([s.p], s.base, { src: s.src || 'game', ask: false });
   else if (s.batch && s.batch.back) reopenDecide(s.batch.back);
 }
@@ -5618,6 +5619,14 @@ function askShuffle() {
   };
   step();
 }
+/* 大天国 / 押し付け券 with 3 or more players: who it goes to is picked on the record sheet, so that sheet is shown
+   even in the 「特殊ルール・券を使う？」 flow (with 2 players it can only go to the other one) */
+function pushPick(s) {
+  if (!s || !G || G.players.length < 3) return false;
+  if (s.hh === 'bigheaven') return true;
+  const t = s.ticket != null && G.players[s.p] ? G.players[s.p].hand.find(h => h.uid === s.ticket) : null;
+  return !!(t && t.fx === 'push');
+}
 /* re-record the person's drink straight away (no sheet on screen), with 倍倍FIGHT！ / a ticket / the chained ×2 */
 function specialRecord(p, o) {
   const A = ask, idx = G.cur.drinks.indexOf(A.e);
@@ -5627,6 +5636,7 @@ function specialRecord(p, o) {
   if (askPend(A.k) === undefined) delete sheet.pend;
   sheet.direct = true;
   Object.assign(sheet, o || {});
+  if (pushPick(sheet)) { sheet.direct = false; sheet.askAfter = true; renderSheet(); openOv('sheetOv'); SE.play('pop'); return 'sheet'; }
   recordSheet();
   return true;
 }
@@ -5666,7 +5676,7 @@ function askAct(a, el) {
     if (askChained(A.k, p)) { closeOv('askOv'); specialRecord(p, {}); askNextLater(1300); }
     else { SE.play('gulp'); askNext(); }
   } else if (a === 'dbl') { closeOv('askOv'); specialRecord(p, { dbl: true }); askNextLater(1700); }
-  else if (a === 'tk') { closeOv('askOv'); specialRecord(p, { ticket: Number(el.dataset.uid) }); askNextLater(1300); }
+  else if (a === 'tk') { closeOv('askOv'); if (specialRecord(p, { ticket: Number(el.dataset.uid) }) !== 'sheet') askNextLater(1300); }
   else if (a === 'hh') {
     const idx = G.cur.drinks.indexOf(A.e);
     if (idx < 0) return;
@@ -6190,8 +6200,9 @@ function confirmWheel() {
   if (!wheel || !wheel.done) return;
   sheet.hh = wheel.kind; sheet.hhFree = wheel.free; sheet.mode = wheel.mode === 'normal' ? null : wheel.mode; sheet.locked = true; sheet.pass = wheel.passUid;
   leaveWheel();
-  if (sheet.direct) { recordSheet(); if (ask) askNextLater(1500); return; }
-  renderSheet();
+  if (sheet.direct && !pushPick(sheet)) { recordSheet(); if (ask) askNextLater(1500); return; }
+  if (sheet.direct) { sheet.direct = false; sheet.askAfter = true; renderSheet(); openOv('sheetOv'); SE.play('pop'); }   /* 大天国: pick who it goes to first */
+  else renderSheet();
   const b = $('sheetRecord'); if (b) b.focus({ preventScroll: true });
 }
 function cancelWheel() {
@@ -10217,7 +10228,7 @@ function wireGame() {
     else if (s === 'to') { sheet.to = Number(b.dataset.to); SE.play('select'); renderSheet(); refocus('[data-to="' + sheet.to + '"]'); }
     else if (s === 'ticket') { const u = Number(b.dataset.uid); sheet.ticket = sheet.ticket === u ? null : u; SE.play(sheet.ticket ? 'ticket' : 'tap'); renderSheet(); refocus('[data-uid="' + u + '"]'); }
     else if (s === 'close') closeSheet();
-    else if (s === 'record') recordSheet();
+    else if (s === 'record') { const after = sheet.askAfter; recordSheet(); if (after && ask) askNextLater(1300); }
     else if (s === 'help') openGuide('special');
     else if (s === 'asnew') { sheet.replace = null; delete sheet.pend; renderSheet(); SE.play('tap'); }
   });
