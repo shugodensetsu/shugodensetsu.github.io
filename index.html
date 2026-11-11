@@ -126,15 +126,19 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .se-btn[aria-pressed="false"]{background:var(--muted)}
 /* BGM: the button opens a small panel with ON/OFF and the volume */
 .top-r{position:relative}
-.bgm-pop{position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(260px, calc(100vw - 24px)); background:var(--white); color:var(--ink); border:2.5px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink); padding:12px 14px 10px}
+.bgm-pop{position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(300px, calc(100vw - 24px)); background:var(--white); color:var(--ink); border:2.5px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink); padding:12px 14px 10px}
 .bgm-pop[hidden]{display:none}
-.bp-row{display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:800; font-size:14px}
-.bp-sw{min-width:68px; border:2.5px solid var(--ink); border-radius:999px; padding:3px 12px; font:inherit; font-weight:800; font-size:13px; background:var(--yellow); color:var(--ink); box-shadow:0 2px 0 var(--ink)}
-.bp-sw[aria-pressed="false"]{background:var(--muted)}
-.bp-vol{display:flex; align-items:center; gap:10px; margin:12px 0 4px; font-weight:800; font-size:13px}
-.bp-vol input{flex:1; min-width:0; accent-color:var(--pink); height:28px}
-.bp-vol b{min-width:2.4em; text-align:right; font-variant-numeric:tabular-nums}
-.bp-vol.off{opacity:.45}
+.bp-title{margin:0 0 6px; font-weight:900; font-size:15px}
+.bp-line{display:flex; align-items:center; gap:8px; margin:8px 0; font-weight:800; font-size:13px}
+.bp-line.sub{padding-left:14px}
+.bp-nm{flex:none; width:74px}
+.bp-line.sub .bp-nm{width:60px; font-size:12px}
+.bp-sw{flex:none; width:74px; border:2.5px solid var(--ink); border-radius:999px; padding:3px 0; font:inherit; font-weight:800; font-size:12px; background:var(--yellow); color:var(--ink); box-shadow:0 2px 0 var(--ink)}
+.bp-sw[aria-pressed="false"]{background:var(--muted); text-decoration:line-through}
+.bp-r{flex:1; min-width:0; accent-color:var(--pink); height:28px}
+.bp-n{flex:none; min-width:2.2em; text-align:right; font-variant-numeric:tabular-nums}
+.bp-line.off .bp-r, .bp-line.off .bp-n{opacity:.4}
+.bp-note{margin:6px 0 0; font-size:11px; line-height:1.5; color:var(--ink-muted); font-weight:600}
 .bp-credit{margin:6px 0 0; font-size:11px; color:var(--ink-muted); font-weight:600}
 .se-btn[aria-pressed="false"] .wave{display:none}
 .se-btn[aria-pressed="true"] .mute{display:none}
@@ -2183,10 +2187,14 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path class="mute" d="M3 3l18 18"/></svg>
         <span id="bgmLabel">BGM ON</span>
       </button>
-      <div class="bgm-pop" id="bgmPop" role="dialog" aria-label="BGMの設定" hidden>
-        <div class="bp-row"><span>BGM</span><button type="button" class="bp-sw" id="bgmOnOff" aria-pressed="true">ON</button></div>
-        <label class="bp-vol" id="bgmVolRow"><span>音量</span><input type="range" id="bgmVol" min="0" max="100" step="5" value="70" aria-label="BGMの音量"><b id="bgmVolN">70</b></label>
-        <p class="bp-credit">曲：「そんなバカな！」 BGMer</p>
+      <div class="bgm-pop" id="bgmPop" role="dialog" aria-labelledby="sndTitle" hidden>
+        <p class="bp-title" id="sndTitle">音の設定</p>
+        <div class="bp-line"><span class="bp-nm">全体</span><input type="range" class="bp-r" id="volMaster" data-vol="master" min="0" max="100" step="5" value="100" aria-label="全体の音量"><b class="bp-n" id="volMasterN">100</b></div>
+        <div class="bp-line" id="bgmVolRow"><button type="button" class="bp-sw" id="bgmOnOff" aria-pressed="true" aria-label="BGM">BGM</button><input type="range" class="bp-r" id="bgmVol" data-vol="bgm" min="0" max="100" step="5" value="70" aria-label="BGMの音量"><b class="bp-n" id="bgmVolN">70</b></div>
+        <div class="bp-line" id="seVolRow"><button type="button" class="bp-sw" id="seOnOff" aria-pressed="true" aria-label="効果音">効果音</button><input type="range" class="bp-r" id="volSe" data-vol="se" min="0" max="100" step="5" value="100" aria-label="効果音の音量"><b class="bp-n" id="volSeN">100</b></div>
+        <div class="bp-line sub" id="uiVolRow"><span class="bp-nm">ボタンの音</span><input type="range" class="bp-r" id="volUi" data-vol="ui" min="0" max="100" step="5" value="100" aria-label="ボタンを押したときの音の音量"><b class="bp-n" id="volUiN">100</b></div>
+        <p class="bp-note">「BGM」「効果音」を押すとON／OFF（灰色がOFF）。全体はスマホの音量の中での大きさ。ボタンの音は、効果音のうちボタンを押したときの音だけ。</p>
+        <p class="bp-credit">ゲーム中の曲：「そんなバカな！」 BGMer</p>
       </div>
       <button type="button" class="se-btn" id="seBtn" aria-pressed="true">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M19 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg>
@@ -3986,9 +3994,24 @@ function snd(name, A, t) {
   else if (SOUNDS[name]) SOUNDS[name](A, t);
 }
 const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'wheelTick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
+/* volumes, 0–100 each: master (everything), se (sound effects), ui (the button sounds, part of se). 100 = the level the app was mixed for.
+   BGM keeps its own (BGM.vol, 70 = as mixed) */
+const VOL_KEYS = { master: 'nomige-vol-master', se: 'nomige-vol-se', ui: 'nomige-vol-ui' };
+const UI_SOUNDS = new Set(['tap', 'pop', 'select']);
+const volGain = v => (v / 100) * (v / 100);
 const SE = {
-  on: true, A: null,
-  init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
+  on: true, A: null, vol: { master: 100, se: 100, ui: 100 },
+  init() {
+    try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ }
+    Object.keys(VOL_KEYS).forEach(k => { try { const raw = localStorage.getItem(VOL_KEYS[k]), v = Number(raw); if (raw != null && v >= 0 && v <= 100) this.vol[k] = v; } catch (_) { /* ignore */ } });
+  },
+  setVol(k, v) {
+    this.vol[k] = Math.max(0, Math.min(100, Math.round(v)));
+    try { localStorage.setItem(VOL_KEYS[k], String(this.vol[k])); } catch (_) { /* ignore */ }
+    const A = this.A; if (!A) return;
+    const node = k === 'master' ? A.m : k === 'se' ? A.o : A.ui, t = A.c.currentTime;
+    node.gain.setTargetAtTime(volGain(this.vol[k]) * (k === 'master' ? 0.95 : 1), t, 0.03);
+  },
   ensure() {
     audioSessionSync();
     if (!this.A) {
@@ -4000,11 +4023,15 @@ const SE = {
         comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.18;
         const lim = c.createDynamicsCompressor();
         lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
-        const o = c.createGain(); o.gain.value = 0.95; o.connect(comp); comp.connect(lim); lim.connect(c.destination);
+        /* m: everything (master) → compressor → limiter; o: the sound effects; ui: the button sounds, inside o; BGM goes to m */
+        const m = c.createGain(); m.gain.value = 0.95 * volGain(this.vol.master); m.connect(comp); comp.connect(lim); lim.connect(c.destination);
+        const o = c.createGain(); o.gain.value = volGain(this.vol.se); o.connect(m);
+        const ui = c.createGain(); ui.gain.value = volGain(this.vol.ui); ui.connect(o);
         const r = c.createConvolver(); r.buffer = impulse(c, 2.2, 2.8);
         const rg = c.createGain(); rg.gain.value = 0.32; r.connect(rg); rg.connect(o);
         const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-        this.A = { c, o, r, nb };
+        this.A = { c, o, r, nb, m, ui };
+        this.Aui = Object.assign({}, this.A, { o: ui });
       } catch (_) { this.A = null; return null; }
       smpLoad(this.A);
       BGM.sync();
@@ -4016,7 +4043,7 @@ const SE = {
     if (!this.on) return;
     const A = this.ensure(); if (!A) return;
     if (!SOUNDS[name]) return;
-    try { snd(name, A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
+    try { snd(name, UI_SOUNDS.has(name) ? this.Aui : A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
     if (!NO_DUCK.has(name)) BGM.duck(delay || 0);
   },
   toggle() {
@@ -4038,10 +4065,14 @@ function renderSE() {
   $('bgmLabel').textContent = BGM.on ? 'BGM ON' : 'BGM OFF';
   $('bgmBtn').setAttribute('aria-expanded', String(!$('bgmPop').hidden));
   $('bgmOnOff').setAttribute('aria-pressed', String(BGM.on));
-  $('bgmOnOff').textContent = BGM.on ? 'ON' : 'OFF';
   $('bgmVol').value = String(BGM.vol);
   $('bgmVolN').textContent = String(BGM.vol);
   $('bgmVolRow').classList.toggle('off', !BGM.on);
+  $('seBtn').setAttribute('aria-expanded', String(!$('bgmPop').hidden));
+  $('seOnOff').setAttribute('aria-pressed', String(SE.on));
+  [['volMaster', 'master'], ['volSe', 'se'], ['volUi', 'ui']].forEach(([id, k]) => { $(id).value = String(SE.vol[k]); $(id + 'N').textContent = String(SE.vol[k]); });
+  $('seVolRow').classList.toggle('off', !SE.on);
+  $('uiVolRow').classList.toggle('off', !SE.on);
 }
 function bgmPop(open) {
   const p = $('bgmPop');
@@ -4192,7 +4223,7 @@ const BGM = {
     if (!name) { clearInterval(this.timer); this.timer = 0; return; }
     const c = A.c, tr = TRACKS[name], now = c.currentTime;
     if (!this.bus) {
-      this.out = c.createGain(); this.out.gain.value = this.volGain(); this.out.connect(A.o);
+      this.out = c.createGain(); this.out.gain.value = this.volGain(); this.out.connect(A.m);
       this.outR = c.createGain(); this.outR.gain.value = this.volGain(); this.outR.connect(A.r);
       this.bus = c.createGain(); this.bus.connect(this.out);
       this.busR = c.createGain(); this.busR.connect(this.outR);
@@ -10140,10 +10171,18 @@ function playResultFx() {
 /* ---------- events ---------- */
 function wireGame() {
   $('brandBtn').addEventListener('click', () => { closeAllOverlays(); showScreen('title'); });
-  $('seBtn').addEventListener('click', () => { SE.toggle(); renderSE(); });
+  /* both buttons open the same 音の設定 panel */
   $('bgmBtn').addEventListener('click', e => { e.stopPropagation(); SE.ensure(); bgmPop(); });
+  $('seBtn').addEventListener('click', e => { e.stopPropagation(); SE.ensure(); bgmPop(); });
   $('bgmOnOff').addEventListener('click', () => { BGM.toggle(); renderSE(); SE.play('tap'); });
+  $('seOnOff').addEventListener('click', () => { SE.toggle(); renderSE(); });
   $('bgmVol').addEventListener('input', e => { BGM.setVol(Number(e.target.value)); $('bgmVolN').textContent = String(BGM.vol); if (!BGM.on) { BGM.toggle(); renderSE(); } });
+  /* master / sound effects / button sounds: set as it moves, a sample sound when let go */
+  const volIn = (id, k, sample) => {
+    $(id).addEventListener('input', e => { SE.setVol(k, Number(e.target.value)); $(id + 'N').textContent = String(SE.vol[k]); });
+    $(id).addEventListener('change', () => { if (k !== 'master' && !SE.on) { SE.toggle(); renderSE(); } else SE.play(sample); });
+  };
+  volIn('volMaster', 'master', 'coin'); volIn('volSe', 'se', 'coin'); volIn('volUi', 'ui', 'tap');
   $('bgmPop').addEventListener('click', e => e.stopPropagation());
   document.addEventListener('click', () => { if (!$('bgmPop').hidden) bgmPop(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bgmPop').hidden) { bgmPop(false); $('bgmBtn').focus(); } });

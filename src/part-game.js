@@ -467,9 +467,24 @@ function snd(name, A, t) {
   else if (SOUNDS[name]) SOUNDS[name](A, t);
 }
 const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'wheelTick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
+/* volumes, 0–100 each: master (everything), se (sound effects), ui (the button sounds, part of se). 100 = the level the app was mixed for.
+   BGM keeps its own (BGM.vol, 70 = as mixed) */
+const VOL_KEYS = { master: 'nomige-vol-master', se: 'nomige-vol-se', ui: 'nomige-vol-ui' };
+const UI_SOUNDS = new Set(['tap', 'pop', 'select']);
+const volGain = v => (v / 100) * (v / 100);
 const SE = {
-  on: true, A: null,
-  init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
+  on: true, A: null, vol: { master: 100, se: 100, ui: 100 },
+  init() {
+    try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ }
+    Object.keys(VOL_KEYS).forEach(k => { try { const raw = localStorage.getItem(VOL_KEYS[k]), v = Number(raw); if (raw != null && v >= 0 && v <= 100) this.vol[k] = v; } catch (_) { /* ignore */ } });
+  },
+  setVol(k, v) {
+    this.vol[k] = Math.max(0, Math.min(100, Math.round(v)));
+    try { localStorage.setItem(VOL_KEYS[k], String(this.vol[k])); } catch (_) { /* ignore */ }
+    const A = this.A; if (!A) return;
+    const node = k === 'master' ? A.m : k === 'se' ? A.o : A.ui, t = A.c.currentTime;
+    node.gain.setTargetAtTime(volGain(this.vol[k]) * (k === 'master' ? 0.95 : 1), t, 0.03);
+  },
   ensure() {
     audioSessionSync();
     if (!this.A) {
@@ -481,11 +496,15 @@ const SE = {
         comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 5; comp.attack.value = 0.003; comp.release.value = 0.18;
         const lim = c.createDynamicsCompressor();
         lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.1;
-        const o = c.createGain(); o.gain.value = 0.95; o.connect(comp); comp.connect(lim); lim.connect(c.destination);
+        /* m: everything (master) → compressor → limiter; o: the sound effects; ui: the button sounds, inside o; BGM goes to m */
+        const m = c.createGain(); m.gain.value = 0.95 * volGain(this.vol.master); m.connect(comp); comp.connect(lim); lim.connect(c.destination);
+        const o = c.createGain(); o.gain.value = volGain(this.vol.se); o.connect(m);
+        const ui = c.createGain(); ui.gain.value = volGain(this.vol.ui); ui.connect(o);
         const r = c.createConvolver(); r.buffer = impulse(c, 2.2, 2.8);
         const rg = c.createGain(); rg.gain.value = 0.32; r.connect(rg); rg.connect(o);
         const nb = c.createBuffer(1, c.sampleRate * 2, c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-        this.A = { c, o, r, nb };
+        this.A = { c, o, r, nb, m, ui };
+        this.Aui = Object.assign({}, this.A, { o: ui });
       } catch (_) { this.A = null; return null; }
       smpLoad(this.A);
       BGM.sync();
@@ -497,7 +516,7 @@ const SE = {
     if (!this.on) return;
     const A = this.ensure(); if (!A) return;
     if (!SOUNDS[name]) return;
-    try { snd(name, A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
+    try { snd(name, UI_SOUNDS.has(name) ? this.Aui : A, A.c.currentTime + 0.01 + (delay || 0)); } catch (_) { /* ignore */ }
     if (!NO_DUCK.has(name)) BGM.duck(delay || 0);
   },
   toggle() {
@@ -519,10 +538,14 @@ function renderSE() {
   $('bgmLabel').textContent = BGM.on ? 'BGM ON' : 'BGM OFF';
   $('bgmBtn').setAttribute('aria-expanded', String(!$('bgmPop').hidden));
   $('bgmOnOff').setAttribute('aria-pressed', String(BGM.on));
-  $('bgmOnOff').textContent = BGM.on ? 'ON' : 'OFF';
   $('bgmVol').value = String(BGM.vol);
   $('bgmVolN').textContent = String(BGM.vol);
   $('bgmVolRow').classList.toggle('off', !BGM.on);
+  $('seBtn').setAttribute('aria-expanded', String(!$('bgmPop').hidden));
+  $('seOnOff').setAttribute('aria-pressed', String(SE.on));
+  [['volMaster', 'master'], ['volSe', 'se'], ['volUi', 'ui']].forEach(([id, k]) => { $(id).value = String(SE.vol[k]); $(id + 'N').textContent = String(SE.vol[k]); });
+  $('seVolRow').classList.toggle('off', !SE.on);
+  $('uiVolRow').classList.toggle('off', !SE.on);
 }
 function bgmPop(open) {
   const p = $('bgmPop');
@@ -673,7 +696,7 @@ const BGM = {
     if (!name) { clearInterval(this.timer); this.timer = 0; return; }
     const c = A.c, tr = TRACKS[name], now = c.currentTime;
     if (!this.bus) {
-      this.out = c.createGain(); this.out.gain.value = this.volGain(); this.out.connect(A.o);
+      this.out = c.createGain(); this.out.gain.value = this.volGain(); this.out.connect(A.m);
       this.outR = c.createGain(); this.outR.gain.value = this.volGain(); this.outR.connect(A.r);
       this.bus = c.createGain(); this.bus.connect(this.out);
       this.busR = c.createGain(); this.busR.connect(this.outR);
@@ -6621,10 +6644,18 @@ function playResultFx() {
 /* ---------- events ---------- */
 function wireGame() {
   $('brandBtn').addEventListener('click', () => { closeAllOverlays(); showScreen('title'); });
-  $('seBtn').addEventListener('click', () => { SE.toggle(); renderSE(); });
+  /* both buttons open the same 音の設定 panel */
   $('bgmBtn').addEventListener('click', e => { e.stopPropagation(); SE.ensure(); bgmPop(); });
+  $('seBtn').addEventListener('click', e => { e.stopPropagation(); SE.ensure(); bgmPop(); });
   $('bgmOnOff').addEventListener('click', () => { BGM.toggle(); renderSE(); SE.play('tap'); });
+  $('seOnOff').addEventListener('click', () => { SE.toggle(); renderSE(); });
   $('bgmVol').addEventListener('input', e => { BGM.setVol(Number(e.target.value)); $('bgmVolN').textContent = String(BGM.vol); if (!BGM.on) { BGM.toggle(); renderSE(); } });
+  /* master / sound effects / button sounds: set as it moves, a sample sound when let go */
+  const volIn = (id, k, sample) => {
+    $(id).addEventListener('input', e => { SE.setVol(k, Number(e.target.value)); $(id + 'N').textContent = String(SE.vol[k]); });
+    $(id).addEventListener('change', () => { if (k !== 'master' && !SE.on) { SE.toggle(); renderSE(); } else SE.play(sample); });
+  };
+  volIn('volMaster', 'master', 'coin'); volIn('volSe', 'se', 'coin'); volIn('volUi', 'ui', 'tap');
   $('bgmPop').addEventListener('click', e => e.stopPropagation());
   document.addEventListener('click', () => { if (!$('bgmPop').hidden) bgmPop(false); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bgmPop').hidden) { bgmPop(false); $('bgmBtn').focus(); } });

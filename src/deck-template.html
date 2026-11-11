@@ -62,15 +62,19 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .se-btn[aria-pressed="false"]{background:var(--muted)}
 /* BGM: the button opens a small panel with ON/OFF and the volume */
 .top-r{position:relative}
-.bgm-pop{position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(260px, calc(100vw - 24px)); background:var(--white); color:var(--ink); border:2.5px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink); padding:12px 14px 10px}
+.bgm-pop{position:absolute; right:0; top:calc(100% + 8px); z-index:60; width:min(300px, calc(100vw - 24px)); background:var(--white); color:var(--ink); border:2.5px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink); padding:12px 14px 10px}
 .bgm-pop[hidden]{display:none}
-.bp-row{display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:800; font-size:14px}
-.bp-sw{min-width:68px; border:2.5px solid var(--ink); border-radius:999px; padding:3px 12px; font:inherit; font-weight:800; font-size:13px; background:var(--yellow); color:var(--ink); box-shadow:0 2px 0 var(--ink)}
-.bp-sw[aria-pressed="false"]{background:var(--muted)}
-.bp-vol{display:flex; align-items:center; gap:10px; margin:12px 0 4px; font-weight:800; font-size:13px}
-.bp-vol input{flex:1; min-width:0; accent-color:var(--pink); height:28px}
-.bp-vol b{min-width:2.4em; text-align:right; font-variant-numeric:tabular-nums}
-.bp-vol.off{opacity:.45}
+.bp-title{margin:0 0 6px; font-weight:900; font-size:15px}
+.bp-line{display:flex; align-items:center; gap:8px; margin:8px 0; font-weight:800; font-size:13px}
+.bp-line.sub{padding-left:14px}
+.bp-nm{flex:none; width:74px}
+.bp-line.sub .bp-nm{width:60px; font-size:12px}
+.bp-sw{flex:none; width:74px; border:2.5px solid var(--ink); border-radius:999px; padding:3px 0; font:inherit; font-weight:800; font-size:12px; background:var(--yellow); color:var(--ink); box-shadow:0 2px 0 var(--ink)}
+.bp-sw[aria-pressed="false"]{background:var(--muted); text-decoration:line-through}
+.bp-r{flex:1; min-width:0; accent-color:var(--pink); height:28px}
+.bp-n{flex:none; min-width:2.2em; text-align:right; font-variant-numeric:tabular-nums}
+.bp-line.off .bp-r, .bp-line.off .bp-n{opacity:.4}
+.bp-note{margin:6px 0 0; font-size:11px; line-height:1.5; color:var(--ink-muted); font-weight:600}
 .bp-credit{margin:6px 0 0; font-size:11px; color:var(--ink-muted); font-weight:600}
 .se-btn[aria-pressed="false"] .wave{display:none}
 .se-btn[aria-pressed="true"] .mute{display:none}
@@ -2117,10 +2121,14 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path class="mute" d="M3 3l18 18"/></svg>
         <span id="bgmLabel">BGM ON</span>
       </button>
-      <div class="bgm-pop" id="bgmPop" role="dialog" aria-label="BGMの設定" hidden>
-        <div class="bp-row"><span>BGM</span><button type="button" class="bp-sw" id="bgmOnOff" aria-pressed="true">ON</button></div>
-        <label class="bp-vol" id="bgmVolRow"><span>音量</span><input type="range" id="bgmVol" min="0" max="100" step="5" value="70" aria-label="BGMの音量"><b id="bgmVolN">70</b></label>
-        <p class="bp-credit">曲：「そんなバカな！」 BGMer</p>
+      <div class="bgm-pop" id="bgmPop" role="dialog" aria-labelledby="sndTitle" hidden>
+        <p class="bp-title" id="sndTitle">音の設定</p>
+        <div class="bp-line"><span class="bp-nm">全体</span><input type="range" class="bp-r" id="volMaster" data-vol="master" min="0" max="100" step="5" value="100" aria-label="全体の音量"><b class="bp-n" id="volMasterN">100</b></div>
+        <div class="bp-line" id="bgmVolRow"><button type="button" class="bp-sw" id="bgmOnOff" aria-pressed="true" aria-label="BGM">BGM</button><input type="range" class="bp-r" id="bgmVol" data-vol="bgm" min="0" max="100" step="5" value="70" aria-label="BGMの音量"><b class="bp-n" id="bgmVolN">70</b></div>
+        <div class="bp-line" id="seVolRow"><button type="button" class="bp-sw" id="seOnOff" aria-pressed="true" aria-label="効果音">効果音</button><input type="range" class="bp-r" id="volSe" data-vol="se" min="0" max="100" step="5" value="100" aria-label="効果音の音量"><b class="bp-n" id="volSeN">100</b></div>
+        <div class="bp-line sub" id="uiVolRow"><span class="bp-nm">ボタンの音</span><input type="range" class="bp-r" id="volUi" data-vol="ui" min="0" max="100" step="5" value="100" aria-label="ボタンを押したときの音の音量"><b class="bp-n" id="volUiN">100</b></div>
+        <p class="bp-note">「BGM」「効果音」を押すとON／OFF（灰色がOFF）。全体はスマホの音量の中での大きさ。ボタンの音は、効果音のうちボタンを押したときの音だけ。</p>
+        <p class="bp-credit">ゲーム中の曲：「そんなバカな！」 BGMer</p>
       </div>
       <button type="button" class="se-btn" id="seBtn" aria-pressed="true">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16.5 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M19 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg>
