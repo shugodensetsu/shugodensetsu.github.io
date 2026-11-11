@@ -18,6 +18,8 @@ const PLUS_PLANS = [
   { k: 'pass', name: '24時間パス', price: '240円', per: '', note: '今夜だけ。自動で更新されない' },
 ];
 const PM_MODES = ['king', 'koi'];
+/* the party modes after 王様・恋バナ (part-party.js): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
+const PMX = {};
 const PLUS_MG = ['cut', 'n21', 'memo'];
 function plusState() {
   try { const s = JSON.parse(localStorage.getItem(PLUS_KEY) || 'null'); return s && typeof s === 'object' && Number.isFinite(s.until) ? s : null; } catch (_) { return null; }
@@ -29,7 +31,9 @@ function tryLoad() {
   let s = null;
   try { s = JSON.parse(localStorage.getItem(TRY_KEY) || 'null'); } catch (_) { s = null; }
   if (!s || typeof s !== 'object' || s.day !== day) s = { day };
-  return { day, king: clampInt(s.king, 0, 999), koi: clampInt(s.koi, 0, 999), mg: Array.isArray(s.mg) ? s.mg.filter(k => PLUS_MG.includes(k)) : [] };
+  const o = { day, mg: Array.isArray(s.mg) ? s.mg.filter(k => PLUS_MG.includes(k)) : [] };
+  PM_MODES.forEach(m => { o[m] = clampInt(s[m], 0, 999); });
+  return o;
 }
 const trySave = s => lsSet(TRY_KEY, JSON.stringify(s));
 const tryLeft = mode => (plusFree() ? Infinity : Math.max(0, PLUS_TRY - tryLoad()[mode]));
@@ -42,6 +46,7 @@ const mgSoon = k => PLUS_MG.includes(k) && !PLUS_OPEN;
 
 const CROWN_SVG = '<svg class="ic-crown" viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/><circle cx="8.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/><circle cx="23.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/></svg>';
 const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><path d="M7 7.5 Q8.5 5 11 5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".8"/></svg>';
+const MEDAL_SVG = '<svg class="ic-medal" viewBox="0 0 24 30" aria-hidden="true"><path d="M6 1h5l2 9H8z" fill="#35e0ff" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 1h-5l-2 9h5z" fill="#ff4fa3" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="19.5" r="8.5" fill="#ffd83d" stroke="#150733" stroke-width="2"/><path d="M12 14.5l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="#fff3b8" stroke="#b07a00" stroke-width="1"/></svg>';
 const DICE_SVG = '<svg class="ic-dice" viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg>';
 /* the 王様ゲーム lots: chopsticks in a paper cup, one with a red tip */
 const KUJI_SVG = '<svg class="kg-kuji" viewBox="0 0 200 210" aria-hidden="true">' +
@@ -223,14 +228,14 @@ function pmSetupOpts(mode) {
 }
 function pmSetupInfo(mode) {
   const n = setup.count, P = PM[mode], few = n < P.min;
-  const pool = mode === 'king' ? kgPool(pmOpt('king')).filter(c => kgNeed(c) <= n - 1).length : koPool(pmOpt('koi')).length;
+  const pool = mode === 'king' ? kgPool(pmOpt('king')).filter(c => kgNeed(c) <= n - 1).length : mode === 'koi' ? koPool(pmOpt('koi')).length : PMX[mode].pool(pmOpt(mode));
   const left = tryLeft(mode);
   const info = $('setupInfo');
   info.classList.remove('bad', 'marquee'); info.classList.add('one');
   info.classList.toggle('bad', few);
   info.innerHTML = '<span class="si-run">' + (few ? P.title + 'は' + P.min + '人から遊べます'
-    : (mode === 'king' ? '命令 <b>' + pool + '</b> 種類' : '質問 <b>' + pool + '</b> 問') + ' ・ ' +
-      (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * n + '</b> ' + P.word : '「終了」を押すまで続く') +
+    : (mode === 'king' ? '命令 <b>' + pool + '</b> 種類' : mode === 'koi' ? '質問 <b>' + pool + '</b> 問' : PMX[mode].poolWord + ' <b>' + pool + '</b> ' + PMX[mode].poolUnit) + ' ・ ' +
+      (!setup.rounds ? '「終了」を押すまで続く' : P.flat ? '<b>' + setup.rounds + '</b> ' + P.word + 'あそぶ' : setup.rounds + '周で <b>' + setup.rounds * n + '</b> ' + P.word) +
       (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
       (left !== Infinity ? ' ・ 今日のお試し あと <b>' + left + '</b>' + P.word : '')) + '</span>';
   $('startGame').disabled = few;
@@ -248,24 +253,26 @@ function beginPM(mode) {
   G = {
     v: 2, mode, gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', lvl: pmOpt(mode), turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
-    players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], king: 0, hit: 0, ans: 0, pass: 0 })),
+    players: names.map(name => Object.assign({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], king: 0, hit: 0, ans: 0, pass: 0, medal: 0 }, PMX[mode] ? PMX[mode].stats() : {})),
     pm: { log: [], used: [] },
   };
   startTurn(); G.cur.sel = [];
+  if (PMX[mode] && PMX[mode].turn) PMX[mode].turn();
   saveGame();
   useTrack('game_start', { players: n, rounds: setup.rounds || 0, mode });
   coachEnd(false);
   bgmDelay = 2.6;
   showScreen('game');
   SE.play('mgStart');
-  telop(mode === 'king' ? CROWN_SVG + '王様ゲーム！<small>王様の命令は絶対！</small>' : HEART_SVG + '恋バナ・暴露！<small>答えるか、飲むか</small>', '', 1800);
+  telop(mode === 'king' ? CROWN_SVG + '王様ゲーム！<small>王様の命令は絶対！</small>' : mode === 'koi' ? HEART_SVG + '恋バナ・暴露！<small>答えるか、飲むか</small>' : PMX[mode].intro, '', 1800);
   FXC.rain(90);
   requestWake();
 }
 function normalizePM(g) {
-  g.players.forEach(p => ['king', 'hit', 'ans', 'pass'].forEach(k => { p[k] = Number(p[k]) || 0; }));
+  const X = PMX[g.mode];
+  g.players.forEach(p => ['king', 'hit', 'ans', 'pass', 'medal'].concat(X ? Object.keys(X.stats()) : []).forEach(k => { p[k] = Number(p[k]) || 0; }));
   const m = g.pm && typeof g.pm === 'object' ? g.pm : {};
-  g.pm = { log: Array.isArray(m.log) ? m.log.filter(e => e && Array.isArray(e.items)) : [], used: Array.isArray(m.used) ? m.used.filter(Number.isInteger).slice(-60) : [] };
+  g.pm = Object.assign({}, m, { log: Array.isArray(m.log) ? m.log.filter(e => e && Array.isArray(e.items)) : [], used: Array.isArray(m.used) ? m.used.filter(Number.isInteger).slice(-60) : [] });
   g.lvl = PM[g.mode].opts.some(o => o[0] === g.lvl) ? g.lvl : PM[g.mode].opts[0][0];
   const c = g.cur, n = g.players.length, okP = p => Number.isInteger(p) && p >= 0 && p < n;
   c.sel = Array.isArray(c.sel) ? c.sel.filter(okP) : [];
@@ -275,9 +282,10 @@ function normalizePM(g) {
     if (c.phase !== 'before' && !(okP(c.k) && okNums && Array.isArray(c.opts))) c.phase = 'before';
     if ((c.phase === 'order' || c.phase === 'open') && !(c.cmd && (c.cmd.id === 0 || KG_BY_ID.has(c.cmd.id)))) c.phase = 'king';
     if (!['before', 'king', 'order', 'open'].includes(c.phase)) c.phase = 'before';
-  } else if (c.phase !== 'before' && !(c.phase === 'q' && KO_BY_ID.has(c.q))) c.phase = 'before';
+  } else if (g.mode === 'koi') { if (c.phase !== 'before' && !(c.phase === 'q' && KO_BY_ID.has(c.q))) c.phase = 'before'; }
+  else if (X) X.norm(g);
 }
-const pmTotal = () => (G.rounds ? G.rounds * G.players.length : 0);
+const pmTotal = () => (!G.rounds ? 0 : PM[G.mode].flat ? G.rounds : G.rounds * G.players.length);
 const pmLast = () => !!pmTotal() && G.turn + 1 >= pmTotal();
 const pmRound = () => (pmLast() ? '<span class="fin">FINAL</span>' : 'ROUND') + ' <b>' + (G.turn + 1) + '</b>' + (pmTotal() ? '<small>/' + pmTotal() + '</small>' : '');
 const pmLocked = () => G.cur.phase === 'before' && tryLeft(G.mode) <= 0;
@@ -496,15 +504,17 @@ function koiDock() {
 
 /* ---------- rendering (the mini game mode's board + stage, with a stage of its own) ---------- */
 function pmBoard() {
-  const cur = G.cur, mark = G.mode === 'king' ? (cur.phase !== 'before' ? cur.k : null) : cur.drawer;
+  const cur = G.cur, X = PMX[G.mode], mark = G.mode === 'king' ? (cur.phase !== 'before' ? cur.k : null) : X ? X.mark() : cur.drawer;
+  const tag = G.mode === 'king' ? '王様' : X ? X.tag : '回答';
   return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯">' +
-    (i === mark ? '<span class="mg-tag">' + (G.mode === 'king' ? '王様' : '回答') + '</span>' : '') +
+    (i === mark ? '<span class="mg-tag">' + tag + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + MEDAL_SVG + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
     '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>杯</small></span></span></div>').join('');
 }
 function pmLog() {
   const log = G.pm.log;
-  if (!log.length) return '<span class="lg-hint">' + (G.mode === 'king' ? '王様の命令は絶対！ できなかった人・パスした人は <b>1杯</b>' : '答えるか、飲むか。パスは <b>1杯</b>') + '</span>';
-  return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + (G.mode === 'king' ? '王 ' : '') + esc(pname(e.k)) + (e.ok ? ' ○' : '') + '</span>' +
+  const X = PMX[G.mode];
+  if (!log.length) return '<span class="lg-hint">' + (G.mode === 'king' ? '王様の命令は絶対！ できなかった人・パスした人は <b>1杯</b>' : X ? X.hint : '答えるか、飲むか。パスは <b>1杯</b>') + '</span>';
+  return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + (G.mode === 'king' ? '王 ' : X && X.logPre ? X.logPre(e) : '') + (e.k != null && G.players[e.k] ? esc(pname(e.k)) : '') + (e.ok ? ' ○' : '') + '</span>' +
     e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>' + fmtAmt(it.amt) + '杯</b></span>').join('')).join('');
 }
 function renderPM(anim) {
@@ -520,11 +530,13 @@ function renderPM(anim) {
   board.innerHTML = pmBoard();
   const st = $('mgStage');
   st.className = 'mg-stage pm-stage pm-' + G.mode;
-  st.innerHTML = G.mode === 'king' ? kingStage(anim) : koiStage(anim);
-  $('dock').innerHTML = G.mode === 'king' ? kingDock() : koiDock();
+  const X = PMX[G.mode];
+  st.innerHTML = G.mode === 'king' ? kingStage(anim) : G.mode === 'koi' ? koiStage(anim) : X.stage(anim);
+  $('dock').innerHTML = G.mode === 'king' ? kingDock() : G.mode === 'koi' ? koiDock() : X.dock();
   const box = $('gLog');
   box.innerHTML = pmLog();
   box.scrollLeft = G.pm.log.length ? box.scrollWidth : 0;
+  if (X && X.mounted) X.mounted(anim);
 }
 /* the round's drinks go on the board, then the next round */
 function pmNext(items, ok) {
@@ -533,25 +545,26 @@ function pmNext(items, ok) {
   items = items || cur.sel.map(p => ({ p, amt: G.mode === 'king' ? kgAmt() : 1 }));
   items.forEach(it => addDrink(it.p, it.amt));
   if (G.mode === 'king' && cur.cmd && cur.cmd.id) kgTargets().filter(p => p !== cur.k).forEach(p => { G.players[p].hit++; });
-  G.pm.log.push({ r: G.turn, k: G.mode === 'king' ? cur.k : cur.drawer, ok: !!ok, items });
+  const X = PMX[G.mode];
+  G.pm.log.push({ r: G.turn, k: G.mode === 'king' ? cur.k : X ? X.who() : cur.drawer, ok: !!ok, items, t: X && X.logTag ? X.logTag() : undefined });
   if (G.pm.log.length > 200) G.pm.log.splice(0, G.pm.log.length - 200);
   useTick();
   G.turn++;
   const end = pmTotal() && G.turn >= pmTotal();
-  if (!end) { startTurn(); G.cur.sel = []; }
+  if (!end) { startTurn(); G.cur.sel = []; if (X && X.turn) X.turn(); }
   saveGame();
   if (end) { if (items.length) SE.play('gulp'); finishGame(); return; }
   renderPM();
   items.forEach((it, k) => setTimeout(() => { if (G && screen === 'game') floatAt(it.p, '+' + fmtAmt(it.amt) + '杯'); }, k * 200));
   if (items.length) SE.play('gulp');
   const last = pmLast();
-  telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1000);
-  SE.play('mgRound');
+  if (!(X && X.quiet)) { telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1000); SE.play('mgRound'); }
   waterCheck();
 }
 function pmAct(g, el) {
   if (!isPM() || !G.cur) return g === 'plus' ? (openPlus('mode'), true) : false;
   const cur = G.cur;
+  if (PMX[G.mode] && /^x-/.test(g)) { PMX[G.mode].act(g.slice(2), el); return true; }
   switch (g) {
     case 'plus': openPlus(pmLocked() ? 'limit' : 'mode'); return true;
     case 'pmend': finishGame(); return true;
@@ -589,7 +602,7 @@ function renderPMResult() {
   const n = G.players.length;
   const order = G.players.map((p, i) => Object.assign({ i }, p)).sort((a, b) => b.total - a.total || a.i - b.i);
   const maxT = order[0].total, minT = order[order.length - 1].total, spread = maxT > minT;
-  const sum = G.players.reduce((s, p) => s + p.total, 0), king = G.mode === 'king';
+  const sum = G.players.reduce((s, p) => s + p.total, 0), king = G.mode === 'king', X = PMX[G.mode];
   $('resSub').textContent = PM[G.mode].title + ' ・ ' + G.turn + PM[G.mode].word + '遊びました' + (unitNote(G) ? ' ・ ' + unitNote(G) : '');
   const unitX = t => (unitOf(G) === 'cup' ? '' : '<small class="res-unit">' + UNITS[unitOf(G)].long + '×' + fmtAmt(t) + '</small>');
   $('resList').innerHTML = order.map((p, idx) => {
@@ -599,10 +612,11 @@ function renderPMResult() {
     return '<li class="res-item' + (spread && rank === 1 ? ' first' : '') + '" style="--p:' + pc(p.i) + ';--d:' + delay.toFixed(2) + 's">' +
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
-      '<span class="res-sub2">' + (king ? '王様 ' + p.king + '回 ・ 命令された ' + p.hit + '回' : '答えた ' + p.ans + '回 ・ パス ' + p.pass + '回') + '</span></span>' +
+      '<span class="res-sub2">' + (king ? '王様 ' + p.king + '回 ・ 命令された ' + p.hit + '回' : X ? X.resLine(p) : '答えた ' + p.ans + '回 ・ パス ' + p.pass + '回') + '</span></span>' +
       '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small>' + unitX(p.total) + '</span></li>';
   }).join('');
   const most = k => { const m = Math.max(...G.players.map(p => p[k])); return m ? G.players.filter(p => p[k] === m).map(p => p.name).slice(0, 2).join('・') : '—'; };
+  if (X) { $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + X.resCount + '</span></div>' + X.resStats(most); return; }
   $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + (king ? '命令' : '質問') + '</span></div>' +
     '<div class="stat wide"><b>' + esc(most(king ? 'king' : 'ans')) + '</b><span>' + (king ? 'いちばん王様' : 'いちばん答えた') + '</span></div>' +
     '<div class="stat wide"><b>' + esc(most(king ? 'hit' : 'pass')) + '</b><span>' + (king ? 'いちばん命令された' : 'いちばんパス') + '</span></div>';
@@ -620,6 +634,7 @@ function renderPlus(msg) {
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(CROWN_SVG, '王様ゲームモード', '王様と番号はアプリが決める。命令もおまかせ') + feat(HEART_SVG, '恋バナ・暴露モード', '答えるか、飲むか。指さし質問も') +
+      (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
     (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：王様ゲーム あと<b>' + left('king') + '</b>回 ・ 恋バナ あと<b>' + left('koi') + '</b>問</p>' : '') +
@@ -649,8 +664,10 @@ function plusAct(a) {
 }
 function titleModes() {
   const tag = !PLUS_OPEN ? 'Coming soon' : PLUS_SALE ? (plusOn() ? '' : 'プレミアム') : 'NEW';
-  ['kingTag', 'koiTag'].forEach(id => { const el = $(id); if (el) { el.textContent = tag; el.hidden = !tag; } });
-  ['goKing', 'goKoi'].forEach(id => { const el = $(id); if (el) { el.classList.toggle('soon', !PLUS_OPEN); el.setAttribute('aria-disabled', String(!PLUS_OPEN)); } });
+  document.querySelectorAll('.t-mode[data-pm]').forEach(el => {
+    el.classList.toggle('soon', !PLUS_OPEN); el.setAttribute('aria-disabled', String(!PLUS_OPEN));
+    const t = el.querySelector('.t-new'); if (t) { t.textContent = tag; t.hidden = !tag; }
+  });
   const b = $('plusBtn');
   if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>酒GO!!プレミアム</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : PLUS_SALE ? '<b>酒GO!!プレミアム</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
 }

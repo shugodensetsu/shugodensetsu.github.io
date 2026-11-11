@@ -2044,6 +2044,121 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .pm-chip{position:relative; min-width:0; background:var(--p); color:var(--ink); border:3px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink); padding:6px 3px; font-weight:800; font-size:12.5px; line-height:1.2; word-break:break-all; cursor:pointer}
 .pm-chip.sel{box-shadow:0 3px 0 var(--ink), 0 0 0 3px var(--red); transform:translateY(-2px); overflow:visible}
 .pm-chip i{position:absolute; top:-9px; right:-5px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:999px; font-style:normal; font-family:var(--f-display); font-size:10.5px; line-height:1.3; padding:0 5px}
+/* ===== 新しいパーティーモード（part-party.js） ===== */
+.pbtn.mint{background:var(--mint)}
+.t-modes2{grid-column:1 / -1; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px}
+.t-actions .t-mode.sm{font-size:min(13px, 3.3vw); padding:min(6px, .9cqh) 1px min(7px, 1cqh); border-radius:13px}
+.t-mode.sm svg{width:min(22px, 2.9cqh); height:min(22px, 2.9cqh)}
+.t-mode.sm .t-new{font-size:9px}
+.mg-medal{position:absolute; top:-10px; right:-6px; display:flex; align-items:center; background:var(--ink); border-radius:999px; padding:1px 4px 1px 2px; line-height:1}
+.mg-medal .ic-medal{width:15px; height:19px}
+.mg-medal b{font-family:var(--f-display); font-weight:400; font-size:11px; color:var(--yellow); margin-left:1px}
+.tl-ic{display:inline-block; vertical-align:-.15em; margin-right:.12em}
+.tl-ic svg{width:1.2em; height:1.1em}
+.tl-ic.rp-tl{width:1em; height:.9em; background:#06c755; border:3px solid var(--ink); border-radius:45%; vertical-align:-.05em}
+.pm-ask.gold{color:var(--yellow); font-family:var(--f-display); font-weight:400; font-size:15px}
+.pm-note.sm{font-size:11.5px}
+.dock-note.grow{flex:2}
+/* こっそり見る */
+.px-pass{gap:10px}
+.px-step{margin:0; font-weight:800; font-size:12px; color:var(--muted); background:var(--chip-bg); border:2px solid rgba(199,184,245,.4); border-radius:999px; padding:2px 12px}
+.px-to{margin:0; display:flex; flex-direction:column; align-items:center; gap:8px; font-family:var(--f-display); font-size:min(26px, 6.8vw); line-height:1.35; color:var(--white)}
+.px-to .pn{font-size:1.15em}
+.px-phone{width:46px; height:74px; border:4px solid var(--white); border-radius:12px; position:relative; animation:pxPass 1.6s ease-in-out infinite}
+.px-phone::after{content:""; position:absolute; left:50%; bottom:5px; width:12px; height:4px; margin-left:-6px; border-radius:2px; background:var(--white)}
+@keyframes pxPass{0%,100%{transform:translateX(-14px) rotate(-8deg)} 50%{transform:translateX(14px) rotate(8deg)}}
+.px-secret{gap:9px}
+.px-for{margin:0; font-weight:800; font-size:13px; color:var(--muted)}
+.px-for .pn{font-size:15px}
+/* ニセ画伯 */
+.gk-art{width:min(130px, 26cqh); height:auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
+.gk-top{margin:0; font-weight:800; font-size:12.5px; line-height:1.45; color:var(--muted)}
+.gk-top b{color:var(--yellow)}
+.gk-wrap{flex:1 1 0; min-height:120px; width:100%; display:flex; align-items:center; justify-content:center}
+.gk-cv{display:block; background:#fffdf6; border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); touch-action:none}
+.gk-cv.live{box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--yellow); cursor:crosshair}
+.gk-who{margin:0; font-family:var(--f-display); font-size:min(19px, 5vw); color:var(--white)}
+.gk-who small{font-family:var(--f-body); font-weight:800; font-size:11.5px; color:var(--muted)}
+.gk-fake{margin:0; font-family:var(--f-display); font-size:min(26px, 7vw); line-height:1.3; color:var(--white)}
+.gk-fake b{font-weight:400; font-size:1.35em; color:var(--pink)}
+.gk-genre{margin:0; font-weight:800; font-size:14px; color:var(--muted)}
+.gk-genre b{color:var(--white); font-size:16px}
+.gk-word{margin:0; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink), 0 0 0 4px var(--yellow); padding:10px 22px; font-family:var(--f-display); font-size:min(38px, 10vw); line-height:1.25; word-break:keep-all}
+.gk-res{margin:0; font-family:var(--f-display); font-size:min(28px, 7.4vw); line-height:1.3; color:var(--yellow)}
+.gk-res.ng{color:var(--pink)}
+.gk-res .pn{font-size:.8em}
+.gk-end{display:flex; flex-direction:column; align-items:center; gap:3px}
+.gk-ans{margin:0; font-weight:800; font-size:13px; color:var(--white)}
+.gk-ans b{color:var(--yellow); font-size:16px}
+/* 返信選手権: トーク画面ふう */
+.rp-chat{width:100%; max-width:460px; display:flex; flex-direction:column; min-height:0; background:#8eaad4; border:3px solid var(--ink); border-radius:18px; box-shadow:0 4px 0 var(--ink); overflow:hidden; text-align:left; font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+.rp-chat.grow{flex:1 1 0; min-height:180px}
+.rp-bar{flex:none; display:flex; align-items:center; gap:8px; padding:7px 12px; background:#7f9cc8; color:#14213d; font-size:15px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.08)}
+.rp-bar b{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.rp-back{font-size:26px; line-height:.8; font-weight:400}
+.rp-ic{display:flex; gap:4px}
+.rp-ic i{width:4px; height:4px; border-radius:50%; background:#14213d}
+.rp-list{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; padding:8px 10px 12px}
+.rp-day{margin:0 auto; font-size:11px; color:#fff}
+.rp-day span{background:rgba(20,33,61,.28); border-radius:999px; padding:2px 10px}
+.rp-in{display:flex; gap:7px; align-items:flex-start; max-width:92%}
+.rp-av{flex:none; width:34px; height:34px; border-radius:50%; background:var(--c); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.rp-av.sm{width:30px; height:30px}
+.rp-in-b{display:flex; flex-direction:column; gap:3px; min-width:0}
+.rp-nm{font-size:11px; color:#14213d}
+.rp-row{display:flex; align-items:flex-end; gap:5px}
+.rp-bub{position:relative; display:block; background:#fff; color:#111; border-radius:18px; padding:8px 12px; font-size:15px; line-height:1.45; word-break:break-word; white-space:pre-wrap}
+.rp-in .rp-bub{border-top-left-radius:5px}
+.rp-meta{flex:none; font-size:10px; line-height:1.25; color:#24324f; text-align:right}
+.rp-in .rp-meta{text-align:left}
+.rp-out{align-self:flex-end; display:flex; flex-direction:column; align-items:flex-end; gap:3px; max-width:88%; animation:rpIn .35s cubic-bezier(.2,1.4,.4,1) both}
+.rp-pick{display:flex; align-items:flex-end; gap:5px; background:none; border:0; padding:0; font:inherit; color:inherit; text-align:left}
+button.rp-pick{cursor:pointer}
+.rp-out .rp-bub{background:#86e05a; border-top-right-radius:5px}
+.rp-out .rp-bub.skip{background:rgba(255,255,255,.35); color:#24324f; font-size:13px; font-style:italic}
+.rp-tag{display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-bottom:2px; border-radius:50%; background:#14213d; color:#fff; font-size:11px; font-weight:800}
+.rp-meta > span{display:block}
+.rp-out.sel .rp-bub{box-shadow:0 0 0 3px #150733, 0 0 0 6px var(--yellow)}
+.rp-out.best .rp-bub{box-shadow:0 0 0 3px #150733, 0 0 0 6px var(--yellow)}
+.rp-out.worst .rp-bub{background:#c9d3e3; color:#4a556b}
+.rp-who{font-size:11px; font-weight:800; color:var(--ink); background:var(--p); border:2px solid var(--ink); border-radius:999px; padding:0 8px; animation:rpIn .35s cubic-bezier(.2,1.4,.4,1) both}
+.rp-out.typing .rp-bub{display:flex; gap:4px; padding:12px 14px}
+.rp-out.typing i{width:7px; height:7px; border-radius:50%; background:#2d5e1a; opacity:.35; animation:rpDot 1s infinite}
+.rp-out.typing i:nth-child(2){animation-delay:.15s} .rp-out.typing i:nth-child(3){animation-delay:.3s}
+@keyframes rpDot{0%,60%,100%{opacity:.35; transform:none} 30%{opacity:1; transform:translateY(-3px)}}
+@keyframes rpIn{from{opacity:0; transform:translateY(10px) scale(.92)} to{opacity:1; transform:none}}
+.rp-input{flex:none; display:flex; align-items:flex-end; gap:6px; padding:7px 8px; background:#f4f5f7; border-top:1px solid #d5d9e0}
+.rp-input textarea{flex:1; min-width:0; resize:none; border:1px solid #cfd5de; border-radius:18px; background:#fff; color:#111; padding:8px 12px; font:16px/1.4 "Hiragino Sans","Noto Sans JP",system-ui,sans-serif; outline:none}
+.rp-input textarea:focus{border-color:#06c755}
+.rp-input textarea.shake{animation:tremble .08s linear 4}
+.rp-send{flex:none; width:40px; height:40px; border:0; border-radius:50%; background:#06c755; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer}
+.rp-send svg{width:20px; height:20px}
+.rp-notice{display:flex; align-items:center; gap:10px; width:min(100%, 320px); box-sizing:border-box; background:rgba(255,255,255,.95); color:#111; border:3px solid var(--ink); border-radius:16px; box-shadow:0 4px 0 var(--ink); padding:10px 12px; text-align:left; animation:rpNotice 2.4s ease-in-out infinite}
+.rp-notice > span:nth-child(2){flex:1; display:flex; flex-direction:column; font-size:14px}
+.rp-notice small{font-size:11.5px; color:#555}
+.rp-notice i{font-style:normal; min-width:22px; height:22px; border-radius:999px; background:#ff3d4f; color:#fff; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center}
+@keyframes rpNotice{0%,70%,100%{transform:none} 76%{transform:translateY(-6px)} 84%{transform:none} 90%{transform:translateY(-3px)}}
+/* しれっとミッション */
+.ms-art{width:min(120px, 24cqh); height:auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
+.ms-card{margin:0; width:min(100%, 380px); box-sizing:border-box; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink), 0 0 0 4px var(--cyan); padding:14px 16px; font-weight:800; font-size:min(20px, 5.4vw); line-height:1.5}
+.ms-card.open{box-shadow:0 5px 0 var(--ink), 0 0 0 4px var(--pink)}
+.ms-list{display:grid; grid-template-columns:repeat(auto-fit, minmax(118px, 1fr)); gap:6px; width:100%; max-width:440px}
+.ms-p{display:flex; flex-direction:column; align-items:center; background:var(--chip-bg); border:2.5px solid var(--p); border-radius:12px; padding:4px; font-size:12.5px; color:var(--white)}
+.ms-p small{font-weight:800; font-size:10.5px; color:var(--muted)}
+/* ウソかホントか */
+.us-thumbs{display:flex; gap:18px}
+.us-th{width:54px; height:54px; filter:drop-shadow(0 4px 0 rgba(0,0,0,.35))}
+.us-th.down{transform:rotate(180deg)}
+.us-thumbs.big > span{display:flex; flex-direction:column; align-items:center; gap:4px; font-family:var(--f-display); font-size:16px; color:var(--white)}
+.us-thumbs.big .us-th{width:74px; height:74px}
+.us-topic{margin:0; width:min(100%, 400px); box-sizing:border-box; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink); padding:12px 16px; font-family:var(--f-display); font-size:min(22px, 6vw); line-height:1.4}
+.us-topic.sm{font-size:15px; padding:7px 12px}
+.us-order{margin:0; font-family:var(--f-display); font-size:min(32px, 8.4vw); line-height:1.25}
+.us-order.true, .us-ans.true{color:var(--lime)}
+.us-order.lie, .us-ans.lie{color:var(--pink)}
+.us-clock{margin:0; font-family:var(--f-display); font-size:min(64px, 13cqh); line-height:1; color:var(--yellow)}
+.us-clock.hot{color:var(--red); animation:tremble .1s linear infinite}
+.us-ans{margin:0; font-family:var(--f-display); font-size:min(54px, 13vw); line-height:1.1; animation:mgIn .55s cubic-bezier(.2,1.4,.4,1) both}
 /* ミニゲーム一覧: 新作の印・お試し済み */
 .mg-new{display:inline-block; background:var(--yellow); color:var(--ink); border-radius:5px; font-size:9.5px; line-height:1.3; padding:0 4px; margin-right:5px; vertical-align:1px}
 .mg-item.lock{opacity:.38}
@@ -2148,8 +2263,14 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
         <div class="t-modes" role="group" aria-label="ほかのモード">
           <button type="button" class="pbtn pink t-mode" id="goMini"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg><span>ミニゲーム</span></button>
-          <button type="button" class="pbtn orange t-mode" id="goKing"><i class="t-new" id="kingTag">NEW</i><svg viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/></svg><span>王様ゲーム</span></button>
-          <button type="button" class="pbtn purple t-mode" id="goKoi"><i class="t-new" id="koiTag">NEW</i><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/></svg><span>恋バナ・暴露</span></button>
+          <button type="button" class="pbtn orange t-mode" id="goKing" data-pm="king"><i class="t-new" id="kingTag">NEW</i><svg viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/></svg><span>王様ゲーム</span></button>
+          <button type="button" class="pbtn purple t-mode" id="goKoi" data-pm="koi"><i class="t-new" id="koiTag">NEW</i><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/></svg><span>恋バナ・暴露</span></button>
+          <div class="t-modes2">
+            <button type="button" class="pbtn cyan t-mode sm" id="goGaka" data-pm="gaka"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3C8 3 3 8 3 14.5S7.5 26 12 26c2 0 2.5-1.6 2-3.2-.6-1.8.6-3.3 2.6-3.3H20c4 0 7-2.7 7-6.5C27 7.7 21.6 3 15 3Z" fill="#fff3d6" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9" cy="13" r="2.2" fill="#ff4fa3"/><circle cx="14" cy="8.5" r="2.2" fill="#35e0ff"/><circle cx="20.5" cy="10" r="2.2" fill="#ffd83d" stroke="#150733" stroke-width=".8"/></svg><span>ニセ画伯</span></button>
+            <button type="button" class="pbtn lime t-mode sm" id="goReply" data-pm="reply"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 4C7.8 4 2.5 8.6 2.5 14.2c0 3.4 2 6.4 5.2 8.2L6.5 27l5.6-3c1 .2 1.9.3 2.9.3 7.2 0 12.5-4.6 12.5-10.1S22.2 4 15 4Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9.5" cy="14.2" r="1.8" fill="#150733"/><circle cx="15" cy="14.2" r="1.8" fill="#150733"/><circle cx="20.5" cy="14.2" r="1.8" fill="#150733"/></svg><span>返信選手権</span></button>
+            <button type="button" class="pbtn mint t-mode sm" id="goMission" data-pm="mission"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 15c3.5-6 7.5-9 12-9s8.5 3 12 9c-3.5 6-7.5 9-12 9S6.5 21 3 15Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="15" r="5" fill="#35e0ff" stroke="#150733" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="#150733"/></svg><span>ミッション</span></button>
+            <button type="button" class="pbtn t-mode sm" id="goUso" data-pm="uso"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="#ffd83d" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg><span>ウソホント</span></button>
+          </div>
         </div>
         <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
         <div class="t-row t-grid">
@@ -2175,7 +2296,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
         <div class="names" id="nameList"></div>
       </div>
       <div class="panel" id="roundPanel">
-        <div class="p-h"><span class="num-badge">3</span>何周あそぶ？</div>
+        <div class="p-h"><span class="num-badge">3</span><span id="roundHead">何周あそぶ？</span></div>
         <div class="round-row" id="roundGrid" role="group" aria-label="終了条件"></div>
       </div>
       <div class="panel" id="mixPanel">

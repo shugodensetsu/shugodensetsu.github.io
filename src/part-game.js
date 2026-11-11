@@ -1043,8 +1043,7 @@ function loadSetup() {
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
       if (s.mix === 'lively' || s.mix === 'even') setup.mix = s.mix;
       if (UNITS[s.unit]) setup.unit = s.unit;
-      if (typeof s.king === 'string') setup.king = s.king;
-      if (typeof s.koi === 'string') setup.koi = s.koi;
+      PM_MODES.forEach(m => { if (typeof s[m] === 'string') setup[m] = s[m]; });
     }
   } catch (_) { /* ignore */ }
 }
@@ -1053,7 +1052,7 @@ function renderSetup(full) {
   const pm = PM_MODES.includes(setup.mode) ? setup.mode : null, minN = pm ? PM[pm].min : 2;
   for (let n = 2; n <= 8; n++) h += '<button type="button" id="cnt-' + n + '" data-cnt="' + n + '" aria-pressed="' + (setup.count === n) + '" aria-label="' + n + '人"' + (n < minN ? ' disabled' : '') + '>' + n + '</button>';
   $('countGrid').innerHTML = h;
-  $('roundGrid').innerHTML = ROUND_OPTS.map(r => '<button type="button" id="rnd-' + r + '" data-rnd="' + r + '" aria-pressed="' + (setup.rounds === r) + '">' + (r ? r + '周' : '∞') + '</button>').join('');
+  $('roundGrid').innerHTML = ROUND_OPTS.map(r => '<button type="button" id="rnd-' + r + '" data-rnd="' + r + '" aria-pressed="' + (setup.rounds === r) + '">' + (r ? r + (pm && PM[pm].flat ? '回' : '周') : '∞') + '</button>').join('');
   $('mixGrid').classList.toggle('three', !!pm && PM[pm].opts.length === 3);
   $('mixGrid').setAttribute('aria-label', pm ? PM[pm].optHead : 'カードの出かた');
   $('mixGrid').innerHTML = pm ? pmSetupOpts(pm) :
@@ -1068,6 +1067,7 @@ function renderSetup(full) {
   $('coachOpt').checked = !!setup.coach;
   const mini = setup.mode === 'mini';
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : pm ? PM[pm].title : 'メンバー登録';
+  $('roundHead').textContent = pm && PM[pm].flat ? '何回あそぶ？' : '何周あそぶ？';
   $('unitSel').innerHTML = UNIT_KEYS.map(k => '<option value="' + k + '"' + (setup.unit === k ? ' selected' : '') + '>' + UNITS[k].btn + '</option>').join('');
   $('roundPanel').hidden = mini; $('mixGrid').hidden = mini; $('coachRow').hidden = mini || !!pm;
   $('mixNum').textContent = mini ? '3' : '4'; $('mixHead').textContent = mini ? 'お酒の量' : pm ? PM[pm].optHead : 'カードの出かた';
@@ -1105,7 +1105,7 @@ function fitInfo() {
   }
 }
 function saveNames() {
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: setup.count, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit, king: setup.king, koi: setup.koi })); } catch (_) { /* ignore */ }
+  try { localStorage.setItem(NAMES_KEY, JSON.stringify({ count: setup.count, names: setup.names.slice(0, 8), rounds: setup.rounds, mix: setup.mix, unit: setup.unit, ...Object.fromEntries(PM_MODES.map(m => [m, setup[m]])) })); } catch (_) { /* ignore */ }
 }
 function beginGame() {
   if (setup.mode === 'mini') { beginMini(); return; }
@@ -5672,7 +5672,7 @@ function renderUsage() {
   const cards = top.length ? '<div class="us-grid cards">' + top.map(([id, n]) => '<div class="us-row"><span class="us-nm">' + esc(plain(byId.get(id).text)) + '</span><span class="us-track"><i style="width:' + (n / cMax * 100) + '%"></i></span><span class="us-v">' + n + '回</span></div>').join('') + '</div>'
     : '<p class="us-none">まだカードを引いていません</p>';
   const special = SPECIAL_NAMES.map(([k, l]) => '<span class="us-chip">' + l + '<b>' + (U.special[k] || 0) + '</b></span>').join('');
-  const modes = [['card', 'カード'], ['mini', 'ミニゲーム'], ['king', '王様ゲーム'], ['koi', '恋バナ・暴露']].map(([k, l]) => '<span class="us-chip' + (U.modes[k] ? '' : ' zero') + '">' + l + '<b>' + (U.modes[k] || 0) + '</b></span>').join('');
+  const modes = [['card', 'カード'], ['mini', 'ミニゲーム']].concat(PM_MODES.map(m => [m, PM[m].title])).map(([k, l]) => '<span class="us-chip' + (U.modes[k] ? '' : ' zero') + '">' + l + '<b>' + (U.modes[k] || 0) + '</b></span>').join('');
   const people = [2, 3, 4, 5, 6, 7, 8].map(n => '<span class="us-chip' + (U.players[n] ? '' : ' zero') + '">' + n + '人<b>' + (U.players[n] || 0) + '</b></span>').join('');
   const since = new Date(U.first);
   $('statsBody').innerHTML =
@@ -6664,7 +6664,8 @@ function wireGame() {
   document.addEventListener('keydown', unlock, true);
   $('goSetup').addEventListener('click', () => { loadSetup(); setup.mode = 'card'; SE.play('tap'); showScreen('setup'); });
   $('goMini').addEventListener('click', () => { loadSetup(); setup.mode = 'mini'; SE.play('tap'); showScreen('setup'); });
-  ['king', 'koi'].forEach(m => $(m === 'king' ? 'goKing' : 'goKoi').addEventListener('click', () => {
+  document.querySelectorAll('.t-mode[data-pm]').forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.pm;
     if (!PLUS_OPEN) { SE.play('tap'); telop('Coming soon！<small>もうすぐ遊べるようになります</small>', 'white sm', 1600); return; }
     loadSetup(); setup.mode = m; if (setup.count < PM[m].min) setup.count = PM[m].min;
     SE.play('tap'); showScreen('setup');

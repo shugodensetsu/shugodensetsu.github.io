@@ -142,7 +142,7 @@ function laps(rows) {
    one phone's games count up 1, 2, 3 … so a run of numbers is one phone */
 function recentList(rows, me, days) {
   if (!rows.length) return '<p class="none">まだありません</p>';
-  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '恋バナ' };
+  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '恋バナ', gaka: 'ニセ画伯', reply: '返信選手権', mission: 'ミッション', uso: 'ウソホント' };
   const when = t => { const d = new Date(t + 9 * 3600e3); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '（' + '日月火水木金土'[d.getUTCDay()] + '）' + d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
   return '<form method="post" action="/move" class="recent"><input type="hidden" name="back" value="/?d=' + days + '&me=' + (me ? 1 : 0) + '">' +
     '<p class="rhint">「通し○回目」は、その端末で何回目のゲームか。1台の端末なら番号が1つずつ増えていきます。' + (me ? 'ふつうの集計に戻すゲームを選んでください。' : '自分の端末で遊んだゲームを選んで、別枠に移せます。') + '</p><ul>' +
@@ -213,7 +213,7 @@ export default {
     const one = (sql, ...a) => env.DB.prepare(sql).bind(...a).first();
     const each = (path, extra) => 'SELECT j.key k, SUM(j.value) n FROM games g, json_each(g.data, \'$.' + path + '\') j WHERE g.day >= ?' + SCg + ' AND g.data IS NOT NULL' + (extra || '') + ' GROUP BY j.key ORDER BY n DESC';
     const [tot, perDay, players, cards, miniM, miniC, fx, sp, ev, draws, kingQ, koiQ, lv, other, rnd, recent] = await Promise.all([
-      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?' + SC + '', from),
+      one('SELECT COUNT(*) n, SUM(done) done, SUM(mode = \'mini\') mini, SUM(mode = \'king\') king, SUM(mode = \'koi\') koi, SUM(mode IN (\'gaka\', \'reply\', \'mission\', \'uso\')) party, SUM(mode = \'gaka\') gaka, SUM(mode = \'reply\') reply, SUM(mode = \'mission\') mission, SUM(mode = \'uso\') uso, AVG(players) pl, AVG(CASE WHEN done = 1 THEN ms END) ms, SUM(nth = 1) first, SUM(installed) inst, SUM(form = \'tablet\') tab, SUM(nth > 1) again, SUM(mix = \'lively\') lively, SUM(mode = \'card\' AND mix IS NOT NULL) mixn, SUM(unit = \'none\') unone, SUM(unit = \'one\') uone, SUM(unit = \'half\') uhalf, SUM(unit IS NOT NULL) unitn FROM games WHERE day >= ?' + SC + '', from),
       q('SELECT day, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY day', from),
       q('SELECT players k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' GROUP BY players ORDER BY players', from),
       q(each('cards') + ' LIMIT 15', from),
@@ -225,12 +225,14 @@ export default {
       one('SELECT SUM(json_extract(data, \'$.own\')) own, (SELECT SUM(j.value) FROM games g, json_each(g.data, \'$.cards\') j WHERE g.day >= ?' + SCg + ') built FROM games WHERE day >= ?' + SC + '', from, from),
       q(each('q', ' AND g.mode = \'king\'') + ' LIMIT 12', from),
       q(each('q', ' AND g.mode = \'koi\'') + ' LIMIT 12', from),
-      q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' AND mode IN (\'king\', \'koi\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
+      q('SELECT mode m, mix k, COUNT(*) n FROM games WHERE day >= ?' + SC + ' AND mode IN (\'king\', \'koi\', \'gaka\', \'reply\', \'mission\', \'uso\') AND mix IS NOT NULL GROUP BY mode, mix ORDER BY n DESC', from),
       one('SELECT COUNT(*) n FROM games WHERE day >= ?' + (me ? ' AND dev IS NULL' : ' AND dev IS NOT NULL'), from),
       q('SELECT rounds k, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY rounds', from),
       q('SELECT sid, started, mode, players, rounds, done, nth, form, installed FROM games WHERE day >= ?' + SC + ' ORDER BY started DESC LIMIT 60', from),
     ]);
-    const LV = { mild: '王様：ふつう', hot: '王様：盛り上げ', mix: '恋バナ：ミックス', koi: '恋バナ：恋バナだけ', bare: '恋バナ：暴露だけ' };
+    const LV = { 'king:mild': '王様：ふつう', 'king:hot': '王様：盛り上げ', 'koi:mix': '恋バナ：ミックス', 'koi:koi': '恋バナ：恋バナだけ', 'koi:bare': '恋バナ：暴露だけ',
+      'gaka:easy': 'ニセ画伯：かんたん', 'gaka:all': 'ニセ画伯：ミックス', 'reply:all': '返信：ミックス', 'reply:safe': '返信：おだやか', 'reply:koi': '返信：恋愛多め',
+      'mission:easy': 'ミッション：かんたん', 'mission:all': 'ミッション：ミックス', 'uso:mix': 'ウソホント：ミックス', 'uso:light': 'ウソホント：かるめ', 'uso:deep': 'ウソホント：ふかめ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
     const ownN = (draws && draws.own) || 0, allDraws = ownN + ((draws && draws.built) || 0);
     const tile = (v, l, s) => '<div class="tile"><b>' + v + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>';
@@ -274,7 +276,7 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 <p class="scope">${me ? '「自分の端末」をオンにした端末で遊んだ分だけを表示中（ふつうの集計には入っていません）。<a href="/?d=' + days + '&me=0">ふつうの集計に戻る</a>'
   : '自分の端末で遊んだ分（別枠）は入っていません：' + ((other && other.n) || 0) + 'ゲーム。<a href="/?d=' + days + '&me=1">自分の端末の分を見る</a>'}</p>
 <div class="tiles">
-${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 恋バナ ' + (tot.koi || 0))}
+${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 恋バナ ' + (tot.koi || 0) + ' ・ 新モード ' + (tot.party || 0))}
 ${tile(pct(tot.done || 0, n), '最後まで遊んだ', (tot.done || 0) + 'ゲーム')}
 ${tile(tot.first || 0, 'はじめて遊んだ端末', '2回目以降のゲーム ' + (tot.again || 0))}
 ${tile(tot.pl ? (Math.round(tot.pl * 10) / 10) + '人' : '—', '平均人数')}
@@ -300,7 +302,7 @@ ${tile(evN('plus', d => d === 'plan_pass'), '24時間パスを選んだ')}
 <section><h2>カードから遊ばれたミニゲーム・アプリ機能</h2>${played(miniC, fx)}</section>
 <section><h2>よく出たカード<small>組み込みのカードだけ</small></h2>${bars(cards, r => (CARDS[r.k] ? 'No.' + r.k + ' ' + CARDS[r.k] : 'No.' + r.k))}</section>
 <section><h2>特殊ルール</h2>${bars(sp, r => NAMES[r.k] || r.k)}</section>
-<section><h2>王様・恋バナの設定</h2>${bars(lv, r => LV[r.k] || r.m + ':' + r.k)}</section>
+<section><h2>新モードの設定</h2>${bars(lv, r => LV[r.m + ':' + r.k] || r.m + ':' + r.k)}</section>
 <section><h2>よく選ばれた命令<small>王様ゲーム</small></h2>${bars(kingQ, r => KQ.king[r.k] || 'No.' + r.k)}</section>
 <section><h2>よく出た質問<small>恋バナ・暴露</small></h2>${bars(koiQ, r => KQ.koi[r.k] || 'No.' + r.k)}</section>
 </div>
