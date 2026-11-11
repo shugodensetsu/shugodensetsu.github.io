@@ -264,6 +264,8 @@ const SOUNDS = {
   cat_chal: (A, t) => { [0, 0.07, 0.14].forEach(dt => snare(A, t + dt, 0.28)); kick(A, t + 0.24, 1); crash(A, t + 0.24, 0.3); brass(A, t + 0.24, [523.25, 659.25, 783.99, 1046.5], 0.55, 0.07, { lp: 1600, lp2: 4200 }); },
   cat_safe: (A, t) => { sparkle(A, t, 10); tone(A, t, { type: 'triangle', f: 1568, d: 1, g: 0.12, rv: 0.6 }); tone(A, t + 0.1, { type: 'triangle', f: 2093, d: 1.1, g: 0.1, rv: 0.6 }); },
   tick: (A, t) => { tone(A, t, { type: 'square', f: 1900, d: 0.02, g: 0.11 }); noise(A, t, { d: 0.015, g: 0.14, type: 'highpass', f: 4000 }); },
+  /* the roulette's own tick: the original synth one (the 効果音ラボ tick was too quiet under the spin) */
+  wheelTick: (A, t) => { tone(A, t, { type: 'square', f: 1900, d: 0.02, g: 0.11 }); noise(A, t, { d: 0.015, g: 0.14, type: 'highpass', f: 4000 }); },
   spin: (A, t) => { noise(A, t, { d: 1.1, g: 0.25, type: 'bandpass', f: 300, f2: 6000, q: 1.2, a: 0.6 }); tone(A, t, { type: 'sawtooth', f: 110, f2: 440, d: 1.1, g: 0.06, lp: 600, lp2: 3000 }); },
   devil: (A, t) => {
     thunder(A, t); brass(A, t + 0.05, [73.42, 77.78, 110, 146.83], 1.7, 0.12, { lp: 260, lp2: 1700 });
@@ -464,7 +466,7 @@ function snd(name, A, t) {
   if (r && r[0].every(k => SMP.buf[k])) r[1](A, t);
   else if (SOUNDS[name]) SOUNDS[name](A, t);
 }
-const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
+const NO_DUCK = new Set(['clink', 'clinks', 'tick', 'wheelTick', 'tap', 'pop', 'select', 'beep', 'heart', 'swoosh', 'coin', 'tick2', 'tock', 'deal', 'flip', 'pass', 'hiss', 'hurry']);
 const SE = {
   on: true, A: null,
   init() { try { if (localStorage.getItem(SE_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
@@ -622,10 +624,10 @@ const TRACKS = {
 };
 /* the main music is a recording: 「そんなバカな！」 (BGMer, https://bgmer.net — free incl. commercial use, credit optional).
    bgm/main.mp3 holds one pass of it plus a little; the song repeats every 176 s, so it loops loopStart → loopEnd.
-   It plays for the table, the results and the menus (party / menu); tension, devil and angel stay the synth tracks.
+   It plays only at the table during a game (party on the game screen); menus, results, tension, devil and angel keep the synth tracks.
    onset: where the sound starts in the file, to correct the loop points for the decoder's own padding */
 const BGM_FILE = { url: 'bgm/main.mp3', onset: 0.565, loopStart: 2, loopEnd: 178, gain: 0.17 };
-const BGM_ALIAS = { party: 'main', menu: 'main' };
+const bgmAlias = want => (want === 'party' && screen === 'game' ? 'main' : null);
 TRACKS.main = { file: true, vol: 1 };
 /* the player's music volume, 0–100 (70 = the level it was made for) */
 const BGM_VOL_KEY = 'nomige-bgm-vol';
@@ -649,7 +651,7 @@ const BGM = {
         let i = 0; while (i < d.length && Math.abs(d[i]) < pk * 0.01) i++;
         this.bufOff = Math.max(-0.2, Math.min(0.2, i / b.sampleRate - BGM_FILE.onset));
         this.buf = b; this.loading = false;
-        if (this.cur && BGM_ALIAS[this.want]) { this.cur.name = '-'; this.sync(); }   /* swap the synth stand-in for the recording */
+        if (this.cur && bgmAlias(this.want)) { this.cur.name = '-'; this.sync(); }   /* swap the synth stand-in for the recording */
       })
       .catch(() => { this.loading = false; this.failed = true; });
   },
@@ -662,8 +664,9 @@ const BGM = {
   },
   sync() {
     const A = SE.A; if (!A) return;
-    if (this.on && BGM_ALIAS[this.want] && !this.buf && !this.failed) this.load();
-    const name = !this.on || !TRACKS[this.want] ? null : BGM_ALIAS[this.want] && this.buf ? BGM_ALIAS[this.want] : this.want;
+    const al = bgmAlias(this.want);
+    if (this.on && al && !this.buf && !this.failed) this.load();
+    const name = !this.on || !TRACKS[this.want] ? null : al && this.buf ? al : this.want;
     if ((this.cur ? this.cur.name : null) === name) return;
     if (this.cur) this.fade(this.cur);
     this.cur = null;
@@ -1514,8 +1517,10 @@ function makeSheet(p, opts) {
     replace: null, batch: opts.batch || null, owed: !!opts.owed, src: opts.src || '' };
   const e = opts.replace != null ? cur.drinks[opts.replace] : null;
   if (e && e.kind === 'auto') {
-    const it = e.items.find(x => x.p === p);
+    const it = e.items.find(x => x.p === p && x.mf == null) || e.items.find(x => x.p === p);
     sheet.replace = opts.replace; sheet.base = Math.max(1, Math.min(99, (e.bases && e.bases[p]) || e.base || def)); sheet.pend = e.pend || null; sheet.was = it ? it.amt : 0;
+    /* an インシュメイト partner: their own drink is the amount they were given, with nothing from the NEXT effect on top */
+    if (it && it.mf != null) { sheet.base = Math.max(1, Math.min(99, it.amt)); sheet.pend = null; sheet.mate = true; }
   }
 }
 function renderSheet() {
@@ -1605,9 +1610,9 @@ function recordSheet() {
   if (s.replace != null && cur.drinks[s.replace]) {
     const e = cur.drinks[s.replace];
     fix = { i: s.replace, items: e.items.map(x => Object.assign({}, x)) };
-    /* that person's drink and the インシュメイト drink that followed it */
-    e.items.filter(x => x.p === p || x.mf === p).forEach(x => { if (x.amt) { G.players[x.p].total = Math.max(0, G.players[x.p].total - x.amt); G.players[x.p].times = Math.max(0, G.players[x.p].times - 1); } });
-    e.items = e.items.filter(x => !(x.p === p || x.mf === p));
+    /* that person's drink only: an インシュメイト partner's drink was fixed when this one was decided, and stays */
+    e.items.filter(x => x.p === p).forEach(x => { if (x.amt) { G.players[x.p].total = Math.max(0, G.players[x.p].total - x.amt); G.players[x.p].times = Math.max(0, G.players[x.p].times - 1); } });
+    e.items = e.items.filter(x => x.p !== p);
     s.together = e.items.map(x => x.p);
   }
   const calc = computeAmount(s);
@@ -1630,7 +1635,9 @@ function recordSheet() {
   addDrink(p, calc.amt);
   calc.pushes.forEach(x => addDrink(x.to, x.amt));
   const own = [{ p, amt: calc.amt }].concat(calc.pushes.map(x => ({ p: x.to, amt: x.amt })));
-  const mx = mateExtras(own, (s.together || []).concat(s.batch && s.batch.others ? s.batch.others : []));
+  /* a re-record (a special rule in the 「使う？」 flow): the partner already has their drink, so only a 押し付け sets off a new one */
+  const trig = fix ? calc.pushes.map(x => ({ p: x.to, amt: x.amt })) : own;
+  const mx = mateExtras(trig, (s.together || []).concat(s.batch && s.batch.others ? s.batch.others : [], fix ? [p] : []));
   mx.forEach(x => addDrink(x.p, x.amt));
   const items = own.concat(mx);
   const entry = { kind: 'drink', snap: sn, items, note: calc.steps.slice(1).join(' → ') };
@@ -2108,7 +2115,8 @@ const usableTickets = p => G.players[p].hand.filter(h => h.kind === 'ticket' && 
 const canSpecial = p => !G.cur.used.includes(p) || usableTickets(p).length > 0;
 function scheduleAsk(e, delay) {
   const cur = G.cur;
-  const ps = e.items.filter(it => it.amt > 0 && it.mf == null).map(it => it.p).filter(canSpecial);
+  /* everyone with a drink here, the インシュメイト partner too: each decides on their own */
+  const ps = [...new Set(e.items.filter(it => it.amt > 0).map(it => it.p))].filter(canSpecial);
   if (!ps.length) return;
   let tries = 0, waiting = true;
   askWait++;
@@ -2116,7 +2124,7 @@ function scheduleAsk(e, delay) {
   const go = () => {
     if (!G || G.cur !== cur || screen !== 'game' || !cur.drinks.includes(e)) { done(); return; }
     if (!noOv() || picking || ask || zoom) { if (++tries < 20) setTimeout(go, 400); else done(); return; }
-    const live = ps.filter(p => e.items.some(it => it.p === p && it.mf == null && it.amt > 0) && canSpecial(p));
+    const live = ps.filter(p => e.items.some(it => it.p === p && it.amt > 0) && canSpecial(p));
     done();
     if (!live.length) return;
     ask = { e, ps: live, sel: [], order: live.length > 1 ? null : live.slice(), k: 0, step: live.length > 1 ? 'choose' : 'person' };
@@ -2126,7 +2134,7 @@ function scheduleAsk(e, delay) {
   };
   setTimeout(go, delay);
 }
-const askAmt = p => { const it = ask.e.items.find(x => x.p === p && x.mf == null); return it ? it.amt : 0; };
+const askAmt = p => { const it = ask.e.items.find(x => x.p === p && x.mf == null) || ask.e.items.find(x => x.p === p); return it ? it.amt : 0; };
 /* the NEXT effect for the k-th person in line: a 倍倍FIGHT！ by someone earlier in line (undefined = use G.pending), else the one the record used */
 function askPend(k) {
   if (pendOn(G.pending) && ask.order.slice(0, k).includes(G.pending.from)) return undefined;
@@ -2641,7 +2649,7 @@ function spinWheel() {
     const slot = Math.floor((((360 - (R % 360)) % 360)) / 22.5);
     if (slot !== lastSlot) {
       lastSlot = slot;
-      if (now - lastTick > 38) { SE.play('tick'); lastTick = now; ptr.classList.add('flap'); setTimeout(() => ptr.classList.remove('flap'), 45); }
+      if (now - lastTick > 38) { SE.play('wheelTick'); lastTick = now; ptr.classList.add('flap'); setTimeout(() => ptr.classList.remove('flap'), 45); }
     }
     if (!ev.omen && t >= T1 - 0.45) { ev.omen = true; omen(); }
     if (!ev.sw && t >= T1) { ev.sw = true; applyWheelMode(w, finalLayout); }
