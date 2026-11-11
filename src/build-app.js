@@ -34,7 +34,7 @@ if (statUrl === undefined) throw new Error('STAT_URL not found');
 const statOrigin = statUrl ? new URL(statUrl).origin : '';
 if (statOrigin && !/^https:\/\/[a-z0-9.-]+$/.test(statOrigin) && VERSION !== 'test') throw new Error('STAT_URL must be https: ' + statUrl);
 /* test builds only (node src/build-app.js test): a handle on the game's state for the automated phone-size tests */
-const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; } };' : '';
+const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; }, TRACKS, BGM };' : '';
 if (/<\/script/i.test(js)) throw new Error('page.js contains a closing script tag');
 const page = tpl.replace('__DECK_JSON__', () => serialize(deck).replace(/</g, '\\u003c')).replace('__PAGE_JS__', () => (TEST_HOOK ? js.replace(/\}\)\(\);\s*$/, TEST_HOOK + '\n})();') : js));
 const cut = page.indexOf('<div class="app"');
@@ -148,16 +148,19 @@ const VERSION = 'sakego-${VERSION}';
 const FONTS = 'sakego-fonts';
 const VENDOR = 'sakego-vendor-three160-cannon020';
 const VENDOR_FILES = ['./vendor/three.module.min.js', './vendor/cannon-es.min.js'];
+const MUSIC = 'sakego-bgm-sonnabakana1';
+const MUSIC_FILES = ['./bgm/main.mp3'];
 const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(Promise.all([
     caches.open(VERSION).then(c => c.addAll(SHELL)),
     caches.open(VENDOR).then(c => Promise.all(VENDOR_FILES.map(f => c.match(f).then(hit => hit || c.add(f))))).catch(() => {}),
+    caches.open(MUSIC).then(c => Promise.all(MUSIC_FILES.map(f => c.match(f).then(hit => hit || c.add(f))))).catch(() => {}),
   ]).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS && k !== VENDOR).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== FONTS && k !== VENDOR && k !== MUSIC).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 const timeout = (ms, p) => new Promise((ok, ng) => { const t = setTimeout(() => ng(new Error('timeout')), ms); p.then(v => { clearTimeout(t); ok(v); }, e => { clearTimeout(t); ng(e); }); });
 self.addEventListener('fetch', e => {

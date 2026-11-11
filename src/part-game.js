@@ -515,6 +515,17 @@ function renderSE() {
   $('seLabel').textContent = SE.on ? '効果音 ON' : '効果音 OFF';
   $('bgmBtn').setAttribute('aria-pressed', String(BGM.on));
   $('bgmLabel').textContent = BGM.on ? 'BGM ON' : 'BGM OFF';
+  $('bgmBtn').setAttribute('aria-expanded', String(!$('bgmPop').hidden));
+  $('bgmOnOff').setAttribute('aria-pressed', String(BGM.on));
+  $('bgmOnOff').textContent = BGM.on ? 'ON' : 'OFF';
+  $('bgmVol').value = String(BGM.vol);
+  $('bgmVolN').textContent = String(BGM.vol);
+  $('bgmVolRow').classList.toggle('off', !BGM.on);
+}
+function bgmPop(open) {
+  const p = $('bgmPop');
+  p.hidden = open == null ? !p.hidden : !open;
+  renderSE();
 }
 
 /* =====================================================================
@@ -609,26 +620,75 @@ const TRACKS = {
     if (st % 4 === 2) BI.hat(B, t, 0.015, false);
   } },
 };
+/* the main music is a recording: 「そんなバカな！」 (BGMer, https://bgmer.net — free incl. commercial use, credit optional).
+   bgm/main.mp3 holds one pass of it plus a little; the song repeats every 176 s, so it loops loopStart → loopEnd.
+   It plays for the table, the results and the menus (party / menu); tension, devil and angel stay the synth tracks.
+   onset: where the sound starts in the file, to correct the loop points for the decoder's own padding */
+const BGM_FILE = { url: 'bgm/main.mp3', onset: 0.565, loopStart: 2, loopEnd: 178, gain: 0.17 };
+const BGM_ALIAS = { party: 'main', menu: 'main' };
+TRACKS.main = { file: true, vol: 1 };
+/* the player's music volume, 0–100 (70 = the level it was made for) */
+const BGM_VOL_KEY = 'nomige-bgm-vol';
 const BGM = {
-  on: true, want: null, cur: null, timer: 0, bus: null, busR: null, base: 1,
-  init() { try { if (localStorage.getItem(BGM_KEY) === '0') this.on = false; } catch (_) { /* ignore */ } },
+  on: true, want: null, cur: null, timer: 0, bus: null, busR: null, base: 1, vol: 70, out: null, outR: null,
+  buf: null, bufOff: 0, loading: false, pos: 0,
+  init() {
+    try { if (localStorage.getItem(BGM_KEY) === '0') this.on = false; } catch (_) { /* ignore */ }
+    try { const v = Number(localStorage.getItem(BGM_VOL_KEY)); if (localStorage.getItem(BGM_VOL_KEY) != null && v >= 0 && v <= 100) this.vol = v; } catch (_) { /* ignore */ }
+  },
   play(name, delay) { this.want = name; this.delay = delay || 0; this.sync(); },
   stop() { this.want = null; this.sync(); },
+  /* the recording is fetched and decoded once, the first time music is wanted; until then (or offline on the very first visit) the synth track plays */
+  load() {
+    const A = SE.A; if (!A || this.buf || this.loading) return;
+    this.loading = true;
+    fetch(BGM_FILE.url).then(r => { if (!r.ok) throw new Error('bgm ' + r.status); return r.arrayBuffer(); })
+      .then(ab => new Promise((ok, ng) => A.c.decodeAudioData(ab, ok, ng)))
+      .then(b => {
+        const d = b.getChannelData(0); let pk = 0; for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > pk) pk = a; }
+        let i = 0; while (i < d.length && Math.abs(d[i]) < pk * 0.01) i++;
+        this.bufOff = Math.max(-0.2, Math.min(0.2, i / b.sampleRate - BGM_FILE.onset));
+        this.buf = b; this.loading = false;
+        if (this.cur && BGM_ALIAS[this.want]) { this.cur.name = '-'; this.sync(); }   /* swap the synth stand-in for the recording */
+      })
+      .catch(() => { this.loading = false; this.failed = true; });
+  },
+  /* 0–100 → gain: 70 is the level it was made for, 100 is a bit louder */
+  volGain() { const v = this.vol / 70; return v * v; },
+  setVol(v) {
+    this.vol = Math.max(0, Math.min(100, Math.round(v)));
+    try { localStorage.setItem(BGM_VOL_KEY, String(this.vol)); } catch (_) { /* ignore */ }
+    if (this.out) { const t = SE.A.c.currentTime; [this.out, this.outR].forEach(n => n.gain.setTargetAtTime(this.volGain(), t, 0.05)); }
+  },
   sync() {
     const A = SE.A; if (!A) return;
-    const name = this.on && TRACKS[this.want] ? this.want : null;
+    if (this.on && BGM_ALIAS[this.want] && !this.buf && !this.failed) this.load();
+    const name = !this.on || !TRACKS[this.want] ? null : BGM_ALIAS[this.want] && this.buf ? BGM_ALIAS[this.want] : this.want;
     if ((this.cur ? this.cur.name : null) === name) return;
     if (this.cur) this.fade(this.cur);
     this.cur = null;
     if (!name) { clearInterval(this.timer); this.timer = 0; return; }
     const c = A.c, tr = TRACKS[name], now = c.currentTime;
     if (!this.bus) {
-      this.bus = c.createGain(); this.bus.connect(A.o);
-      this.busR = c.createGain(); this.busR.connect(A.r);
+      this.out = c.createGain(); this.out.gain.value = this.volGain(); this.out.connect(A.o);
+      this.outR = c.createGain(); this.outR.gain.value = this.volGain(); this.outR.connect(A.r);
+      this.bus = c.createGain(); this.bus.connect(this.out);
+      this.busR = c.createGain(); this.busR.connect(this.outR);
     }
     const g = c.createGain(), rg = c.createGain();
-    g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(tr.vol * 0.62, now + 0.3);
+    g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(tr.file ? BGM_FILE.gain : tr.vol * 0.62, now + 0.3);
     g.connect(this.bus); rg.connect(this.busR);
+    if (tr.file) {
+      /* the recording: one looping source, picking up where it left off (after a roulette, back to the same spot) */
+      const src = c.createBufferSource(), at = now + 0.05 + (this.delay || 0);
+      src.buffer = this.buf; src.loop = true;
+      src.loopStart = BGM_FILE.loopStart + this.bufOff; src.loopEnd = BGM_FILE.loopEnd + this.bufOff;
+      src.connect(g);
+      src.start(at, this.pos || 0);
+      this.cur = { name, tr, g, rg, src, at, from: this.pos || 0 };
+      this.delay = 0;
+      return;
+    }
     const B = { c, o: g, r: rg, nb: A.nb };
     B.d = B;
     if (tr.dist) {
@@ -644,6 +704,14 @@ const BGM = {
   },
   fade(cur) {
     const t = SE.A.c.currentTime;
+    if (cur.src) {
+      /* remember where the recording was, inside the loop */
+      const ls = cur.src.loopStart, le = cur.src.loopEnd;
+      let p = cur.from + Math.max(0, t - cur.at);
+      if (p >= le) p = ls + (p - ls) % (le - ls);
+      this.pos = p;
+      try { cur.src.stop(t + 0.5); } catch (_) { /* ignore */ }
+    }
     try {
       cur.g.gain.cancelScheduledValues(t); cur.g.gain.setValueAtTime(cur.g.gain.value, t); cur.g.gain.linearRampToValueAtTime(0, t + 0.45);
       cur.rg.gain.setTargetAtTime(0, t + 0.3, 0.3);
@@ -652,7 +720,7 @@ const BGM = {
   },
   pump() {
     const cur = this.cur, A = SE.A;
-    if (!cur || !A || A.c.state !== 'running') return;
+    if (!cur || cur.src || !A || A.c.state !== 'running') return;
     const now = A.c.currentTime;
     if (cur.next < now - 0.1) cur.next = now + 0.03;
     while (cur.next < now + 0.3) {
@@ -6546,7 +6614,12 @@ function playResultFx() {
 function wireGame() {
   $('brandBtn').addEventListener('click', () => { closeAllOverlays(); showScreen('title'); });
   $('seBtn').addEventListener('click', () => { SE.toggle(); renderSE(); });
-  $('bgmBtn').addEventListener('click', () => { BGM.toggle(); renderSE(); });
+  $('bgmBtn').addEventListener('click', e => { e.stopPropagation(); SE.ensure(); bgmPop(); });
+  $('bgmOnOff').addEventListener('click', () => { BGM.toggle(); renderSE(); SE.play('tap'); });
+  $('bgmVol').addEventListener('input', e => { BGM.setVol(Number(e.target.value)); $('bgmVolN').textContent = String(BGM.vol); if (!BGM.on) { BGM.toggle(); renderSE(); } });
+  $('bgmPop').addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', () => { if (!$('bgmPop').hidden) bgmPop(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('bgmPop').hidden) { bgmPop(false); $('bgmBtn').focus(); } });
   const unlock = () => { if (SE.ensure()) BGM.sync(); };
   document.addEventListener('pointerdown', unlock, true);
   document.addEventListener('keydown', unlock, true);

@@ -1,0 +1,8 @@
+Music in this folder
+
+main.mp3 — 「そんなバカな！」 by BGMer (https://bgmer.net)
+License: free for personal and commercial use, credit optional (https://bgmer.net/terms/).
+Selling the music as is, or registering it with Content ID or a rights society, is not allowed.
+
+The file is one pass of the song (it repeats every 176 s) plus a little,
+re-encoded as 96 kbps stereo MP3. The app loops it from 2 s to 178 s.
