@@ -6,3 +6,9 @@ Credit is not required, but thank you, Kenney.
 
 The files were trimmed, normalized and converted to mono MP3 (80 kbps) for the app.
 They are built into index.html as base64 by src/build-app.js.
+
+Files named lab_*.mp3
+Source: 効果音ラボ (https://soundeffect-lab.info/)
+License: free for commercial use, credit not required (https://soundeffect-lab.info/agreement/).
+Redistributing the sounds themselves is not allowed, so do not copy these files out for other uses.
+Each one was cut to fit where the app plays it, leveled and converted to mono MP3 (64 kbps).

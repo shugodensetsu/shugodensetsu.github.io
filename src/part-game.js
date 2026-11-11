@@ -458,6 +458,8 @@ const REAL = {
 };
 /* a sound by name: recorded when its recordings are ready, synthesized otherwise */
 function snd(name, A, t) {
+  /* 効果音ラボ（https://soundeffect-lab.info/）の音に差し替えたもの: snd/lab_<name>.mp3, already cut and leveled to fit here */
+  if (SMP.buf['lab_' + name] && smp(A, t, 'lab_' + name, { g: 1, vary: 0 })) return;
   const r = REAL[name];
   if (r && r[0].every(k => SMP.buf[k])) r[1](A, t);
   else if (SOUNDS[name]) SOUNDS[name](A, t);
