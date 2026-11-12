@@ -435,8 +435,8 @@ function titleModes() {
    ===================================================================== */
 Object.assign(MG, {
   cut: { short: '解除', title: '爆弾解除', text: '{引いた人}から順番に、爆弾のコードを1本ずつ切る。ハズレのコードを切った人の負け' },
-  n21: { short: '21', title: '21ゲーム', text: '{引いた人}から順番に、数を1〜3個ずつ進める。「21」を言った人の負け' },
-  memo: { short: '記憶', title: 'メモリーリレー', text: '{引いた人}から1人ずつ、光った順番どおりにタップ。1人ごとに1つずつ増える。まちがえた人の負け' },
+  n21: { short: '21', title: '21ゲーム', text: '{引いた人}から順番に、数を1〜3個ずつ進める。「21」を言った人の負け。ときどきイベントで、順番が逆になったり、とばされたり、数が動いたりする' },
+  memo: { short: '記憶', title: 'メモリーリレー', text: '{引いた人}から1人ずつ、光った順番どおりにタップ。1人ごとに1つずつ増える。スピードも1.1倍ずつ速くなる。まちがえた人の負け' },
 });
 PLUS_MG.forEach(k => { if (!MG_ORDER.includes(k)) MG_ORDER.push(k); });
 Object.assign(TOOL_INFO, {
@@ -445,49 +445,77 @@ Object.assign(TOOL_INFO, {
   memo: { title: 'メモリーリレー', act: 'メモリーリレー スタート！', cls: 'memo', stake: 'まちがえた人が' },
 });
 ['cut', 'n21'].forEach(k => { if (!PARTY_FX.includes(k)) PARTY_FX.push(k); });
-Object.assign(PARTY_HINT, { cut: 'コードを1本タップして切る', n21: '「+1」を1〜3回押して「次の人へ」' });
+Object.assign(PARTY_HINT, { cut: 'コードを1本えらんで「切る！」', n21: '「+1」を1〜3回押して「次の人へ」' });
 Object.assign(PARTY_LOSE, { cut: 'がハズレを切った！', n21: 'が「21」を言った！' });
 Object.assign(LOSE_SE, { cut: 'loseMine', n21: 'loseSkull', memo: 'loseReact' });
 Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', pour: '黄金比チャレンジ' });
 
-/* 爆弾解除: a time bomb with 8 wires; one hidden wire sets it off. Every safe cut makes the timer tick faster */
+/* 爆弾解除: a time bomb with 8 wires; one hidden wire sets it off. Every safe cut makes the timer tick faster.
+   The wires fan out under the bomb and then run straight down, side by side, each to its own plug: every wire has a column of its own to tap.
+   A tap only chooses the wire (and may be changed); the cut is the big button, so a slip of the finger never cuts the wrong one */
 const CUT_COLORS = ['#ff3d4f', '#2f8cff', '#ffd83d', '#30d158', '#ffffff', '#ff8b2b', '#b17cff', '#ff6fd8'];
-const CUT_N = CUT_COLORS.length;
-const cutX = (i, top) => (top ? 104 + i * 16 : 34 + i * 36);
+const CUT_NAMES = ['赤', '青', '黄', '緑', '白', 'オレンジ', '紫', 'ピンク'];
+const CUT_N = CUT_COLORS.length, CUT_Y = 262;
+const cutTop = i => 97 + i * 18, cutBot = i => 22.5 + i * 39.3;
 function cutWire(i, top) {
-  const x1 = cutX(i, true), x2 = cutX(i, false), mx = (x1 + x2) / 2 + (i % 2 ? 14 : -14);
-  return top ? 'M' + x1 + ' 132 C ' + x1 + ' 168, ' + mx + ' 176, ' + mx.toFixed(1) + ' 214' : 'M' + mx.toFixed(1) + ' 226 C ' + mx.toFixed(1) + ' 262, ' + x2 + ' 268, ' + x2 + ' 300';
+  const x1 = cutTop(i), x2 = cutBot(i).toFixed(1);
+  return top ? 'M' + x1 + ' 132 C ' + x1 + ' 172, ' + x2 + ' 162, ' + x2 + ' 204 V' + (CUT_Y - 6) : 'M' + x2 + ' ' + (CUT_Y + 6) + ' V322';
 }
 function cutSVG() {
   const wires = CUT_COLORS.map((c, i) => '<g class="ct-w" id="ctW' + i + '"><g class="ct-top"><path d="' + cutWire(i, true) + '" class="ct-o"/><path d="' + cutWire(i, true) + '" stroke="' + c + '" class="ct-c"/></g>' +
-    '<g class="ct-bot"><path d="' + cutWire(i, false) + '" class="ct-o"/><path d="' + cutWire(i, false) + '" stroke="' + c + '" class="ct-c"/></g>' +
-    '<path d="M' + ((cutX(i, true) + cutX(i, false)) / 2 + (i % 2 ? 14 : -14)).toFixed(1) + ' 214 v12" stroke="' + c + '" class="ct-mid"/></g>').join('');
-  const hits = CUT_COLORS.map((_, i) => '<path d="' + cutWire(i, true) + ' L' + ((cutX(i, true) + cutX(i, false)) / 2 + (i % 2 ? 14 : -14)).toFixed(1) + ' 226 ' + cutWire(i, false).replace(/^M[\d. ]+/, '') + '" class="ct-hit" data-tl="hit" data-i="' + i + '"/>').join('');
-  return '<svg class="ct-svg" id="ctSvg" viewBox="0 0 320 340" role="img" aria-label="時限爆弾">' +
-    '<ellipse cx="160" cy="326" rx="140" ry="10" fill="rgba(0,0,0,.25)"/>' +
-    '<rect x="18" y="292" width="284" height="26" rx="8" fill="#3a3d48" stroke="#150733" stroke-width="3"/>' +
-    CUT_COLORS.map((_, i) => '<circle cx="' + cutX(i, false) + '" cy="300" r="5" fill="#c9ced6" stroke="#150733" stroke-width="2"/>').join('') +
+    '<g class="ct-bot"><path d="' + cutWire(i, false) + '" class="ct-o"/><path d="' + cutWire(i, false) + '" stroke="' + c + '" class="ct-c"/>' +
+    '<rect x="' + (cutBot(i) - 14).toFixed(1) + '" y="314" width="28" height="30" rx="7" fill="' + c + '" stroke="#150733" stroke-width="3" class="ct-plug"/></g>' +
+    '<path d="M' + cutBot(i).toFixed(1) + ' ' + (CUT_Y - 6) + ' v12" stroke="' + c + '" class="ct-mid"/></g>').join('');
+  const hits = CUT_COLORS.map((_, i) => '<rect x="' + (cutBot(i) - 19.65).toFixed(2) + '" y="190" width="39.3" height="170" class="ct-hit" data-tl="hit" data-i="' + i + '"/>').join('');
+  return '<svg class="ct-svg" id="ctSvg" viewBox="0 0 320 372" role="img" aria-label="時限爆弾">' +
+    '<ellipse cx="160" cy="362" rx="150" ry="9" fill="rgba(0,0,0,.25)"/>' +
+    '<rect x="5" y="332" width="310" height="26" rx="9" fill="#3a3d48" stroke="#150733" stroke-width="3"/>' +
     '<g class="ct-box"><rect x="74" y="34" width="172" height="104" rx="14" fill="#2b2d33" stroke="#150733" stroke-width="3.5"/>' +
     '<path d="M86 122 h148" stroke="#ffd83d" stroke-width="9" stroke-dasharray="12 10"/>' +
     '<rect x="96" y="48" width="128" height="52" rx="8" fill="#150707" stroke="#150733" stroke-width="2.5"/>' +
     '<text x="160" y="88" class="ct-lcd" id="ctLcd">0:30</text>' +
     '<circle cx="232" cy="46" r="7" class="ct-led" fill="#ff3d4f" stroke="#150733" stroke-width="2"/>' +
     '<rect x="132" y="18" width="56" height="20" rx="6" fill="#4a4e5a" stroke="#150733" stroke-width="3"/></g>' +
-    wires + '<g id="ctSnips"></g>' + hits +
+    '<rect class="ct-col" id="ctCol" x="0" y="190" width="39.3" height="170" rx="10"/>' +
+    wires + '<g id="ctSnips"></g>' +
+    '<g class="ct-scis" id="ctScis"><g class="ct-sc"><path d="M-24 -9 L13 5M-24 9 L13 -5" class="ct-sc-o"/><circle cx="-29" cy="-11" r="6" class="ct-sc-o"/><circle cx="-29" cy="11" r="6" class="ct-sc-o"/>' +
+    '<path d="M-24 -9 L13 5M-24 9 L13 -5" class="ct-sc-i"/><circle cx="-29" cy="-11" r="6" class="ct-sc-h"/><circle cx="-29" cy="11" r="6" class="ct-sc-h"/><circle cx="-3" cy="0" r="2.4" fill="#150733"/></g></g>' +
+    hits +
     '<g class="ct-bang" id="ctBang"><path d="' + Array.from({ length: 24 }, (_, k) => { const a = k / 24 * Math.PI * 2, r = k % 2 ? 60 : 110; return (k ? 'L' : 'M') + (160 + Math.cos(a) * r).toFixed(1) + ' ' + (150 + Math.sin(a) * r * 0.8).toFixed(1); }).join(' ') + 'Z" fill="#ffe066" stroke="#150733" stroke-width="4" stroke-linejoin="round"/>' +
     '<text x="160" y="164" class="ct-bang-t">ドカーン!!</text></g></svg>';
 }
+function cutPick(T, i) {
+  T.sel = i;
+  const svg = $('ctSvg');
+  if (!svg) return;
+  svg.classList.toggle('pick', i != null);
+  CUT_COLORS.forEach((_, k) => { const w = $('ctW' + k); if (w) w.classList.toggle('sel', k === i); });
+  if (i == null) return;
+  /* the scissors come in from the middle of the picture, so they never hang over its edge */
+  $('ctScis').setAttribute('transform', 'translate(' + cutBot(i).toFixed(1) + ' ' + CUT_Y + ')' + (i < CUT_N / 2 ? ' scale(-1 1)' : ''));
+  $('ctCol').setAttribute('x', (cutBot(i) - 19.65).toFixed(2));
+}
 PARTY.cut = {
-  init(T) { T.trap = rint(0, CUT_N - 1); T.cut = []; T.secs = 30; },
+  init(T) { T.trap = rint(0, CUT_N - 1); T.cut = []; T.secs = 30; T.sel = null; },
   info: T => 'のこりのコード <b>' + (CUT_N - T.cut.length) + '</b>本（ハズレは1本）',
   art: () => cutSVG(),
+  buttons: T => '<button type="button" class="pbtn big main pg-go ct-go" data-tl="go"' + (T.sel == null ? ' disabled' : '') + '>' +
+    (T.sel == null ? 'コードをえらぶ' : '<i class="ct-sw" style="background:' + CUT_COLORS[T.sel] + '"></i>' + CUT_NAMES[T.sel] + 'を切る！') + '</button>',
   hit(T, i) {
-    if (T.cut.includes(i)) return;
+    if (T.cut.includes(i) || T.sel === i) return;
+    cutPick(T, i);
+    SE.play('tick2'); vibrate(8);
+    partyButtons();
+  },
+  go(T) {
+    const i = T.sel;
+    if (i == null || T.cut.includes(i)) return;
     T.busy = true; T.cut.push(i);
+    cutPick(T, null);
+    toolActs('', false);
     const w = $('ctW' + i), svg = $('ctSvg');
     if (w) w.classList.add('snip');
-    const mx = (cutX(i, true) + cutX(i, false)) / 2 + (i % 2 ? 14 : -14);
-    $('ctSnips').insertAdjacentHTML('beforeend', '<g class="ct-spark" transform="translate(' + mx.toFixed(1) + ' 220)"><path d="M0 -14V14M-14 0H14M-10 -10L10 10M-10 10L10 -10" stroke="#ffe066" stroke-width="3.5" stroke-linecap="round"/></g>');
+    $('ctSnips').insertAdjacentHTML('beforeend', '<g class="ct-spark" transform="translate(' + cutBot(i).toFixed(1) + ' ' + CUT_Y + ')"><path d="M0 -14V14M-14 0H14M-10 -10L10 10M-10 10L10 -10" stroke="#ffe066" stroke-width="3.5" stroke-linecap="round"/></g>');
     SE.play('swClack'); vibrate(25);
     partyStake();
     if (i === T.trap) { toolLater(() => { svg.classList.add('brink'); $('ctLcd').textContent = '0:00'; SE.play('mnWarn'); hushBeat('toolOv', 900, cutBoom, null, false, [$('pgArt')]); }, 380); return; }
@@ -507,17 +535,90 @@ function cutBoom() {
   partyLose(2200);
 }
 
-/* 21ゲーム: count up 1–3 at a time; whoever has to say 21 loses */
+/* 21ゲーム: count up 1–3 at a time; whoever has to say 21 loses.
+   Counting ahead to trap somebody does not work here: when the turn passes, an event may turn the order round, skip the next player,
+   give the same player another go, send the turn to anybody, or move the number back or forward */
 const N21 = 21;
+Object.assign(SOUNDS, {
+  n21Ev: (A, t) => { noise(A, t, { d: 0.2, g: 0.18, type: 'bandpass', f: 500, f2: 3600, q: 0.9 }); [523.25, 783.99, 1046.5].forEach((f, i) => tone(A, t + 0.07 + i * 0.07, { type: 'square', f, d: 0.11, g: 0.12, lp: 3000 })); },
+  n21Back: (A, t) => [880, 659.25, 523.25, 392].forEach((f, i) => tone(A, t + i * 0.07, { type: 'triangle', f, d: 0.12, g: 0.15 })),
+  n21Warp: (A, t) => tone(A, t, { type: 'sine', f: 330, f2: 1760, d: 0.3, g: 0.16 }),
+  n21Tick: (A, t) => tone(A, t, { type: 'square', f: 1318.5, d: 0.03, g: 0.06, lp: 3000 }),
+});
 function n21Art(T) {
-  let h = '<div class="n21-now"><b id="n21Now">' + T.n + '</b><small>/21</small></div><div class="n21-grid" id="n21Grid">';
+  let h = '<div class="n21-dir" id="n21Dir"></div><div class="n21-now"><b id="n21Now">' + T.n + '</b><small>/21</small></div><div class="n21-grid" id="n21Grid">';
   for (let k = 1; k <= N21; k++) h += '<span class="n21-c' + (k === N21 ? ' end' : '') + '" id="n21C' + k + '">' + (k === N21 ? '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4C11 4 5 10 5 18c0 5 2.5 8.5 6 10.5V34h18v-5.5c3.5-2 6-5.5 6-10.5C35 10 29 4 20 4Z" fill="#fff" stroke="#150733" stroke-width="2.6"/><circle cx="14" cy="18" r="4" fill="#150733"/><circle cx="26" cy="18" r="4" fill="#150733"/><path d="M17 34v-4M23 34v-4" stroke="#150733" stroke-width="2.4"/></svg>' : k) + '</span>';
   return h + '</div>';
 }
+/* the order runs along the row of names: to the right, or (after リバース) to the left */
+function n21Dir(T, pop) {
+  const el = $('n21Dir');
+  if (!el) return;
+  el.innerHTML = T.dir > 0 ? '順番 <b>▶▶</b>' : '<b>◀◀</b> 順番（逆まわり）';
+  el.classList.toggle('rev', T.dir < 0);
+  $('pgOrder').classList.toggle('rev', T.dir < 0);
+  if (pop) restartAnim(el, 'pop');
+}
+function n21Set(T, n, col) {   /* the number moves without anybody counting (もどる / ワープ) */
+  for (let c = T.n; c > n; c--) { const e = $('n21C' + c); if (e) { e.classList.remove('on'); restartAnim(e, 'n21pop'); } }
+  for (let c = T.n + 1; c <= n; c++) { const e = $('n21C' + c); if (e) { e.style.setProperty('--p', col); e.classList.add('on'); restartAnim(e, 'n21pop'); } }
+  T.n = n;
+  const now = $('n21Now'); if (now) { now.textContent = n; restartAnim(now, 'n21bump'); }
+  $('pgArt').classList.toggle('hot', n >= 17);
+}
+function n21Next(T, ms) {
+  const P = PARTY.n21, n = T.ps.length, cur = T.k % n, mod = v => ((v % n) + n) % n, wait = ms == null ? 650 : ms;
+  T.turns++;
+  /* what may happen now: nothing on the very first pass, never the same event twice running */
+  const pool = [];
+  if (T.turns > 1) {
+    if (n >= 3) pool.push('rev', 'rev', 'rev', 'skip', 'skip', 'skip', 'pick', 'pick');
+    pool.push('again', 'again');
+    if (T.n >= 4 && T.backs < 2) pool.push('back', 'back');
+    if (T.n <= N21 - 3) pool.push('warp');
+  }
+  const cand = pool.filter(k => k !== T.lastEv);
+  let k = '';
+  if (P.rig && P.rig.length) k = P.rig.shift();
+  else if (cand.length && Math.random() < (T.n >= 16 ? 0.5 : 0.36)) k = cand[rint(0, cand.length - 1)];
+  T.lastEv = k;
+  if (!k) { T.k = mod(cur + T.dir); toolLater(partyTurn, wait); return; }
+  const nm = j => '<span style="color:' + pc(T.ps[mod(j)]) + '">' + esc(pname(T.ps[mod(j)])) + '</span>';
+  let to = cur + T.dir, title, sub, se = 'n21Ev', cls = 'cyan', after = null;
+  if (k === 'rev') { T.dir = -T.dir; to = cur + T.dir; title = 'リバース！'; sub = '逆まわり → 次は ' + nm(to); after = () => n21Dir(T, true); }
+  else if (k === 'skip') {
+    const skipped = mod(cur + T.dir);
+    to = cur + 2 * T.dir; title = 'パス！'; sub = nm(skipped) + ' をとばして ' + nm(to); cls = 'lime';
+    after = () => { const c = $('pgO' + skipped); if (c) restartAnim(c, 'skipd'); };
+  } else if (k === 'again') { to = cur; title = 'もう1回！'; sub = nm(cur) + ' が もう一度'; cls = 'pink'; }
+  else if (k === 'pick') {
+    /* anybody but the one who just played and the one whose turn it would have been */
+    const list = T.ps.map((_, j) => j).filter(j => j !== cur && (n < 4 || j !== mod(cur + T.dir)));
+    to = list[rint(0, list.length - 1)]; title = 'ご指名！'; sub = '次は ' + nm(to); cls = 'pink';
+    after = () => { for (let q = 0; q < 9; q++) toolLater(() => { const at = q === 8 ? mod(to) : mod(cur + 1 + q); T.ps.forEach((_, j) => $('pgO' + j).classList.toggle('now', j === at)); SE.play('n21Tick'); }, q * 85); };
+  } else if (k === 'back') { const d = Math.min(T.n, rint(2, 3)); T.backs++; title = 'もどる！'; sub = d + 'つ もどって ' + (T.n - d); se = 'n21Back'; cls = 'lime'; after = () => n21Set(T, T.n - d, '#fff'); }
+  else { const d = rint(1, Math.min(2, N21 - 1 - T.n)); title = 'ワープ！'; sub = d + 'つ すすんで ' + (T.n + d); se = 'n21Warp'; cls = 'red'; after = () => n21Set(T, T.n + d, '#ffffff'); }
+  T.evN++;
+  toolActs('', false);
+  T.ps.forEach((_, j) => $('pgO' + j).classList.remove('now'));
+  $('toolSub').innerHTML = '<b>イベント！</b><small>' + title + '</small>';
+  toolLater(() => {
+    SE.play(se); flash(k === 'again' || k === 'pick' ? '#ff4fa3' : '#35e0ff'); vibrate([30, 30, 30]);
+    telop(title + '<small>' + sub + '</small>', cls, 1500);
+    const art = $('pgArt');   /* the big number steps back while the event is on the screen */
+    if (art) { art.classList.add('ev'); toolLater(() => art.classList.remove('ev'), 1500); }
+    if (after) toolLater(after, 380);
+  }, Math.min(wait, 300));
+  T.k = mod(to);
+  toolLater(partyTurn, Math.min(wait, 300) + 1650);
+}
 PARTY.n21 = {
-  init(T) { T.n = 0; },
-  info: () => '1人1〜3個 ・ 21を言ったら負け（20まで行ったら次の人の負け）',
+  rig: null,   /* tests: the events of the coming passes ('' = none) */
+  init(T) { T.n = 0; T.dir = 1; T.evN = 0; T.backs = 0; T.lastEv = ''; },
+  info: () => '1人1〜3個。21を言ったら負け。<b>イベント</b>あり！',
   art: T => n21Art(T),
+  mounted: T => n21Dir(T),
+  next: (T, ms) => n21Next(T, ms),
   buttons: T => '<button type="button" class="pbtn big main pg-go" data-tl="go"' + (T.acts >= 3 ? ' disabled' : '') + '>+1<small>' + pips(T.acts, 3) + '</small></button>' +
     '<button type="button" class="pbtn cyan small pg-pass" data-tl="pass"' + (T.acts ? '' : ' disabled') + '>次の人へ ▶</button>',
   go(T) {
@@ -535,17 +636,28 @@ PARTY.n21 = {
   },
 };
 
-/* メモリーリレー: four pads light up in an order; each player repeats it, and it grows by one for the next player */
-const MEMO_F = [329.63, 440, 554.37, 659.25];
-MEMO_F.forEach((f, i) => { SOUNDS['mm' + i] = (A, t) => { tone(A, t, { type: 'triangle', f, d: 0.42, g: 0.16, rv: 0.25 }); tone(A, t, { type: 'sine', f: f * 2, d: 0.2, g: 0.04 }); }; NO_DUCK.add('mm' + i); });
+/* メモリーリレー: eight pads light up in an order; each player repeats it. For the next player it is one longer and plays 1.1 times faster */
+const MEMO_N = 8, MEMO_GAP = 620;   /* ms from one light to the next, at the start */
+const MEMO_F = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25];
+const MEMO_COL = ['#ff3d4f', '#ff8b2b', '#ffd83d', '#30d158', '#22d3c5', '#2f8cff', '#9a6bff', '#ff6fd8'];
+const MEMO_NAME = ['あか', 'オレンジ', 'きいろ', 'みどり', 'みずいろ', 'あお', 'むらさき', 'ピンク'];
+/* round the 3×3 board, clockwise from the top left; the middle shows how many to remember */
+const MEMO_AT = ['1/1', '1/2', '1/3', '2/3', '3/3', '3/2', '3/1', '2/1'];
+/* a shape on every pad: easier to remember than eight colours, and it does not depend on telling the colours apart */
+const MEMO_SYM = ['<circle cx="12" cy="12" r="8"/>', '<path d="M12 3 21.5 20h-19Z"/>', '<rect x="4" y="4" width="16" height="16" rx="2"/>', '<path d="m12 2 2.9 6.6 7.1.7-5.4 4.8 1.6 7L12 17.4 5.8 21.1l1.6-7L2 9.3l7.1-.7Z"/>',
+  '<path d="M12 2 21 12 12 22 3 12Z"/>', '<path d="M12 21C4 15 2 11 2 7.8A4.8 4.8 0 0 1 12 6a4.8 4.8 0 0 1 10 1.8C22 11 20 15 12 21Z"/>', '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z"/>', '<path d="M20 15.5A9 9 0 1 1 9 3.3 7.2 7.2 0 0 0 20 15.5Z"/>'];
+MEMO_F.forEach((f, i) => { SOUNDS['mm' + i] = (A, t) => { tone(A, t, { type: 'triangle', f, d: 0.36, g: 0.16, rv: 0.25 }); tone(A, t, { type: 'sine', f: f * 2, d: 0.18, g: 0.04 }); }; NO_DUCK.add('mm' + i); });
 SOUNDS.mmBad = (A, t) => { tone(A, t, { type: 'square', f: 160, f2: 90, d: 0.45, g: 0.12, lp: 900 }); noise(A, t, { d: 0.12, g: 0.2, type: 'lowpass', f: 700 }); };
+const memoRate = T => Math.pow(1.1, T.seq.length - 3);
+const memoSpeed = T => (T.seq.length > 3 ? 'スピード ×' + memoRate(T).toFixed(2) : 'スピード ×1');
 function memoSetup() {
-  const T = tool;
-  T.seq = [rint(0, 3), rint(0, 3), rint(0, 3)]; T.at = 0; T.mm = 'ready';
-  $('toolStage').innerHTML = stakeLine(T) + tlList(T, '--') +
-    '<div class="mm-pads" id="mmPads">' + [0, 1, 2, 3].map(i => '<button type="button" class="mm-pad c' + i + '" id="mmP' + i + '" aria-label="' + ['あか', 'あお', 'きいろ', 'みどり'][i] + '"></button>').join('') +
-    '<b class="mm-n" id="mmN"></b></div><p class="tm-sub" id="toolSub"></p>';
-  [0, 1, 2, 3].forEach(i => onPress($('mmP' + i), () => memoTap(i)));
+  const T = tool, n = T.ps.length, pad = () => rint(0, MEMO_N - 1);
+  T.seq = [pad(), pad(), pad()]; T.at = 0; T.mm = 'ready';
+  $('toolStage').innerHTML = stakeLine(T) +
+    '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
+    '<div class="mm-wrap"><div class="mm-pads" id="mmPads">' + MEMO_COL.map((c, i) => '<button type="button" class="mm-pad k' + i + '" id="mmP' + i + '" style="--c:' + c + ';grid-area:' + MEMO_AT[i] + '" aria-label="' + MEMO_NAME[i] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + MEMO_SYM[i] + '</svg></button>').join('') +
+    '<div class="mm-n"><b id="mmN"></b><small id="mmS"></small></div></div></div><p class="tm-sub mm-sub" id="toolSub"></p>';
+  MEMO_COL.forEach((_, i) => onPress($('mmP' + i), () => memoTap(i)));
   memoTurn();
 }
 function memoTurn() {
@@ -553,8 +665,8 @@ function memoTurn() {
   T.mm = 'ready'; T.at = 0;
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
   $('mmPads').className = 'mm-pads';
-  $('mmN').textContent = T.seq.length;
-  $('toolSub').innerHTML = (i ? 'スマホを渡して…<br>' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！ <small>' + T.seq.length + '個の順番を覚えてね</small>';
+  $('mmN').textContent = T.seq.length; $('mmS').textContent = '×' + memoRate(T).toFixed(2);
+  $('toolSub').innerHTML = (T.seq.length > 3 || i ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(T.ps[i])) + '</b> の番！<small>' + T.seq.length + '個の順番を覚えてね（' + memoSpeed(T) + '）</small>';
   toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main" data-tl="watch">見る！</button>');
 }
 function memoShow() {
@@ -562,15 +674,17 @@ function memoShow() {
   if (T.mm !== 'ready') return;
   T.mm = 'show';
   toolActs(TOOL_CLOSE, false);
-  $('mmPads').className = 'mm-pads show';
-  $('toolSub').innerHTML = '<b>よく見て…</b>';
-  const gap = Math.max(330, 620 - T.seq.length * 25);
+  const pads = $('mmPads'), gap = Math.max(120, MEMO_GAP / memoRate(T));
+  pads.className = 'mm-pads show';
+  pads.style.setProperty('--lit', Math.round(Math.min(380, gap * 0.88)) + 'ms');
+  $('toolSub').innerHTML = '<b>よく見て…</b><small>' + T.seq.length + '個 ・ ' + memoSpeed(T) + '</small>';
   T.seq.forEach((v, k) => toolLater(() => memoLight(v), 500 + k * gap));
   toolLater(() => {
     T.mm = 'input';
-    $('mmPads').className = 'mm-pads input';
-    $('toolSub').innerHTML = '<b>どうぞ！</b> 同じ順番でタップ <small id="mmLeft">のこり ' + T.seq.length + '</small>';
-  }, 500 + T.seq.length * gap + 200);
+    pads.className = 'mm-pads input';
+    pads.style.setProperty('--lit', '300ms');
+    $('toolSub').innerHTML = '<b>どうぞ！</b> 同じ順番でタップ<small id="mmLeft">のこり ' + T.seq.length + '</small>';
+  }, 500 + (T.seq.length - 1) * gap + Math.max(gap, 380) + 150);
 }
 function memoLight(v) {
   const el = $('mmP' + v);
@@ -588,8 +702,8 @@ function memoTap(v) {
     SE.play('mmBad'); vibrate([80, 40, 80]);
     const p = T.ps[T.k], v2 = $('tlV' + T.k);
     v2.innerHTML = '<span class="rc-foul">' + T.at + '/' + T.seq.length + '</span>'; tmPop(v2);
-    $('toolSub').innerHTML = '<b>ざんねん！</b>';
-    toolLater(() => hushBeat('toolOv', 700, () => toolFinish([p], 'まちがえた <b>' + esc(pname(p)) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j))), 900);
+    $('toolSub').innerHTML = '<b>ざんねん！</b><small>正しくは 光っているボタン</small>';
+    toolLater(() => hushBeat('toolOv', 700, () => toolFinish([p], 'まちがえた <b>' + esc(pname(p)) + '</b> の負け！ ' + amtTxt(T.cups), j => $('tlP' + j))), 1100);
     return;
   }
   memoLight(v); vibrate(10);
@@ -597,11 +711,11 @@ function memoTap(v) {
   const left = $('mmLeft'); if (left) left.textContent = 'のこり ' + (T.seq.length - T.at);
   if (T.at < T.seq.length) return;
   T.mm = 'gap';
-  const v2 = $('tlV' + T.k); v2.textContent = T.seq.length + '個 OK'; tmPop(v2);
-  $('toolSub').innerHTML = '<b>クリア！</b> 次は ' + (T.seq.length + 1) + '個';
+  const v2 = $('tlV' + T.k); v2.textContent = T.seq.length + '個OK'; v2.classList.add('great'); tmPop(v2);
   SE.play('ding');
-  T.seq.push(rint(0, 3));
-  toolLater(() => { T.k = (T.k + 1) % T.ps.length; if (T.k === 0) T.ps.forEach((_, j) => { const e = $('tlV' + j); if (e) e.textContent = '--'; }); memoTurn(); }, 1200);
+  T.seq.push(rint(0, MEMO_N - 1));
+  $('toolSub').innerHTML = '<b>クリア！</b><small>次は ' + T.seq.length + '個（' + memoSpeed(T) + '）</small>';
+  toolLater(() => { T.k = (T.k + 1) % T.ps.length; if (T.k === 0) T.ps.forEach((_, j) => { const e = $('tlV' + j); if (e) { e.textContent = '--'; e.classList.remove('great'); } }); memoTurn(); }, 1200);
 }
 function memoAct(a) { if (a === 'watch') memoShow(); }
 

@@ -970,6 +970,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .tm-acts{flex:none; position:relative; z-index:3; display:flex; gap:10px}
 .tm-acts .pbtn{flex:1}
 .tm-acts .pbtn.main{flex:2}
+.tm-acts [data-tl="close"]{white-space:nowrap}
 .tm-stage .cg-big{width:min(54vw, 28vh, 220px, 40cqh)}
 .sw-btn.run{background:var(--red)}
 .sw-row{display:flex; align-items:center; justify-content:center; gap:8px; width:100%}
@@ -2161,11 +2162,29 @@ button.rp-pick{cursor:pointer}
 /* 爆弾解除 */
 .tool-ov.cut{background:radial-gradient(circle at 50% 40%, #3d4a5c 0, #1a212c 55%, #07090d 100%)}
 .tool-ov.cut::before{background:repeating-linear-gradient(-45deg, rgba(255,216,61,.06) 0 22px, transparent 22px 44px)}
-.ct-svg{width:min(96cqw, calc(96cqh * 320 / 340)); height:auto}
+.ct-svg{width:min(98cqw, calc(98cqh * 320 / 372)); height:auto}
 .ct-o{fill:none; stroke:#150733; stroke-width:12; stroke-linecap:round}
 .ct-c{fill:none; stroke-width:7; stroke-linecap:round}
 .ct-mid{stroke-width:7; stroke-linecap:round}
-.ct-hit{fill:none; stroke:transparent; stroke-width:30; stroke-linecap:round; pointer-events:stroke; cursor:pointer}
+.ct-hit{fill:transparent; pointer-events:all; cursor:pointer}
+/* a wire is chosen first (its column lights up, the scissors wait on it) and cut with the button */
+.ct-col{fill:rgba(255,255,255,.13); stroke:rgba(255,255,255,.55); stroke-width:2; stroke-dasharray:6 5; opacity:0; pointer-events:none}
+.ct-svg.pick .ct-col{opacity:1}
+.ct-w{transition:opacity .15s}
+.ct-svg.pick .ct-w:not(.sel):not(.snip){opacity:.5}
+.ct-w.sel .ct-c{stroke-width:9}
+.ct-w.sel .ct-plug{animation:ctPlug .45s ease-in-out infinite alternate}
+@keyframes ctPlug{to{filter:brightness(1.5)}}
+.ct-scis{opacity:0; pointer-events:none}
+.ct-svg.pick .ct-scis{opacity:1}
+.ct-sc{animation:ctSnip .42s ease-in-out infinite alternate}
+@keyframes ctSnip{from{transform:scaleY(1)} to{transform:scaleY(.3)}}
+.ct-sc-o{fill:none; stroke:#150733; stroke-width:9; stroke-linecap:round}
+.ct-sc-i{fill:none; stroke:#eef2f7; stroke-width:4.5; stroke-linecap:round}
+.ct-sc-h{fill:none; stroke:#ff3d4f; stroke-width:3.5}
+.ct-w.snip .ct-plug{fill:#6b7080}
+.tm-acts .ct-go{white-space:nowrap; font-size:min(22px, 5.8vw)}
+.ct-sw{display:inline-block; width:.85em; height:.85em; border-radius:50%; border:3px solid var(--ink); margin-right:.35em; vertical-align:-.08em}
 .ct-top, .ct-bot{transition:transform .35s cubic-bezier(.2,1.6,.4,1)}
 .ct-w.snip .ct-top{transform:translateY(-7px)}
 .ct-w.snip .ct-bot{transform:translateY(7px)}
@@ -2188,12 +2207,22 @@ button.rp-pick{cursor:pointer}
 @keyframes ctBlast{0%{filter:brightness(3)} 100%{filter:brightness(.25); transform:translateY(-6px) scale(.96)}}
 /* 21ゲーム */
 .tool-ov.n21{background:radial-gradient(circle at 50% 40%, #1f7a6a 0, #0c3d36 55%, #031512 100%)}
+.n21-dir{font-weight:800; font-size:12.5px; line-height:1.55; color:var(--white); background:rgba(21,7,51,.55); border:2px solid var(--ink); border-radius:999px; padding:0 13px}
+.n21-dir b{color:var(--yellow); letter-spacing:-.12em; margin:0 2px}
+.n21-dir.rev{background:#b01c8a}
+.n21-dir.pop{animation:n21Bump .4s cubic-bezier(.3,1.8,.5,1)}
+.pg-o.skipd{animation:n21Skip 1.1s ease-in-out}
+@keyframes n21Skip{0%,100%{} 15%,45%,75%{opacity:1; filter:grayscale(1); transform:scale(1.12) rotate(-7deg)} 30%,60%,90%{opacity:1; filter:grayscale(1); transform:scale(1.12) rotate(7deg)}}
 .n21-now{display:flex; align-items:baseline; justify-content:center; gap:4px; font-family:var(--f-display); color:var(--white); line-height:1}
 .n21-now b{font-weight:400; font-size:min(74px, 17cqh); color:var(--yellow); text-shadow:0 4px 0 var(--ink)}
 .n21-now b.n21bump{animation:n21Bump .35s cubic-bezier(.3,1.8,.5,1)}
 .n21-now small{font-size:20px; color:var(--muted)}
+.n21-now{transition:opacity .2s}
+#pgArt.ev .n21-now{opacity:.1}
 #pgArt.hot .n21-now b{color:#ff6b6b}
-.n21-grid{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:5px; width:min(92cqw, 380px)}
+/* the pill, the number and the board share the height of the stage: on a short screen the board gets narrower instead of running into the number */
+.pg-n21{align-content:center; row-gap:min(8px, 2cqh)}
+.n21-grid{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:5px; width:min(92cqw, 380px, max(150px, calc((100cqh - 44px - min(74px, 17cqh)) * 7 / 3)))}
 .n21-c{aspect-ratio:1; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.12); border:2.5px solid rgba(255,255,255,.3); font-family:var(--f-display); font-size:min(15px, 3.6vw); color:rgba(255,255,255,.6)}
 .n21-c.on{background:var(--p); border-color:var(--ink); color:var(--ink); box-shadow:0 2px 0 var(--ink)}
 .n21-c.n21pop{animation:n21Bump .35s cubic-bezier(.3,1.8,.5,1)}
@@ -2205,19 +2234,23 @@ button.rp-pick{cursor:pointer}
 @keyframes n21Boom{0%{transform:scale(1)} 50%{transform:scale(2.2) rotate(-10deg)} 100%{transform:scale(1.6)}}
 /* メモリーリレー */
 .tool-ov.memo{background:radial-gradient(circle at 50% 46%, #3b2a7a 0, #170f3a 60%, #070417 100%)}
-.mm-pads{position:relative; flex:1 1 0; min-height:0; width:min(84cqw, 46cqh, 340px); aspect-ratio:1; display:grid; grid-template-columns:1fr 1fr; gap:10px}
-.mm-pad{border:4px solid var(--ink); box-shadow:0 5px 0 var(--ink); cursor:pointer; filter:brightness(.55) saturate(.8); transition:filter .12s, transform .12s; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
-.mm-pad.c0{background:#ff3d4f; border-radius:60% 14px 14px 14px}
-.mm-pad.c1{background:#2f8cff; border-radius:14px 60% 14px 14px}
-.mm-pad.c2{background:#ffd83d; border-radius:14px 14px 14px 60%}
-.mm-pad.c3{background:#30d158; border-radius:14px 14px 60% 14px}
-.mm-pads.input .mm-pad{filter:brightness(.8)}
-.mm-pad.lit{animation:mmLit .38s ease-out}
-@keyframes mmLit{0%{filter:brightness(1.6) saturate(1.2); transform:scale(1.04); box-shadow:0 5px 0 var(--ink), 0 0 28px 6px rgba(255,255,255,.7)} 100%{}}
-.mm-pad.bad{filter:grayscale(1) brightness(.5); animation:tmLose .3s 2}
-.mm-pad.hint{animation:mmLit .5s ease-out 3}
+.tool-ov.memo .tm-card{display:none}
+.tool-ov.memo .tm-stage{gap:8px; container-name:arc}
+.mm-wrap{flex:1 1 0; min-height:0; width:100%; container-type:size; display:grid; place-items:center}
+.mm-pads{width:min(100cqw, 100cqh, 430px); aspect-ratio:1; box-sizing:border-box; padding-bottom:5px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); grid-template-rows:repeat(3, minmax(0,1fr)); gap:min(9px, 2.4cqw)}
+.mm-pad{display:grid; place-items:center; min-width:0; min-height:0; padding:0; border:4px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink); background:var(--c); cursor:pointer; filter:brightness(.5) saturate(.8); transition:filter .12s, transform .12s; -webkit-tap-highlight-color:transparent; touch-action:manipulation}
+.mm-pad svg{width:36%; height:36%; fill:var(--ink); opacity:.5; pointer-events:none}
+.mm-pad.k0{border-top-left-radius:42%} .mm-pad.k2{border-top-right-radius:42%} .mm-pad.k4{border-bottom-right-radius:42%} .mm-pad.k6{border-bottom-left-radius:42%}
+.mm-pads.input .mm-pad{filter:brightness(.82)}
+.mm-pad.lit{animation:mmLit var(--lit, .38s) ease-out}
+@keyframes mmLit{0%{filter:brightness(1.7) saturate(1.25); transform:scale(1.05); box-shadow:0 5px 0 var(--ink), 0 0 28px 8px rgba(255,255,255,.75)} 100%{}}
+.mm-pads .mm-pad.bad{filter:grayscale(1) brightness(.45); animation:tmLose .3s 2}
+.mm-pads .mm-pad.hint{filter:brightness(1.3) saturate(1.15); box-shadow:0 5px 0 var(--ink), 0 0 0 4px #fff, 0 0 22px 6px rgba(255,255,255,.6); animation:mmLit .5s ease-out 3}
 .mm-pads.show .mm-pad{cursor:default}
-.mm-n{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:52px; height:52px; border-radius:50%; background:var(--ink); color:var(--yellow); border:3px solid var(--paper); display:grid; place-items:center; font-family:var(--f-display); font-weight:400; font-size:22px; pointer-events:none}
+.mm-n{grid-area:2/2; margin:9%; display:grid; place-items:center; align-content:center; border-radius:50%; background:var(--ink); border:3px solid var(--paper); pointer-events:none}
+.mm-n b{font-family:var(--f-display); font-weight:400; font-size:min(34px, 9.5cqw, 9.5cqh); line-height:1; color:var(--yellow)}
+.mm-n small{font-weight:800; font-size:min(11.5px, 3.2cqw, 3.2cqh); line-height:1.3; color:var(--white)}
+.mm-sub{min-height:2.9em}
 /* ===== プレミアムのミニゲーム（part-arcade.js） ===== */
 /* 酒スロ */
 .tool-ov.slot{background:radial-gradient(circle at 50% 40%, #6a1fb5 0, #260a58 52%, #07020f 100%)}

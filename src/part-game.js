@@ -4699,6 +4699,7 @@ function partySetup() {
   $('toolStage').innerHTML = '<p class="tl-stake pg-stake" id="pgStake"></p>' +
     '<div class="pg-order" id="pgOrder">' + T.ps.map((p, j) => '<span class="pg-o" id="pgO' + j + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>').join('') + '</div>' +
     '<div class="pg-stage pg-' + kind + '" id="pgArt">' + P.art(T) + '</div><p class="tm-sub pg-sub" id="toolSub"></p>';
+  if (P.mounted) P.mounted(T);
   partyStake();
   partyTurn();
 }
@@ -4716,7 +4717,14 @@ function partyTurn() {
   if (T.turns) SE.play('pass');
 }
 function partyButtons() { const T = tool, P = PARTY[T.kind]; toolActs(TOOL_CLOSE + (P.buttons ? P.buttons(T) : ''), false); }
-function partyNext(ms) { const T = tool; T.busy = true; T.turns++; T.k++; toolLater(partyTurn, ms == null ? 650 : ms); }
+/* P.next: a game that decides for itself whose turn comes next (21ゲーム and its events) */
+function partyNext(ms) {
+  const T = tool, P = PARTY[T.kind];
+  T.busy = true;
+  if (P.next) { P.next(T, ms); return; }
+  T.turns++; T.k++;
+  toolLater(partyTurn, ms == null ? 650 : ms);
+}
 function partyLose(ms) {
   const T = tool, p = pgNow();
   T.state = 'boom'; T.busy = true;
