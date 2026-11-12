@@ -934,6 +934,7 @@ function loadGame() {
 const validGame = g => !!(g && Array.isArray(g.players) && g.players.length >= 2 && g.cur && typeof g.turn === 'number' && g.pending);
 function normalizeGame(g) {
   if (!validGame(g)) return null;
+  if (g.mode === 'king') return null;   /* 王様ゲームはやめた: 遊びかけのゲームは捨てる */
   g.players.forEach(p => { p.hand = Array.isArray(p.hand) ? p.hand : []; p.hand.forEach(h => { delete h.fresh; }); ['total', 'times', 'dbl', 'hh', 'cospa'].forEach(k => { p[k] = Number(p[k]) || 0; }); });
   g.uid = g.uid || 1;
   g.gid = Number(g.gid) || Date.now();

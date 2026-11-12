@@ -1938,31 +1938,21 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .dialog .pl-fine{font-size:11px; font-weight:700; color:var(--ink-muted); line-height:1.5}
 .pl-fine a{color:inherit}
 
-/* 王様ゲーム・恋バナ（ミニゲームモードの画面を使う） */
+/* 恋バナ・パーティーモード（ミニゲームモードの画面を使う） */
 .pm-stage{align-items:center; text-align:center; overflow-y:auto; gap:7px; container-type:size}
 /* short stages (small phones, 7–8 players): tighter, so the three commands and the buttons fit without scrolling */
 @container (max-height: 450px){
-  .pm-stage .pm-sub, .pm-stage .pm-body.open .kg-who{display:none}
+  .pm-stage .pm-sub{display:none}
   .pm-stage .pm-body{gap:6px}
-  .pm-stage .kg-who{font-size:19px}
-  .pm-stage .kg-opt{padding:6px 10px; font-size:13px; line-height:1.45; box-shadow:0 3px 0 var(--ink)}
-  .pm-stage .kg-opt.own{padding:4px; font-size:12px}
-  .pm-stage .kg-cmd{padding:5px 10px 7px}
-  .pm-stage .kg-cmd-t{font-size:14.5px; line-height:1.5}
-  .pm-stage .kg-num{min-height:46px}
-  .pm-stage .kg-big{font-size:22px}
   .pm-stage .ko-q{font-size:18px}
   .pm-stage .ko-card.face{padding:10px 12px 8px; gap:3px}
   .pm-stage .pm-chip{padding:5px 3px}
   .pm-stage .pm-note{font-size:12px}
-  .pm-stage .kg-kuji{width:min(110px, 30cqh)}
 }
 .pm-stage > .mg-head{align-self:stretch}
 .pm-body{flex:1 0 auto; width:100%; display:flex; flex-direction:column; align-items:center; gap:9px}
 .pm-body > :first-child{margin-top:auto}
 .pm-body > :last-child{margin-bottom:auto}
-.kg-cmd, .kg-opts, .kg-nums, .pm-chips{box-sizing:border-box}
-.kg-num:disabled{opacity:1}
 .pm-big{flex:1 0 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; width:100%}
 .pm-lead{margin:0; font-family:var(--f-display); font-size:min(22px, 5.6vw); line-height:1.3; color:var(--yellow)}
 .pm-note, .pm-sub{margin:0; font-weight:800; font-size:min(13px, 3.4vw); line-height:1.55; color:var(--muted)}
@@ -1975,51 +1965,8 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .pm-lock .ic-crown{width:70px; height:56px}
 .pm-stage .pn{color:var(--ink)}
 /* くじ */
-.kg-kuji{width:min(150px, 30cqh, 40vw); height:auto; overflow:visible; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
-.kg-kuji-t{font-family:var(--f-display); font-size:20px; fill:var(--ink); text-anchor:middle}
-.kg-st{transform-box:fill-box; transform-origin:50% 100%}
-.kg-start.drawing .kg-st{animation:kgRattle .16s ease-in-out infinite alternate; animation-delay:calc(var(--i) * -.05s)}
-.kg-start.drawing .kg-st.red{animation:kgRattle .16s ease-in-out infinite alternate, kgPull 1.25s ease-in forwards}
-.kg-start.drawing .kg-kuji{animation:tremble .1s linear infinite}
-@keyframes kgRattle{from{transform:translateY(0) rotate(-3deg)} to{transform:translateY(-8px) rotate(3deg)}}
-@keyframes kgPull{0%, 55%{translate:0 0} 100%{translate:0 -40px}}
-.kg-who{margin:0; display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; font-family:var(--f-display); font-size:min(24px, 6.4vw); line-height:1.25; color:var(--white)}
-.kg-who .ic-crown{width:1.5em; height:1.25em}
-.kg-who.enter{animation:mgIn .6s cubic-bezier(.2,1.4,.4,1) both}
-.kg-opts{display:flex; flex-direction:column; gap:7px; width:100%; max-width:440px}
-.kg-opt{background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:14px; box-shadow:0 4px 0 var(--ink); padding:9px 12px; font-family:var(--f-body); font-weight:800; font-size:min(15px, 3.9vw); line-height:1.5; text-align:left; cursor:pointer}
-.kg-opt.own{background:transparent; color:var(--white); border-style:dashed; border-color:var(--muted); box-shadow:none; text-align:center; font-size:13px; padding:6px}
-.kg-opt:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink)}
-.kg-opts.enter .kg-opt{animation:pmPop .4s var(--d, 0s) cubic-bezier(.2,1.5,.4,1) both}
 @keyframes pmPop{0%{opacity:0; transform:translateY(10px) scale(.92)} 100%{opacity:1; transform:none}}
-.kg-n{display:inline-block; background:var(--yellow); color:var(--ink); border:2px solid var(--ink); border-radius:8px; padding:0 .25em; margin:0 .08em; line-height:1.35; font-family:var(--f-display); font-weight:400}
-.kg-n small{font-family:var(--f-body); font-weight:800; font-size:.78em; margin-left:.2em; background:var(--p); border-radius:5px; padding:0 .25em}
-.kg-k{color:#e0a400}
-.kg-cmd{margin:0; width:100%; max-width:460px; display:flex; flex-direction:column; gap:3px; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:16px; box-shadow:0 4px 0 var(--ink), 0 0 0 3px var(--yellow); padding:8px 12px 10px}
-.kg-cmd.enter{animation:mgIn .55s cubic-bezier(.2,1.4,.4,1) both}
-.kg-cmd-h{font-family:var(--f-display); font-size:12px; color:var(--pink)}
-.kg-cmd-t{font-weight:800; font-size:min(17px, 4.4vw); line-height:1.6}
-.kg-cmd.own .kg-cmd-t{font-family:var(--f-display); font-weight:400}
-.kg-ex{display:block; font-family:var(--f-body); font-weight:800; font-size:12px; color:var(--ink-muted)}
-.kg-nums{display:grid; grid-template-columns:repeat(auto-fit, minmax(64px, 1fr)); gap:7px; width:100%; max-width:460px}
-.kg-nums.many{grid-template-columns:repeat(4, minmax(0,1fr))}
-.kg-nums.shake .kg-num{animation:tremble .08s linear infinite}
-.kg-num{position:relative; min-width:0; min-height:58px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; background:var(--chip-bg); color:var(--white); border:3px solid var(--ink); border-radius:12px; box-shadow:0 3px 0 var(--ink), inset 0 0 0 2px rgba(199,184,245,.3); padding:4px 3px; font-family:var(--f-body)}
-.kg-num:disabled{cursor:default}
-.kg-big{font-family:var(--f-display); font-size:26px; line-height:1}
-.kg-big small{font-size:12px; margin-left:1px}
-.kg-num.hit{box-shadow:0 3px 0 var(--ink), 0 0 0 3px var(--yellow)}
-.kg-num.hit .kg-big{color:var(--yellow)}
-.kg-nums.open .kg-num{background:var(--p); color:var(--ink); cursor:pointer}
-.kg-nums.open .kg-num.dim{opacity:.4; cursor:default}
-.kg-nums.reveal .kg-num{animation:kgFlip .5s var(--d, 0s) cubic-bezier(.3,1.4,.5,1) both}
-@keyframes kgFlip{0%{transform:rotateY(90deg) scale(.9)} 100%{transform:none}}
-.kg-lab{font-family:var(--f-display); font-size:12px; line-height:1}
-.kg-nm{max-width:100%; overflow:hidden; font-weight:800; font-size:12.5px; line-height:1.2; word-break:break-all; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
 .stat.wide b{font-family:var(--f-body); font-weight:800; font-size:12px; line-height:1.25; color:var(--yellow); word-break:break-all; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin:auto 0}
-.kg-num.king .kg-lab{color:#8a5a00}
-.kg-num.sel{transform:translateY(-2px); box-shadow:0 3px 0 var(--ink), 0 0 0 3px var(--red)}
-.kg-drink{position:absolute; top:-9px; right:-6px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:999px; font-style:normal; font-family:var(--f-display); font-size:11px; line-height:1.3; padding:0 6px; animation:bump .45s cubic-bezier(.3,1.8,.5,1)}
 /* 恋バナ */
 .ko-who{margin:0; font-family:var(--f-display); font-size:min(22px, 6vw); color:var(--white)}
 .ko-card{position:relative; width:min(100%, 420px); box-sizing:border-box; border:3px solid var(--ink); border-radius:20px; box-shadow:0 5px 0 var(--ink)}
@@ -2046,10 +1993,6 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .pm-chip i{position:absolute; top:-9px; right:-5px; background:var(--red); color:var(--white); border:2px solid var(--ink); border-radius:999px; font-style:normal; font-family:var(--f-display); font-size:10.5px; line-height:1.3; padding:0 5px}
 /* ===== 新しいパーティーモード（part-party.js） ===== */
 .pbtn.mint{background:var(--mint)}
-.t-modes2{grid-column:1 / -1; display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px}
-.t-actions .t-mode.sm{font-size:min(13px, 3.3vw); padding:min(6px, .9cqh) 1px min(7px, 1cqh); border-radius:13px}
-.t-mode.sm svg{width:min(22px, 2.9cqh); height:min(22px, 2.9cqh)}
-.t-mode.sm .t-new{font-size:9px}
 .mg-medal{position:absolute; top:-10px; right:-6px; display:flex; align-items:center; background:var(--ink); border-radius:999px; padding:1px 4px 1px 2px; line-height:1}
 .mg-medal .ic-medal{width:15px; height:19px}
 .mg-medal b{font-family:var(--f-display); font-weight:400; font-size:11px; color:var(--yellow); margin-left:1px}
@@ -2058,6 +2001,11 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .tl-ic.rp-tl{width:1em; height:.9em; background:#06c755; border:3px solid var(--ink); border-radius:45%; vertical-align:-.05em}
 .pm-ask.gold{color:var(--yellow); font-family:var(--f-display); font-weight:400; font-size:15px}
 .pm-note.sm{font-size:11.5px}
+.ms-memo{margin:0; display:flex; align-items:center; gap:8px; background:rgba(255,243,184,.12); border:2px dashed var(--yellow); border-radius:12px; padding:6px 12px; font-weight:800; font-size:12.5px; line-height:1.45; color:var(--white); text-align:left}
+.ms-memo b{color:var(--yellow)}
+.ms-memo svg{flex:none; width:26px; height:26px}
+.ms-memo.sm{font-size:11.5px; padding:4px 10px}
+.ms-memo.sm svg{width:20px; height:20px}
 .dock-note.grow{flex:2}
 /* こっそり見る */
 .px-pass{gap:10px}
@@ -2263,14 +2211,11 @@ button.rp-pick{cursor:pointer}
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
         <div class="t-modes" role="group" aria-label="ほかのモード">
           <button type="button" class="pbtn pink t-mode" id="goMini"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg><span>ミニゲーム</span></button>
-          <button type="button" class="pbtn orange t-mode" id="goKing" data-pm="king"><i class="t-new" id="kingTag">NEW</i><svg viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/></svg><span>王様ゲーム</span></button>
           <button type="button" class="pbtn purple t-mode" id="goKoi" data-pm="koi"><i class="t-new" id="koiTag">NEW</i><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/></svg><span>恋バナ・暴露</span></button>
-          <div class="t-modes2">
-            <button type="button" class="pbtn cyan t-mode sm" id="goGaka" data-pm="gaka"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3C8 3 3 8 3 14.5S7.5 26 12 26c2 0 2.5-1.6 2-3.2-.6-1.8.6-3.3 2.6-3.3H20c4 0 7-2.7 7-6.5C27 7.7 21.6 3 15 3Z" fill="#fff3d6" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9" cy="13" r="2.2" fill="#ff4fa3"/><circle cx="14" cy="8.5" r="2.2" fill="#35e0ff"/><circle cx="20.5" cy="10" r="2.2" fill="#ffd83d" stroke="#150733" stroke-width=".8"/></svg><span>ニセ画伯</span></button>
-            <button type="button" class="pbtn lime t-mode sm" id="goReply" data-pm="reply"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 4C7.8 4 2.5 8.6 2.5 14.2c0 3.4 2 6.4 5.2 8.2L6.5 27l5.6-3c1 .2 1.9.3 2.9.3 7.2 0 12.5-4.6 12.5-10.1S22.2 4 15 4Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9.5" cy="14.2" r="1.8" fill="#150733"/><circle cx="15" cy="14.2" r="1.8" fill="#150733"/><circle cx="20.5" cy="14.2" r="1.8" fill="#150733"/></svg><span>返信選手権</span></button>
-            <button type="button" class="pbtn mint t-mode sm" id="goMission" data-pm="mission"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 15c3.5-6 7.5-9 12-9s8.5 3 12 9c-3.5 6-7.5 9-12 9S6.5 21 3 15Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="15" r="5" fill="#35e0ff" stroke="#150733" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="#150733"/></svg><span>ミッション</span></button>
-            <button type="button" class="pbtn t-mode sm" id="goUso" data-pm="uso"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="#ffd83d" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg><span>ウソホント</span></button>
-          </div>
+          <button type="button" class="pbtn cyan t-mode" id="goGaka" data-pm="gaka"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3C8 3 3 8 3 14.5S7.5 26 12 26c2 0 2.5-1.6 2-3.2-.6-1.8.6-3.3 2.6-3.3H20c4 0 7-2.7 7-6.5C27 7.7 21.6 3 15 3Z" fill="#fff3d6" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9" cy="13" r="2.2" fill="#ff4fa3"/><circle cx="14" cy="8.5" r="2.2" fill="#35e0ff"/><circle cx="20.5" cy="10" r="2.2" fill="#ffd83d" stroke="#150733" stroke-width=".8"/></svg><span>ニセ画伯</span></button>
+          <button type="button" class="pbtn lime t-mode" id="goReply" data-pm="reply"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 4C7.8 4 2.5 8.6 2.5 14.2c0 3.4 2 6.4 5.2 8.2L6.5 27l5.6-3c1 .2 1.9.3 2.9.3 7.2 0 12.5-4.6 12.5-10.1S22.2 4 15 4Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9.5" cy="14.2" r="1.8" fill="#150733"/><circle cx="15" cy="14.2" r="1.8" fill="#150733"/><circle cx="20.5" cy="14.2" r="1.8" fill="#150733"/></svg><span>返信選手権</span></button>
+          <button type="button" class="pbtn mint t-mode" id="goMission" data-pm="mission"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 15c3.5-6 7.5-9 12-9s8.5 3 12 9c-3.5 6-7.5 9-12 9S6.5 21 3 15Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="15" r="5" fill="#35e0ff" stroke="#150733" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="#150733"/></svg><span>ミッション</span></button>
+          <button type="button" class="pbtn t-mode" id="goUso" data-pm="uso"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="#ffd83d" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg><span>ウソホント</span></button>
         </div>
         <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
         <div class="t-row t-grid">

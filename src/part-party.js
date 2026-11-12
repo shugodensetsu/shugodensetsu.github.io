@@ -1,7 +1,7 @@
 
 /* =====================================================================
    新しいパーティーモード（プレミアム）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
-   どれもスマホ1台。PM_MODES の仲間として、王様ゲーム・恋バナと同じ画面（mgBoard + mgStage + dock）で動く。
+   どれもスマホ1台。PM_MODES の仲間として、恋バナと同じ画面（mgBoard + mgStage + dock）で動く。
    ボタンは data-g="x-…" → PMX[mode].act('…')
    ===================================================================== */
 PM_MODES.push('gaka', 'reply', 'mission', 'uso');
@@ -471,6 +471,7 @@ const MS_LIST = [
 const MS_BY_ID = new Map(MS_LIST.map(m => [m.id, m]));
 const msPool = o => MS_LIST.filter(m => m.lv === 1 || o === 'all');
 const EYE_SVG = '<svg class="ms-art" viewBox="0 0 120 80" aria-hidden="true"><path d="M6 40C22 15 40 4 60 4s38 11 54 36C98 65 80 76 60 76S22 65 6 40Z" fill="#fff" stroke="#150733" stroke-width="4" stroke-linejoin="round"/><circle cx="60" cy="40" r="20" fill="#35e0ff" stroke="#150733" stroke-width="4"/><circle cx="60" cy="40" r="8" fill="#150733"/><circle cx="66" cy="33" r="4" fill="#fff"/></svg>';
+const MEMO_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5" fill="#fff3b8" stroke="#150733" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#150733" stroke-width="1.6" stroke-linecap="round"/></svg>';
 const msOf = p => MS_BY_ID.get((G.pm.ms || {})[p]);
 function msGive(ps) {
   const ms = G.pm.ms || (G.pm.ms = {}), have = Object.values(ms);
@@ -508,15 +509,15 @@ PMX.mission = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'peek') {
       if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を渡すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
       const p = pxPeekWho(), m = msOf(p);
-      return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(p) + ' のミッション</p><p class="ms-card">' + esc(m.t) + '</p><p class="pm-note">バレないように、しれっと達成しよう。<br>できたら「達成した！」で名乗り出てね</p>' +
+      return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(p) + ' のミッション</p><p class="ms-card">' + esc(m.t) + '</p><p class="ms-memo">' + MEMO_ICON + '<span>忘れないように、<b>自分のスマホのメモ</b>に<br>こっそり書いておこう</span></p><p class="pm-note">バレないように、しれっと達成しよう。<br>できたら「達成した！」で名乗り出てね</p>' +
         (cur.peek.check ? '' : '<button type="button" class="pm-link" data-g="x-reroll">ほかのミッションにする</button>') + '</div>';
     }
     const board = '<div class="ms-list">' + G.players.map((pl, i) => '<span class="ms-p" style="--p:' + pc(i) + '"><b>' + esc(pl.name) + '</b><small>達成 ' + pl.done + ' ・ 見破られ ' + pl.caught + '</small></span>').join('') + '</div>';
-    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p>' + board + '</div>';
+    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
     if (cur.phase === 'checkWho') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを確認</p><p class="pm-ask">確認する人をタップ（本人だけ見てね）</p>' + pxChips(pxAll(), null, 'check') + '</div>';
     if (cur.phase === 'claimWho') return head + '<div class="pm-body"><p class="pm-lead ol">達成した人は？</p><p class="pm-ask">名乗り出た人をタップ</p>' + pxChips(pxAll(), null, 'claim') + '</div>';
     if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1杯</p></div>';
@@ -714,7 +715,7 @@ Object.assign(PMX.reply, { resLine: p => 'いちばん ' + p.best + '回 ・ ス
 Object.assign(PMX.mission, { resLine: p => '達成 ' + p.done + ' ・ 見破り ' + p.spot + ' ・ 見破られ ' + p.caught, resStats: most => pxStat('ミッション王', most('done')) + pxStat('名探偵', most('spot')) });
 Object.assign(PMX.uso, { resLine: p => '全員だました ' + p.fool + '回 ・ 外した ' + p.miss + '回', resStats: most => pxStat('ホラ吹き王', most('fool')) + pxStat('いちばんだまされた', most('miss')) });
 
-/* 遊び方ガイド: a page for the four party modes, after 王様・恋バナ */
+/* 遊び方ガイド: a page for the four party modes, after 恋バナ */
 if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1), 0, { k: 'party', tab: '新モード', html: () =>
   '<p class="gd-lead">タイトル画面の下の段、<b>4つの新モード</b>です。どれもスマホ1台で遊べます。「こっそり見る」場面では、名前が出た人にスマホを渡してね。</p>' +
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
@@ -724,7 +725,7 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
     '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1杯。最後に名前がわかります。</p>', 2) +
   gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
     '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1杯。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1杯。</p>' +
-    '<p>忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
+    '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1杯</b>。全員だませたら、話した人に勲章。</p>', 4) +
   gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')

@@ -10,7 +10,9 @@ const pickM = re => { const m = re.exec(modes); if (!m) throw new Error('not fou
 const MINI = pick(/const MINI_NAMES = (\{[\s\S]*?\});/), SPECIAL = pick(/const SPECIAL_NAMES = (\[[\s\S]*?\]);/);
 const names = Object.assign({}, MINI, pickM(/Object\.assign\(MINI_NAMES, (\{[^}]*\})\);/), Object.fromEntries(SPECIAL), { timer: '10秒ストップ・タイマー', tap: '早押し' });
 /* 王様ゲームの命令・恋バナの質問: number -> text */
-const kq = { king: Object.fromEntries(pickM(/const KG_CMDS = (\[[\s\S]*?\n\]);/).map(c => [c.id, c.t.replace(/\{([ABC])\}/g, '〇')])), koi: Object.fromEntries(pickM(/const KO_QS = (\[[\s\S]*?\n\]);/).map(q => [q.id, q.q])) };
+/* 王様ゲームはやめた (2026-11-12): its command texts stay as they were in the last build, for the old games */
+const oldKing = JSON.parse((/"king":(\{.*?\}),"koi"/.exec(fs.readFileSync(path.join(dir, '..', 'src', 'stats.js'), 'utf8')) || [0, '{}'])[1]);
+const kq = { king: oldKing, koi: Object.fromEntries(pickM(/const KO_QS = (\[[\s\S]*?\n\]);/).map(q => [q.id, q.q])) };
 const plain = t => t.replace(/\{([^}]+)\}/g, '$1').replace(/\s+/g, ' ').trim();
 const cards = Object.fromEntries(deck.cards.map(c => [c.id, plain(c.text).slice(0, 48)]));
 const out = fs.readFileSync(path.join(dir, 'stats.src.js'), 'utf8')
