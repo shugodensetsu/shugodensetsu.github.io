@@ -1,7 +1,7 @@
 
 /* =====================================================================
    新しいパーティーモード（プレミアム）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
-   どれもスマホ1台。PM_MODES の仲間として、暴露オーディションと同じ画面（mgBoard + mgStage + dock）で動く。
+   どれもスマホ1台。PM_MODES の仲間として、暴露トークと同じ画面（mgBoard + mgStage + dock）で動く。
    ボタンは data-g="x-…" → PMX[mode].act('…')
    ===================================================================== */
 PM_MODES.push('gaka', 'reply', 'mission', 'uso');
@@ -715,7 +715,7 @@ Object.assign(PMX.reply, { resLine: p => 'いちばん ' + p.best + '回 ・ ス
 Object.assign(PMX.mission, { resLine: p => '達成 ' + p.done + ' ・ 見破り ' + p.spot + ' ・ 見破られ ' + p.caught, resStats: most => pxStat('ミッション王', most('done')) + pxStat('名探偵', most('spot')) });
 Object.assign(PMX.uso, { resLine: p => '全員だました ' + p.fool + '回 ・ 外した ' + p.miss + '回', resStats: most => pxStat('ホラ吹き王', most('fool')) + pxStat('いちばんだまされた', most('miss')) });
 
-/* 遊び方ガイド: a page for the four party modes, after 暴露オーディション */
+/* 遊び方ガイド: a page for the four party modes, after 暴露トーク */
 if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1), 0, { k: 'party', tab: '新モード', html: () =>
   '<p class="gd-lead">タイトル画面の下の段、<b>4つの新モード</b>です。どれもスマホ1台で遊べます。「こっそり見る」場面では、名前が出た人にスマホを渡してね。</p>' +
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
@@ -732,7 +732,7 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
 });
 
 /* =====================================================================
-   暴露オーディション（もとの恋バナ・暴露。mode のキーは 'koi' のまま）:
+   暴露トーク（もとの恋バナ・暴露。mode のキーは 'koi' のまま）:
    聞き手（答える人の左隣）が2枚から質問を選んで読む → 答えるかパス → もうひと声・♡いい話！ → 次の人。
    「この中で」は指さし（point）か、こっそり投票（vote: 3位から順に発表。だれがだれに入れたかは残さない）
    ===================================================================== */
@@ -781,7 +781,7 @@ function koReveal() {
   step();
 }
 PMX.koi = {
-  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、飲むか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露オーディション！<small>答えるか、飲むか</small>',
+  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、飲むか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露トーク！<small>答えるか、飲むか</small>',
   poolWord: '質問', poolUnit: '問', resCount: '問',
   pool: o => koPool(o).length,
   stats: () => ({ more: 0, votes: 0 }),

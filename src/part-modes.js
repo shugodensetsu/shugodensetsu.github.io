@@ -1,9 +1,9 @@
 
 /* =====================================================================
-   酒GO!!プレミアム: 暴露オーディション・パーティーモード4つ（part-party.js）・新作ミニゲーム
+   酒GO!!プレミアム: 暴露トーク・パーティーモード4つ（part-party.js）・新作ミニゲーム
    - カード104枚・カード編集・ミニゲーム14種は、ずっと無料のまま
    - PLUS_SALE が false のあいだは「先行体験」: プレミアムの中身も全部無料で、制限なし
-   - true にすると、無料の人は「お試し」（暴露オーディション・パーティーモードは1日 PLUS_TRY ラウンドずつ、新作ミニゲームは1日1回ずつ）。
+   - true にすると、無料の人は「お試し」（暴露トーク・パーティーモードは1日 PLUS_TRY ラウンドずつ、新作ミニゲームは1日1回ずつ）。
      お支払い（Google Play の課金 / Stripe）をつないだら、購入の結果を PLUS_KEY に { plan, until } で入れる。
      true にするときは、build-app.js の説明文・shareApp の文の「無料」を「基本無料」に直し、特定商取引法の表示ページを用意する
    ===================================================================== */
@@ -18,7 +18,7 @@ const PLUS_PLANS = [
   { k: 'pass', name: '24時間パス', price: '240円', per: '', note: '今夜だけ。自動で更新されない' },
 ];
 const PM_MODES = ['koi'];   /* 王様ゲームは 2026-11-12 にやめた */
-/* the party modes (part-party.js, 暴露オーディション = 'koi' included): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
+/* the party modes (part-party.js, 暴露トーク = 'koi' included): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
 const PMX = {};
 const PLUS_MG = ['cut', 'n21', 'memo'];
 function plusState() {
@@ -49,7 +49,7 @@ const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true">
 const MEDAL_SVG = '<svg class="ic-medal" viewBox="0 0 24 30" aria-hidden="true"><path d="M6 1h5l2 9H8z" fill="#35e0ff" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 1h-5l-2 9h5z" fill="#ff4fa3" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="19.5" r="8.5" fill="#ffd83d" stroke="#150733" stroke-width="2"/><path d="M12 14.5l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="#fff3b8" stroke="#b07a00" stroke-width="1"/></svg>';
 const DICE_SVG = '<svg class="ic-dice" viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg>';
 
-/* ---------- 暴露オーディションの質問. g: koi（恋バナ）/ bare（暴露・本音）. t: ask（番の人が答える）/ point（全員で指さし）/ vote（こっそり投票）/ all（全員で答える）.
+/* ---------- 暴露トークの質問. g: koi（恋バナ）/ bare（暴露・本音）. t: ask（番の人が答える）/ point（全員で指さし）/ vote（こっそり投票）/ all（全員で答える）.
    lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、飲む（tease）か.
    id は集計とダッシュボードが数えているので、変えない ---------- */
 const KO_QS = [
@@ -190,7 +190,7 @@ const KO_QS = [
 ];
 const KO_BY_ID = new Map(KO_QS.map(q => [q.id, q]));
 const PM = {
-  koi: { title: '暴露オーディション', word: '問', opt: 'koi', optHead: '質問のジャンル', min: 2,
+  koi: { title: '暴露トーク', word: '問', opt: 'koi', optHead: '質問のジャンル', min: 2,
     opts: [['mix', 'ミックス', '両方から'], ['koi', '恋バナ', '恋の話だけ'], ['bare', '暴露', '秘密・本音'], ['light', 'かるめ', '深い質問なし']] },
 };
 const pmOpt = mode => { const o = PM[mode].opts.map(x => x[0]); return o.includes(setup[mode]) ? setup[mode] : o[0]; };
@@ -264,7 +264,7 @@ function pmTryNote() {
   return left === Infinity ? '' : '<p class="pm-try">今日のお試し あと <b>' + left + '</b>' + PM[G.mode].word + ' ・ <button type="button" class="pm-link" data-g="plus">プレミアムなら遊び放題</button></p>';
 }
 function pmLockHTML() {
-  return '<div class="pm-big pm-lock">' + CROWN_SVG + '<h3 class="ol">今日のお試しはここまで！</h3><p>プレミアムなら、暴露オーディション・パーティーモード・新作ミニゲームが<b>遊び放題</b>。お試しは明日また使えます。</p>' +
+  return '<div class="pm-big pm-lock">' + CROWN_SVG + '<h3 class="ol">今日のお試しはここまで！</h3><p>プレミアムなら、暴露トーク・パーティーモード・新作ミニゲームが<b>遊び放題</b>。お試しは明日また使えます。</p>' +
     '<button type="button" class="pbtn" data-g="plus">プレミアムを見る</button></div>';
 }
 
@@ -387,11 +387,11 @@ function renderPlus(msg) {
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露オーディション', '答えるか、飲むか。こっそり投票・もうひと声も') +
+    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
-    (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露オーディション あと<b>' + left('koi') + '</b>問</p>' : '') +
+    (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
       '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '">' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +
       '<b class="pl-nm">' + p.name + '</b><span class="pl-pr">' + p.price + '<small>' + p.per + '</small></span><small class="pl-nt">' + p.note + '</small></button>').join('') + '</div>') +
@@ -602,8 +602,8 @@ function memoTap(v) {
 function memoAct(a) { if (a === 'watch') memoShow(); }
 
 /* 遊び方ガイド: the new modes get a page of their own (after ミニゲーム) */
-if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '暴露オーディション', html: () =>
-  '<p class="gd-lead">タイトル画面の<b>「暴露オーディション」</b>から遊べるモードです（2人から）。答えるか、飲むか。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
+if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '暴露トーク', html: () =>
+  '<p class="gd-lead">タイトル画面の<b>「暴露トーク」</b>から遊べるモードです（2人から）。答えるか、飲むか。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
   gCard('質問を選んで、読み上げる', '<p>番の人が<b>答える人</b>、その左隣が<b>聞き手</b>。聞き手が2枚の質問から1枚を選んで、声に出して読みます（2枚とも入れかえは1回まで）。</p>' +
     '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1杯</b>。理由は聞かないのがルール。</p>', 1) +
   gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>半分飲む</b>か。</p>' +

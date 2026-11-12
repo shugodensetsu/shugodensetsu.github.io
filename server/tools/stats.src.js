@@ -142,7 +142,7 @@ function laps(rows) {
    one phone's games count up 1, 2, 3 … so a run of numbers is one phone */
 function recentList(rows, me, days) {
   if (!rows.length) return '<p class="none">まだありません</p>';
-  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '暴露オーディション', gaka: 'ニセ画伯', reply: '返信選手権', mission: 'ミッション', uso: 'ウソホント' };
+  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '暴露トーク', gaka: 'ニセ画伯', reply: '返信選手権', mission: 'ミッション', uso: 'ウソホント' };
   const when = t => { const d = new Date(t + 9 * 3600e3); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '（' + '日月火水木金土'[d.getUTCDay()] + '）' + d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
   return '<form method="post" action="/move" class="recent"><input type="hidden" name="back" value="/?d=' + days + '&me=' + (me ? 1 : 0) + '">' +
     '<p class="rhint">「通し○回目」は、その端末で何回目のゲームか。1台の端末なら番号が1つずつ増えていきます。' + (me ? 'ふつうの集計に戻すゲームを選んでください。' : '自分の端末で遊んだゲームを選んで、別枠に移せます。') + '</p><ul>' +
@@ -230,7 +230,7 @@ export default {
       q('SELECT rounds k, COUNT(*) n, SUM(done) done FROM games WHERE day >= ?' + SC + ' GROUP BY rounds', from),
       q('SELECT sid, started, mode, players, rounds, done, nth, form, installed FROM games WHERE day >= ?' + SC + ' ORDER BY started DESC LIMIT 60', from),
     ]);
-    const LV = { 'king:mild': '王様：ふつう', 'king:hot': '王様：盛り上げ', 'koi:mix': '暴露オーディション：ミックス', 'koi:koi': '暴露オーディション：恋バナ', 'koi:bare': '暴露オーディション：暴露', 'koi:light': '暴露オーディション：かるめ',
+    const LV = { 'king:mild': '王様：ふつう', 'king:hot': '王様：盛り上げ', 'koi:mix': '暴露トーク：ミックス', 'koi:koi': '暴露トーク：恋バナ', 'koi:bare': '暴露トーク：暴露', 'koi:light': '暴露トーク：かるめ',
       'gaka:easy': 'ニセ画伯：かんたん', 'gaka:all': 'ニセ画伯：ミックス', 'reply:all': '返信：ミックス', 'reply:safe': '返信：おだやか', 'reply:koi': '返信：恋愛多め',
       'mission:easy': 'ミッション：かんたん', 'mission:all': 'ミッション：ミックス', 'uso:mix': 'ウソホント：ミックス', 'uso:light': 'ウソホント：かるめ', 'uso:deep': 'ウソホント：ふかめ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
@@ -276,7 +276,7 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 <p class="scope">${me ? '「自分の端末」をオンにした端末で遊んだ分だけを表示中（ふつうの集計には入っていません）。<a href="/?d=' + days + '&me=0">ふつうの集計に戻る</a>'
   : '自分の端末で遊んだ分（別枠）は入っていません：' + ((other && other.n) || 0) + 'ゲーム。<a href="/?d=' + days + '&me=1">自分の端末の分を見る</a>'}</p>
 <div class="tiles">
-${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 暴露オーディション ' + (tot.koi || 0) + ' ・ 新モード ' + (tot.party || 0))}
+${tile(n, 'ゲーム数', 'ミニゲーム ' + (tot.mini || 0) + ' ・ 王様 ' + (tot.king || 0) + ' ・ 暴露トーク ' + (tot.koi || 0) + ' ・ 新モード ' + (tot.party || 0))}
 ${tile(pct(tot.done || 0, n), '最後まで遊んだ', (tot.done || 0) + 'ゲーム')}
 ${tile(tot.first || 0, 'はじめて遊んだ端末', '2回目以降のゲーム ' + (tot.again || 0))}
 ${tile(tot.pl ? (Math.round(tot.pl * 10) / 10) + '人' : '—', '平均人数')}
@@ -304,7 +304,7 @@ ${tile(evN('plus', d => d === 'plan_pass'), '24時間パスを選んだ')}
 <section><h2>特殊ルール</h2>${bars(sp, r => NAMES[r.k] || r.k)}</section>
 <section><h2>新モードの設定</h2>${bars(lv, r => LV[r.m + ':' + r.k] || r.m + ':' + r.k)}</section>
 <section><h2>よく選ばれた命令<small>王様ゲーム</small></h2>${bars(kingQ, r => KQ.king[r.k] || 'No.' + r.k)}</section>
-<section><h2>よく出た質問<small>暴露オーディション</small></h2>${bars(koiQ, r => KQ.koi[r.k] || 'No.' + r.k)}</section>
+<section><h2>よく出た質問<small>暴露トーク</small></h2>${bars(koiQ, r => KQ.koi[r.k] || 'No.' + r.k)}</section>
 </div>
 <section id="recent"><h2>最近のゲーム<small>新しい順 ${recent.length}件</small></h2>${recentList(recent, me, days)}</section>
 <footer>名前・カードの文章・端末を見分けるIDは集めていません。数字は「集計に協力する」がオンの端末のぶんです。${g.cookie ? ' <a href="/logout">ログアウト</a>' : ''}</footer>
