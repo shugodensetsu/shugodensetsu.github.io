@@ -20,7 +20,7 @@ const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
-let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
+let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-arcade.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
   .replace('__SMP_DATA__', () => JSON.stringify(smpData));
 /* the play-count collector (server/collector.js): its address is STAT_URL in part-game.js, and the page may talk to that one origin only.
    A test build can point it at a local stand-in:  STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test */
@@ -34,7 +34,7 @@ if (statUrl === undefined) throw new Error('STAT_URL not found');
 const statOrigin = statUrl ? new URL(statUrl).origin : '';
 if (statOrigin && !/^https:\/\/[a-z0-9.-]+$/.test(statOrigin) && VERSION !== 'test') throw new Error('STAT_URL must be https: ' + statUrl);
 /* test builds only (node src/build-app.js test): a handle on the game's state for the automated phone-size tests */
-const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; }, TRACKS, BGM };' : '';
+const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, miniChoose, TOOLX, FXC, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; }, TRACKS, BGM };' : '';
 if (/<\/script/i.test(js)) throw new Error('page.js contains a closing script tag');
 const page = tpl.replace('__DECK_JSON__', () => serialize(deck).replace(/</g, '\\u003c')).replace('__PAGE_JS__', () => (TEST_HOOK ? js.replace(/\}\)\(\);\s*$/, TEST_HOOK + '\n})();') : js));
 const cut = page.indexOf('<div class="app"');

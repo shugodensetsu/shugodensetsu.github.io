@@ -4018,7 +4018,7 @@ function openTool(force) {
   openOv('toolOv');
   BGM.play('tension'); BGM.level(0.7, 0.3);
   SE.play('pop');
-  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else if (kind === 'react') reactSetup(); else if (kind === 'memo') memoSetup(); else duelSetup();
+  if (PARTY_FX.includes(kind)) partySetup(); else if (kind === 'chinchiro') chinSetup(); else if (kind === 'darts') dartsSetup(); else if (kind === 'dice') diceSetup(); else if (kind === 'react') reactSetup(); else if (kind === 'memo') memoSetup(); else if (TOOLX[kind]) TOOLX[kind].setup(); else duelSetup();
 }
 function closeTool(mode) {
   const T = tool;
@@ -4027,6 +4027,7 @@ function closeTool(mode) {
   if (T.raf) cancelAnimationFrame(T.raf);
   tool = null;
   if (T.bowl) { T.bowl.dispose(); T.bowl = null; }
+  if (TOOLX[T.kind] && TOOLX[T.kind].close) TOOLX[T.kind].close(T);
   clearVerdict('toolOv');
   closeOv('toolOv');
   BGM.play('party'); BGM.level(1, 0.3);
@@ -4043,6 +4044,7 @@ function toolAct(a, el) {
   if (PARTY_FX.includes(T.kind)) { partyAct(a, el); return; }
   if (T.kind === 'react') { reactAct(a); return; }
   if (T.kind === 'memo') { memoAct(a); return; }
+  if (TOOLX[T.kind]) { TOOLX[T.kind].act(a, el); return; }
   if (T.kind === 'indian' && a === 'peek') { indianPeek(); return; }
   if (T.kind === 'indian' && a === 'hide') { indianHide(); return; }
   if (T.kind === 'indian' && a === 'redraw') { indianRedraw(+el.dataset.j); return; }
@@ -4070,7 +4072,7 @@ function toolFinish(losers, msg, panel) {
   vibrate([60, 40, 120]);
   BGM.level(0.15, 0.05);
   toolActs('', false);
-  toolLater(() => loseStamp('toolOv', losers), 160);
+  toolLater(() => loseStamp('toolOv', losers, T.stamp), 160);
   toolLater(() => toolActs(losers.length === 1
     ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>'
     : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録</button>'), 1400);
@@ -4120,12 +4122,14 @@ function hushBeat(ov, ms, fn, later, white, lit) {
     fn();
   }, reduceMotion ? 150 : ms);
 }
-function loseStamp(ov, losers) {
+/* alt = { names: [players], word }: a stamp that names someone else (「○○ 以外 全員の負け！！」) */
+function loseStamp(ov, losers, alt) {
   const el = typeof ov === 'string' ? $(ov) : ov;
   if (!el || !losers || !losers.length) return;
   el.querySelectorAll('.lose-stamp').forEach(e => e.remove());
-  el.insertAdjacentHTML('beforeend', '<div class="lose-stamp" aria-hidden="true"><div class="ls-in"><div class="ls-names' + (losers.length > 2 ? ' many' : '') + '">' +
-    losers.map(p => '<span style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>').join('') + '</div><b class="ls-word">の負け！！</b></div></div>');
+  const names = alt ? alt.names : losers;
+  el.insertAdjacentHTML('beforeend', '<div class="lose-stamp" aria-hidden="true"><div class="ls-in"><div class="ls-names' + (names.length > 2 ? ' many' : '') + '">' +
+    names.map(p => '<span style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>').join('') + '</div><b class="ls-word' + (alt ? ' alt' : '') + '">' + (alt ? alt.word : 'の負け！！') + '</b></div></div>');
   SE.play('hanko'); shake(true); vibrate([90, 40, 160]);
 }
 const clearVerdict = ov => {
@@ -5838,6 +5842,17 @@ function miniLand(cur, kind) {
   SE.play('rlLand');
   const q = relPos($('mgStage')); if (!reduceMotion) FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 });
 }
+/* tapping a game in the list picks it without the roulette (a game already played can be played again) */
+function miniChoose(kind) {
+  const cur = G.cur;
+  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv() || !MG[kind] || mgLocked(kind) || mgSoon(kind)) return;
+  mSpin = { cur, kind };
+  renderGame();
+  const el = document.querySelector('#mgList [data-k="' + kind + '"]');
+  if (el) el.classList.add('hot', 'win');
+  SE.play('rlStop'); vibrate(30);
+  setTimeout(() => miniLand(cur, kind), reduceMotion ? 150 : 550);
+}
 /* 「別のゲーム」: put this one aside for the rest of the game and spin again */
 function miniReroll() {
   const cur = G.cur, M = G.mini;
@@ -5975,7 +5990,7 @@ function miniStageHTML(anim) {
     const rows = MG_ORDER.length;
     return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList" style="--rows:' + rows + ';--rows2:' + Math.ceil(rows / 2) + '">' + MG_ORDER.map(k => {
       const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), soon = mgSoon(k), plus = PLUS_MG.includes(k);
-      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock || soon ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"><span class="mg-it">' + (plus && !soon ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
+      return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock || soon ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"' + (lock || soon ? '' : ' data-g="mchoose" role="button" tabindex="0"') + '><span class="mg-it">' + (plus && !soon ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
         (used ? '<i>済</i>' : skip ? '<i>パス</i>' : soon ? '<i>Coming soon</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
     }).join('') + '</ol>';
   }
@@ -5990,7 +6005,7 @@ function miniStageHTML(anim) {
 function miniDock() {
   const cur = G.cur, last = G.turn + 1 >= G.mini.total;
   if (cur.phase === 'before') {
-    return '<div class="dock-row">' + (mSpin ? '<div class="dock-note">ルーレット中…</div>' : '<button type="button" class="pbtn big main pulse" data-g="mpick">ルーレットスタート！</button>') + '</div>';
+    return '<div class="dock-row">' + (mSpin ? '<div class="dock-note">ルーレット中…</div>' : '<button type="button" class="pbtn big main pulse" data-g="mpick">ルーレットスタート！<span class="sub">ゲームをタップして選んでもOK</span></button>') + '</div>';
   }
   if (cur.phase === 'drawn') {
     return '<div class="dock-row"><button type="button" class="pbtn white small" data-g="mreroll">別のゲーム<span class="sub">にする</span></button>' +
@@ -6767,6 +6782,7 @@ function wireGame() {
     if (pmAct(g, el)) return;
     if (g === 'draw') drawCard();
     else if (g === 'mpick') miniPick();
+    else if (g === 'mchoose') miniChoose(el.dataset.k);
     else if (g === 'mstart') miniStart();
     else if (g === 'mreroll') miniReroll();
     else if (g === 'mundo') miniUndo();

@@ -20,7 +20,9 @@ const PLUS_PLANS = [
 const PM_MODES = ['koi'];   /* 王様ゲームは 2026-11-12 にやめた */
 /* the party modes (part-party.js, 暴露トーク = 'koi' included): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
 const PMX = {};
-const PLUS_MG = ['cut', 'n21', 'memo'];
+/* the mini games with a screen of their own (part-arcade.js): TOOLX[kind] = { setup(), act(a, el), close(T) } */
+const TOOLX = {};
+const PLUS_MG = ['cut', 'n21', 'memo', 'slot', 'twist', 'pour'];
 function plusState() {
   try { const s = JSON.parse(localStorage.getItem(PLUS_KEY) || 'null'); return s && typeof s === 'object' && Number.isFinite(s.until) ? s : null; } catch (_) { return null; }
 }
@@ -389,7 +391,7 @@ function renderPlus(msg) {
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
-      feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
+      feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.filter(k => MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
     (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
@@ -444,7 +446,7 @@ Object.assign(TOOL_INFO, {
 Object.assign(PARTY_HINT, { cut: 'コードを1本タップして切る', n21: '「+1」を1〜3回押して「次の人へ」' });
 Object.assign(PARTY_LOSE, { cut: 'がハズレを切った！', n21: 'が「21」を言った！' });
 Object.assign(LOSE_SE, { cut: 'loseMine', n21: 'loseSkull', memo: 'loseReact' });
-Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー' });
+Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', pour: '黄金比チャレンジ' });
 
 /* 爆弾解除: a time bomb with 8 wires; one hidden wire sets it off. Every safe cut makes the timer tick faster */
 const CUT_COLORS = ['#ff3d4f', '#2f8cff', '#ffd83d', '#30d158', '#ffffff', '#ff8b2b', '#b17cff', '#ff6fd8'];
