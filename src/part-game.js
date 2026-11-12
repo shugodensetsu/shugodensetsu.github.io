@@ -5799,7 +5799,7 @@ function miniRoundFx() {
 }
 const miniAvail = () => {
   const M = G.mini;
-  const all = MG_ORDER.filter(k => !mgLocked(k) && !mgSoon(k));
+  const all = MG_ORDER.filter(k => !mgLocked(k) && !mgSoon(k) && !mgCant(k));
   let a = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
   if (!a.length) a = all.filter(k => !M.skip.includes(k));
   return a.length ? a : all;
@@ -5845,7 +5845,7 @@ function miniLand(cur, kind) {
 /* tapping a game in the list picks it without the roulette (a game already played can be played again) */
 function miniChoose(kind) {
   const cur = G.cur;
-  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv() || !MG[kind] || mgLocked(kind) || mgSoon(kind)) return;
+  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv() || !MG[kind] || mgLocked(kind) || mgSoon(kind) || mgCant(kind)) return;
   mSpin = { cur, kind };
   renderGame();
   const el = document.querySelector('#mgList [data-k="' + kind + '"]');
@@ -5989,9 +5989,9 @@ function miniStageHTML(anim) {
   if (cur.phase === 'before') {
     const rows = MG_ORDER.length;
     return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList" style="--rows:' + rows + ';--rows2:' + Math.ceil(rows / 2) + '">' + MG_ORDER.map(k => {
-      const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), soon = mgSoon(k), plus = PLUS_MG.includes(k);
+      const used = M.used.includes(k), skip = M.skip.includes(k), soon = mgSoon(k), cant = soon ? '' : mgCant(k), lock = mgLocked(k) || !!cant, plus = PLUS_MG.includes(k);
       return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock || soon ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"' + (lock || soon ? '' : ' data-g="mchoose" role="button" tabindex="0"') + '><span class="mg-it">' + (plus && !soon ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
-        (used ? '<i>済</i>' : skip ? '<i>パス</i>' : soon ? '<i>Coming soon</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
+        (soon ? '<i>Coming soon</i>' : cant ? '<i>' + cant + '</i>' : used ? '<i>済</i>' : skip ? '<i>パス</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
     }).join('') + '</ol>';
   }
   const k = cur.mkind, done = cur.phase === 'done';
@@ -6264,7 +6264,7 @@ const GUIDE = [
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
     gCard('ミニゲームモード', '<p>タイトルの<b>「ミニゲームモード」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
       '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、グラスのメモリが<b>3つたまると1杯</b>。メモリが2つの人がまた負けたら、1杯飲んでメモリ1つから再スタート。</p>' +
-      '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。</p>') +
+      '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。<b>一覧のゲームをタップ</b>すれば、ルーレットなしで好きなゲームを選べます。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },

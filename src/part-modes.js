@@ -45,6 +45,8 @@ const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.include
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }
 function isPM() { return !!(G && PM_MODES.includes(G.mode)); }
 const mgSoon = k => PLUS_MG.includes(k) && !PLUS_OPEN;
+/* a game this device cannot play (指ツイスター needs a multi-touch screen): '' or a short label for the list */
+const mgCant = k => (TOOLX[k] && TOOLX[k].cant ? TOOLX[k].cant() : '');
 
 const CROWN_SVG = '<svg class="ic-crown" viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/><circle cx="8.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/><circle cx="23.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/></svg>';
 const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><path d="M7 7.5 Q8.5 5 11 5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".8"/></svg>';
@@ -391,7 +393,7 @@ function renderPlus(msg) {
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
-      feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.filter(k => MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
+      feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
     (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>

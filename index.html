@@ -1450,7 +1450,8 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .mg-head small{font-size:.65em; color:var(--muted); margin-left:2px}
 .mg-head .fin{color:var(--red)}
 .mg-list{flex:1; min-height:0; margin:0; padding:0; list-style:none; display:grid; grid-template-rows:repeat(var(--rows, 14), minmax(0,1fr)); gap:3px}
-.mg-list.two{grid-template-rows:repeat(var(--rows2, 7), minmax(0,1fr)); grid-template-columns:1fr 1fr; grid-auto-flow:column; column-gap:6px}
+.mg-list.two{grid-template-rows:repeat(var(--rows2, 7), minmax(0,1fr)); grid-template-columns:auto auto; grid-auto-flow:column; column-gap:6px}
+.mg-list.two .mg-item{min-width:0} /* a column is as wide as its longest name, as long as both fit */
 .mg-item{min-height:0; display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--chip-bg); border:2px solid rgba(199,184,245,.28); border-radius:10px; padding:0 10px; font-weight:800; font-size:min(15px, 2.4cqh); color:var(--white); transition:background .08s, transform .08s}
 .mg-it{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .mg-item i{flex:none; font-style:normal; font-size:10.5px; color:var(--muted); border:1.5px solid currentColor; border-radius:6px; padding:0 5px; line-height:1.4}
@@ -2216,6 +2217,9 @@ button.rp-pick{cursor:pointer}
 /* ミニゲーム一覧: 新作の印・お試し済み */
 .mg-new{display:inline-block; background:var(--yellow); color:var(--ink); border-radius:5px; font-size:9.5px; line-height:1.3; padding:0 4px; margin-right:5px; vertical-align:1px}
 .mg-item.lock{opacity:.38}
+.mg-item.lock .mg-new{display:none}
+/* a narrow phone: the NEW badge becomes a dot, so the name of the game fits */
+@container (max-width: 400px){ .mg-list.two .mg-new{width:7px; height:7px; padding:0; border-radius:50%; font-size:0; line-height:0; vertical-align:middle; margin-top:-3px} .mg-list.two .mg-item{padding:0 8px} }
 .mg-item.hot .mg-new, .mg-item.win .mg-new{background:var(--ink); color:var(--yellow)}
 
 /* 爆弾解除 */
@@ -2405,6 +2409,106 @@ button.rp-pick{cursor:pointer}
   .tool-ov.slot .sl-sub small{display:none}
 }
 @media (prefers-reduced-motion: reduce){ .sl-reel.spin .sl-strip{filter:none} .sl-machine.god, .sl-machine[data-lamp="rainbow"], [data-lamp="red"] .sl-lamp, .sl-lcd.red, .sl-lcd.reach, .sl-machine.reach #slR2{animation:none} }
+/* 指ツイスター */
+.tool-ov.twist{background:radial-gradient(circle at 50% 45%, #0f6f8a 0, #0a2c5a 55%, #04081c 100%)}
+.tool-ov.twist .tm-box{gap:8px}
+.tool-ov.twist .tm-card{display:none}
+.tool-ov.twist .tm-title{font-size:min(26px, 6.8vw)}
+.tool-ov.twist .tm-stage{gap:8px; container-name:arc; touch-action:none}
+.tool-ov.twist .tm-acts{min-height:42px}
+.tw-arena{position:relative; flex:1 1 0; min-height:0; width:100%; box-sizing:border-box; margin-bottom:6px; overflow:hidden; container-type:size; border:4px solid var(--ink); border-radius:22px;
+  background:radial-gradient(circle, rgba(255,79,163,.2) 0 10px, transparent 11px) 0 0/25% 54px repeat-y, radial-gradient(circle, rgba(53,224,255,.2) 0 10px, transparent 11px) 33.33% 0/25% 54px repeat-y,
+    radial-gradient(circle, rgba(255,216,61,.2) 0 10px, transparent 11px) 66.66% 0/25% 54px repeat-y, radial-gradient(circle, rgba(124,240,61,.2) 0 10px, transparent 11px) 100% 0/25% 54px repeat-y, #0b1030;
+  box-shadow:0 6px 0 var(--ink), inset 0 0 44px rgba(0,0,0,.6); touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; transition:border-color .2s}
+.tw-arena.spin::before{content:""; position:absolute; left:50%; top:50%; width:min(70cqw, 70cqh); aspect-ratio:1; margin:calc(min(70cqw, 70cqh) / -2) 0 0 calc(min(70cqw, 70cqh) / -2); border-radius:50%; border:6px dashed rgba(255,255,255,.28); animation:twSpin 2.4s linear infinite; animation-direction:normal}
+@keyframes twSpin{to{transform:rotate(calc(360deg * var(--dir, 1)))}}
+.tw-arena.over{border-color:#ff3d4f}
+.tw-hud{position:absolute; left:12px; right:12px; top:3px; z-index:1; display:flex; justify-content:space-between; align-items:baseline; font-family:var(--f-display); font-size:13px; line-height:1.4; color:rgba(255,255,255,.8); pointer-events:none}
+.tw-hud b{font-weight:400; font-size:15px; color:var(--yellow); min-width:2.6em}
+.tw-hud b::after{content:"秒"; font-size:.7em; margin-left:1px}
+.tw-hud i{font-style:normal}
+.tw-c{position:absolute; left:0; top:0; z-index:2; width:var(--d); height:var(--d); margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2); border-radius:50%; pointer-events:none; will-change:transform; --life:1}
+.tw-ring{position:absolute; inset:-10px; border-radius:50%; background:conic-gradient(#fff calc(var(--life) * 360deg), rgba(255,255,255,.16) 0);
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px)); mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px))}
+.tw-disc{position:absolute; inset:0; border-radius:50%; box-sizing:border-box; border:4px solid var(--ink); background:repeating-radial-gradient(circle, rgba(21,7,51,0) 0 5px, rgba(21,7,51,.17) 5px 7px), radial-gradient(circle at 34% 28%, rgba(255,255,255,.8), rgba(255,255,255,0) 46%), var(--p); box-shadow:0 4px 0 var(--ink); transition:box-shadow .12s, opacity .2s}
+.tw-arena.wait .tw-c:not(.held) .tw-disc{animation:twCall .8s ease-in-out infinite}
+@keyframes twCall{50%{transform:scale(1.12); box-shadow:0 4px 0 var(--ink), 0 0 0 6px rgba(255,255,255,.35)}}
+.tw-c.held .tw-disc{box-shadow:0 0 0 3px #fff, 0 0 22px 8px var(--p)}
+.tw-c.warn .tw-ring{background:conic-gradient(#ff3d4f calc(var(--life) * 360deg), rgba(255,255,255,.16) 0)}
+.tw-c.warn .tw-disc{animation:twWarn .16s steps(1) infinite; box-shadow:0 0 0 3px #ff3d4f, 0 0 18px 6px rgba(255,61,79,.8)}
+@keyframes twWarn{50%{filter:brightness(1.9) saturate(.3)}}
+.tw-c.grace .tw-ring{background:conic-gradient(var(--cyan) 360deg, transparent 0); animation:twBlink .2s steps(1) infinite}
+.tw-c.mark .tw-ring{background:repeating-conic-gradient(#fff 0 18deg, transparent 18deg 36deg); animation:twTurn 1s linear infinite}
+.tw-c.pick .tw-disc{box-shadow:0 0 0 3px var(--yellow), 0 0 0 7px #ff3d4f, 0 0 26px 12px rgba(255,120,30,.9)}
+.tw-c.going .tw-disc{animation:twBlink .14s steps(1) infinite}
+@keyframes twBlink{50%{opacity:.35}}
+@keyframes twTurn{to{transform:rotate(360deg)}}
+.tw-c.safe{opacity:.4}
+.tw-c.out .tw-ring{opacity:0}
+.tw-c.out .tw-disc{background:#ff3d4f; animation:twOut .7s cubic-bezier(.2,.8,.3,1) forwards}
+.tw-c.out .tw-disc::after{content:"✕"; position:absolute; inset:0; display:grid; place-items:center; font-family:var(--f-display); font-size:calc(var(--d) * .6); color:#fff}
+@keyframes twOut{0%{transform:scale(1)} 30%{transform:scale(1.9); filter:brightness(2)} 100%{transform:scale(1.25)}}
+.tw-nm{position:absolute; left:0; top:0; z-index:3; box-sizing:border-box; max-width:44%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 8px; border-radius:999px; border:2px solid var(--ink); background:var(--p); color:var(--ink); font-weight:800; font-size:11.5px; line-height:1.5; pointer-events:none; will-change:transform}
+.tw-nm.out{background:#ff3d4f; color:#fff}
+.tw-ghost{position:absolute; left:0; top:0; z-index:1; width:var(--d); height:var(--d); margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2); box-sizing:border-box; border-radius:50%; border:5px dashed var(--p); background:rgba(255,255,255,.12); opacity:0; pointer-events:none}
+.tw-ghost.on{opacity:1; animation:twBlink .22s steps(1) infinite}
+.tw-ghost.on::after{content:"ココ！"; position:absolute; inset:0; display:grid; place-items:center; font-family:var(--f-display); font-size:calc(var(--d) * .26); color:#fff; text-shadow:0 2px 0 var(--ink)}
+.tw-ban{position:absolute; left:6px; right:6px; top:44%; z-index:4; text-align:center; font-family:var(--f-display); font-size:min(34px, 9.4cqw); line-height:1.25; color:#fff; text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink), 0 0 18px rgba(0,0,0,.6); pointer-events:none; opacity:0; transform:translateY(-50%)}
+.tw-ban.show{animation:twBan 1.15s cubic-bezier(.2,1.5,.4,1) both}
+.tw-ban.go{color:var(--lime); font-size:min(64px, 18cqw)}
+.tw-ban.out{color:#ff3d4f; font-size:min(56px, 16cqw); animation-duration:1.5s}
+.tw-ban.speed, .tw-ban.pick{color:var(--yellow)}
+.tw-ban.warp{color:var(--cyan)}
+.tw-ban.swap, .tw-ban.spin{color:var(--pink)}
+.tw-ban.shrink{color:var(--lime)}
+.tw-ban.ng{font-size:min(22px, 6.4cqw); color:#ffb0b8}
+@keyframes twBan{0%{opacity:0; transform:translateY(-50%) scale(2.2) rotate(-5deg)} 16%{opacity:1; transform:translateY(-50%) scale(1) rotate(-3deg)} 78%{opacity:1; transform:translateY(-50%) scale(1) rotate(-3deg)} 100%{opacity:0; transform:translateY(-50%) scale(.85) rotate(-3deg)}}
+.tw-cnt{position:absolute; inset:0; z-index:4; display:grid; place-items:center; pointer-events:none; font-family:var(--f-display); font-size:min(120px, 36cqw); color:var(--yellow); text-shadow:0 5px 0 var(--ink), 3px 0 0 var(--ink), -3px 0 0 var(--ink), 0 -3px 0 var(--ink)}
+.tw-cnt b{font-weight:400; animation:twCnt .7s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes twCnt{0%{transform:scale(2.4); opacity:0} 25%{transform:scale(1); opacity:1} 80%{opacity:1} 100%{transform:scale(.8); opacity:.2}}
+.tw-sub{min-height:3.05em}
+@container arc (max-height: 400px){
+  .tool-ov.twist .tw-sub small{display:none}
+  .tw-sub{min-height:1.55em}
+}
+/* 黄金比チャレンジ */
+.tool-ov.pour{background:radial-gradient(circle at 50% 38%, #8a4b1c 0, #3f1d0c 55%, #120703 100%)}
+.tool-ov.pour::before{content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 18% 16%, rgba(255,200,90,.3) 0 26px, transparent 60px), radial-gradient(circle at 82% 10%, rgba(255,120,160,.22) 0 20px, transparent 52px), radial-gradient(circle at 70% 30%, rgba(255,220,130,.16) 0 30px, transparent 70px), radial-gradient(circle at 8% 44%, rgba(120,220,255,.14) 0 22px, transparent 56px)}
+.tool-ov.pour .tm-box{gap:8px}
+.tool-ov.pour .tm-card{display:none}
+.tool-ov.pour .tm-title{font-size:min(26px, 6.8vw)}
+.tool-ov.pour .tm-stage{gap:8px; container-name:arc}
+.tool-ov.pour .tm-acts{min-height:57px; align-items:flex-end}
+.pr-arena{position:relative; flex:1 1 0; min-height:0; width:100%; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; cursor:pointer}
+.pr-arena canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.pr-bar{position:absolute; left:8%; right:8%; bottom:2px; height:9px; border:2.5px solid var(--ink); border-radius:999px; background:rgba(21,7,51,.6); overflow:hidden; pointer-events:none}
+.pr-bar[hidden]{display:none}
+.pr-bar i{display:block; height:100%; background:var(--lime); transform-origin:0 50%}
+.pr-bar i.hurry{background:var(--red); animation:slBlink .3s steps(1) infinite}
+.pr-tip{position:absolute; left:0; right:0; bottom:16px; margin:0; text-align:center; font-weight:800; font-size:12.5px; line-height:1.5; color:var(--white); text-shadow:0 2px 0 rgba(21,7,51,.8); pointer-events:none}
+.pr-tip[hidden]{display:none}
+.pr-tip b{color:var(--yellow)}
+.pr-mode{position:absolute; right:0; top:0; z-index:2; padding:2px 10px; border:2.5px solid var(--ink); border-radius:999px; background:rgba(255,255,255,.92); color:var(--ink); font:inherit; font-weight:800; font-size:11px; line-height:1.6; cursor:pointer}
+.pr-mode[hidden]{display:none}
+.pr-res{position:absolute; left:50%; top:2px; z-index:2; width:max-content; max-width:100%; box-sizing:border-box; display:flex; align-items:center; gap:12px; padding:4px 14px 5px; border:4px solid var(--ink); border-radius:18px; background:rgba(255,253,246,.96); color:var(--ink); box-shadow:0 5px 0 var(--ink); text-align:center; transform:translateX(-50%) rotate(-2deg); animation:prRes .4s cubic-bezier(.2,1.5,.4,1) both; pointer-events:none}
+.pr-res[hidden]{display:none}
+@keyframes prRes{from{transform:translateX(-50%) rotate(-2deg) scale(.4); opacity:0}}
+.pr-pt{flex:none; font-family:var(--f-display); font-weight:400; font-size:min(44px, 11.5vw); line-height:1.1; color:var(--ink); white-space:nowrap}
+.pr-side{display:flex; flex-direction:column; align-items:flex-start; text-align:left; min-width:0}
+.pr-pt small{font-size:.4em; margin-left:2px}
+.pr-res.great .pr-pt{color:#d18a00}
+.pr-res.bad .pr-pt{color:#d8172f}
+.pr-word{font-style:normal; font-family:var(--f-display); font-size:min(18px, 4.8vw); line-height:1.3; min-height:1.3em; color:#d8172f; white-space:nowrap}
+.pr-res.great .pr-word{color:#d18a00}
+.pr-res.in .pr-word{animation:prPop .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes prPop{from{transform:scale(2.2); opacity:0}}
+.pr-bd{margin:0; font-weight:800; font-size:11px; line-height:1.45; color:#5a4d7a; white-space:nowrap}
+.pr-bd b{color:var(--ink); font-size:1.15em}
+.pr-sub{min-height:3.05em}
+@container arc (max-height: 400px){
+  .tool-ov.pour .pr-sub small{display:none}
+  .pr-sub{min-height:1.55em}
+}
 </style>
 <script>window.SAKEGO_APP = true;</script>
 </head>
@@ -9561,7 +9665,7 @@ function miniRoundFx() {
 }
 const miniAvail = () => {
   const M = G.mini;
-  const all = MG_ORDER.filter(k => !mgLocked(k) && !mgSoon(k));
+  const all = MG_ORDER.filter(k => !mgLocked(k) && !mgSoon(k) && !mgCant(k));
   let a = all.filter(k => !M.used.includes(k) && !M.skip.includes(k));
   if (!a.length) a = all.filter(k => !M.skip.includes(k));
   return a.length ? a : all;
@@ -9607,7 +9711,7 @@ function miniLand(cur, kind) {
 /* tapping a game in the list picks it without the roulette (a game already played can be played again) */
 function miniChoose(kind) {
   const cur = G.cur;
-  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv() || !MG[kind] || mgLocked(kind) || mgSoon(kind)) return;
+  if (!isMini() || cur.phase !== 'before' || mSpin || !noOv() || !MG[kind] || mgLocked(kind) || mgSoon(kind) || mgCant(kind)) return;
   mSpin = { cur, kind };
   renderGame();
   const el = document.querySelector('#mgList [data-k="' + kind + '"]');
@@ -9751,9 +9855,9 @@ function miniStageHTML(anim) {
   if (cur.phase === 'before') {
     const rows = MG_ORDER.length;
     return '<p class="mg-head ol">' + miniRound() + '</p><ol class="mg-list" id="mgList" style="--rows:' + rows + ';--rows2:' + Math.ceil(rows / 2) + '">' + MG_ORDER.map(k => {
-      const used = M.used.includes(k), skip = M.skip.includes(k), lock = mgLocked(k), soon = mgSoon(k), plus = PLUS_MG.includes(k);
+      const used = M.used.includes(k), skip = M.skip.includes(k), soon = mgSoon(k), cant = soon ? '' : mgCant(k), lock = mgLocked(k) || !!cant, plus = PLUS_MG.includes(k);
       return '<li class="mg-item' + (used ? ' used' : skip ? ' skip' : lock || soon ? ' lock' : '') + (plus ? ' plus' : '') + '" data-k="' + k + '"' + (lock || soon ? '' : ' data-g="mchoose" role="button" tabindex="0"') + '><span class="mg-it">' + (plus && !soon ? '<b class="mg-new">' + (PLUS_SALE ? '★' : 'NEW') + '</b>' : '') + esc(mgTitle(k)) + '</span>' +
-        (used ? '<i>済</i>' : skip ? '<i>パス</i>' : soon ? '<i>Coming soon</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
+        (soon ? '<i>Coming soon</i>' : cant ? '<i>' + cant + '</i>' : used ? '<i>済</i>' : skip ? '<i>パス</i>' : lock ? '<i>お試し済</i>' : '') + '</li>';
     }).join('') + '</ol>';
   }
   const k = cur.mkind, done = cur.phase === 'done';
@@ -10026,7 +10130,7 @@ const GUIDE = [
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
     gCard('ミニゲームモード', '<p>タイトルの<b>「ミニゲームモード」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
       '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、グラスのメモリが<b>3つたまると1杯</b>。メモリが2つの人がまた負けたら、1杯飲んでメモリ1つから再スタート。</p>' +
-      '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。</p>') +
+      '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。<b>一覧のゲームをタップ</b>すれば、ルーレットなしで好きなゲームを選べます。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
   },
@@ -10809,6 +10913,8 @@ const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.include
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }
 function isPM() { return !!(G && PM_MODES.includes(G.mode)); }
 const mgSoon = k => PLUS_MG.includes(k) && !PLUS_OPEN;
+/* a game this device cannot play (指ツイスター needs a multi-touch screen): '' or a short label for the list */
+const mgCant = k => (TOOLX[k] && TOOLX[k].cant ? TOOLX[k].cant() : '');
 
 const CROWN_SVG = '<svg class="ic-crown" viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/><circle cx="8.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/><circle cx="23.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/></svg>';
 const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><path d="M7 7.5 Q8.5 5 11 5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".8"/></svg>';
@@ -11155,7 +11261,7 @@ function renderPlus(msg) {
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
     '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
-      feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.filter(k => MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
+      feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
     (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
@@ -12318,13 +12424,17 @@ PMX.koi = {
    ===================================================================== */
 Object.assign(MG, {
   slot: { short: 'スロ', title: '酒スロ', text: '{引いた人}から順番にスロットを回す。出た枚数がいちばん少ない人の負け（「酒」が3つそろったら、その人以外の全員が負け）' },
+  pour: { short: '黄金比', title: '黄金比チャレンジ', text: '{引いた人}から1人ずつ、スマホをグラスにしてビールを注ぐ。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。ビール7：泡3でフチまで注げた人ほど高得点。いちばん点数が低い人の負け' },
+  twist: { short: '指', title: '指ツイスター', text: 'スマホをテーブルに置いて、全員が自分の色の丸に指を1本置く。丸は動く・入れかわる・ワープする。最初に指がはなれた人の負け（6人からは2組に分かれて、負けた2人で決勝）' },
 });
 Object.assign(TOOL_INFO, {
   slot: { title: '酒スロ', act: '酒スロ スタート！', cls: 'slot', stake: '出た枚数がいちばん少ない人が' },
+  twist: { title: '指ツイスター', act: '指ツイスター スタート！', cls: 'twist', stake: '最初に指がはなれた人が' },
+  pour: { title: '黄金比チャレンジ', act: '黄金比チャレンジ スタート！', cls: 'pour', stake: 'いちばん点数が低い人が' },
 });
-Object.assign(LOSE_SE, { slot: 'loseCards' });
+Object.assign(LOSE_SE, { slot: 'loseCards', twist: 'loseReact', pour: 'loseChamp' });
 /* the list: free games, then the three arcade games, then the older premium ones */
-['slot', 'twist', 'pour'].filter(k => MG[k]).reverse().forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); MG_ORDER.splice(MG_ORDER.indexOf('cut'), 0, k); });
+['slot', 'twist', 'pour'].filter(k => MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); MG_ORDER.splice(MG_ORDER.indexOf('cut'), 0, k); });
 ['twist', 'pour'].filter(k => !MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); });
 const pickW = list => { let r = Math.random() * list.reduce((s, x) => s + x[1], 0); for (const x of list) { r -= x[1]; if (r < 0) return x[0]; } return list[list.length - 1][0]; };
 
@@ -12813,6 +12923,718 @@ TOOLX.slot = {
   act() {},
   close(T) { clearTimeout(T.sl && T.sl.auto); $('toolOv').classList.remove('sl-dark'); },
 };
+
+/* =====================================================================
+   指ツイスター: スマホをテーブルに置いて、全員が自分の色の丸に指を1本ずつ置く。
+   丸は動き、ときどきイベント（入れかえ・ワープ・ぐるぐる…）が起きる。丸から指がはなれたまま、まわりのゲージが空になった人の負け。
+   同時に置ける指は5本まで（iPhone の上限）。6人からは2組に分けて、それぞれの負けどうしで決勝
+   ===================================================================== */
+const TW_EV = { swap: '入れかえ！', speed: 'スピードアップ！', shrink: 'ちぢむ！', warp: 'ワープ！', spin: 'ぐるぐる！', pick: 'ねらいうち！' };
+const TW_TOP = 26, TW_PAD = 6;   /* room at the top of the arena for the name tags and the clock; the gap to the other walls */
+Object.assign(SOUNDS, {
+  twOn: (A, t) => tone(A, t, { type: 'triangle', f: 660, f2: 990, d: 0.12, g: 0.16 }),
+  twTick: (A, t) => tone(A, t, { type: 'square', f: 1046.5, d: 0.03, g: 0.045, lp: 2600 }),
+  twTock: (A, t) => tone(A, t, { type: 'square', f: 783.99, d: 0.03, g: 0.04, lp: 2200 }),
+  twEv: (A, t) => { noise(A, t, { d: 0.22, g: 0.2, type: 'bandpass', f: 600, f2: 4200, q: 0.9 }); [587.33, 880, 1174.7].forEach((f, i) => tone(A, t + 0.08 + i * 0.08, { type: 'square', f, d: 0.11, g: 0.12, lp: 3200 })); },
+  twWarn: (A, t) => tone(A, t, { type: 'square', f: 1480, f2: 1245, d: 0.06, g: 0.11, lp: 4000 }),
+  twWarp: (A, t) => { tone(A, t, { type: 'sine', f: 300, f2: 2400, d: 0.2, g: 0.16 }); noise(A, t + 0.05, { d: 0.18, g: 0.12, type: 'highpass', f: 3000 }); },
+  twOut: (A, t) => { noise(A, t, { d: 0.6, g: 0.5, type: 'lowpass', f: 1800, f2: 120, rv: 0.4 }); kick(A, t, 1); tone(A, t, { type: 'sawtooth', f: 330, f2: 55, d: 0.6, g: 0.18, lp: 1600, lp2: 200 }); },
+});
+['twTick', 'twTock', 'twWarn', 'twOn'].forEach(k => NO_DUCK.add(k));
+
+function twistSetup() {
+  const T = tool, n = T.ps.length, idx = T.ps.map((_, j) => j);
+  let rounds;
+  if (n <= 5) rounds = [{ ids: idx, label: '' }];
+  else { const h = Math.ceil(n / 2); rounds = [{ ids: idx.slice(0, h), label: 'Aグループ' }, { ids: idx.slice(h), label: 'Bグループ' }, { ids: [], label: '決勝' }]; }
+  const ac = new AbortController();
+  const S = T.tw = { rounds, ri: 0, phase: 'idle', cs: [], ptrs: new Map(), ac, last: 0, t0: 0, W: 0, H: 0, R: 34, sp: 0, boost: 1, lv0: 0, ev: null, evAt: 0, evN: 0, lastEv: '', shr: 0, spd: 0, cnt: -1, warnAt: 0, tickAt: 0, tickK: 0, time: 0, hud: '' };
+  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + (rounds.length > 1 ? '2組に分かれて対決 → 負けた2人で決勝。決勝で負けた人が' : TOOL_INFO.twist.stake) + ' <b>' + amtTxt(T.cups) + '</b></p>' +
+    '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
+    '<div class="tw-arena" id="twA"></div><p class="tm-sub tw-sub" id="toolSub"></p>';
+  /* fingers anywhere on the overlay count (a finger may land beside the arena and slide in) */
+  const ov = $('toolOv'), A = $('twA'), sig = { signal: ac.signal }, np = { signal: ac.signal, passive: false };
+  ov.addEventListener('pointerdown', e => { S.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); }, sig);
+  ov.addEventListener('pointermove', e => { const q = S.ptrs.get(e.pointerId); if (q) { q.x = e.clientX; q.y = e.clientY; } }, sig);
+  ['pointerup', 'pointercancel'].forEach(k => ov.addEventListener(k, e => { S.ptrs.delete(e.pointerId); }, sig));
+  window.addEventListener('blur', () => S.ptrs.clear(), sig);
+  /* no scrolling, zooming, text selection or long-press menus under all those fingers */
+  ['touchstart', 'touchmove', 'touchend', 'contextmenu', 'gesturestart', 'gesturechange', 'dblclick', 'selectstart'].forEach(k => A.addEventListener(k, e => { if (e.cancelable) e.preventDefault(); }, np));
+  twistRound();
+}
+function twistRound() {
+  const T = tool, S = T.tw, rd = S.rounds[S.ri], A = $('twA'), m = rd.ids.length, heats = S.rounds.length > 1;
+  const rect = A.getBoundingClientRect(), W = S.W = rect.width, H = S.H = rect.height;
+  S.R = Math.round(Math.max(30, Math.min(46, Math.min(W, H) * 0.105)));
+  S.phase = 'wait'; S.boost = 1; S.ev = null; S.evN = 0; S.lastEv = ''; S.shr = 0; S.spd = 0; S.cnt = -1; S.hud = '';
+  S.lv0 = S.ri === 2 ? 2 : 0;   /* the final starts faster */
+  S.cs = rd.ids.map((j, k) => {
+    const a = -Math.PI / 2 + k * 2 * Math.PI / m;
+    return { j, x: W / 2 + Math.cos(a) * W * 0.29, y: (H + TW_TOP) / 2 + Math.sin(a) * (H - TW_TOP) * 0.3, a: Math.random() * 6.283, turn: 0, r: S.R, rt: S.R, held: false, life: 1, grace: 0, slow: 0, fast: 1, fastT: 0, mode: 'wander', warn: false, wp: null, cls: '', lf: -1, st: '' };
+  });
+  A.style.setProperty('--d', S.R * 2 + 'px');
+  A.className = 'tw-arena wait';
+  A.innerHTML = '<div class="tw-hud"><b id="twTime">0.0</b><i id="twLv">' + (rd.label || 'LV.1') + '</i></div>' +
+    S.cs.map((c, k) => '<i class="tw-ghost" id="twG' + k + '" style="--p:' + pc(T.ps[c.j]) + '"></i>').join('') +
+    S.cs.map((c, k) => '<div class="tw-c" id="twC' + k + '" style="--p:' + pc(T.ps[c.j]) + '"><i class="tw-ring"></i><i class="tw-disc"></i></div>').join('') +
+    S.cs.map((c, k) => '<span class="tw-nm" id="twN' + k + '" style="--p:' + pc(T.ps[c.j]) + '">' + esc(pname(T.ps[c.j])) + '</span>').join('') +
+    '<div class="tw-ban" id="twBan"></div><div class="tw-cnt" id="twCnt"></div>';
+  S.cs.forEach((c, k) => { c.el = $('twC' + k); c.nm = $('twN' + k); c.gh = $('twG' + k); });
+  T.ps.forEach((_, j) => {
+    const el = $('tlP' + j), v = $('tlV' + j), on = rd.ids.includes(j);
+    el.classList.toggle('now', on && heats); el.classList.toggle('wait', !on && !el.classList.contains('safe'));
+    if (on) { v.textContent = 'まだ'; v.classList.remove('bad', 'great'); }
+  });
+  $('toolSub').innerHTML = (rd.label ? '<b>' + rd.label + '</b>： ' : '') + '自分の色の丸に 指を1本！<small>スマホはテーブルに。全員そろうと スタート</small>';
+  toolActs(TOOL_CLOSE, false);
+  twistPaint();
+  if (!T.raf) { S.last = performance.now(); T.raf = requestAnimationFrame(twistFrame); }
+}
+function twBanner(html, cls) {
+  const b = $('twBan');
+  if (!b) return;
+  b.className = 'tw-ban'; b.innerHTML = html; void b.offsetWidth; b.className = 'tw-ban show ' + (cls || '');
+}
+const twWho = c => '<span style="color:' + pc(tool.ps[c.j]) + '">' + esc(pname(tool.ps[c.j])) + '</span><br>';
+function twCount(v) { const c = $('twCnt'); if (c) c.innerHTML = v === '' ? '' : '<b>' + v + '</b>'; }
+function twistFrame(now) {
+  const T = tool;
+  if (!T || T.kind !== 'twist') return;
+  const S = T.tw, A = $('twA');
+  T.raf = 0;
+  if (!A || S.phase === 'done') return;
+  const dt = Math.min(0.05, Math.max(0, (now - S.last) / 1000));
+  S.last = now;
+  const rect = A.getBoundingClientRect();
+  if (rect.width && (Math.abs(rect.width - S.W) > 0.5 || Math.abs(rect.height - S.H) > 0.5)) {
+    /* the arena changed size (a rotated phone, a resized window): everything keeps its place in proportion */
+    const fx = rect.width / (S.W || rect.width), fy = rect.height / (S.H || rect.height);
+    S.cs.forEach(c => { c.x *= fx; c.y *= fy; if (c.wp) { c.wp.x *= fx; c.wp.y *= fy; } if (c.mode === 'arc') { c.cx *= fx; c.cy *= fy; } });
+    S.W = rect.width; S.H = rect.height;
+  }
+  if (S.phase !== 'over') {
+    S.cs.forEach(c => {
+      let h = false;
+      const lim = c.r + 14;
+      S.ptrs.forEach(q => { const dx = q.x - rect.left - c.x, dy = q.y - rect.top - c.y; if (dx * dx + dy * dy <= lim * lim) h = true; });
+      if (h && !c.held && S.phase !== 'play') { SE.play('twOn'); vibrate(10); }
+      c.held = h;
+    });
+  }
+  if (S.phase === 'wait') {
+    if (S.cs.every(c => c.held)) { S.phase = 'count'; S.t0 = now; S.cnt = -1; toolActs('', false); }
+  } else if (S.phase === 'count') {
+    if (!S.cs.every(c => c.held)) {
+      S.phase = 'wait'; twCount(''); twBanner('はなれた！ もういちど', 'ng'); SE.play('buzz');
+      toolActs(TOOL_CLOSE, false);
+    } else {
+      const k = Math.floor((now - S.t0) / 700);
+      if (k !== S.cnt) {
+        S.cnt = k;
+        if (k < 3) { twCount(3 - k); SE.play('beep'); vibrate(15); }
+        else {
+          twCount(''); twBanner('GO！', 'go'); SE.play('go'); vibrate(40);
+          S.phase = 'play'; S.t0 = now; S.evAt = 3.2; S.tickAt = 0;
+          A.className = 'tw-arena play';
+          S.cs.forEach(c => { c.life = 1; $('tlV' + c.j).textContent = 'GO!'; });
+          $('toolSub').innerHTML = '指を はなすな！<small>まわりのゲージが空になったら アウト</small>';
+        }
+      }
+    }
+  } else if (S.phase === 'play') twistStep(now, dt);
+  if (S.phase === 'wait' || S.phase === 'count') S.cs.forEach(c => { const st = c.held ? 'OK!' : 'まだ'; if (st !== c.st) { c.st = st; const v = $('tlV' + c.j); v.textContent = st; v.classList.toggle('great', c.held); } });
+  twistPaint();
+  T.raf = requestAnimationFrame(twistFrame);
+}
+function twistStep(now, dt) {
+  const T = tool, S = T.tw, W = S.W, H = S.H, u = Math.min(W, H), cs = S.cs;
+  /* a phone is small: even a slow finger crosses it in a second, so the circles get fast (about 1.2cm/s at first, 6cm/s and more half a minute in) */
+  const t = (now - S.t0) / 1000, lvl = S.lv0 + t / 3.5;
+  const sp = S.sp = Math.min(u * 1.9, u * 0.22 * Math.pow(1.2, lvl) * S.boost) * Math.min(1, t / 1.2);
+  const G = Math.max(0.5, 0.9 - lvl * 0.035);   /* seconds a finger may be off its circle */
+  cs.forEach(c => {
+    c.r += (c.rt - c.r) * Math.min(1, dt * 5);
+    if (c.fastT && now > c.fastT) { c.fast = 1; c.fastT = 0; }
+    if (c.wp && now >= c.wp.at) {
+      c.x = c.wp.x; c.y = c.wp.y; c.wp = null; c.grace = 0.95; c.slow = now + 900; c.a = Math.random() * 6.283;
+      SE.play('twWarp');
+    }
+    if (c.mode === 'wander') {
+      c.turn = Math.max(-2.4, Math.min(2.4, (c.turn + (Math.random() - 0.5) * dt * 10) * Math.pow(0.6, dt)));
+      let vx = Math.cos(c.a), vy = Math.sin(c.a);
+      cs.forEach(o => {
+        if (o === c) return;
+        const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1, R = c.r + o.r + 70;
+        if (d < R) { const k = (1 - d / R) * 2.4; vx += dx / d * k; vy += dy / d * k; }
+      });
+      const m = Math.min(80, 30 + sp * 0.12), l = c.x - c.r - TW_PAD, r = W - c.r - TW_PAD - c.x, tp = c.y - c.r - TW_TOP, bt = H - c.r - TW_PAD - c.y;
+      if (l < m) vx += (1 - l / m) * 1.8; if (r < m) vx -= (1 - r / m) * 1.8;
+      if (tp < m) vy += (1 - tp / m) * 1.8; if (bt < m) vy -= (1 - bt / m) * 1.8;
+      c.a = Math.atan2(vy, vx) + c.turn * dt;
+      const v = sp * c.fast * (c.slow > now ? 0.3 : 1);
+      c.x += Math.cos(c.a) * v * dt; c.y += Math.sin(c.a) * v * dt;
+    } else if (c.mode === 'arc') {
+      /* 入れかえ: half a turn around the point between the two */
+      const s = Math.max(0, Math.min(1, (now - c.m0) / c.md)), th = c.th * slEaseIO(s);
+      c.x = c.cx + Math.cos(c.a0 + th) * c.cr; c.y = c.cy + Math.sin(c.a0 + th) * c.cr;
+      if (s >= 1) { c.mode = 'wander'; c.a = c.a0 + c.th + Math.sign(c.th) * Math.PI / 2; c.turn = 0; }
+    } else if (c.mode === 'orbit') {
+      /* ぐるぐる: everyone lines up on a ring and the ring turns */
+      const s = Math.max(0, Math.min(1, (now - c.m0) / c.md)), e = slEaseOut(Math.min(1, s * 3));
+      const rho = c.q0 + (0.82 - c.q0) * e, ph = c.f0 + (c.f1 - c.f0) * e + c.th * slEaseIO(s);
+      const ax = W / 2 - c.r - TW_PAD - 2, ay = (H - TW_TOP - TW_PAD) / 2 - c.r - 2;
+      c.x = W / 2 + Math.cos(ph) * rho * ax; c.y = (H + TW_TOP - TW_PAD) / 2 + Math.sin(ph) * rho * ay;
+      if (s >= 1) { c.mode = 'wander'; c.a = ph + Math.sign(c.th) * Math.PI / 2; c.turn = 0; }
+    }
+  });
+  /* nobody overlaps, nobody leaves the arena */
+  for (let i = 0; i < cs.length; i++) for (let k = i + 1; k < cs.length; k++) {
+    const a = cs[i], b = cs[k];
+    if (a.mode !== 'wander' && b.mode !== 'wander') continue;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, need = a.r + b.r + 10;
+    if (d >= need) continue;
+    const push = (need - d) * Math.min(1, dt * 12), fa = a.mode === 'wander' ? (b.mode === 'wander' ? 0.5 : 1) : 0, fb = b.mode === 'wander' ? (a.mode === 'wander' ? 0.5 : 1) : 0;
+    a.x -= dx / d * push * fa; a.y -= dy / d * push * fa; b.x += dx / d * push * fb; b.y += dy / d * push * fb;
+  }
+  cs.forEach(c => {
+    const x0 = c.r + TW_PAD, x1 = W - c.r - TW_PAD, y0 = c.r + TW_TOP, y1 = H - c.r - TW_PAD, w = c.mode === 'wander';
+    if (c.x < x0) { c.x = x0; if (w && Math.cos(c.a) < 0) c.a = Math.PI - c.a; }
+    if (c.x > x1) { c.x = x1; if (w && Math.cos(c.a) > 0) c.a = Math.PI - c.a; }
+    if (c.y < y0) { c.y = y0; if (w && Math.sin(c.a) < 0) c.a = -c.a; }
+    if (c.y > y1) { c.y = y1; if (w && Math.sin(c.a) > 0) c.a = -c.a; }
+  });
+  /* events */
+  if (!S.ev && t >= S.evAt) twistEvent(now, lvl);
+  else if (S.ev && now >= S.ev.end) { S.ev = null; S.evAt = t + Math.max(1.9, 3.8 - lvl * 0.2); $('twA').classList.remove('spin'); }
+  /* the gauge: it drains while the finger is off, and fills again quickly when the finger is back */
+  let out = null;
+  cs.forEach(c => {
+    if (c.grace > 0) { c.grace -= dt; if (c.held) c.grace = 0; }
+    c.warn = !c.held && c.grace <= 0;
+    if (c.held || c.grace > 0) c.life = Math.min(1, c.life + dt * 3);
+    else { c.life -= dt / G; if (c.life <= 0 && (!out || c.life < out.life)) out = c; }
+  });
+  if (cs.some(c => c.warn) && now >= S.warnAt) { SE.play('twWarn'); S.warnAt = now + 170; }
+  if (now >= S.tickAt) { SE.play(S.tickK++ % 2 ? 'twTock' : 'twTick'); S.tickAt = now + Math.max(190, 520 - lvl * 32); }
+  const hud = t.toFixed(1);
+  if (hud !== S.hud) { S.hud = hud; $('twTime').textContent = hud; const lv = S.rounds[S.ri].label ? S.rounds[S.ri].label + ' LV.' : 'LV.'; $('twLv').textContent = lv + (Math.floor(lvl - S.lv0) + 1); }
+  if (out) twistOut(out, now);
+}
+function twistEvent(now, lvl) {
+  const T = tool, S = T.tw, cs = S.cs, n = cs.length, W = S.W, H = S.H, A = $('twA');
+  let pool = ['swap', 'speed', 'spin'];
+  if (S.evN >= 1) pool.push('shrink', 'warp');
+  if (S.evN >= 2) pool.push('pick', 'warp');
+  pool = pool.filter(k => k !== S.lastEv && !(k === 'shrink' && S.shr >= 3) && !(k === 'speed' && S.spd >= 4));
+  const k = S.evN === 0 ? 'swap' : pool[rint(0, pool.length - 1)];
+  S.evN++; S.lastEv = k;
+  let dur = 900, text = TW_EV[k];
+  if (k === 'speed') { S.boost *= 1.3; S.spd++; }
+  else if (k === 'shrink') { cs.forEach(c => { c.rt = Math.max(22, c.rt * 0.82); }); S.shr++; }
+  else if (k === 'swap') {
+    const order = shuffle(cs.filter(c => c.mode === 'wander' && !c.wp)), pairs = [];
+    if (order.length >= 2) pairs.push([order[0], order[1]]);
+    if (order.length >= 4 && S.evN > 1) pairs.push([order[2], order[3]]);
+    pairs.forEach(([a, b]) => {
+      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2, cr = Math.hypot(a.x - b.x, a.y - b.y) / 2, dir = Math.random() < 0.5 ? 1 : -1;
+      const md = Math.max(1100, Math.min(2600, Math.PI * cr / Math.max(150, S.sp * 2.4) * 1000));
+      [a, b].forEach(c => { c.mode = 'arc'; c.cx = cx; c.cy = cy; c.cr = cr; c.a0 = Math.atan2(c.y - cy, c.x - cx); c.th = dir * Math.PI; c.m0 = now + 450; c.md = md; });
+      dur = Math.max(dur, md + 450);
+    });
+  } else if (k === 'spin') {
+    const dir = Math.random() < 0.5 ? 1 : -1, md = Math.max(1800, Math.min(4200, 400000 / Math.max(1, S.sp * 1.3))), cy = (H + TW_TOP - TW_PAD) / 2;
+    const list = cs.filter(c => c.mode === 'wander');
+    list.forEach(c => { const ax = W / 2 - c.r - TW_PAD - 2, ay = (H - TW_TOP - TW_PAD) / 2 - c.r - 2, nx = (c.x - W / 2) / ax, ny = (c.y - cy) / ay; c.q0 = Math.min(1, Math.hypot(nx, ny)); c.f0 = Math.atan2(ny, nx); });
+    list.sort((a, b) => a.f0 - b.f0);
+    /* evenly spaced places on the ring, turned so that nobody has far to go */
+    const step = 2 * Math.PI / list.length;
+    let sx = 0, sy = 0;
+    list.forEach((c, i) => { sx += Math.cos(c.f0 - i * step); sy += Math.sin(c.f0 - i * step); });
+    const base = Math.atan2(sy, sx);
+    list.forEach((c, i) => {
+      let f1 = base + i * step;
+      while (f1 - c.f0 > Math.PI) f1 -= 2 * Math.PI;
+      while (f1 - c.f0 < -Math.PI) f1 += 2 * Math.PI;
+      c.f1 = f1; c.th = dir * Math.PI; c.m0 = now + 450; c.md = md; c.mode = 'orbit'; c.wp = null;
+    });
+    A.classList.add('spin'); A.style.setProperty('--dir', dir);
+    dur = md + 450;
+  } else if (k === 'warp') {
+    const picks = shuffle(cs.filter(c => c.mode === 'wander')).slice(0, n >= 3 && lvl >= 4 ? 2 : 1), dests = [];
+    picks.forEach(c => {
+      const x0 = c.r + TW_PAD + 8, x1 = W - c.r - TW_PAD - 8, y0 = c.r + TW_TOP + 8, y1 = H - c.r - TW_PAD - 8;
+      let best = null, bd = -1;
+      for (let i = 0; i < 40; i++) {
+        const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0);
+        let d = Math.hypot(x - c.x, y - c.y) * 0.7;   /* far from where it is now, and clear of the others */
+        cs.forEach(o => { if (o !== c) d = Math.min(d, Math.hypot(x - o.x, y - o.y)); });
+        dests.forEach(q => { d = Math.min(d, Math.hypot(x - q.x, y - q.y)); });
+        if (d > bd) { bd = d; best = { x, y }; }
+      }
+      dests.push(best);
+      c.wp = { x: best.x, y: best.y, at: now + 1150 };
+    });
+    if (!picks.length) text = TW_EV.speed, S.boost *= 1.15;
+    else if (picks.length === 1) text = twWho(picks[0]) + TW_EV.warp;
+    dur = 2100;
+  } else if (k === 'pick') {
+    const c = cs[rint(0, n - 1)];
+    c.fast = 1.7; c.fastT = now + 3200;
+    text = twWho(c) + TW_EV.pick;
+    dur = 3200;
+  }
+  S.ev = { k, end: now + dur };
+  twBanner(text, k);
+  SE.play('twEv'); vibrate(25);
+}
+function twistPaint() {
+  const T = tool, S = T.tw, now = performance.now();
+  S.cs.forEach(c => {
+    const sc = c.r / S.R;
+    c.el.style.transform = 'translate3d(' + c.x.toFixed(1) + 'px,' + c.y.toFixed(1) + 'px,0) scale(' + sc.toFixed(3) + ')';
+    c.nm.style.transform = 'translate3d(' + c.x.toFixed(1) + 'px,' + (c.y - c.r - 10).toFixed(1) + 'px,0) translate(-50%,-100%)';
+    const cls = (c.held ? ' held' : '') + (c.warn && S.phase === 'play' ? ' warn' : '') + (c.grace > 0 ? ' grace' : '') + (c.fastT ? ' pick' : '') + (c.mode === 'arc' ? ' mark' : '') + (c.wp ? ' going' : '') + (c.out ? ' out' : '') + (c.safe ? ' safe' : '');
+    if (cls !== c.cls) { c.cls = cls; c.el.className = 'tw-c' + cls; c.nm.className = 'tw-nm' + (c.out ? ' out' : ''); }
+    const lf = Math.max(0, Math.round(c.life * 50) / 50);
+    if (lf !== c.lf) { c.lf = lf; c.el.style.setProperty('--life', lf); }
+    const g = c.wp ? c.wp.x.toFixed(0) + ',' + c.wp.y.toFixed(0) : '';
+    if (g !== c.g) { c.g = g; c.gh.className = 'tw-ghost' + (c.wp ? ' on' : ''); if (c.wp) c.gh.style.transform = 'translate3d(' + c.wp.x.toFixed(1) + 'px,' + c.wp.y.toFixed(1) + 'px,0) scale(' + sc.toFixed(3) + ')'; }
+  });
+}
+function twistOut(c, now) {
+  const T = tool, S = T.tw, rd = S.rounds[S.ri];
+  S.phase = 'over'; S.time = (now - S.t0) / 1000; S.ev = null;
+  rd.loser = c.j;
+  c.out = true; c.warn = false; c.life = 0;
+  S.cs.forEach(o => { o.wp = null; o.fastT = 0; if (o !== c) o.safe = true; });
+  const A = $('twA'); A.className = 'tw-arena over';
+  SE.play('twOut'); SE.play('buzz'); flash('#e8233f'); shake(false); vibrate([120, 60, 220]);
+  const q = relPos(c.el); FXC.burst(q.x, q.y, 60, { speed: 13 });
+  twBanner('アウト！', 'out');
+  BGM.level(0.2, 0.1);
+  S.cs.forEach(o => { const v = $('tlV' + o.j); v.classList.remove('great'); v.textContent = o === c ? 'アウト' : 'セーフ'; v.classList.toggle('bad', o === c); });
+  $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[c.j])) + '</b> の指がはなれた！<small>' + S.time.toFixed(1) + '秒</small>';
+  toolLater(twistRoundEnd, 1500);
+}
+function twistRoundEnd() {
+  const T = tool, S = T.tw, rd = S.rounds[S.ri], j = rd.loser;
+  if (S.ri === S.rounds.length - 1) {
+    S.phase = 'done';
+    const p = T.ps[j];
+    hushBeat('toolOv', 700, () => toolFinish([p], '<b>' + esc(pname(p)) + '</b> の指がはなれた！ ' + amtTxt(T.cups), k => $('tlP' + k)));
+    return;
+  }
+  /* a heat is over: its loser goes on to the final */
+  rd.ids.forEach(k => { const el = $('tlP' + k), v = $('tlV' + k); el.classList.remove('now'); el.classList.toggle('safe', k !== j); v.textContent = k === j ? '決勝へ' : 'セーフ'; v.classList.toggle('bad', k === j); });
+  S.ri++;
+  if (S.ri === 2) {
+    S.rounds[2].ids = [S.rounds[0].loser, S.rounds[1].loser];
+    S.rounds[2].ids.forEach(k => $('tlP' + k).classList.remove('safe'));
+    telop('決勝！<small>' + S.rounds[2].ids.map(k => esc(pname(T.ps[k]))).join(' vs ') + '</small>', 'red', 1700);
+  } else telop('Bグループ！', 'white', 1300);
+  SE.play('mgRound');
+  BGM.level(0.7, 0.4);
+  twistRound();
+}
+TOOLX.twist = {
+  force: false,   /* tests: play without a multi-touch screen */
+  cant() { return this.force || navigator.maxTouchPoints > 1 ? '' : 'タッチ専用'; },
+  setup: twistSetup,
+  act() {},
+  close(T) { if (T.tw) T.tw.ac.abort(); },
+};
+
+/* =====================================================================
+   黄金比チャレンジ: スマホがグラス。1人ずつビールを注いで、ビール7：泡3でフチまで注げた人ほど高得点。いちばん低い人の負け。
+   かたむけて注ぐ（ビールがグラスの壁をつたう）と泡は少なく、まっすぐ注ぐと泡だらけ。かたむけすぎ・注ぎすぎは こぼれる。
+   かたむきは スマホのセンサー（devicemotion）で。センサーが使えないところ（claude.ai のページの中、パソコン）では、指を左右にすべらせてかたむける。
+   どちらでも計算は同じ: グラスの座標で、重力の向き g = (sin a, cos a) が変わるだけ
+   ===================================================================== */
+const PR_TIME = 14, PR_RATE = 0.17;   /* seconds for one pour; glass volumes per second out of the tap */
+let prTone = 0;                        /* how full the glass is (the pouring sound rises with it) */
+Object.assign(SOUNDS, {
+  prPour: (A, t) => { noise(A, t, { d: 0.17, g: 0.1, type: 'bandpass', f: 520 + 1500 * prTone, q: 2.4, a: 0.02 }); tone(A, t, { type: 'sine', f: 250 + 500 * prTone, f2: 290 + 560 * prTone, d: 0.09, g: 0.05 }); },
+  prFizz: (A, t) => noise(A, t, { d: 0.3, g: 0.07, type: 'highpass', f: 5200, a: 0.05 }),
+  prSpill: (A, t) => { noise(A, t, { d: 0.14, g: 0.26, type: 'bandpass', f: 900, f2: 300, q: 1 }); tone(A, t, { type: 'sine', f: 520, f2: 180, d: 0.1, g: 0.1 }); },
+});
+['prPour', 'prFizz', 'prSpill'].forEach(k => NO_DUCK.add(k));
+/* the foam in what comes out of the tap: 85% into an upright glass, 5% down the wall of a glass tilted 32° or more */
+const prFoam = a => { const d = Math.abs(a) * 180 / Math.PI; return d <= 5 ? 0.85 : d >= 32 ? 0.05 : 0.85 - (d - 5) / 27 * 0.8; };
+/* the inside of the glass: origin at the middle of the rim, y down */
+const prGlass = h => { const at = 0.36 * h, ab = 0.27 * h; return [[-at, 0], [at, 0], [ab, h], [-ab, h]]; };
+function prClip(P, gx, gy, c) {   /* the part of a convex polygon at or below the level c (measured along gravity) */
+  const out = [];
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], da = a[0] * gx + a[1] * gy - c, db = b[0] * gx + b[1] * gy - c;
+    if (da >= 0) out.push(a);
+    if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+  }
+  return out;
+}
+const prArea = P => { let s = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; s += a[0] * b[1] - b[0] * a[1]; } return Math.abs(s) / 2; };
+/* the level of the surface of a volume (a fraction of the glass) */
+function prLevel(P, gx, gy, vol, full) {
+  let lo = Infinity, hi = -Infinity;
+  P.forEach(q => { const d = q[0] * gx + q[1] * gy; lo = Math.min(lo, d); hi = Math.max(hi, d); });
+  if (vol <= 0) return hi;
+  for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (prArea(prClip(P, gx, gy, mid)) / full > vol) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
+/* the stream: straight down (along g) from the point `ex` on the rim line to the surface, or onto a wall and down the wall */
+function prStream(P, gx, gy, cT, ex) {
+  const pts = [[ex, 0]], W = [[1, 2], [2, 3], [3, 0]], at = s => [ex + gx * s, gy * s], sT = cT - ex * gx;
+  let best = null;
+  W.forEach(([i, k], w) => {
+    const ax = P[i][0] - ex, ay = P[i][1], dx = P[k][0] - P[i][0], dy = P[k][1] - P[i][1], D = dx * gy - dy * gx;
+    if (Math.abs(D) < 1e-9) return;
+    const sv = (dx * ay - dy * ax) / D, u = (gx * ay - gy * ax) / D;
+    if (sv > 1e-6 && u >= -1e-6 && u <= 1 + 1e-6 && (!best || sv < best.s)) best = { s: sv, w };
+  });
+  if (!best || sT <= best.s) { pts.push(at(Math.max(0, best ? Math.min(sT, best.s) : sT))); return { pts, wall: false }; }
+  let q = at(best.s), w = best.w;
+  pts.push(q);
+  for (let n = 0; n < 2; n++) {
+    const a = P[W[w][0]], b = P[W[w][1]], da = a[0] * gx + a[1] * gy, db = b[0] * gx + b[1] * gy, end = da > db ? a : b, de = Math.max(da, db), dq = q[0] * gx + q[1] * gy;
+    if (cT <= de + 1e-6) { const t = de - dq < 1e-6 ? 1 : Math.max(0, Math.min(1, (cT - dq) / (de - dq))); pts.push([q[0] + (end[0] - q[0]) * t, q[1] + (end[1] - q[1]) * t]); break; }
+    pts.push(end); q = end;
+    if (w !== 1 && (end === P[2] || end === P[3])) w = 1; else break;   /* round the corner onto the bottom */
+  }
+  return { pts, wall: true };
+}
+/* where the beer comes in: over the middle of an upright glass, close to the lower wall of a tilted one (that is how the stream gets onto the wall) */
+const prEntry = (a, h) => Math.sign(a) * 0.36 * h * Math.min(0.72, Math.abs(a) / 0.6);
+const prAsk = () => {   /* iOS asks before a page may read the motion sensor, and only from a tap */
+  try {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') return DeviceMotionEvent.requestPermission().then(r => r === 'granted', () => false);
+  } catch (_) { return Promise.resolve(false); }
+  return Promise.resolve(true);
+};
+function pourSetup() {
+  const T = tool, n = T.ps.length, ac = new AbortController();
+  T.res = [];
+  const S = T.pr = { phase: 'idle', mode: '', ac, has: false, gx: 0, gy: 0, sgn: 1, a: 0, aT: 0, phi: 0, dphi: 0, B: 0, F: 0, spill: 0, pouring: false, pid: null, drag: null, t0: 0, left: PR_TIME, last: 0,
+    drops: [], bubs: [], fx: [], grain: 0, fizz: 0, spAt: 0, W: 0, H: 0, dpr: 1, cv: null, cx: null, font: 'sans-serif', bar: -1, shown: false };
+  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + TOOL_INFO.pour.stake + ' <b>' + amtTxt(T.cups) + '</b><small>ビール7：泡3で、フチまで注げたら 100点</small></p>' +
+    '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
+    '<div class="pr-arena" id="prA"><canvas id="prCv" aria-hidden="true"></canvas><div class="pr-bar" id="prBarBox" hidden><i id="prBar"></i></div>' +
+    '<p class="pr-tip" id="prTip"></p><div class="pr-res" id="prRes" hidden></div><button type="button" class="pr-mode" id="prMode" data-tl="mode" hidden></button></div>' +
+    '<p class="tm-sub pr-sub" id="toolSub"></p>';
+  const A = $('prA'), sig = { signal: ac.signal }, np = { signal: ac.signal, passive: false };
+  S.cv = $('prCv'); S.cx = S.cv.getContext('2d');
+  S.font = getComputedStyle(document.documentElement).getPropertyValue('--f-display') || 'sans-serif';
+  for (let i = 0; i < 16; i++) S.bubs.push({ u: Math.random(), v: Math.random(), r: 1 + Math.random() * 2.2, s: 0.25 + Math.random() * 0.5 });
+  /* the motion sensor. iOS reports the opposite sign from Android, so the sign is taken from how the phone is held (upright) when the pour starts */
+  window.addEventListener('devicemotion', e => {
+    const g = e.accelerationIncludingGravity;
+    if (!g || g.x == null || g.y == null) return;
+    const o = ((screen.orientation && screen.orientation.angle) || 0) * Math.PI / 180, x = g.x * Math.cos(o) - g.y * Math.sin(o), y = g.x * Math.sin(o) + g.y * Math.cos(o);
+    if (!S.has) { S.has = true; S.gx = x; S.gy = y; } else { S.gx += (x - S.gx) * 0.3; S.gy += (y - S.gy) * 0.3; }
+  }, sig);
+  A.addEventListener('pointerdown', e => {
+    if (S.phase !== 'pour' || S.pid != null || e.target.closest('button')) return;
+    S.pid = e.pointerId; S.pouring = true; S.drag = { x: e.clientX, a: S.aT };
+    try { A.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+  }, sig);
+  A.addEventListener('pointermove', e => {
+    if (e.pointerId !== S.pid || !S.drag || S.mode !== 'touch') return;
+    /* the finger drags the body of the glass: to the right, the bottom of the glass swings right */
+    S.aT = Math.max(-0.8, Math.min(0.8, S.drag.a - (e.clientX - S.drag.x) / Math.max(120, S.W * 0.5) * 0.95));
+  }, sig);
+  ['pointerup', 'pointercancel'].forEach(k => A.addEventListener(k, e => { if (e.pointerId === S.pid) { S.pid = null; S.pouring = false; S.drag = null; } }, sig));
+  ['touchstart', 'touchmove', 'touchend', 'contextmenu', 'gesturestart', 'dblclick', 'selectstart'].forEach(k => A.addEventListener(k, e => { if (e.cancelable && !e.target.closest('button')) e.preventDefault(); }, np));
+  pourTurn();
+  S.last = performance.now(); T.raf = requestAnimationFrame(pourFrame);
+}
+const prTip = h => { const el = $('prTip'); if (el) { el.innerHTML = h; el.hidden = !h; } };
+function pourTurn() {
+  const T = tool, S = T.pr, i = T.k, p = T.ps[i];
+  S.phase = 'ready'; S.B = 0; S.F = 0; S.spill = 0; S.a = 0; S.aT = 0; S.phi = 0; S.dphi = 0; S.pouring = false; S.pid = null; S.drag = null; S.drops = []; S.fx = []; S.left = PR_TIME; S.bar = -1;
+  T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', j > i); });
+  $('prRes').hidden = true; $('prBarBox').hidden = true; $('prMode').hidden = true;
+  prTip('ビールは <b>点線</b>まで、泡は <b>フチ</b>まで');
+  $('toolSub').innerHTML = (i ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(p)) + '</b> の番！<small>かたむけて注ぐと 泡は少ない。まっすぐ注ぐと 泡だらけ</small>';
+  if (i) SE.play('pass');
+  toolActs(TOOL_CLOSE + '<button type="button" class="pbtn big main pulse" data-tl="go">注ぎはじめる！</button>');
+}
+function pourAct(a) {
+  const T = tool, S = T.pr;
+  if (a === 'go' && S.phase === 'ready') {
+    if (S.mode) { pourBegin(); return; }
+    /* the first pour: is there a motion sensor this page may read? (no answer within 0.7s: the finger does the tilting) */
+    S.phase = 'check';
+    toolActs('', false);
+    prTip('センサーを確認中…');
+    prAsk().then(ok => {
+      if (tool !== T || S.phase !== 'check') return;
+      if (!ok) { S.mode = 'touch'; pourBegin(); return; }
+      toolLater(() => { if (S.phase !== 'check') return; S.mode = S.has && !TOOLX.pour.touch ? 'tilt' : 'touch'; pourBegin(); }, S.has ? 0 : 700);
+    });
+  } else if (a === 'done' && S.phase === 'pour') pourDone();
+  else if (a === 'next' && S.phase === 'shown') { T.k++; pourTurn(); }
+  else if (a === 'mode' && S.has && (S.phase === 'pour' || S.phase === 'hold')) {
+    S.mode = S.mode === 'tilt' ? 'touch' : 'tilt';
+    S.aT = S.a;
+    if (S.mode === 'tilt') S.sgn = S.gy >= 0 ? 1 : -1;
+    S.phase = 'pour';
+    pourHelp();
+  }
+}
+const prUpright = S => Math.abs(S.gy) > 5.5 && Math.abs(S.gy) > Math.abs(S.gx) * 1.3;
+function pourBegin() {
+  const T = tool, S = T.pr;
+  toolActs('', false);
+  if (S.mode === 'tilt' && !prUpright(S)) {
+    /* lying on the table: there is no telling which way is up yet */
+    S.phase = 'hold';
+    prTip('スマホを <b>立てて</b>、グラスみたいに持って！');
+    $('prMode').hidden = false; $('prMode').textContent = '指でかたむける';
+    return;
+  }
+  pourStart();
+}
+function pourHelp() {
+  const S = tool.pr, m = $('prMode');
+  prTip(S.mode === 'tilt' ? '<b>スマホをかたむけて</b>、押して 注ぐ' : '押して 注ぐ。<b>左右にすべらせて</b> かたむける');
+  m.hidden = !S.has || !!TOOLX.pour.touch; m.textContent = S.mode === 'tilt' ? '指でかたむける' : 'スマホをかたむける';
+}
+function pourStart() {
+  const T = tool, S = T.pr;
+  S.phase = 'pour'; S.t0 = performance.now(); S.left = PR_TIME;
+  if (S.mode === 'tilt') {
+    S.sgn = S.gy >= 0 ? 1 : -1;
+    /* a tilted phone should not turn the page on its side (this works in the installed app; a browser tab may refuse) */
+    try { const o = screen.orientation; if (o && o.lock) { const r = o.lock('portrait'); if (r && r.catch) r.catch(() => {}); } } catch (_) { /* ignore */ }
+  }
+  $('prBarBox').hidden = false;
+  pourHelp();
+  $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[T.k])) + '</b> が注いでいる…<small>できたら「完成！」。時間切れでも完成</small>';
+  toolActs('<button type="button" class="pbtn big main" data-tl="done">完成！</button>', false);
+  SE.play('go');
+}
+function pourFrame(now) {
+  const T = tool;
+  if (!T || T.kind !== 'pour') return;
+  const S = T.pr, A = $('prA');
+  T.raf = 0;
+  if (!A || S.phase === 'over') return;
+  const dt = Math.min(0.05, Math.max(0, (now - S.last) / 1000));
+  S.last = now;
+  if (S.phase === 'hold' && prUpright(S)) pourStart();
+  /* the tilt */
+  if (S.phase === 'judge' || S.phase === 'shown') S.a += (0 - S.a) * Math.min(1, dt * 5);
+  else if (S.mode === 'tilt') { if (S.phase === 'pour' && S.gx * S.gx + S.gy * S.gy > 9) S.a += (Math.max(-1.3, Math.min(1.3, Math.atan2(-S.sgn * S.gx, S.sgn * S.gy))) - S.a) * Math.min(1, dt * 16); }
+  else S.a += (S.aT - S.a) * Math.min(1, dt * 14);
+  /* the surface follows with a little slosh */
+  S.dphi += ((S.a - S.phi) * 90 - S.dphi * 10) * dt; S.phi += S.dphi * dt;
+  const P = prGlass(1), full = prArea(P);
+  if (S.phase === 'pour') {
+    S.left = PR_TIME - (now - S.t0) / 1000;
+    if (S.pouring) {
+      const dv = PR_RATE * dt, f = prFoam(S.a);
+      S.B += dv * (1 - f); S.F += dv * f;
+      prTone = Math.min(1, S.B + S.F);
+      if (now >= S.grain) { SE.play('prPour'); S.grain = now + 105; }
+      if (f > 0.45 && now >= S.fizz) { SE.play('prFizz'); S.fizz = now + 280; }
+    }
+  }
+  /* what does not fit under the lower corner of the rim runs over: the foam first */
+  const sx = Math.sin(S.phi), sy = Math.cos(S.phi), cap = prArea(prClip(P, sx, sy, 0.36 * Math.abs(sx))) / full, over = S.B + S.F - cap;
+  if (over > 1e-5) {
+    const fo = Math.min(S.F, over);
+    S.F -= fo; S.B = Math.max(0, S.B - (over - fo));
+    if (S.phase === 'pour') {
+      S.spill += over;
+      const side = Math.abs(sx) < 0.03 ? (Math.random() < 0.5 ? -1 : 1) : Math.sign(sx);
+      for (let k = 0; k < 2; k++) S.drops.push({ x: side * 0.36, y: 0, vx: side * (0.25 + Math.random() * 0.5), vy: -0.2 - Math.random() * 0.3, life: 1, foam: fo > 0, r: 0.012 + Math.random() * 0.016 });
+      if (now >= S.spAt) { SE.play('prSpill'); vibrate(15); S.spAt = now + 260; }
+    }
+  }
+  S.drops.forEach(d => { d.vx += Math.sin(S.a) * 3.2 * dt; d.vy += Math.cos(S.a) * 3.2 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt * 1.1; });
+  S.drops = S.drops.filter(d => d.life > 0);
+  if (S.phase === 'pour') {
+    const k = Math.max(0, Math.round(S.left / PR_TIME * 200));
+    if (k !== S.bar) { S.bar = k; const b = $('prBar'); b.style.transform = 'scaleX(' + (k / 200) + ')'; b.classList.toggle('hurry', S.left < 4); }
+    if (S.left <= 0) pourDone();
+  }
+  pourDraw(now);
+  T.raf = requestAnimationFrame(pourFrame);
+}
+function pourDraw(now) {
+  const T = tool, S = T.pr, cv = S.cv, cx = S.cx, A = $('prA');
+  const W = A.clientWidth, H = A.clientHeight, dpr = Math.min(2.5, window.devicePixelRatio || 1);
+  if (!W || !H) return;
+  if (W !== S.W || H !== S.H || dpr !== S.dpr) { S.W = W; S.H = H; S.dpr = dpr; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const touch = S.mode !== 'tilt', INK = '#150733';
+  /* the finger tilts a glass drawn on the screen, so it needs room to swing; a tilted phone IS the glass, so the glass is as big as it can be */
+  const h = Math.min((H - 50) * (touch ? 0.56 : 0.66), W * (touch ? 0.56 : 0.9)), oy = touch ? (H - 50) * 0.38 : (H - 50) * 0.27;
+  const P = prGlass(h), full = prArea(P), a = S.a, gx = Math.sin(a), gy = Math.cos(a), sx = Math.sin(S.phi), sy = Math.cos(S.phi);
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx.clearRect(0, 0, W, H);
+  /* the tilted glass swings out to one side: the picture slides back so that glass and tap both stay on the screen */
+  const ex = prEntry(a, h), ox = W / 2 - (touch ? 0.6 * (-ex * Math.cos(a) - 0.5 * h * Math.sin(a)) : 0);
+  cx.translate(ox, oy);
+  if (touch) { cx.rotate(a); cx.translate(-ex, 0); }
+  cx.lineJoin = 'round'; cx.lineCap = 'round';
+  const path = Q => { cx.beginPath(); Q.forEach((q, i) => (i ? cx.lineTo(q[0], q[1]) : cx.moveTo(q[0], q[1]))); cx.closePath(); };
+  const tot = S.B + S.F, cT = prLevel(P, sx, sy, tot, full), cB = prLevel(P, sx, sy, S.B, full);
+  /* the handle (behind the glass) */
+  cx.beginPath(); cx.moveTo(0.33 * h, 0.2 * h); cx.bezierCurveTo(0.66 * h, 0.14 * h, 0.66 * h, 0.72 * h, 0.29 * h, 0.66 * h);
+  cx.strokeStyle = INK; cx.lineWidth = h * 0.085; cx.stroke(); cx.strokeStyle = 'rgba(214,232,255,.55)'; cx.lineWidth = h * 0.045; cx.stroke();
+  /* the glass, then what is in it */
+  path(P); cx.fillStyle = 'rgba(255,255,255,.1)'; cx.fill();
+  /* a full, level glass: the foam stands a little above the rim */
+  const dome = S.F > 0.02 && tot > 0.93 && Math.abs(S.phi) < 0.14 ? Math.min(1, (tot - 0.93) / 0.05) : 0;
+  if (dome) { cx.fillStyle = '#fff6dc'; for (let k = 0; k <= 8; k++) { const u = k / 8, r = h * (0.05 + 0.05 * Math.sin(Math.PI * u) + 0.008 * Math.sin(k * 2.4 + now / 420)) * dome; cx.beginPath(); cx.arc((u * 2 - 1) * 0.3 * h, h * 0.012 - r * 0.25, r, 0, 6.283); cx.fill(); } }
+  cx.save(); path(P); cx.clip();
+  if (tot > 0.0005) {
+    path(prClip(P, sx, sy, cT)); cx.fillStyle = '#fff6dc'; cx.fill();
+    if (S.F > 0.004) {
+      /* the bubbly top of the foam */
+      const top = prClip(P, sx, sy, cT).filter(q => Math.abs(q[0] * sx + q[1] * sy - cT) < 0.5);
+      if (top.length >= 2) {
+        const p0 = top[0], p1 = top[top.length - 1], len = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), nb = Math.max(3, Math.round(len / (h * 0.085))), rise = Math.min(1, S.F * 14);
+        cx.fillStyle = '#fff6dc';
+        for (let k = 0; k <= nb; k++) { const u = k / nb, r = h * (0.034 + 0.012 * Math.sin(k * 2.4 + now / 420)) * rise; cx.beginPath(); cx.arc(p0[0] + (p1[0] - p0[0]) * u - sx * r * 0.2, p0[1] + (p1[1] - p0[1]) * u - sy * r * 0.2, r, 0, 6.283); cx.fill(); }
+      }
+    }
+    if (S.B > 0.0005) {
+      const beer = prClip(P, sx, sy, cB), lg = cx.createLinearGradient(sx * cB, sy * cB, sx * (cB + h * 0.9), sy * (cB + h * 0.9));
+      lg.addColorStop(0, '#ffd04a'); lg.addColorStop(0.5, '#f9a80f'); lg.addColorStop(1, '#d97a00');
+      path(beer); cx.fillStyle = lg; cx.fill();
+      /* bubbles rising */
+      cx.fillStyle = 'rgba(255,255,255,.75)';
+      S.bubs.forEach(b => {
+        b.v -= b.s * 0.011; if (b.v < 0) { b.v = 1; b.u = Math.random(); }
+        const y = h * (0.12 + 0.86 * b.v), half = 0.36 * h - (0.09 * h) * (y / h) - 4, x = (b.u * 2 - 1) * half;
+        if (x * sx + y * sy > cB + 3) { cx.beginPath(); cx.arc(x, y, b.r, 0, 6.283); cx.fill(); }
+      });
+      /* the line where the foam sits on the beer */
+      if (S.F > 0.004) { const e = beer.filter(q => Math.abs(q[0] * sx + q[1] * sy - cB) < 0.5); if (e.length >= 2) { cx.beginPath(); cx.moveTo(e[0][0], e[0][1]); cx.lineTo(e[e.length - 1][0], e[e.length - 1][1]); cx.strokeStyle = 'rgba(255,246,220,.9)'; cx.lineWidth = 3; cx.stroke(); } }
+    }
+  }
+  /* the stream */
+  if (S.pouring && S.phase === 'pour') {
+    const st = prStream(P, gx, gy, prLevel(P, gx, gy, tot, full), ex), wob = Math.sin(now / 38) * 0.8;
+    cx.beginPath(); st.pts.forEach((q, i) => (i ? cx.lineTo(q[0] + (i === 1 ? wob : 0), q[1]) : cx.moveTo(q[0], q[1])));
+    cx.strokeStyle = '#f7a50c'; cx.lineWidth = h * 0.05; cx.stroke(); cx.strokeStyle = 'rgba(255,240,190,.9)'; cx.lineWidth = h * 0.016; cx.stroke();
+    const e = st.pts[st.pts.length - 1];
+    if (now >= (S.fxAt || 0)) { S.fxAt = now + (st.wall ? 90 : 30); S.fx.push({ x: e[0], y: e[1], vx: (Math.random() - 0.5) * h * (st.wall ? 0.3 : 1), vy: -Math.random() * h * (st.wall ? 0.2 : 0.8), life: 1, r: h * (0.012 + Math.random() * 0.018) }); }
+  }
+  cx.fillStyle = '#fff6dc';
+  S.fx.forEach(f => { f.vx *= 0.96; f.vy += h * 0.05; f.x += f.vx / 60; f.y += f.vy / 60; f.life -= 0.05; if (f.life > 0) { cx.globalAlpha = f.life; cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, 6.283); cx.fill(); } });
+  cx.globalAlpha = 1;
+  S.fx = S.fx.filter(f => f.life > 0);
+  cx.restore();
+  /* the marks: beer up to the dotted line, foam up to the rim */
+  const y7 = prLevel(P, 0, 1, 0.7, full), half7 = 0.36 * h - 0.09 * y7;
+  cx.setLineDash([h * 0.03, h * 0.03]); cx.beginPath(); cx.moveTo(-half7 + 5, y7); cx.lineTo(half7 - 5, y7); cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = 2.5; cx.stroke(); cx.setLineDash([]);
+  /* the glass itself: thick walls, a heavy bottom, a streak of light */
+  cx.beginPath(); cx.moveTo(P[0][0], P[0][1]); cx.lineTo(P[3][0], P[3][1]); cx.lineTo(P[2][0], P[2][1]); cx.lineTo(P[1][0], P[1][1]);
+  cx.strokeStyle = INK; cx.lineWidth = h * 0.045; cx.stroke(); cx.strokeStyle = 'rgba(226,240,255,.8)'; cx.lineWidth = h * 0.018; cx.stroke();
+  cx.beginPath(); cx.moveTo(P[3][0], h + h * 0.03); cx.lineTo(P[2][0], h + h * 0.03); cx.strokeStyle = INK; cx.lineWidth = h * 0.085; cx.stroke(); cx.strokeStyle = 'rgba(226,240,255,.7)'; cx.lineWidth = h * 0.05; cx.stroke();
+  cx.beginPath(); cx.moveTo(-0.27 * h, 0.1 * h); cx.lineTo(-0.2 * h, 0.82 * h); cx.strokeStyle = 'rgba(255,255,255,.3)'; cx.lineWidth = h * 0.03; cx.stroke();
+  /* labels beside the marks */
+  const fs = Math.max(10, Math.min(14, h * 0.05)), lab = (t, y, col) => {
+    cx.font = '800 ' + fs + 'px ' + S.font; const w = cx.measureText(t).width + fs, x = -0.36 * h + 0.09 * y - h * 0.05;
+    cx.fillStyle = INK; cx.beginPath(); cx.roundRect(x - w, y - fs * 0.85, w, fs * 1.7, fs * 0.85); cx.fill();
+    cx.fillStyle = col; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(t, x - w / 2, y + 1);
+  };
+  if (S.phase !== 'judge' && S.phase !== 'shown') { lab('ビール', y7, '#ffd04a'); lab('泡', h * 0.035, '#fff6dc'); }
+  /* what ran over the rim */
+  S.drops.forEach(d => { cx.globalAlpha = Math.min(1, d.life * 1.6); cx.fillStyle = d.foam ? '#fff6dc' : '#f9a80f'; cx.beginPath(); cx.arc(d.x * h, d.y * h, d.r * h, 0, 6.283); cx.fill(); });
+  cx.globalAlpha = 1;
+  /* the tap hangs straight down over the middle of the rim, however the glass is held */
+  if (S.phase === 'judge' || S.phase === 'shown') return;
+  cx.translate(ex, 0); cx.rotate(-a);
+  const th = h * 0.2, tw = h * 0.11, on = S.pouring && S.phase === 'pour';
+  cx.fillStyle = INK; cx.beginPath(); cx.roundRect(-tw * 0.5 - 3, -th - h * 0.5, tw + 6, h * 0.5 - h * 0.02 + 3, 6); cx.fill();
+  const tg = cx.createLinearGradient(-tw / 2, 0, tw / 2, 0); tg.addColorStop(0, '#8d97a8'); tg.addColorStop(0.35, '#f4f7fb'); tg.addColorStop(1, '#6d7686');
+  cx.fillStyle = tg; cx.beginPath(); cx.roundRect(-tw * 0.5, -th - h * 0.5, tw, h * 0.5 - h * 0.02, 4); cx.fill();
+  cx.fillStyle = INK; cx.beginPath(); cx.roundRect(-tw * 0.34 - 3, -th - h * 0.03, tw * 0.68 + 6, h * 0.075 + 3, 4); cx.fill();
+  cx.fillStyle = '#c9d0db'; cx.beginPath(); cx.roundRect(-tw * 0.34, -th - h * 0.03, tw * 0.68, h * 0.075, 3); cx.fill();
+  /* the lever: pulled forward while the beer runs */
+  cx.save(); cx.translate(tw * 0.5, -th - h * 0.2); cx.rotate(on ? 0.9 : 0.25);
+  cx.fillStyle = INK; cx.beginPath(); cx.roundRect(-3, -h * 0.02 - 3, h * 0.2 + 6, h * 0.04 + 6, 8); cx.fill();
+  cx.fillStyle = on ? '#ffd83d' : '#ff4fa3'; cx.beginPath(); cx.roundRect(0, -h * 0.02, h * 0.2, h * 0.04, 6); cx.fill();
+  cx.restore();
+  if (on) { cx.beginPath(); cx.moveTo(0, -th + h * 0.045); cx.lineTo(0, 0); cx.strokeStyle = '#f7a50c'; cx.lineWidth = h * 0.05; cx.stroke(); cx.strokeStyle = 'rgba(255,240,190,.9)'; cx.lineWidth = h * 0.016; cx.stroke(); }
+}
+function pourDone() {
+  const T = tool, S = T.pr;
+  if (S.phase !== 'pour') return;
+  S.phase = 'judge'; S.pouring = false; S.pid = null; S.drag = null;
+  toolActs('', false);
+  $('prBarBox').hidden = true; $('prMode').hidden = true;
+  prTip('');
+  $('toolSub').innerHTML = '判定中…<small>ビール7：泡3 にどれだけ近い？</small>';
+  SE.play('swDrum'); BGM.level(0.25, 0.2);
+  toolLater(pourScore, 1500);
+}
+/* 100 points for beer 7 : foam 3 up to the rim with nothing spilled */
+function prScore(B, F, spill) {
+  const tot = B + F, ratio = tot > 0.001 ? F / tot : 0;
+  const rp = tot > 0.001 ? Math.min(60, Math.abs(ratio - 0.3) * 220) : 60, fp = Math.min(45, Math.max(0, 0.97 - tot) * 130), sp = Math.min(35, spill * 160);
+  return { score: Math.max(0, Math.round((100 - rp - fp - sp) * 10) / 10), ratio, tot, rp, fp, sp };
+}
+function pourScore() {
+  const T = tool, S = T.pr, i = T.k, R = prScore(S.B, S.F, S.spill), sc = R.score;
+  const word = sc >= 95 ? '黄金比！！' : sc >= 85 ? 'プロの一杯！' : sc >= 70 ? 'うまい！' : sc >= 50 ? 'まあまあ' :
+    R.tot < 0.05 ? 'からっぽ…' : R.sp >= Math.max(R.rp, R.fp) ? 'こぼしすぎ！' : R.fp >= R.rp ? '少なすぎ！' : R.ratio > 0.3 ? '泡だらけ！' : '泡がない…';
+  const cls = sc >= 85 ? 'great' : sc >= 50 ? '' : 'bad';
+  T.res[i] = sc;
+  const res = $('prRes');
+  res.className = 'pr-res ' + cls;
+  res.innerHTML = '<b class="pr-pt"><span id="prPt">0</span><small>点</small></b><div class="pr-side"><em class="pr-word" id="prWord"></em>' +
+    '<p class="pr-bd">ビール <b>' + ((1 - R.ratio) * 10).toFixed(1) + '</b>：泡 <b>' + (R.ratio * 10).toFixed(1) + '</b><br>量 <b>' + Math.round(Math.min(1, R.tot) * 100) + '%</b>　こぼした <b>' + Math.round(Math.min(9.99, S.spill) * 100) + '%</b></p></div>';
+  res.hidden = false;
+  const steps = 22;
+  for (let k = 1; k <= steps; k++) toolLater(() => { const e = $('prPt'); if (e) e.textContent = (sc * k / steps).toFixed(1); if (k % 2) SE.play('coin'); }, k * 45);
+  toolLater(() => {
+    S.phase = 'shown';
+    $('prWord').textContent = word; res.classList.add('in');
+    const v = $('tlV' + i); v.textContent = sc.toFixed(1); v.classList.toggle('great', sc >= 85); v.classList.toggle('bad', sc < 50); tmPop(v);
+    BGM.level(0.7, 0.4);
+    const q = relPos(res);
+    if (sc >= 95) { SE.play('fanfare'); flash('#ffd83d'); FXC.burst(q.x, q.y, 120, { colors: GOLD, star: true, speed: 15 }); FXC.rain(100, GOLD); vibrate([60, 40, 60, 40, 160]); }
+    else if (sc >= 85) { SE.play('ding'); SE.play('heaven'); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 }); }
+    else if (sc >= 50) SE.play('ding');
+    else { SE.play('bubuu'); shake(false); }
+    $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[i])) + '</b> は ' + sc.toFixed(1) + '点！<small>' + word + '</small>';
+    if (i + 1 < T.ps.length) toolActs('<button type="button" class="pbtn big main" data-tl="next">つぎは ' + esc(pname(T.ps[i + 1])) + '！</button>', false);
+    else toolLater(pourFinish, 2000);
+  }, steps * 45 + 260);
+}
+function pourFinish() {
+  const T = tool, S = T.pr;
+  S.phase = 'over';
+  T.ps.forEach((_, j) => $('tlP' + j).classList.remove('now', 'wait'));
+  const min = Math.min(...T.res), losers = T.ps.filter((_, j) => T.res[j] === min);
+  hushBeat('toolOv', 700, () => toolFinish(losers, loseLine(T, losers, '同じ ' + min.toFixed(1) + '点！'), j => $('tlP' + j)));
+}
+TOOLX.pour = {
+  touch: false,   /* tests: never use the motion sensor */
+  setup: pourSetup,
+  act: pourAct,
+  close(T) {
+    if (T.pr) T.pr.ac.abort();
+    try { const o = screen.orientation; if (T.pr && T.pr.mode === 'tilt' && o && o.unlock) o.unlock(); } catch (_) { /* ignore */ }
+  },
+};
+
+/* 遊び方: the premium mini games get a card on the ミニゲーム page */
+if (PLUS_OPEN) {
+  const g = GUIDE.find(x => x.k === 'games');
+  if (g) {
+    const base = g.html;
+    g.html = () => base() + gCard('プレミアムのミニゲーム', '<p><b>ミニゲームモード</b>の一覧で <b>NEW</b> がついているゲームです。ルーレットで当たるか、一覧からタップして選びます。</p>' +
+      '<p><b>酒スロ</b>：1人ずつスロットを回して、出た枚数がいちばん少ない人の負け。レバー → ボタン3つで止めます。ランプの色（青 → 緑 → 赤 → 虹）・リーチ・カットインが出るほど大当たりのチャンス。<b>「酒」が3つそろうと、その人以外の全員が負け</b>。2人なら3回、3人なら2回ずつ回せて、最下位が同じ枚数ならサドンデス。</p>' +
+      '<p><b>指ツイスター</b>：スマホをテーブルに置いて、全員が自分の色の丸に指を1本。丸は動き、入れかわり、ワープします。指がはなれたまま、まわりのゲージが空になった人の負け。6人からは2組に分かれて、負けた2人で決勝。<span class="sub">指を同時に置くので、タッチ画面の端末だけ。</span></p>' +
+      '<p><b>黄金比チャレンジ</b>：スマホがグラス。1人ずつビールを注いで、<b>ビール7：泡3</b>でフチまで注げた人ほど高得点。いちばん低い人の負け。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。かたむけすぎ・注ぎすぎは、こぼれて減点。スマホをかたむけるか、指を左右にすべらせます。</p><div class="gd-rows">' +
+      [['爆弾解除', '爆弾のコードを1本ずつ切る。ハズレを切った人の負け'], ['21ゲーム', '数を1〜3個ずつ進めて、「21」を言った人の負け'], ['メモリーリレー', '光った順番どおりにタップ。1人ごとに1つずつ増えて、まちがえた人の負け']]
+        .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
+      gTip('酒スロの結果は、レバーを引いた瞬間に決まっています（本物のパチスロと同じ）。ボタンは好きなタイミングで押してOK。'));
+  }
+}
 
 /* =====================================================================
    ことばの説明: カードに「インシュメイト」「クエスチョンマスター」のような、知らないと分からない言葉が出たら説明する。
