@@ -80,7 +80,7 @@ export default {
       const mode = ['card', 'mini', 'king', 'koi', 'gaka', 'reply', 'mission', 'uso'].includes(r.mode) ? r.mode : null;   // カード・ミニゲーム・王様ゲーム・恋バナ/暴露・ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
       const players = int(r.players, 2, 8), rounds = int(r.rounds ?? 0, 0, 99);
       const form = r.form === 'tablet' ? 'tablet' : 'phone', installed = r.inst ? 1 : 0, nth = int(r.nth ?? 1, 1, 99999);
-      const MIXES = { card: ['even', 'lively'], king: ['mild', 'hot'], koi: ['mix', 'koi', 'bare'], gaka: ['easy', 'all'], reply: ['all', 'safe', 'koi'], mission: ['easy', 'all'], uso: ['mix', 'light', 'deep'] };   // カードの出かた・命令のレベル・質問のジャンル・お題など
+      const MIXES = { card: ['even', 'lively'], king: ['mild', 'hot'], koi: ['mix', 'koi', 'bare', 'light'], gaka: ['easy', 'all'], reply: ['all', 'safe', 'koi'], mission: ['easy', 'all'], uso: ['mix', 'light', 'deep'] };   // カードの出かた・命令のレベル・質問のジャンル・お題など
       const mix = MIXES[mode] && MIXES[mode].includes(r.mix) ? r.mix : null;
       const unit = ['one', 'half', 'cup', 'none'].includes(r.unit) ? r.unit : null;            // 1杯の量
       if (!sid || !mode || players == null || rounds == null || nth == null) return reply(400, origin);

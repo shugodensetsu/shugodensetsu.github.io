@@ -1055,6 +1055,7 @@ function renderSetup(full) {
   $('countGrid').innerHTML = h;
   $('roundGrid').innerHTML = ROUND_OPTS.map(r => '<button type="button" id="rnd-' + r + '" data-rnd="' + r + '" aria-pressed="' + (setup.rounds === r) + '">' + (r ? r + (pm && PM[pm].flat ? '回' : '周') : '∞') + '</button>').join('');
   $('mixGrid').classList.toggle('three', !!pm && PM[pm].opts.length === 3);
+  $('mixGrid').classList.toggle('four', !!pm && PM[pm].opts.length === 4);
   $('mixGrid').setAttribute('aria-label', pm ? PM[pm].optHead : 'カードの出かた');
   $('mixGrid').innerHTML = pm ? pmSetupOpts(pm) :
     '<button type="button" id="mix-even" data-mix="even" aria-pressed="' + (setup.mix !== 'lively') + '"><b>バランス</b><small>全カードが均等に出る</small></button>' +

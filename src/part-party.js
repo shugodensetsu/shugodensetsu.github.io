@@ -1,7 +1,7 @@
 
 /* =====================================================================
    新しいパーティーモード（プレミアム）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
-   どれもスマホ1台。PM_MODES の仲間として、恋バナと同じ画面（mgBoard + mgStage + dock）で動く。
+   どれもスマホ1台。PM_MODES の仲間として、暴露オーディションと同じ画面（mgBoard + mgStage + dock）で動く。
    ボタンは data-g="x-…" → PMX[mode].act('…')
    ===================================================================== */
 PM_MODES.push('gaka', 'reply', 'mission', 'uso');
@@ -715,7 +715,7 @@ Object.assign(PMX.reply, { resLine: p => 'いちばん ' + p.best + '回 ・ ス
 Object.assign(PMX.mission, { resLine: p => '達成 ' + p.done + ' ・ 見破り ' + p.spot + ' ・ 見破られ ' + p.caught, resStats: most => pxStat('ミッション王', most('done')) + pxStat('名探偵', most('spot')) });
 Object.assign(PMX.uso, { resLine: p => '全員だました ' + p.fool + '回 ・ 外した ' + p.miss + '回', resStats: most => pxStat('ホラ吹き王', most('fool')) + pxStat('いちばんだまされた', most('miss')) });
 
-/* 遊び方ガイド: a page for the four party modes, after 恋バナ */
+/* 遊び方ガイド: a page for the four party modes, after 暴露オーディション */
 if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1), 0, { k: 'party', tab: '新モード', html: () =>
   '<p class="gd-lead">タイトル画面の下の段、<b>4つの新モード</b>です。どれもスマホ1台で遊べます。「こっそり見る」場面では、名前が出た人にスマホを渡してね。</p>' +
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
@@ -730,3 +730,201 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1杯</b>。全員だませたら、話した人に勲章。</p>', 4) +
   gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')
 });
+
+/* =====================================================================
+   暴露オーディション（もとの恋バナ・暴露。mode のキーは 'koi' のまま）:
+   聞き手（答える人の左隣）が2枚から質問を選んで読む → 答えるかパス → もうひと声・♡いい話！ → 次の人。
+   「この中で」は指さし（point）か、こっそり投票（vote: 3位から順に発表。だれがだれに入れたかは残さない）
+   ===================================================================== */
+const KO_TYPE = { ask: '答える', point: '全員で指さし', vote: 'こっそり投票', all: '全員で答える' };
+const KO_GENRE = { koi: '恋バナ', bare: '暴露' };
+const koLap = () => Math.floor(G.turn / G.players.length) + 1;
+const koMax = () => Math.min(3, koLap());
+const koAsker = () => (G.cur.drawer + 1) % G.players.length;
+const koQ = id => KO_BY_ID.get(id);
+const koDepth = lv => '<span class="ko-depth" aria-label="深さ' + lv + '">' + '♡♡♡'.slice(0, lv) + '<i>' + '♡♡♡'.slice(lv) + '</i></span>';
+function koTwo() {
+  const n = G.players.length, max = koMax(), skip = G.cur.opts || [];
+  let pool = koPool(G.lvl).filter(q => q.lv <= max && (n >= 3 || q.t === 'ask' || q.t === 'all') && !skip.includes(q.id));
+  if (pool.length < 2) pool = koPool(G.lvl).filter(q => q.lv <= max && (n >= 3 || q.t === 'ask' || q.t === 'all'));
+  const a = pmDraw(pool, 1, q => (q.lv === max ? 2 : 1))[0];
+  const rest = pool.filter(q => q.id !== a.id), diff = rest.filter(q => q.t !== a.t || q.lv !== a.lv);
+  const b = pmDraw(diff.length ? diff : rest, 1)[0];
+  return [a, b].filter(Boolean).map(q => q.id);
+}
+function koCard(q, extra, cls) {
+  return '<div class="ko-card face g-' + q.g + (cls ? ' ' + cls : '') + '"><span class="ko-tag">' + KO_GENRE[q.g] + ' ・ ' + KO_TYPE[q.t] + '</span>' + koDepth(q.lv) +
+    '<p class="ko-q">' + esc(q.q) + '</p>' + (extra || '') + '</div>';
+}
+function koTally() {
+  const cur = G.cur, cnt = {};
+  Object.values(cur.votes || {}).forEach(p => { cnt[p] = (cnt[p] || 0) + 1; });
+  delete cur.votes;
+  cur.tally = Object.keys(cnt).map(p => ({ p: Number(p), n: cnt[p] })).sort((a, b) => b.n - a.n || a.p - b.p);
+  cur.shown = 0;
+}
+const koSplit = () => G.players.length >= 3 && G.cur.tally.length > 1 && G.cur.tally.every(t => t.n === 1);
+const koTop = () => { const t = G.cur.tally, m = t.length ? t[0].n : 0; return koSplit() ? [] : t.filter(x => x.n === m).map(x => x.p); };
+function koReveal() {
+  const cur = G.cur, steps = Math.min(3, cur.tally.length);
+  const step = () => {
+    if (!G || G.cur !== cur || cur.phase !== 'tally') return;
+    if (cur.shown >= steps) { saveGame(); renderPM(); return; }
+    SE.play('swDrum');
+    pxLater(() => {
+      cur.shown++; saveGame(); renderPM('tally');
+      const last = cur.shown >= steps;
+      SE.play(last ? (koQ(cur.q).k === 'praise' ? 'fanfare' : 'swShow') : 'pop'); vibrate(last ? [40, 30, 80] : 20);
+      if (!last) setTimeout(step, 450); else renderPM('tally');
+    }, cur.shown + 1 >= steps ? 1500 : 900);
+  };
+  step();
+}
+PMX.koi = {
+  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、飲むか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露オーディション！<small>答えるか、飲むか</small>',
+  poolWord: '質問', poolUnit: '問', resCount: '問',
+  pool: o => koPool(o).length,
+  stats: () => ({ more: 0, votes: 0 }),
+  mark: () => G.cur.drawer,
+  mark2: () => (G.players.length >= 2 && G.cur.drawer !== koAsker() ? koAsker() : null),
+  who: () => { const q = koQ(G.cur.q); return !q || q.t === 'ask' ? G.cur.drawer : null; }, logTag: () => G.cur.q, logH: () => G.cur.h || 0,
+  logPre: e => { const q = koQ(e.t); return q && q.t !== 'ask' ? '全員' : ''; },
+  norm(g) {
+    const c = g.cur, n = g.players.length, okP = p => Number.isInteger(p) && p >= 0 && p < n;
+    c.vsel = null;
+    if (c.phase === 'pick') { if (!(Array.isArray(c.opts) && c.opts.length && c.opts.every(id => KO_BY_ID.has(id)))) c.phase = 'before'; return; }
+    if (!['q', 'more', 'heart', 'vote', 'tally'].includes(c.phase) || !KO_BY_ID.has(c.q)) { c.phase = 'before'; delete c.peek; return; }
+    /* a vote that was cut off: everyone votes again from the first person (the votes themselves are never saved for long) */
+    if (c.phase === 'vote' || (c.phase === 'q' && KO_BY_ID.get(c.q).t === 'vote')) { c.phase = 'vote'; c.votes = {}; c.peek = { ps: Array.from({ length: n }, (_, i) => (c.drawer + i) % n), at: 0, open: false }; }
+    if (c.phase === 'tally') { if (!Array.isArray(c.tally) || !c.tally.every(t => okP(t.p))) c.phase = 'before'; else c.shown = Math.min(3, c.tally.length); }
+    if (c.phase === 'more' && !(Array.isArray(KO_BY_ID.get(c.q).more) && KO_BY_ID.get(c.q).more[c.mi])) c.phase = 'heart';
+  },
+  turn() {
+    const max = G.lvl === 'light' ? Math.min(2, koMax()) : koMax();
+    if (G.pm.lv && max > G.pm.lv) setTimeout(() => { if (G && screen === 'game') telop('ここから、ちょっと深め！<small>' + '♡'.repeat(max) + '</small>', 'pink', 1600); }, 1100);
+    G.pm.lv = max;
+  },
+  stage(anim) {
+    const cur = G.cur, head = pxHead(), p = cur.drawer, a = koAsker(), max = G.lvl === 'light' ? Math.min(2, koMax()) : koMax();
+    const depth = '<p class="ko-now">いまの深さ ' + koDepth(max) + '</p>';
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><p class="ko-who">' + pmName(p) + ' が答える番</p>' +
+      '<div class="ko-backs"><div class="ko-card back"><span class="ko-back">' + HEART_SVG + '<b>Q</b></span></div><div class="ko-card back"><span class="ko-back">' + HEART_SVG + '<b>Q</b></span></div></div>' +
+      '<p class="pm-note">聞き手は ' + pmName(a) + '。2枚から質問を選んで、読み上げてね</p>' + depth + pmTryNote() + '</div>');
+    if (cur.phase === 'pick') return head + '<div class="pm-body"><p class="pm-ask">' + esc(pname(a)) + '、' + esc(pname(p)) + ' に聞く質問をタップ</p><div class="ko-picks' + (anim === 'pick' ? ' enter' : '') + '">' +
+      cur.opts.map((id, i) => { const q = koQ(id); return '<button type="button" class="ko-pick g-' + q.g + (cur.pk === i ? ' sel' : '') + '" data-g="x-pk" data-i="' + i + '" aria-pressed="' + (cur.pk === i) + '"><span class="ko-pt">' + KO_TYPE[q.t] + ' ' + koDepth(q.lv) + '</span><span class="ko-pq">' + esc(q.q) + '</span></button>'; }).join('') + '</div></div>';
+    const q = koQ(cur.q);
+    if (cur.phase === 'q' && q.t === 'ask') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' が答える</p>' + koCard(q, '<p class="ko-rule">' + esc(pname(a)) + '、読み上げて！ 答えたくなければパス（1杯）</p>', anim === 'q' ? 'enter' : '') + '</div>';
+    if (cur.phase === 'more') return head + '<div class="pm-body"><p class="ko-who">もうひと声！</p>' + koCard(q, '', 'small') + '<div class="ko-card face more g-' + q.g + (anim === 'more' ? ' enter' : '') + '"><span class="ko-tag">もうひと声</span><p class="ko-q">' + esc(q.more[cur.mi]) + '</p><p class="ko-rule">答えるか、半分飲むか</p></div></div>';
+    if (cur.phase === 'heart') {
+      const canMore = q.more && q.more.length && !cur.md;
+      return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<p class="pm-lead ol">いい話だった？</p><p class="pm-note">よかったら「♡いい話！」。' + (canMore ? 'もっと聞きたければ「もうひと声！」' : '') + '</p>' +
+        (cur.heart || cur.mok ? '<p class="ko-hearts">' + pmName(p) + ' に ' + '♡'.repeat((cur.heart ? 1 : 0) + (cur.mok ? 1 : 0)) + '</p>' : '') + '</div>';
+    }
+    if (cur.phase === 'q') {
+      const pt = q.t === 'point';
+      return head + '<div class="pm-body">' + koCard(q, '<p class="ko-rule">' + (pt ? 'せーので一斉に指さし！ いちばん指された人が1杯。指した理由も1人ずつ' : esc(pname(p)) + ' から1人ずつ答える。答えられなかった人が1杯') + '</p>', anim === 'q' ? 'enter' : '') +
+        '<p class="pm-ask">' + (pt ? 'いちばん指された人をタップ' : '答えられなかった・パスした人をタップ') + '</p>' + pxChips(pxAll(), cur.sel, 'sel', '1杯') + '</div>';
+    }
+    if (cur.phase === 'vote') {
+      if (!cur.peek.open) return head + pxPeekCover('だれに入れたかは、だれにも分からない');
+      const v = pxPeekWho();
+      return head + '<div class="pm-body"><p class="px-for">' + pmName(v) + ' の投票</p>' + koCard(q, '', 'small') + '<p class="pm-ask">1人をタップ（自分には入れられない）</p>' + pxChips(pxOthers(v), cur.vsel, 'vsel') + '</div>';
+    }
+    /* tally */
+    const steps = Math.min(3, cur.tally.length), done = cur.shown >= steps, top = koTop();
+    let rows = '';
+    for (let i = steps - 1; i >= 0; i--) {
+      const t = cur.tally[i], on = steps - 1 - i < cur.shown;
+      rows += '<li class="ko-rank' + (on ? ' on' : '') + (done && top.includes(t.p) ? ' top' : '') + '"><b>' + (1 + cur.tally.filter(x => x.n > t.n).length) + '位</b>' + (on ? pmName(t.p) + '<i>' + t.n + '票</i>' : '<span class="ko-hide">？？？</span>') + '</li>';
+    }
+    const res = !done ? '' : koSplit() ? '<p class="pm-ask gold">意見が割れた！ だれも飲まない</p>' : q.k === 'praise' ? '<p class="pm-ask gold">' + top.map(x => esc(pname(x))).join('・') + ' に ♡</p>' : '<p class="pm-ask">' + top.map(x => esc(pname(x))).join('・') + ' が1杯</p>';
+    return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<ol class="ko-ranks">' + rows + '</ol>' + res + '</div>';
+  },
+  dock() {
+    const cur = G.cur;
+    if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('flip', '質問をめくる！', 'big main pulse pink'));
+    if (cur.phase === 'pick') return pxRow(pxBtn('re', '2枚とも<span class="sub">入れかえ' + (cur.re ? '済み' : '（1回）') + '</span>', 'white small', cur.re ? ' disabled' : '') + pxBtn('go', cur.pk == null ? '質問をタップ' : 'これにする！', 'big main grow', cur.pk == null ? ' disabled' : ''));
+    const q = koQ(cur.q), last = pmLast() ? '結果発表へ！' : '次へ ▶';
+    if (cur.phase === 'q' && q.t === 'ask') return pxRow(pxBtn('pass', 'パス<span class="sub">1杯飲む</span>', 'white small') + pxBtn('ok', '答えた！', 'big main grow'));
+    if (cur.phase === 'more') return pxRow(pxBtn('mhalf', '半分<span class="sub">飲む</span>', 'white small') + pxBtn('mok', '答えた！', 'big main grow'));
+    if (cur.phase === 'heart') {
+      const canMore = q.more && q.more.length && !cur.md;
+      return pxRow((canMore ? pxBtn('more', 'もうひと声！', 'cyan small') : '') + pxBtn('heart', (cur.heart ? '♡ 送った' : '♡いい話！'), (cur.heart ? 'pink' : 'white') + ' small', cur.heart ? ' aria-pressed="true"' : '') + pxBtn('next', last, 'big main'));
+    }
+    if (cur.phase === 'q') { const k = cur.sel.length; return pxRow(pxBtn('next', (k ? k + '人に記録して' : '') + last, 'big main')); }
+    if (cur.phase === 'vote') return pxRow(!cur.peek.open ? pxPeekOpenBtn() : pxBtn('vote', cur.vsel == null ? '1人をタップ' : (cur.peek.at + 1 >= cur.peek.ps.length ? '投票して発表へ ▶' : '投票して次の人へ ▶'), 'big main', cur.vsel == null ? ' disabled' : ''));
+    const done = cur.shown >= Math.min(3, cur.tally.length);
+    return pxRow(done ? pxBtn('next', last, 'big main') : '<div class="dock-note">発表中…</div>');
+  },
+  act(a, el) {
+    const cur = G.cur;
+    if (pxBusy) return;
+    if (a === 'end') { finishGame(); return; }
+    if (a === 'flip' && cur.phase === 'before' && !pmLocked()) { cur.opts = koTwo(); cur.pk = null; cur.re = 0; cur.phase = 'pick'; tryUse('koi'); SE.play('deal'); pxSave('pick'); return; }
+    if (cur.phase === 'pick') {
+      if (a === 're' && !cur.re) { cur.opts = koTwo(); cur.pk = null; cur.re = 1; SE.play('cdShuffle'); pxSave('pick'); return; }
+      if (a === 'pk') { const i = Number(el && el.dataset.i); if (i === 0 || i === 1) { cur.pk = cur.pk === i ? null : i; SE.play('select'); pxSave(); } return; }
+      if (a === 'go' && cur.pk != null) {
+        const q = koQ(cur.opts[cur.pk]);
+        cur.q = q.id; pmUse(q.id); useTrack('pm_item', { id: q.id });
+        cur.sel = []; cur.heart = false; cur.md = false; cur.mok = false; cur.half = false; cur.h = 0;
+        if (q.t === 'vote') { cur.votes = {}; cur.vsel = null; pxPeekStart(Array.from({ length: G.players.length }, (_, i) => (cur.drawer + i) % G.players.length)); cur.phase = 'vote'; SE.play('swoosh'); pxSave(); telop('こっそり投票！<small>スマホを回して1人ずつ</small>', 'pink', 1300); return; }
+        cur.phase = 'q'; SE.play('flip'); pxSave('q');
+        return;
+      }
+      return;
+    }
+    const q = cur.q && koQ(cur.q);
+    if (!q) return;
+    if (cur.phase === 'q' && q.t === 'ask') {
+      if (a === 'pass') { G.players[cur.drawer].pass++; SE.play('gulp'); pmNext(pxCups([cur.drawer]), false); return; }
+      if (a === 'ok') { G.players[cur.drawer].ans++; cur.phase = 'heart'; SE.play('ding'); pxSave(); return; }
+      return;
+    }
+    if (cur.phase === 'heart') {
+      if (a === 'more' && q.more && q.more.length && !cur.md) { cur.mi = rint(0, q.more.length - 1); cur.md = true; cur.phase = 'more'; SE.play('swDrum'); pxSave('more'); return; }
+      if (a === 'heart') { cur.heart = !cur.heart; SE.play(cur.heart ? 'ding' : 'tap'); if (cur.heart) vibrate(15); pxSave(); return; }
+      if (a === 'next') {
+        const h = (cur.heart ? 1 : 0) + (cur.mok ? 1 : 0);
+        cur.h = h; G.players[cur.drawer].medal += h;
+        if (h) telop('♡'.repeat(h) + '<small>' + esc(pname(cur.drawer)) + ' に</small>', 'pink', 1100);
+        pmNext(cur.half ? [{ p: cur.drawer, amt: 0.5 }] : [], true);
+      }
+      return;
+    }
+    if (cur.phase === 'more') {
+      if (a === 'mok') { cur.mok = true; G.players[cur.drawer].more++; cur.phase = 'heart'; SE.play('ding'); pxSave(); return; }
+      if (a === 'mhalf') { cur.half = true; cur.phase = 'heart'; SE.play('gulp'); pxSave(); return; }
+      return;
+    }
+    if (cur.phase === 'q') {
+      if (a === 'sel') { const p = pxP(el); if (p == null) return; const at = cur.sel.indexOf(p); if (at >= 0) cur.sel.splice(at, 1); else cur.sel.push(p); SE.play(at >= 0 ? 'tap' : 'select'); pxSave(); return; }
+      if (a === 'next') pmNext(null, false);
+      return;
+    }
+    if (cur.phase === 'vote') {
+      if (a === 'peekopen') { pxPeekAct(a, () => {}); return; }
+      if (a === 'vsel' && cur.peek && cur.peek.open) { const p = pxP(el); if (p == null || p === pxPeekWho()) return; cur.vsel = cur.vsel === p ? null : p; SE.play('select'); pxSave(); return; }
+      if (a === 'vote' && cur.peek && cur.peek.open && cur.vsel != null) {
+        cur.votes = cur.votes || {}; cur.votes[pxPeekWho()] = cur.vsel; cur.vsel = null;
+        SE.play('swoosh');
+        pxPeekAct('peeknext', () => { koTally(); cur.phase = 'tally'; pxSave(); koReveal(); });
+      }
+      return;
+    }
+    if (cur.phase === 'tally' && a === 'next' && cur.shown >= Math.min(3, cur.tally.length)) {
+      const top = koTop();
+      top.forEach(p => { G.players[p].votes++; });
+      if (q.k === 'praise') { top.forEach(p => { G.players[p].medal++; }); cur.h = top.length ? 1 : 0; pmNext([], true); }
+      else pmNext(pxCups(top), false);
+    }
+  },
+  resLine: p => '♡ ' + p.medal + ' ・ 答えた ' + p.ans + ' ・ パス ' + p.pass,
+  resStats(most) {
+    const list = G.pm.log.filter(e => koQ(e.t)).slice(-30).map(e => {
+      const q = koQ(e.t), who = q.t === 'ask' && G.players[e.k] ? '<b style="--p:' + pc(e.k) + '">' + esc(pname(e.k)) + '</b>' : '<b class="all">全員</b>';
+      return '<li>' + who + '<span>' + esc(q.q) + '</span>' + (e.h ? '<i>' + '♡'.repeat(e.h) + '</i>' : '') + '</li>';
+    }).join('');
+    return pxStat('グランプリ（♡いちばん）', most('medal')) + pxStat('もうひと声に答えた', most('more')) + (list ? '<div class="ko-log"><h3>今夜の質問</h3><ol>' + list + '</ol></div>' : '');
+  },
+};

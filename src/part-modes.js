@@ -1,9 +1,9 @@
 
 /* =====================================================================
-   酒GO!!プレミアム: 恋バナ/暴露モード・パーティーモード4つ（part-party.js）・新作ミニゲーム
+   酒GO!!プレミアム: 暴露オーディション・パーティーモード4つ（part-party.js）・新作ミニゲーム
    - カード104枚・カード編集・ミニゲーム14種は、ずっと無料のまま
    - PLUS_SALE が false のあいだは「先行体験」: プレミアムの中身も全部無料で、制限なし
-   - true にすると、無料の人は「お試し」（恋バナ・パーティーモードは1日 PLUS_TRY ラウンドずつ、新作ミニゲームは1日1回ずつ）。
+   - true にすると、無料の人は「お試し」（暴露オーディション・パーティーモードは1日 PLUS_TRY ラウンドずつ、新作ミニゲームは1日1回ずつ）。
      お支払い（Google Play の課金 / Stripe）をつないだら、購入の結果を PLUS_KEY に { plan, until } で入れる。
      true にするときは、build-app.js の説明文・shareApp の文の「無料」を「基本無料」に直し、特定商取引法の表示ページを用意する
    ===================================================================== */
@@ -18,7 +18,7 @@ const PLUS_PLANS = [
   { k: 'pass', name: '24時間パス', price: '240円', per: '', note: '今夜だけ。自動で更新されない' },
 ];
 const PM_MODES = ['koi'];   /* 王様ゲームは 2026-11-12 にやめた */
-/* the party modes after 恋バナ (part-party.js): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
+/* the party modes (part-party.js, 暴露オーディション = 'koi' included): each one is PMX[mode] = { stage, dock, act, norm, turn, … } */
 const PMX = {};
 const PLUS_MG = ['cut', 'n21', 'memo'];
 function plusState() {
@@ -49,90 +49,152 @@ const HEART_SVG = '<svg class="ic-heart" viewBox="0 0 32 28" aria-hidden="true">
 const MEDAL_SVG = '<svg class="ic-medal" viewBox="0 0 24 30" aria-hidden="true"><path d="M6 1h5l2 9H8z" fill="#35e0ff" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 1h-5l-2 9h5z" fill="#ff4fa3" stroke="#150733" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="19.5" r="8.5" fill="#ffd83d" stroke="#150733" stroke-width="2"/><path d="M12 14.5l1.5 3.1 3.4.4-2.5 2.3.7 3.4-3.1-1.7-3.1 1.7.7-3.4-2.5-2.3 3.4-.4z" fill="#fff3b8" stroke="#b07a00" stroke-width="1"/></svg>';
 const DICE_SVG = '<svg class="ic-dice" viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg>';
 
-/* ---------- 恋バナ・暴露の質問. g: koi（恋バナ）/ bare（暴露）. t: ask（番の人が答える）/ point（全員で指さし）/ all（全員で答える） ---------- */
+/* ---------- 暴露オーディションの質問. g: koi（恋バナ）/ bare（暴露・本音）. t: ask（番の人が答える）/ point（全員で指さし）/ vote（こっそり投票）/ all（全員で答える）.
+   lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、飲む（tease）か.
+   id は集計とダッシュボードが数えているので、変えない ---------- */
 const KO_QS = [
-  { id: 1, g: 'koi', t: 'ask', q: '初恋はいつ？ どんな人だった？' },
-  { id: 2, g: 'koi', t: 'ask', q: '好きなタイプを3つ挙げると？' },
-  { id: 3, g: 'koi', t: 'ask', q: '告白したこと・されたことはある？ どんなセリフだった？' },
-  { id: 4, g: 'koi', t: 'ask', q: '今までいちばんキュンとした瞬間は？' },
-  { id: 5, g: 'koi', t: 'ask', q: '理想のデートプランを教えて' },
-  { id: 6, g: 'koi', t: 'ask', q: '恋人にされたら、うれしいことは？' },
-  { id: 7, g: 'koi', t: 'ask', q: '恋人にされたら、イヤなことは？' },
-  { id: 8, g: 'koi', t: 'ask', q: 'どこからが浮気だと思う？' },
-  { id: 9, g: 'koi', t: 'ask', q: '一目ぼれしたことはある？ そのあとどうなった？' },
-  { id: 10, g: 'koi', t: 'ask', q: '付き合う前に、ここだけは確認したいってところは？' },
-  { id: 11, g: 'koi', t: 'ask', q: '片思いで、いちばん長かったのはどれくらい？' },
-  { id: 12, g: 'koi', t: 'ask', q: '好きな人ができたら、自分から行く？ 待つ？' },
-  { id: 13, g: 'koi', t: 'ask', q: '恋愛でいちばんの失敗談は？' },
-  { id: 14, g: 'koi', t: 'ask', q: '元恋人と友達に戻れる派？ 戻れない派？' },
-  { id: 15, g: 'koi', t: 'ask', q: '好きな人の前でだけ、やっちゃうことは？' },
-  { id: 16, g: 'koi', t: 'ask', q: 'プロポーズするなら（されるなら）どんなシチュエーション？' },
-  { id: 17, g: 'koi', t: 'ask', q: '恋人に求める条件、1つだけ選ぶなら？' },
-  { id: 18, g: 'koi', t: 'ask', q: '学生時代の、いちばんの恋の思い出は？' },
-  { id: 19, g: 'koi', t: 'ask', q: '結婚するなら何歳くらいがいい？ 理由も' },
-  { id: 20, g: 'koi', t: 'ask', q: '最近キュンとしたのはいつ？' },
-  { id: 21, g: 'koi', t: 'ask', q: '好きな人にされたら一発でオチる、っていうしぐさは？' },
-  { id: 22, g: 'koi', t: 'ask', q: '恋人とケンカしたら、先に謝る派？' },
-  { id: 23, g: 'koi', t: 'ask', q: '今までもらった、いちばんうれしいプレゼントは？' },
-  { id: 24, g: 'koi', t: 'ask', q: '芸能人と付き合えるなら、だれ？' },
-  { id: 40, g: 'koi', t: 'point', q: 'この中で、いちばんモテそうな人は？' },
-  { id: 41, g: 'koi', t: 'point', q: 'この中で、いちばん最初に結婚しそうな人は？' },
-  { id: 42, g: 'koi', t: 'point', q: 'この中で、いちばん恋人に尽くしそうな人は？' },
-  { id: 43, g: 'koi', t: 'point', q: 'この中で、いちばんデートが上手そうな人は？' },
-  { id: 44, g: 'koi', t: 'point', q: 'この中で、いちばんヤキモチをやきそうな人は？' },
-  { id: 45, g: 'koi', t: 'point', q: 'この中で、いちばん恋に不器用そうな人は？' },
-  { id: 46, g: 'koi', t: 'point', q: 'この中で、いちばん告白されたことが多そうな人は？' },
-  { id: 47, g: 'koi', t: 'point', q: 'この中で、いちばん一途そうな人は？' },
-  { id: 60, g: 'koi', t: 'all', q: '理想のタイプを、芸能人で1人ずつ' },
-  { id: 61, g: 'koi', t: 'all', q: '初恋の年齢を、1人ずつ' },
-  { id: 62, g: 'koi', t: 'all', q: '「恋人にするなら絶対これ」を、1人1つずつ' },
-  { id: 63, g: 'koi', t: 'all', q: '今までのデートで、いちばん楽しかった場所を1人ずつ' },
-  { id: 101, g: 'bare', t: 'ask', q: '最近ついたウソは？' },
-  { id: 102, g: 'bare', t: 'ask', q: '人に言えない趣味はある？' },
-  { id: 103, g: 'bare', t: 'ask', q: 'スマホの検索履歴の、最新1件は？' },
-  { id: 104, g: 'bare', t: 'ask', q: '今までいちばん恥ずかしかった失敗は？' },
-  { id: 105, g: 'bare', t: 'ask', q: 'ここだけの話、最近ムカッとしたことは？' },
-  { id: 106, g: 'bare', t: 'ask', q: '学生時代の黒歴史を1つ' },
-  { id: 107, g: 'bare', t: 'ask', q: '親に言えない秘密を1つ' },
-  { id: 108, g: 'bare', t: 'ask', q: 'いちばん最近泣いたのはいつ？ なんで？' },
-  { id: 109, g: 'bare', t: 'ask', q: '自分の性格で、直したいところは？' },
-  { id: 110, g: 'bare', t: 'ask', q: '実はちょっと自慢したいことは？' },
-  { id: 111, g: 'bare', t: 'ask', q: 'お金をいちばん使っているものは？' },
-  { id: 112, g: 'bare', t: 'ask', q: '今までいちばん高い買い物は？' },
-  { id: 113, g: 'bare', t: 'ask', q: '正直、今日来るのめんどくさかった？' },
-  { id: 114, g: 'bare', t: 'ask', q: '自分の顔で、いちばん好きなパーツは？' },
-  { id: 115, g: 'bare', t: 'ask', q: 'このメンバーに、今まで言えなかった本音を1つ' },
-  { id: 116, g: 'bare', t: 'ask', q: 'ついやってしまうクセは？' },
-  { id: 117, g: 'bare', t: 'ask', q: '人生でいちばん怒られたことは？' },
-  { id: 118, g: 'bare', t: 'ask', q: '学生時代のあだ名は？ 由来も' },
-  { id: 119, g: 'bare', t: 'ask', q: '今までに見た、いちばん変な夢は？' },
-  { id: 120, g: 'bare', t: 'ask', q: '寝坊の言いわけで、いちばんひどかったのは？' },
-  { id: 121, g: 'bare', t: 'ask', q: '実は苦手な食べ物は？' },
-  { id: 122, g: 'bare', t: 'ask', q: '最近、ひとりでこっそりやったことは？' },
-  { id: 123, g: 'bare', t: 'ask', q: '人生でいちばん「やらかした」と思った日は？' },
-  { id: 124, g: 'bare', t: 'ask', q: 'もし今日1日だれかと入れかわれるなら、だれ？ なにする？' },
-  { id: 140, g: 'bare', t: 'point', q: 'この中で、いちばんウソがうまそうな人は？' },
-  { id: 141, g: 'bare', t: 'point', q: 'この中で、いちばん秘密が多そうな人は？' },
-  { id: 142, g: 'bare', t: 'point', q: 'この中で、いちばん酒グセが悪そうな人は？' },
-  { id: 143, g: 'bare', t: 'point', q: 'この中で、いちばんお金持ちになりそうな人は？' },
-  { id: 144, g: 'bare', t: 'point', q: 'この中で、いちばん寝坊しそうな人は？' },
-  { id: 145, g: 'bare', t: 'point', q: 'この中で、怒らせたらいちばんこわい人は？' },
-  { id: 146, g: 'bare', t: 'point', q: 'この中で、いちばん天然な人は？' },
-  { id: 147, g: 'bare', t: 'point', q: 'この中で、無人島でいちばん生き残りそうな人は？' },
-  { id: 160, g: 'bare', t: 'all', q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1杯' },
-  { id: 161, g: 'bare', t: 'all', q: '今日いちばんのハイライトを、ひと言ずつ' },
-  { id: 162, g: 'bare', t: 'all', q: '最近いちばん笑ったことを、1人ずつ' },
-  { id: 163, g: 'bare', t: 'all', q: '「実は〇〇できない」を、1人1つずつ' },
+  { id: 1, g: 'koi', t: 'ask', lv: 1, q: '初恋はいつ？ どんな人だった？', more: ['その人と今も連絡とってる？', '当時、気持ちは伝えた？'] },
+  { id: 2, g: 'koi', t: 'ask', lv: 1, q: '好きなタイプを3つ挙げると？', more: ['その3つ、元恋人は当てはまってた？'] },
+  { id: 3, g: 'koi', t: 'ask', lv: 2, q: '告白したこと・されたことはある？ どんなセリフだった？', more: ['そのあと、どうなった？', '今ならなんて言う？'] },
+  { id: 4, g: 'koi', t: 'ask', lv: 1, q: '今までいちばんキュンとした瞬間は？', more: ['それ、相手はだれ？'] },
+  { id: 5, g: 'koi', t: 'ask', lv: 1, q: '理想のデートプランを教えて', more: ['実際にしたことある？'] },
+  { id: 6, g: 'koi', t: 'ask', lv: 1, q: '恋人にされたら、うれしいことは？', more: ['最近それをしてくれた人はいる？'] },
+  { id: 7, g: 'koi', t: 'ask', lv: 1, q: '恋人にされたら、イヤなことは？', more: ['それ、実際にされたことある？'] },
+  { id: 8, g: 'koi', t: 'ask', lv: 2, q: 'どこからが浮気だと思う？', more: ['自分はその線、守れてる？'] },
+  { id: 9, g: 'koi', t: 'ask', lv: 2, q: '一目ぼれしたことはある？ そのあとどうなった？', more: ['今もその人のこと覚えてる？'] },
+  { id: 10, g: 'koi', t: 'ask', lv: 1, q: '付き合う前に、ここだけは確認したいってところは？', more: ['それで失敗したことある？'] },
+  { id: 11, g: 'koi', t: 'ask', lv: 2, q: '片思いで、いちばん長かったのはどれくらい？', more: ['その人に気持ちは伝えた？'] },
+  { id: 12, g: 'koi', t: 'ask', lv: 1, q: '好きな人ができたら、自分から行く？ 待つ？', more: ['最後に自分から行ったのはいつ？'] },
+  { id: 13, g: 'koi', t: 'ask', lv: 2, q: '恋愛でいちばんの失敗談は？', more: ['そこから学んだことは？'] },
+  { id: 14, g: 'koi', t: 'ask', lv: 2, q: '元恋人と友達に戻れる派？ 戻れない派？', more: ['実際に友達に戻れた人はいる？'] },
+  { id: 15, g: 'koi', t: 'ask', lv: 1, q: '好きな人の前でだけ、やっちゃうことは？', more: ['それ、相手にバレてた？'] },
+  { id: 16, g: 'koi', t: 'ask', lv: 1, q: 'プロポーズするなら（されるなら）どんなシチュエーション？' },
+  { id: 17, g: 'koi', t: 'ask', lv: 1, q: '恋人に求める条件、1つだけ選ぶなら？' },
+  { id: 18, g: 'koi', t: 'ask', lv: 2, q: '学生時代の、いちばんの恋の思い出は？', more: ['その人、今なにしてるか知ってる？'] },
+  { id: 19, g: 'koi', t: 'ask', lv: 1, q: '結婚するなら何歳くらいがいい？ 理由も' },
+  { id: 20, g: 'koi', t: 'ask', lv: 1, q: '最近キュンとしたのはいつ？', more: ['だれに？'] },
+  { id: 21, g: 'koi', t: 'ask', lv: 1, q: '好きな人にされたら一発でオチる、っていうしぐさは？' },
+  { id: 22, g: 'koi', t: 'ask', lv: 1, q: '恋人とケンカしたら、先に謝る派？', more: ['最近いちばん大きいケンカは？'] },
+  { id: 23, g: 'koi', t: 'ask', lv: 1, q: '今までもらった、いちばんうれしいプレゼントは？', more: ['だれからもらった？'] },
+  { id: 24, g: 'koi', t: 'ask', lv: 1, q: '芸能人と付き合えるなら、だれ？' },
+  { id: 25, g: 'koi', t: 'ask', lv: 1, q: 'マッチングアプリのプロフィールに書くなら、自分の一言は？' },
+  { id: 26, g: 'koi', t: 'ask', lv: 2, q: '既読スルーされて、いちばんこたえたのはどんなとき？', more: ['そのあと、自分から連絡した？'] },
+  { id: 27, g: 'koi', t: 'ask', lv: 3, q: '今いちばん後悔している恋は？', more: ['今なら、どうする？'] },
+  { id: 28, g: 'koi', t: 'ask', lv: 2, q: '元恋人にもらったもので、まだ持っているものは？', more: ['捨てられない理由は？'] },
+  { id: 29, g: 'koi', t: 'ask', lv: 2, q: 'デートで「この人ないな」と思った瞬間は？' },
+  { id: 30, g: 'koi', t: 'ask', lv: 2, q: '恋人のスマホ、見たいと思ったことある？', more: ['実際に見たことは？'] },
+  { id: 31, g: 'koi', t: 'ask', lv: 2, q: '今まででいちばん長く続いた恋は、どれくらい？', more: ['終わった理由は？'] },
+  { id: 32, g: 'koi', t: 'ask', lv: 1, q: '好きな人にだけ送る、絵文字やスタンプのクセは？' },
+  { id: 33, g: 'koi', t: 'ask', lv: 1, q: '初デートの思い出は？', more: ['そのあと付き合った？'] },
+  { id: 34, g: 'koi', t: 'ask', lv: 3, q: 'フラれたこと、フッたこと、どっちが多い？', more: ['いちばん忘れられないのは？'] },
+  { id: 35, g: 'koi', t: 'ask', lv: 1, q: '好きになったら、どこで「好き」に気づく？' },
+  { id: 36, g: 'koi', t: 'ask', lv: 1, q: '推しと恋人、どっちか1つなら？' },
+  { id: 37, g: 'koi', t: 'ask', lv: 3, q: '今、気になっている人はいる？', more: ['どんな人？ ヒントだけでも'] },
+  { id: 38, g: 'koi', t: 'ask', lv: 2, q: '元恋人のSNS、見ちゃうことある？' },
+  { id: 39, g: 'koi', t: 'ask', lv: 2, q: '恋人に言われて、いちばんうれしかった言葉は？' },
+  { id: 40, g: 'koi', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんモテそうな人は？' },
+  { id: 41, g: 'koi', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばん最初に結婚しそうな人は？' },
+  { id: 42, g: 'koi', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん恋人に尽くしそうな人は？' },
+  { id: 43, g: 'koi', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんデートが上手そうな人は？' },
+  { id: 44, g: 'koi', t: 'point', lv: 1, q: 'この中で、いちばんヤキモチをやきそうな人は？' },
+  { id: 45, g: 'koi', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん恋に不器用そうな人は？' },
+  { id: 46, g: 'koi', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん告白されたことが多そうな人は？' },
+  { id: 47, g: 'koi', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばん一途そうな人は？' },
+  { id: 48, g: 'koi', t: 'point', lv: 1, q: 'この中で、いちばんデートに遅刻しそうな人は？' },
+  { id: 49, g: 'koi', t: 'point', lv: 1, q: 'この中で、いちばん恋人への連絡がマメそうな人は？' },
+  { id: 50, g: 'koi', t: 'vote', k: 'tease', lv: 3, q: 'この中で、いちばん恋人になったら大変そうな人は？' },
+  { id: 51, g: 'koi', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん結婚式のスピーチを頼みたい人は？' },
+  { id: 52, g: 'koi', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん恋愛相談をしたい人は？' },
+  { id: 53, g: 'koi', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん元恋人を引きずっていそうな人は？' },
+  { id: 54, g: 'koi', t: 'vote', k: 'tease', lv: 3, q: 'この中で、いちばん浮気がバレなさそうな人は？' },
+  { id: 55, g: 'koi', t: 'point', lv: 1, q: 'この中で、いちばんロマンチストな人は？' },
+  { id: 56, g: 'koi', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばん親に紹介したら喜ばれそうな人は？' },
+  { id: 57, g: 'koi', t: 'point', lv: 2, q: 'この中で、いちばん恋の話をはぐらかしそうな人は？' },
+  { id: 60, g: 'koi', t: 'all', lv: 1, q: '理想のタイプを、芸能人で1人ずつ' },
+  { id: 61, g: 'koi', t: 'all', lv: 1, q: '初恋の年齢を、1人ずつ' },
+  { id: 62, g: 'koi', t: 'all', lv: 1, q: '「恋人にするなら絶対これ」を、1人1つずつ' },
+  { id: 63, g: 'koi', t: 'all', lv: 1, q: '今までのデートで、いちばん楽しかった場所を1人ずつ' },
+  { id: 64, g: 'koi', t: 'all', lv: 1, q: '左隣の人の第一印象を、1人ずつ正直に' },
+  { id: 65, g: 'koi', t: 'all', lv: 1, q: '最近キュンとした瞬間を、1人ずつ' },
+  { id: 66, g: 'koi', t: 'all', lv: 2, q: '初デートで「これだけは無理」を、1人1つずつ' },
+  { id: 67, g: 'koi', t: 'all', lv: 2, q: '恋人にしたい有名人を、理由つきで1人ずつ' },
+  { id: 68, g: 'koi', t: 'all', lv: 1, q: '告白するならどんなセリフ？ 1人ずつ' },
+  { id: 69, g: 'koi', t: 'all', lv: 2, q: '今までの恋を、ひと言で表すと？ 1人ずつ' },
+  { id: 101, g: 'bare', t: 'ask', lv: 2, q: '最近ついたウソは？', more: ['それ、まだバレてない？'] },
+  { id: 102, g: 'bare', t: 'ask', lv: 2, q: '人に言えない趣味はある？', more: ['それ、どれくらいハマってる？'] },
+  { id: 103, g: 'bare', t: 'ask', lv: 2, q: 'スマホの検索履歴の、最新1件は？' },
+  { id: 104, g: 'bare', t: 'ask', lv: 1, q: '今までいちばん恥ずかしかった失敗は？', more: ['そのとき、まわりの反応は？'] },
+  { id: 105, g: 'bare', t: 'ask', lv: 1, q: 'ここだけの話、最近ムカッとしたことは？', more: ['相手に言った？'] },
+  { id: 106, g: 'bare', t: 'ask', lv: 2, q: '学生時代の黒歴史を1つ', more: ['それを知ってる人は、この中にいる？'] },
+  { id: 107, g: 'bare', t: 'ask', lv: 3, q: '親に言えない秘密を1つ' },
+  { id: 108, g: 'bare', t: 'ask', lv: 2, q: 'いちばん最近泣いたのはいつ？ なんで？', more: ['だれかに話した？'] },
+  { id: 109, g: 'bare', t: 'ask', lv: 1, q: '自分の性格で、直したいところは？' },
+  { id: 110, g: 'bare', t: 'ask', lv: 1, q: '実はちょっと自慢したいことは？', more: ['それ、だれかにほめられた？'] },
+  { id: 111, g: 'bare', t: 'ask', lv: 1, q: 'お金をいちばん使っているものは？', more: ['どれくらいハマってる？'] },
+  { id: 112, g: 'bare', t: 'ask', lv: 1, q: '今までいちばん高い買い物は？', more: ['後悔してる？'] },
+  { id: 113, g: 'bare', t: 'ask', lv: 2, q: '正直、今日来るのめんどくさかった？' },
+  { id: 114, g: 'bare', t: 'ask', lv: 1, q: '自分の顔で、いちばん好きなパーツは？' },
+  { id: 115, g: 'bare', t: 'ask', lv: 3, q: 'このメンバーに、今まで言えなかった本音を1つ' },
+  { id: 116, g: 'bare', t: 'ask', lv: 1, q: 'ついやってしまうクセは？' },
+  { id: 117, g: 'bare', t: 'ask', lv: 1, q: '人生でいちばん怒られたことは？', more: ['だれに？'] },
+  { id: 118, g: 'bare', t: 'ask', lv: 1, q: '学生時代のあだ名は？ 由来も' },
+  { id: 119, g: 'bare', t: 'ask', lv: 1, q: '今までに見た、いちばん変な夢は？' },
+  { id: 120, g: 'bare', t: 'ask', lv: 1, q: '寝坊の言いわけで、いちばんひどかったのは？' },
+  { id: 121, g: 'bare', t: 'ask', lv: 1, q: '実は苦手な食べ物は？' },
+  { id: 122, g: 'bare', t: 'ask', lv: 2, q: '最近、ひとりでこっそりやったことは？' },
+  { id: 123, g: 'bare', t: 'ask', lv: 2, q: '人生でいちばん「やらかした」と思った日は？', more: ['今なら笑える？'] },
+  { id: 124, g: 'bare', t: 'ask', lv: 1, q: 'もし今日1日だれかと入れかわれるなら、だれ？ なにする？' },
+  { id: 125, g: 'bare', t: 'ask', lv: 1, q: 'スマホのスクリーンタイム、1日どれくらい？', more: ['いちばん使ってるアプリは？'] },
+  { id: 126, g: 'bare', t: 'ask', lv: 3, q: 'SNSの裏アカ、持ってる？', more: ['何を投稿してる？ ジャンルだけでも'] },
+  { id: 127, g: 'bare', t: 'ask', lv: 2, q: '今だから言える、学校や職場での小さなズルは？' },
+  { id: 128, g: 'bare', t: 'ask', lv: 1, q: '解約し忘れているサブスクはある？' },
+  { id: 129, g: 'bare', t: 'ask', lv: 1, q: 'この1年で、いちばん自分をほめたいことは？' },
+  { id: 130, g: 'bare', t: 'ask', lv: 2, q: '人に借りたまま、返していないものは？' },
+  { id: 131, g: 'bare', t: 'ask', lv: 2, q: 'ここ最近、いちばん見栄を張ったのは？', more: ['バレなかった？'] },
+  { id: 132, g: 'bare', t: 'ask', lv: 2, q: '実は苦手な人のタイプは？' },
+  { id: 133, g: 'bare', t: 'ask', lv: 2, q: '自分のスマホの写真フォルダ、見られたくない度は何％？' },
+  { id: 134, g: 'bare', t: 'ask', lv: 3, q: 'このメンバーに最初に会ったときの、本当の印象は？' },
+  { id: 135, g: 'bare', t: 'ask', lv: 3, q: '人生でいちばん「バレたらやばい」と思った瞬間は？' },
+  { id: 136, g: 'bare', t: 'ask', lv: 1, q: '今の自分に点数をつけると、100点中何点？', more: ['足りない分は何？'] },
+  { id: 137, g: 'bare', t: 'ask', lv: 2, q: '実はしていない「やってるフリ」は？' },
+  { id: 138, g: 'bare', t: 'ask', lv: 1, q: '最近いちばんテンションが上がったことは？' },
+  { id: 139, g: 'bare', t: 'ask', lv: 3, q: '人に言われて、いちばん刺さったひと言は？' },
+  { id: 140, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんウソがうまそうな人は？' },
+  { id: 141, g: 'bare', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん秘密が多そうな人は？' },
+  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん酒グセが悪そうな人は？' },
+  { id: 143, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんお金持ちになりそうな人は？' },
+  { id: 144, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝坊しそうな人は？' },
+  { id: 145, g: 'bare', t: 'point', lv: 1, q: 'この中で、怒らせたらいちばんこわい人は？' },
+  { id: 146, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん天然な人は？' },
+  { id: 147, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、無人島でいちばん生き残りそうな人は？' },
+  { id: 148, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばん頼りになる人は？' },
+  { id: 149, g: 'bare', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん社長になりそうな人は？' },
+  { id: 150, g: 'bare', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん隠しごとが下手な人は？' },
+  { id: 151, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんスマホを見ている時間が長そうな人は？' },
+  { id: 152, g: 'bare', t: 'vote', k: 'tease', lv: 3, q: 'この中で、いちばん本性を隠していそうな人は？' },
+  { id: 153, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんサブスクを解約し忘れていそうな人は？' },
+  { id: 154, g: 'bare', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん秘密を守ってくれそうな人は？' },
+  { id: 155, g: 'bare', t: 'point', lv: 2, q: 'この中で、いちばん有名人になりそうな人は？' },
+  { id: 160, g: 'bare', t: 'all', lv: 1, q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1杯' },
+  { id: 161, g: 'bare', t: 'all', lv: 1, q: '今日いちばんのハイライトを、ひと言ずつ' },
+  { id: 162, g: 'bare', t: 'all', lv: 1, q: '最近いちばん笑ったことを、1人ずつ' },
+  { id: 163, g: 'bare', t: 'all', lv: 1, q: '「実は〇〇できない」を、1人1つずつ' },
+  { id: 164, g: 'bare', t: 'all', lv: 1, q: '左隣の人にあだ名をつける。今夜はその名前で呼ぶこと' },
+  { id: 165, g: 'bare', t: 'all', lv: 1, q: '右隣の人のいいところを、1人1つずつ' },
+  { id: 166, g: 'bare', t: 'all', lv: 1, q: '子どものころの夢を、1人ずつ' },
+  { id: 167, g: 'bare', t: 'all', lv: 1, q: '最近ハマっているものを、1人1つずつ' },
+  { id: 168, g: 'bare', t: 'all', lv: 2, q: 'この中のだれかに、感謝していることを1つずつ' },
+  { id: 169, g: 'bare', t: 'all', lv: 1, q: 'カラオケの十八番を、1人ずつ発表' },
+  { id: 170, g: 'bare', t: 'all', lv: 2, q: '今の気持ちを、俳句（5・7・5）で1人ずつ' },
+  { id: 171, g: 'bare', t: 'all', lv: 2, q: '最近ついた小さなウソを、1人1つずつ' },
 ];
 const KO_BY_ID = new Map(KO_QS.map(q => [q.id, q]));
-const KO_GENRE = { koi: '恋バナ', bare: '暴露' };
-const KO_TYPE = { ask: '', point: '全員で指さし！', all: '全員で答える' };
 const PM = {
-  koi: { title: '恋バナ・暴露', word: '問', opt: 'koi', optHead: '質問のジャンル', min: 2,
-    opts: [['mix', 'ミックス', '両方から'], ['koi', '恋バナ', '恋の話だけ'], ['bare', '暴露', '秘密・本音']] },
+  koi: { title: '暴露オーディション', word: '問', opt: 'koi', optHead: '質問のジャンル', min: 2,
+    opts: [['mix', 'ミックス', '両方から'], ['koi', '恋バナ', '恋の話だけ'], ['bare', '暴露', '秘密・本音'], ['light', 'かるめ', '深い質問なし']] },
 };
 const pmOpt = mode => { const o = PM[mode].opts.map(x => x[0]); return o.includes(setup[mode]) ? setup[mode] : o[0]; };
-const koPool = g => KO_QS.filter(q => g === 'mix' || q.g === g);
+const koPool = g => KO_QS.filter(q => (g === 'mix' || g === 'light' || q.g === g) && !(g === 'light' && q.lv >= 3));
 
 /* ---------- setup screen (called from renderSetup) ---------- */
 function pmSetupOpts(mode) {
@@ -141,13 +203,13 @@ function pmSetupOpts(mode) {
 }
 function pmSetupInfo(mode) {
   const n = setup.count, P = PM[mode], few = n < P.min;
-  const pool = mode === 'koi' ? koPool(pmOpt('koi')).length : PMX[mode].pool(pmOpt(mode));
+  const pool = PMX[mode].pool(pmOpt(mode));
   const left = tryLeft(mode);
   const info = $('setupInfo');
   info.classList.remove('bad', 'marquee'); info.classList.add('one');
   info.classList.toggle('bad', few);
   info.innerHTML = '<span class="si-run">' + (few ? P.title + 'は' + P.min + '人から遊べます'
-    : (mode === 'koi' ? '質問 <b>' + pool + '</b> 問' : PMX[mode].poolWord + ' <b>' + pool + '</b> ' + PMX[mode].poolUnit) + ' ・ ' +
+    : (PMX[mode].poolWord + ' <b>' + pool + '</b> ' + PMX[mode].poolUnit) + ' ・ ' +
       (!setup.rounds ? '「終了」を押すまで続く' : P.flat ? '<b>' + setup.rounds + '</b> ' + P.word + 'あそぶ' : setup.rounds + '周で <b>' + setup.rounds * n + '</b> ' + P.word) +
       (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
       (left !== Infinity ? ' ・ 今日のお試し あと <b>' + left + '</b>' + P.word : '')) + '</span>';
@@ -177,7 +239,7 @@ function beginPM(mode) {
   bgmDelay = 2.6;
   showScreen('game');
   SE.play('mgStart');
-  telop(mode === 'koi' ? HEART_SVG + '恋バナ・暴露！<small>答えるか、飲むか</small>' : PMX[mode].intro, '', 1800);
+  telop(PMX[mode].intro, '', 1800);
   FXC.rain(90);
   requestWake();
 }
@@ -190,8 +252,7 @@ function normalizePM(g) {
   const c = g.cur, n = g.players.length, okP = p => Number.isInteger(p) && p >= 0 && p < n;
   c.sel = Array.isArray(c.sel) ? c.sel.filter(okP) : [];
   delete c.drawing;
-  if (g.mode === 'koi') { if (c.phase !== 'before' && !(c.phase === 'q' && KO_BY_ID.has(c.q))) c.phase = 'before'; }
-  else if (X) X.norm(g);
+  if (X) X.norm(g);
 }
 const pmTotal = () => (!G.rounds ? 0 : PM[G.mode].flat ? G.rounds : G.rounds * G.players.length);
 const pmLast = () => !!pmTotal() && G.turn + 1 >= pmTotal();
@@ -203,7 +264,7 @@ function pmTryNote() {
   return left === Infinity ? '' : '<p class="pm-try">今日のお試し あと <b>' + left + '</b>' + PM[G.mode].word + ' ・ <button type="button" class="pm-link" data-g="plus">プレミアムなら遊び放題</button></p>';
 }
 function pmLockHTML() {
-  return '<div class="pm-big pm-lock">' + CROWN_SVG + '<h3 class="ol">今日のお試しはここまで！</h3><p>プレミアムなら、恋バナ・パーティーモード・新作ミニゲームが<b>遊び放題</b>。お試しは明日また使えます。</p>' +
+  return '<div class="pm-big pm-lock">' + CROWN_SVG + '<h3 class="ol">今日のお試しはここまで！</h3><p>プレミアムなら、暴露オーディション・パーティーモード・新作ミニゲームが<b>遊び放題</b>。お試しは明日また使えます。</p>' +
     '<button type="button" class="pbtn" data-g="plus">プレミアムを見る</button></div>';
 }
 
@@ -223,74 +284,12 @@ function pmDraw(pool, k, w) {
 }
 const pmUse = id => { G.pm.used.push(id); if (G.pm.used.length > 60) G.pm.used.splice(0, G.pm.used.length - 60); };
 
-function pmNextBtn() {
-  const k = G.cur.sel.length;
-  return '<div class="dock-row"><button type="button" class="pbtn big main" data-g="pmnext">' + (k ? k + '人に記録して' : '') + (pmLast() ? '結果発表へ！' : '次へ ▶') + '</button></div>';
-}
-/* 恋バナ・暴露: 番の人が質問カードを引く → 答える or パス（1杯）。指さし・全員の質問は、飲む人をタップ */
-function koDraw(again) {
-  const cur = G.cur;
-  if (again ? cur.phase !== 'q' : cur.phase !== 'before' || cur.drawing || pmLocked()) return;
-  const pick = () => {
-    const skip = again ? [cur.q] : [];
-    const pool = koPool(G.lvl).filter(q => !skip.includes(q.id) && (q.t === 'ask' || G.players.length >= 3 || q.t === 'all'));
-    const q = pmDraw(pool, 1)[0];
-    cur.q = q.id; cur.sel = []; cur.phase = 'q';
-    pmUse(q.id);
-    useTrack('pm_item', { id: q.id });
-  };
-  if (again) { pick(); saveGame(); renderPM('card'); SE.play('flip'); return; }
-  cur.drawing = true;
-  renderPM();
-  SE.play('deal');
-  setTimeout(() => {
-    if (!G || G.cur !== cur || screen !== 'game') return;
-    delete cur.drawing;
-    pick();
-    tryUse('koi');
-    saveGame();
-    renderPM('card');
-    SE.play('flip'); vibrate(30);
-  }, reduceMotion ? 150 : 650);
-}
-function koiStage(anim) {
-  const cur = G.cur, head = '<p class="mg-head ol">' + pmRound() + '</p>', p = cur.drawer;
-  const who = '<p class="ko-who">' + pmName(p) + ' の番！</p>';
-  if (cur.phase === 'before') {
-    if (pmLocked()) return head + pmLockHTML();
-    return head + '<div class="pm-big">' + who + '<div class="ko-card back' + (cur.drawing ? ' drawing' : '') + '"><span class="ko-back">' + HEART_SVG + '<b>Q</b></span></div>' +
-      '<p class="pm-note">答えるか、飲むか。<br>答えたくない質問はパスでOK（1杯）</p>' + pmTryNote() + '</div>';
-  }
-  const q = KO_BY_ID.get(cur.q), many = q.t !== 'ask';
-  const lead = many ? KO_TYPE[q.t] : pmName(p) + ' が答える';
-  const rule = q.t === 'ask' ? '答えられなければ1杯' : q.t === 'point' ? 'せーので一斉に指さし。いちばん指された人が1杯' : '答えられなかった・パスした人が1杯';
-  return head + '<div class="pm-body"><div class="ko-card face g-' + q.g + (anim === 'card' ? ' enter' : '') + '"><span class="ko-tag">' + KO_GENRE[q.g] + '</span>' +
-    '<button type="button" class="ko-re" data-g="qre">別の質問</button><p class="ko-type">' + lead + '</p><p class="ko-q">' + esc(q.q) + '</p><p class="ko-rule">' + rule + '</p></div>' +
-    (many ? '<p class="pm-ask">飲む人をタップ</p><div class="pm-chips' + (G.players.length > 4 ? ' two' : '') + '">' + G.players.map((pl, i) => {
-      const sel = cur.sel.includes(i);
-      return '<button type="button" class="pm-chip' + (sel ? ' sel' : '') + '" data-g="qsel" data-p="' + i + '" aria-pressed="' + sel + '" style="--p:' + pc(i) + '">' + esc(pl.name) + (sel ? '<i>1杯</i>' : '') + '</button>';
-    }).join('') + '</div>' : '') + '</div>';
-}
-function koiDock() {
-  const cur = G.cur;
-  if (cur.phase === 'before') {
-    if (pmLocked()) return '<div class="dock-row"><button type="button" class="pbtn big main" data-g="pmend">結果発表へ</button></div>';
-    return '<div class="dock-row">' + (cur.drawing ? '<div class="dock-note">カードを引いています…</div>' : '<button type="button" class="pbtn big main pulse pink" data-g="qdraw">質問を引く！</button>') + '</div>';
-  }
-  const q = KO_BY_ID.get(cur.q);
-  if (q.t === 'ask') {
-    return '<div class="dock-row"><button type="button" class="pbtn white small" data-g="qpass">パス<span class="sub">1杯飲む</span></button>' +
-      '<button type="button" class="pbtn big main" data-g="qok">答えた！ ' + (pmLast() ? '結果へ' : '次へ ▶') + '</button></div>';
-  }
-  return pmNextBtn();
-}
-
 /* ---------- rendering (the mini game mode's board + stage, with a stage of its own) ---------- */
 function pmBoard() {
-  const cur = G.cur, X = PMX[G.mode], mark = X ? X.mark() : cur.drawer;
-  const tag = X ? X.tag : '回答';
-  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯">' +
-    (i === mark ? '<span class="mg-tag">' + tag + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + MEDAL_SVG + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
+  const cur = G.cur, X = PMX[G.mode], mark = X ? X.mark() : cur.drawer, mark2 = X && X.mark2 ? X.mark2() : null;
+  const tag = X ? X.tag : '回答', icon = X && X.icon ? X.icon : MEDAL_SVG;
+  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯">' +
+    (i === mark ? '<span class="mg-tag">' + tag + '</span>' : i === mark2 ? '<span class="mg-tag ask">' + X.tag2 + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + icon + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
     '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>杯</small></span></span></div>').join('');
 }
 function pmLog() {
@@ -314,8 +313,8 @@ function renderPM(anim) {
   const st = $('mgStage');
   st.className = 'mg-stage pm-stage pm-' + G.mode;
   const X = PMX[G.mode];
-  st.innerHTML = G.mode === 'koi' ? koiStage(anim) : X.stage(anim);
-  $('dock').innerHTML = G.mode === 'koi' ? koiDock() : X.dock();
+  st.innerHTML = X.stage(anim);
+  $('dock').innerHTML = X.dock();
   const box = $('gLog');
   box.innerHTML = pmLog();
   box.scrollLeft = G.pm.log.length ? box.scrollWidth : 0;
@@ -328,7 +327,7 @@ function pmNext(items, ok) {
   items = items || cur.sel.map(p => ({ p, amt: 1 }));
   items.forEach(it => addDrink(it.p, it.amt));
   const X = PMX[G.mode];
-  G.pm.log.push({ r: G.turn, k: X ? X.who() : cur.drawer, ok: !!ok, items, t: X && X.logTag ? X.logTag() : undefined });
+  G.pm.log.push({ r: G.turn, k: X ? X.who() : cur.drawer, ok: !!ok, items, t: X && X.logTag ? X.logTag() : undefined, h: X && X.logH ? X.logH() : undefined });
   if (G.pm.log.length > 200) G.pm.log.splice(0, G.pm.log.length - 200);
   useTick();
   G.turn++;
@@ -350,19 +349,6 @@ function pmAct(g, el) {
   switch (g) {
     case 'plus': openPlus(pmLocked() ? 'limit' : 'mode'); return true;
     case 'pmend': finishGame(); return true;
-    case 'qsel': {
-      const p = Number(el && el.dataset.p);
-      if (cur.phase !== 'q' || !Number.isInteger(p)) return true;
-      const at = cur.sel.indexOf(p);
-      if (at >= 0) cur.sel.splice(at, 1); else cur.sel.push(p);
-      saveGame(); renderPM(); SE.play(at >= 0 ? 'tap' : 'select');
-      return true;
-    }
-    case 'pmnext': if (cur.phase === 'q') pmNext(null, false); return true;
-    case 'qdraw': koDraw(false); return true;
-    case 'qre': koDraw(true); return true;
-    case 'qok': if (cur.phase === 'q') { G.players[cur.drawer].ans++; SE.play('ding'); pmNext([], true); } return true;
-    case 'qpass': if (cur.phase === 'q') { G.players[cur.drawer].pass++; pmNext([{ p: cur.drawer, amt: 1 }], false); } return true;
   }
   return false;
 }
@@ -401,11 +387,11 @@ function renderPlus(msg) {
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    '<ul class="pl-feats">' + feat(HEART_SVG, '恋バナ・暴露モード', '答えるか、飲むか。指さし質問も') +
+    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露オーディション', '答えるか、飲むか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', PLUS_MG.map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
-    (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：恋バナ あと<b>' + left('koi') + '</b>問</p>' : '') +
+    (PLUS_SALE && !on ? '<p class="pl-try">今日のお試し：暴露オーディション あと<b>' + left('koi') + '</b>問</p>' : '') +
     (on ? '' : '<p class="pl-ph">' + (PLUS_SALE ? '料金' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
       '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '">' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +
       '<b class="pl-nm">' + p.name + '</b><span class="pl-pr">' + p.price + '<small>' + p.per + '</small></span><small class="pl-nt">' + p.note + '</small></button>').join('') + '</div>') +
@@ -616,9 +602,15 @@ function memoTap(v) {
 function memoAct(a) { if (a === 'watch') memoShow(); }
 
 /* 遊び方ガイド: the new modes get a page of their own (after ミニゲーム) */
-if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '恋バナ', html: () =>
-  '<p class="gd-lead">タイトル画面の<b>「恋バナ・暴露」</b>から遊べるモードです。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
-  gCard('恋バナ・暴露', '<p>番の人が「質問を引く！」。答えたら「答えた！」、答えたくなければ<b>「パス」で1杯</b>。</p>' +
-    '<p>「全員で指さし！」は、せーので一斉に指さして<b>いちばん指された人</b>をタップ。「全員で答える」は、答えられなかった人をタップ。</p>', 1) +
+if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '暴露オーディション', html: () =>
+  '<p class="gd-lead">タイトル画面の<b>「暴露オーディション」</b>から遊べるモードです（2人から）。答えるか、飲むか。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
+  gCard('質問を選んで、読み上げる', '<p>番の人が<b>答える人</b>、その左隣が<b>聞き手</b>。聞き手が2枚の質問から1枚を選んで、声に出して読みます（2枚とも入れかえは1回まで）。</p>' +
+    '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1杯</b>。理由は聞かないのがルール。</p>', 1) +
+  gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>半分飲む</b>か。</p>' +
+    '<p>いい話には<b>「♡いい話！」</b>。もうひと声に答えても ♡ がもう1つ。♡ がいちばん多い人が、結果発表の<b>グランプリ</b>。</p>', 2) +
+  gCard('「この中で」の質問', '<p><b>全員で指さし</b>は、せーので指さして、いちばん指された人をタップ → 1杯。</p>' +
+    '<p><b>こっそり投票</b>は、スマホを回して1人ずつ投票。3位から順に発表します。だれがだれに入れたかは残りません。ほめる質問なら1位に ♡、いじる質問なら1位が1杯。全員1票ずつなら「意見が割れた！」でだれも飲みません。</p>' +
+    '<p><b>全員で答える</b>は、答えられなかった人をタップ → 1杯。</p>', 3) +
+  gCard('だんだん深く', '<p>1周目はかるい質問だけ。2周目から少し深く、3周目からはいちばん深い質問も出ます。ジャンルで<b>「かるめ」</b>を選ぶと、いちばん深い質問は出ません。</p>', 4) +
   gTip('答えたくない質問は、パスしてOK。理由は聞かないのがルールです。')
 });
