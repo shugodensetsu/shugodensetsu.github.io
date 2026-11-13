@@ -2442,8 +2442,11 @@ button.rp-pick{cursor:pointer}
 .tool-ov.peka .tm-stage{gap:8px; container-name:arc}
 .tool-ov.peka .tm-acts{min-height:42px}
 .pk-sub{min-height:3.05em}
-.pk-sub .pk-again{display:inline-block; font-family:var(--f-display); font-weight:400; font-size:1.35em; color:var(--cyan); text-shadow:0 2px 0 var(--ink); animation:tmPopIn .3s cubic-bezier(.2,1.6,.4,1)}
-@keyframes tmPopIn{from{transform:scale(1.6); opacity:0}}
+.pk-again{position:absolute; z-index:4; margin:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; opacity:0; transition:opacity .15s;
+  font-family:var(--f-display); font-size:min(30px, 9cqw); line-height:1.15; color:var(--cyan); text-align:center; white-space:nowrap;
+  text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink), 0 0 14px rgba(0,0,0,.7)}
+.pk-again small{font-family:var(--f-body); font-weight:800; font-size:.5em; color:var(--white)}
+.pk-again.on{opacity:1}
 @container arc (max-height: 400px){
   .pk-sub small{display:none}
   .pk-sub{min-height:1.55em}
@@ -13159,15 +13162,15 @@ TOOLX.slot = {
 };
 
 /* =====================================================================
-   DON!!チャンス: ジャグラー風の台を1人ずつ回す。1/8 で DON!!ランプがペカッと光ったら抜け、最後まで光らなかった人の負け。
+   DON!!チャンス: ジャグラー風の台を1人ずつ回す。1/4 で DON!!ランプがペカッと光ったら抜け、最後まで光らなかった人の負け。
    台は酒スロと共通の筐体の写真（CAB_DATA）。動くのはリールとランプだけで、演出は一切なし。
-   光るのは レバーONの瞬間（先ペカ）か、最後のボタンを離した瞬間（後ペカ。押したままならリールは止まっても光らない）。
+   光るのは 最後のボタンを離した瞬間だけ（押したままならリールは止まっても光らない）。レバーONで光る先ペカはなし。
    出目: 7揃い＝確定、チェリー（左リール）＝30%、ハズレ目＝たまに、ぶどう・リプレイ＝光らない。リプレイは もう1回
    ===================================================================== */
-/* per 100 spins. pre = 先ペカ (its reels then show 7揃い). Lit in all: 3.125 + 3 + 8 × 30% + 58.875 × 6.75% = 12.5% = 1/8 */
-const PK_ODDS = [['pre', 3.125], ['seven', 3], ['cherry', 8], ['replay', 12], ['grape', 15], ['miss', 58.875]];
-const PK_LIT = { pre: 1, seven: 1, cherry: 0.3, miss: 0.0675, replay: 0, grape: 0 };
-const PK_LINE = { pre: 'seven', seven: 'seven', replay: 'tiger', grape: 'grape' };
+/* per 100 spins. Lit in all: 14 + 15 × 30% + 44 × 14.77% = 25% = 1/4 */
+const PK_ODDS = [['seven', 14], ['cherry', 15], ['replay', 12], ['grape', 15], ['miss', 44]];
+const PK_LIT = { seven: 1, cherry: 0.3, miss: 6.5 / 44, replay: 0, grape: 0 };
+const PK_LINE = { seven: 'seven', replay: 'tiger', grape: 'grape' };
 const PK_FILL = ['seven', 'bar', 'bell', 'tiger', 'grape'];
 const PK_SPIN0 = PK_FILL.concat('cherry');   /* the cherry is on the left reel only */
 const PK_V = 28;                             /* symbols per second (80 turns a minute, 21 symbols a turn) */
@@ -13177,9 +13180,9 @@ const PK_SND = { buf: {}, started: false };
 function pekaLot() {
   const rig = TOOLX.peka.rig;
   let kind, lit;
-  if (rig && rig.length) { const r = rig.shift(); kind = r.replace(/[+-]$/, ''); lit = kind === 'pre' || kind === 'seven' || /\+$/.test(r); }
+  if (rig && rig.length) { const r = rig.shift(); kind = r.replace(/[+-]$/, ''); lit = kind === 'seven' || /\+$/.test(r); }
   else { kind = pickW(PK_ODDS); lit = Math.random() < PK_LIT[kind]; }
-  return { kind, lit, pre: kind === 'pre', grid: pekaGrid(kind) };
+  return { kind, lit, grid: pekaGrid(kind) };
 }
 /* the stop picture, [reel][top, middle, bottom]: only the middle line counts, and nothing else may look like a line */
 function pekaGrid(kind) {
@@ -13241,9 +13244,9 @@ function pekaSetup() {
     return;
   }
   pekaSndLoad();
-  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + TOOL_INFO.peka.stake + ' <b>' + amtTxt(T.cups) + '</b><small>1/8でペカッ。光った人から抜けていく</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + TOOL_INFO.peka.stake + ' <b>' + amtTxt(T.cups) + '</b><small>1/4でペカッ。光った人から抜けていく</small></p>' +
     '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
-    cabHTML('pk-cab') + '<p class="tm-sub sl-sub pk-sub" id="toolSub"></p>';
+    cabHTML('pk-cab', '<p class="pk-again" id="pkAgain" style="' + cabBox(0, CAB_DATA.meta.win[1] + CAB_DATA.meta.win[3] - 10, CAB_DATA.meta.w, 120) + '"></p>') + '<p class="tm-sub sl-sub pk-sub" id="toolSub"></p>';
   const ac = new AbortController(), sig = { signal: ac.signal };
   const S = T.pk = {
     ac, phase: 'ready', alive: T.ps.map((_, j) => j), at: 0, j: -1, lot: null, held: -1, t0: 0, last: 0, stops: 0, rel: false, spins: 0,
@@ -13288,9 +13291,10 @@ function pekaTurn(again) {
   const T = tool, S = T.pk, j = S.j = S.alive[S.at], p = T.ps[j];
   S.phase = 'ready'; S.stops = 0; S.rel = false; S.held = -1; S.lot = null;
   $('cabM').classList.remove('lit');
+  if (!again) $('pkAgain').classList.remove('on');
   T.ps.forEach((_, k) => $('tlP' + k).classList.toggle('now', k === j));
   $('toolSub').innerHTML = again
-    ? '<b class="pk-again">リプレイ！ もう1回</b><small><b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> がもう1回まわす</small>'
+    ? '<b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> もう1回<small>レバー → ボタン3つでリールを止める</small>'
     : '<b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> の番<small>レバー → ボタン3つでリールを止める</small>';
 }
 function pekaLever() {
@@ -13298,8 +13302,8 @@ function pekaLever() {
   if (!S || S.phase !== 'ready' || T.state === 'done') return;
   const lot = S.lot = pekaLot(), now = performance.now();
   S.phase = 'spin'; S.t0 = now; S.spins++;
+  $('pkAgain').classList.remove('on');
   pekaPlay('reba');
-  if (lot.pre) { $('cabM').classList.add('lit'); pekaPlay('gako'); }
   S.reels.forEach(R => {
     R.mode = 'spin'; R.v = 0;
     /* forget what has gone by, keep what is on screen */
@@ -13331,7 +13335,7 @@ function pekaAfter() {
   if (S.reels.some(R => R.mode !== 'stopped')) { toolLater(pekaAfter, 16); return; }
   const lot = S.lot, j = S.j, p = T.ps[j];
   S.phase = 'after';
-  if (lot.lit && !lot.pre) { $('cabM').classList.add('lit'); pekaPlay('gako'); }
+  if (lot.lit) { $('cabM').classList.add('lit'); pekaPlay('gako'); }
   if (lot.lit) {
     S.alive.splice(S.at, 1);
     if (S.at >= S.alive.length) S.at = 0;
@@ -13341,11 +13345,10 @@ function pekaAfter() {
     if (S.alive.length === 1) { toolLater(pekaFinish, 1900); return; }
     toolLater(() => pekaTurn(false), 1900);
   } else if (lot.kind === 'replay') {
-    /* リプレイ: its own sound, and a big 「もう1回」 so nobody hands the phone on */
+    /* リプレイ: its own sound, and a still 「もう1回」 on the cabinet (nothing moves or zooms), so nobody hands the phone on */
     pekaPlay('replay');
-    telop('リプレイ！<small>' + esc(pname(p)) + ' もう1回！</small>', 'cyan', 1500);
-    $('toolSub').innerHTML = '<b class="pk-again">リプレイ！ もう1回</b><small>' + esc(pname(p)) + ' がもう1回まわす</small>';
-    toolLater(() => pekaTurn(true), 1100);
+    const tag = $('pkAgain'); tag.innerHTML = 'リプレイ！ もう1回<small>' + esc(pname(p)) + ' がもう1回まわす</small>'; tag.classList.add('on');
+    toolLater(() => pekaTurn(true), 700);
   }
   else { S.at = (S.at + 1) % S.alive.length; toolLater(() => pekaTurn(false), 650); }
 }
@@ -13373,7 +13376,7 @@ function pekaFrame(now) {
   if (moving) T.raf = requestAnimationFrame(pekaFrame);
 }
 TOOLX.peka = {
-  rig: null,   /* tests: the outcomes of the next spins: 'pre', 'seven', 'cherry+', 'cherry-', 'miss+', 'miss-', 'replay', 'grape' */
+  rig: null,   /* tests: the outcomes of the next spins: 'seven', 'cherry+', 'cherry-', 'miss+', 'miss-', 'replay', 'grape' */
   log: null,   /* tests: [sound, time] of every sound */
   lot: pekaLot,   /* tests: the lottery on its own */
   snd: PK_SND,     /* tests: the decoded sounds */
@@ -13766,7 +13769,7 @@ if (PLUS_OPEN) {
     const base = g.html;
     g.html = () => base() + gCard('プレミアムのミニゲーム', '<p><b>ミニゲームモード</b>の一覧で <b>NEW</b> がついているゲームです。ルーレットで当たるか、一覧からタップして選びます。</p>' +
       '<p><b>酒スロ</b>：1人ずつスロットを回して、出た枚数がいちばん少ない人の負け。レバー → ボタン3つで止めます。ランプの色（青 → 緑 → 赤 → 虹）・リーチ・カットインが出るほど大当たりのチャンス。<b>「酒」が3つそろうと、その人以外の全員が負け</b>。2人なら3回、3人なら2回ずつ回せて、最下位が同じ枚数ならサドンデス。</p>' +
-      '<p><b>DON!!チャンス</b>：1人ずつ台を回して、DON!!ランプが<b>ペカッ</b>と光ったら抜け。最後まで光らなかった人の負け。光るのは1/8。光るのは<b>レバーをたたいた瞬間</b>か、<b>最後のボタンを離した瞬間</b>だけ（押したままだと、リールは止まっても光りません）。<b>7がそろったら確定</b>、左リールのチェリーは30%、ハズレ目でもたまに光ります。ぶどう・リプレイがそろっても光りません。<b>リプレイ</b>がそろったら、もう1回まわせます。</p>' +
+      '<p><b>DON!!チャンス</b>：1人ずつ台を回して、DON!!ランプが<b>ペカッ</b>と光ったら抜け。最後まで光らなかった人の負け。光るのは1/4。光るのは<b>最後のボタンを離した瞬間</b>だけ（押したままだと、リールは止まっても光りません）。<b>7がそろったら確定</b>、左リールのチェリーは30%、ハズレ目でもたまに光ります。ぶどう・リプレイがそろっても光りません。<b>リプレイ</b>がそろったら、もう1回まわせます。</p>' +
       '<p><b>黄金比チャレンジ</b>：スマホがグラス。1人ずつビールを注いで、<b>ビール7：泡3</b>でフチまで注げた人ほど高得点。いちばん低い人の負け。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。かたむけすぎ・注ぎすぎは、こぼれて減点。スマホをかたむけるか、指を左右にすべらせます。</p><div class="gd-rows">' +
       [['爆弾解除', '爆弾のコードを1本えらんで「切る！」。ハズレを切った人の負け'], ['21ゲーム', '数を1〜3個ずつ進めて、「21」を言った人の負け。ときどきイベント（リバース・パス・もう1回・ご指名・もどる・ワープ）で順番や数が変わるので、数えて誰かをはめることはできません'], ['メモリーリレー', '8つのボタンが光った順番どおりにタップ。1人ごとに1つ増えて、スピードも1.1倍ずつ速くなる。まちがえた人の負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +

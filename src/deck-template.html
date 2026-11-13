@@ -2378,8 +2378,11 @@ button.rp-pick{cursor:pointer}
 .tool-ov.peka .tm-stage{gap:8px; container-name:arc}
 .tool-ov.peka .tm-acts{min-height:42px}
 .pk-sub{min-height:3.05em}
-.pk-sub .pk-again{display:inline-block; font-family:var(--f-display); font-weight:400; font-size:1.35em; color:var(--cyan); text-shadow:0 2px 0 var(--ink); animation:tmPopIn .3s cubic-bezier(.2,1.6,.4,1)}
-@keyframes tmPopIn{from{transform:scale(1.6); opacity:0}}
+.pk-again{position:absolute; z-index:4; margin:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; opacity:0; transition:opacity .15s;
+  font-family:var(--f-display); font-size:min(30px, 9cqw); line-height:1.15; color:var(--cyan); text-align:center; white-space:nowrap;
+  text-shadow:0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink), 0 0 14px rgba(0,0,0,.7)}
+.pk-again small{font-family:var(--f-body); font-weight:800; font-size:.5em; color:var(--white)}
+.pk-again.on{opacity:1}
 @container arc (max-height: 400px){
   .pk-sub small{display:none}
   .pk-sub{min-height:1.55em}
