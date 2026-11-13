@@ -240,12 +240,7 @@ function beginPM(mode) {
   saveGame();
   useTrack('game_start', { players: n, rounds: setup.rounds || 0, mode });
   coachEnd(false);
-  bgmDelay = 2.6;
-  showScreen('game');
-  SE.play('mgStart');
-  telop(PMX[mode].intro, '', 1800);
-  FXC.rain(90);
-  requestWake();
+  startIntro('mgStart', PMX[mode].intro);
 }
 function normalizePM(g) {
   const X = PMX[g.mode];

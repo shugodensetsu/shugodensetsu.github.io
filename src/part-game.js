@@ -1126,13 +1126,29 @@ function beginGame() {
   saveGame();
   useTrack('game_start', { players: n, rounds: setup.rounds || 0 });
   if (setup.coach) coachStart(); else coachEnd(false);
-  bgmDelay = 2.6;
+  startIntro('start', 'ゲームスタート！', () => turnFx());
+}
+/* the opening fanfare plays to its end before the game starts: until then the table waits under a clear cover
+   (taps do nothing), the music holds off, and `go` runs once the last note has rung out.
+   ms: [the recording (snd/lab_<name>.mp3), the synth stand-in]; with sound off it is a short beat */
+const INTRO_MS = { start: [0, 2400], mgStart: [3400, 1100] };
+let introGate = null;
+function startIntro(sound, html, go) {
+  const r = INTRO_MS[sound], ms = !SE.on ? 1500 : SMP.buf['lab_' + sound] ? r[0] : r[1];
+  bgmDelay = ms / 1000 + 0.2;
   showScreen('game');
-  SE.play('start');
-  telop('ゲームスタート！', '', 1600);
+  SE.play(sound);
+  telop(html, '', ms);
   FXC.rain(90);
   requestWake();
-  setTimeout(() => { if (screen === 'game') turnFx(); }, 1500);
+  if (introGate) introGate.remove();
+  const g = introGate = document.createElement('div');
+  g.className = 'start-gate';
+  $('shell').appendChild(g);
+  setTimeout(() => {
+    g.remove(); if (introGate === g) introGate = null;
+    if (screen === 'game' && go) go();
+  }, ms);
 }
 
 /* ---------- turn flow ---------- */
@@ -5787,13 +5803,7 @@ function beginMini() {
   saveGame();
   useTrack('game_start', { players: n, rounds: MINI_TOTAL, mode: 'mini' });
   coachEnd(false);
-  bgmDelay = 2.6;
-  showScreen('game');
-  SE.play('mgStart');
-  telop('ミニゲームモード！<small>負けたら+2・3つで1杯</small>', '', 1800);
-  FXC.rain(90);
-  requestWake();
-  setTimeout(() => { if (screen === 'game' && isMini() && G.turn === 0) miniRoundFx(); }, 1900);
+  startIntro('mgStart', 'ミニゲームモード！<small>負けたら+2・3つで1杯</small>', () => { if (isMini() && G.turn === 0) miniRoundFx(); });
 }
 function normalizeMini(g) {
   const m = g.mini && typeof g.mini === 'object' ? g.mini : {};
