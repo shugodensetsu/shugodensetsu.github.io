@@ -317,7 +317,7 @@ function slotTurn() {
   const pass = S.lastP >= 0 && S.lastP !== i;
   S.lastP = i;
   $('toolSub').innerHTML = (pass ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(p)) + '</b> の番！<small>レバーをタップ → ボタンでリールを止める' + (S.spins > 1 ? '（' + S.spins + '回まわせる）' : '') + '</small>';
-  if (pass) SE.play('pass');
+  if (pass) SE.play('slPass');
   slotReady(false);
 }
 function slotReady(replay) {
@@ -426,8 +426,7 @@ function slotCreep(res) {
         SE.play('slStep'); vibrate(15);
         if (k > 1) { toolLater(step, waits[k]); return; }
         /* the symbol sits one cell above the line */
-        SE.play('heart');
-        toolLater(() => SE.play('heart'), 420);
+        SE.play('slHeart');
         toolLater(() => {
           const R = tool.sl.reels[2];
           if (hit) slotMove(2, R.p - 1, 300, slEaseBack, () => { SE.play('slStop'); slotResult(res); });
@@ -480,7 +479,7 @@ function slotResult(res) {
     slotHit(big ? 'seven' : 'bar');
     slotLamp('rainbow'); slotDon(true);
     slotLcd(big ? 'BIG BONUS！！ +300枚' : 'REGULAR BONUS！ +100枚', 'bonus');
-    SE.play(big ? 'slBig' : 'slReg'); if (big) SE.play('fanfare');
+    SE.play(big ? 'slBig' : 'slReg');
     flash('#ffd83d'); shake(big); vibrate(big ? [80, 40, 80, 40, 200] : [60, 40, 120]);
     FXC.burst(q.x, q.y, big ? 130 : 70, { colors: GOLD, star: true, speed: big ? 17 : 13 });
     if (big) { FXC.rain(90, GOLD); telop('BIG BONUS!!<small>+300枚</small>', '', 1700); }
@@ -829,6 +828,15 @@ Object.assign(SOUNDS, {
   prSpill: (A, t) => { noise(A, t, { d: 0.14, g: 0.26, type: 'bandpass', f: 900, f2: 300, q: 1 }); tone(A, t, { type: 'sine', f: 520, f2: 180, d: 0.1, g: 0.1 }); },
 });
 ['prPour', 'prFizz', 'prSpill'].forEach(k => NO_DUCK.add(k));
+/* the pour, recorded: one glug of wine into a glass (snd/lab_prGlug.mp3), lower as the glass fills */
+REAL.prPour = [['lab_prGlug'], (A, t) => smp(A, t, 'lab_prGlug', { g: 1, rate: 1.15 - 0.3 * prTone, vary: 0.06 })];
+
+/* =====================================================================
+   the paid mini games' own sounds: where a game used a sound shared with other games, it now plays one of its own
+   (snd/lab_<name>.mp3, picked by ear in the sound comparison). Until the recording is ready each falls back to the shared one
+   ===================================================================== */
+Object.entries({ slHeart: 'heart', slPass: 'pass', ctCut: 'swClack', ctPick: 'tick2', ctTick: 'tick', n21Warn: 'mnWarn', n21Doom: 'skDoom', n21Step: 'tick2',
+  mmOk: 'ding', prOk: 'ding', prTop: 'fanfare', prGood: 'heaven', prDrum: 'swDrum' }).forEach(([k, base]) => { SOUNDS[k] = (A, t) => snd(base, A, t); if (NO_DUCK.has(base)) NO_DUCK.add(k); });
 /* the foam in what comes out of the tap: 85% into an upright glass, 5% down the wall of a glass tilted 32° or more */
 const prFoam = a => { const d = Math.abs(a) * 180 / Math.PI; return d <= 5 ? 0.85 : d >= 32 ? 0.05 : 0.85 - (d - 5) / 27 * 0.8; };
 /* the inside of the glass: origin at the middle of the rim, y down */
@@ -1004,7 +1012,7 @@ function pourFrame(now) {
       const dv = PR_RATE * dt, f = prFoam(S.a);
       S.B += dv * (1 - f); S.F += dv * f;
       prTone = Math.min(1, S.B + S.F);
-      if (now >= S.grain) { SE.play('prPour'); S.grain = now + 105; }
+      if (now >= S.grain) { SE.play('prPour'); S.grain = now + (SMP.buf.lab_prGlug ? 150 + Math.random() * 70 : 105); }
       if (f > 0.45 && now >= S.fizz) { SE.play('prFizz'); S.fizz = now + 280; }
     }
   }
@@ -1138,7 +1146,7 @@ function pourDone() {
   $('prBarBox').hidden = true; $('prMode').hidden = true;
   prTip('');
   $('toolSub').innerHTML = '判定中…<small>ビール7：泡3 にどれだけ近い？</small>';
-  SE.play('swDrum'); BGM.level(0.25, 0.2);
+  SE.play('prDrum'); BGM.level(0.25, 0.2);
   toolLater(pourScore, 1500);
 }
 /* 100 points for beer 7 : foam 3 up to the rim with nothing spilled */
@@ -1166,9 +1174,9 @@ function pourScore() {
     const v = $('tlV' + i); v.textContent = sc.toFixed(1); v.classList.toggle('great', sc >= 85); v.classList.toggle('bad', sc < 50); tmPop(v);
     BGM.level(0.7, 0.4);
     const q = relPos(res);
-    if (sc >= 95) { SE.play('fanfare'); flash('#ffd83d'); FXC.burst(q.x, q.y, 120, { colors: GOLD, star: true, speed: 15 }); FXC.rain(100, GOLD); vibrate([60, 40, 60, 40, 160]); }
-    else if (sc >= 85) { SE.play('ding'); SE.play('heaven'); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 }); }
-    else if (sc >= 50) SE.play('ding');
+    if (sc >= 95) { SE.play('prTop'); flash('#ffd83d'); FXC.burst(q.x, q.y, 120, { colors: GOLD, star: true, speed: 15 }); FXC.rain(100, GOLD); vibrate([60, 40, 60, 40, 160]); }
+    else if (sc >= 85) { SE.play('prOk'); SE.play('prGood'); FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 }); }
+    else if (sc >= 50) SE.play('prOk');
     else { SE.play('bubuu'); shake(false); }
     $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[i])) + '</b> は ' + sc.toFixed(1) + '点！<small>' + word + '</small>';
     if (i + 1 < T.ps.length) toolActs('<button type="button" class="pbtn big main" data-tl="next">つぎは ' + esc(pname(T.ps[i + 1])) + '！</button>', false);

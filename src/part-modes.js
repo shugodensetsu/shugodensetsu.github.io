@@ -499,7 +499,7 @@ PARTY.cut = {
   hit(T, i) {
     if (T.cut.includes(i) || T.sel === i) return;
     cutPick(T, i);
-    SE.play('tick2'); vibrate(8);
+    SE.play('ctPick'); vibrate(8);
     partyButtons();
   },
   go(T) {
@@ -511,11 +511,11 @@ PARTY.cut = {
     const w = $('ctW' + i), svg = $('ctSvg');
     if (w) w.classList.add('snip');
     $('ctSnips').insertAdjacentHTML('beforeend', '<g class="ct-spark" transform="translate(' + cutBot(i).toFixed(1) + ' ' + CUT_Y + ')"><path d="M0 -14V14M-14 0H14M-10 -10L10 10M-10 10L10 -10" stroke="#ffe066" stroke-width="3.5" stroke-linecap="round"/></g>');
-    SE.play('swClack'); vibrate(25);
+    SE.play('ctCut'); vibrate(25);
     partyStake();
     if (i === T.trap) { toolLater(() => { svg.classList.add('brink'); $('ctLcd').textContent = '0:00'; SE.play('mnWarn'); hushBeat('toolOv', 900, cutBoom, null, false, [$('pgArt')]); }, 380); return; }
     T.secs = Math.max(3, T.secs - rint(3, 5));
-    toolLater(() => { $('ctLcd').textContent = '0:' + String(T.secs).padStart(2, '0'); svg.style.setProperty('--tick', Math.max(0.18, T.secs / 30).toFixed(2) + 's'); SE.play('tick'); }, 260);
+    toolLater(() => { $('ctLcd').textContent = '0:' + String(T.secs).padStart(2, '0'); svg.style.setProperty('--tick', Math.max(0.18, T.secs / 30).toFixed(2) + 's'); SE.play('ctTick'); }, 260);
     toolLater(() => partyNext(420), 520);
   },
 };
@@ -624,8 +624,8 @@ PARTY.n21 = {
     if (now) { now.textContent = T.n; restartAnim(now, 'n21bump'); }
     $('pgArt').classList.toggle('hot', T.n >= 17);
     vibrate(12);
-    if (T.n >= N21) { T.busy = true; toolActs('', false); SE.play('mnWarn'); toolLater(() => hushBeat('toolOv', 700, () => { $('pgArt').classList.add('boom'); SE.play('skDoom'); flash('#e8233f'); shake(true); telop('21！！', 'red', 1200); partyLose(1800); }, null, false, [$('pgArt')]), 200); return; }
-    SE.play(T.n >= 18 ? 'mnWarn' : 'tick2');
+    if (T.n >= N21) { T.busy = true; toolActs('', false); SE.play('mnWarn'); toolLater(() => hushBeat('toolOv', 700, () => { $('pgArt').classList.add('boom'); SE.play('n21Doom'); flash('#e8233f'); shake(true); telop('21！！', 'red', 1200); partyLose(1800); }, null, false, [$('pgArt')]), 200); return; }
+    SE.play(T.n >= 18 ? 'n21Warn' : 'n21Step');
     partyButtons();
     if (T.acts >= 3 || T.n === N21 - 1) { T.busy = true; toolLater(() => partyNext(300), 650); }
   },
@@ -707,7 +707,7 @@ function memoTap(v) {
   if (T.at < T.seq.length) return;
   T.mm = 'gap';
   const v2 = $('tlV' + T.k); v2.textContent = T.seq.length + '個OK'; v2.classList.add('great'); tmPop(v2);
-  SE.play('ding');
+  SE.play('mmOk');
   T.seq.push(rint(0, MEMO_N - 1));
   $('toolSub').innerHTML = '<b>クリア！</b><small>次は ' + T.seq.length + '個（' + memoSpeed(T) + '）</small>';
   toolLater(() => { T.k = (T.k + 1) % T.ps.length; if (T.k === 0) T.ps.forEach((_, j) => { const e = $('tlV' + j); if (e) { e.textContent = '--'; e.classList.remove('great'); } }); memoTurn(); }, 1200);
