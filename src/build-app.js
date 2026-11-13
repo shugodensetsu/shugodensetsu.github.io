@@ -22,7 +22,7 @@ const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8').replac
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
-/* the cabinet of 酒スロ and ペカるのは誰だ！: its pictures and the three machine sounds (src/private/cab, kept out of the repository until it is
+/* the cabinet of 酒スロ and DON!!チャンス: its pictures and the machine sounds (src/private/cab, kept out of the repository until it is
    settled that they may be published). Only test builds carry them; the app build gets null and the game stays Coming soon there */
 const cabData = () => {
   const d = path.join(dir, 'private', 'cab');
@@ -30,7 +30,7 @@ const cabData = () => {
   const b64 = f => fs.readFileSync(path.join(d, f)).toString('base64');
   return { meta: JSON.parse(fs.readFileSync(path.join(d, 'cab.json'), 'utf8')),
     img: Object.fromEntries(['machine', 'lamp', 'reels'].map(k => [k, 'data:image/webp;base64,' + b64(k + '.webp')])),
-    snd: Object.fromEntries(['reba', 'botan', 'gako'].map(k => [k, b64(k + '.mp3')])) };
+    snd: Object.fromEntries(['reba', 'botan', 'gako', 'replay'].map(k => [k, b64(k + '.mp3')])) };
 };
 let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-arcade.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
   .replace('__SMP_DATA__', () => JSON.stringify(smpData)).replace('__CAB_DATA__', () => JSON.stringify(cabData()));

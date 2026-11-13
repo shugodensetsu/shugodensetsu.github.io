@@ -2278,7 +2278,7 @@ button.rp-pick{cursor:pointer}
 .sl-p .cc-hand{min-width:0; font-size:14px; line-height:1.15; text-align:center}
 .sl-p.safe{opacity:.5}
 .sl-p.safe .cc-hand{color:var(--lime); font-size:12px}
-/* the cabinet picture (酒スロ・ペカるのは誰だ！): the picture as it is; reels on canvas, the lit DON!! lamp as a second picture */
+/* the cabinet picture (酒スロ・DON!!チャンス): the picture as it is; reels on canvas, the lit DON!! lamp as a second picture */
 .cab-wrap{flex:1 1 0; min-height:0; width:100%; container:cab / size; display:flex; align-items:center; justify-content:center}
 /* the part of the cabinet on show: all of it on a tall screen; on wider ones the bottom is cut off (only the bottom, so glows still spill out at the sides) */
 .cab-view{position:relative; flex:none; --f:1; height:min(100cqh, calc(100cqw / var(--k) * var(--f))); aspect-ratio:calc(var(--k) / var(--f)); clip-path:inset(-40px -40px 0 -40px)}
@@ -2370,7 +2370,7 @@ button.rp-pick{cursor:pointer}
   .tool-ov.slot .sl-sub small{display:none}
 }
 @media (prefers-reduced-motion: reduce){ .sl-cab.god, .sl-cab[data-lamp="rainbow"], .sl-cab[data-lamp] .cab-top, .sl-lcd.red, .sl-lcd.reach, .sl-cab.reach #cabR2, .cab-reel.hit, .cab-ring{animation:none} }
-/* ペカるのは誰だ！ (the cabinet: .cab, above) */
+/* DON!!チャンス (the cabinet: .cab, above) */
 .tool-ov.peka{background:radial-gradient(circle at 50% 46%, #33245e 0, #140c2c 58%, #05030c 100%)}
 .tool-ov.peka .tm-box{gap:8px}
 .tool-ov.peka .tm-card{display:none}
@@ -2378,6 +2378,8 @@ button.rp-pick{cursor:pointer}
 .tool-ov.peka .tm-stage{gap:8px; container-name:arc}
 .tool-ov.peka .tm-acts{min-height:42px}
 .pk-sub{min-height:3.05em}
+.pk-sub .pk-again{display:inline-block; font-family:var(--f-display); font-weight:400; font-size:1.35em; color:var(--cyan); text-shadow:0 2px 0 var(--ink); animation:tmPopIn .3s cubic-bezier(.2,1.6,.4,1)}
+@keyframes tmPopIn{from{transform:scale(1.6); opacity:0}}
 @container arc (max-height: 400px){
   .pk-sub small{display:none}
   .pk-sub{min-height:1.55em}

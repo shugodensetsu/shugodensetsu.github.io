@@ -448,7 +448,7 @@ Object.assign(TOOL_INFO, {
 Object.assign(PARTY_HINT, { cut: 'コードを1本えらんで「切る！」', n21: '「+1」を1〜3回押して「次の人へ」' });
 Object.assign(PARTY_LOSE, { cut: 'がハズレを切った！', n21: 'が「21」を言った！' });
 Object.assign(LOSE_SE, { cut: 'loseMine', n21: 'loseSkull', memo: 'loseReact' });
-Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', peka: 'ペカるのは誰だ！', pour: '黄金比チャレンジ' });
+Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', peka: 'DON!!チャンス', pour: '黄金比チャレンジ' });
 
 /* 爆弾解除: a time bomb with 8 wires; one hidden wire sets it off. Every safe cut makes the timer tick faster.
    The wires fan out under the bomb and then run straight down, side by side, each to its own plug: every wire has a column of its own to tap.
