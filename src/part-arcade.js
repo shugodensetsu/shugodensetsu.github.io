@@ -1,23 +1,23 @@
 
 /* =====================================================================
-   プレミアムのミニゲーム: 酒スロ・指ツイスター・黄金比チャレンジ
+   プレミアムのミニゲーム: 酒スロ・ペカるのは誰だ！・黄金比チャレンジ
    どれも「スマホでしかできない」遊び。ミニゲームモードのルーレットに入り、一覧からタップで直接えらべる。
    画面は toolOv を使い、TOOLX[kind] = { setup, act, close } でつなぐ
    ===================================================================== */
 Object.assign(MG, {
   slot: { short: 'スロ', title: '酒スロ', text: '{引いた人}から順番にスロットを回す。出た枚数がいちばん少ない人の負け（「酒」が3つそろったら、その人以外の全員が負け）' },
   pour: { short: '黄金比', title: '黄金比チャレンジ', text: '{引いた人}から1人ずつ、スマホをグラスにしてビールを注ぐ。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。ビール7：泡3でフチまで注げた人ほど高得点。いちばん点数が低い人の負け' },
-  twist: { short: '指', title: '指ツイスター', text: 'スマホをテーブルに置いて、全員が自分の色の丸に指を1本置く。丸は動く・入れかわる・ワープする。最初に指がはなれた人の負け（6人からは2組に分かれて、負けた2人で決勝）' },
+  peka: { short: 'ペカ', title: 'ペカるのは誰だ！', text: '{引いた人}から順番に台を回す。GOGOランプがペカッと光った人から抜けていき、最後まで光らなかった人の負け（リプレイがそろったら、もう1回）' },
 });
 Object.assign(TOOL_INFO, {
   slot: { title: '酒スロ', act: '酒スロ スタート！', cls: 'slot', stake: '出た枚数がいちばん少ない人が' },
-  twist: { title: '指ツイスター', act: '指ツイスター スタート！', cls: 'twist', stake: '最初に指がはなれた人が' },
+  peka: { title: 'ペカるのは誰だ！', act: 'ペカるのは誰だ！ スタート！', cls: 'peka', stake: '最後まで光らなかった人が' },
   pour: { title: '黄金比チャレンジ', act: '黄金比チャレンジ スタート！', cls: 'pour', stake: 'いちばん点数が低い人が' },
 });
-Object.assign(LOSE_SE, { slot: 'loseCards', twist: 'loseReact', pour: 'loseChamp' });
+Object.assign(LOSE_SE, { slot: 'loseCards', peka: 'loseCards', pour: 'loseChamp' });
 /* the list: free games, then the three arcade games, then the older premium ones */
-['slot', 'twist', 'pour'].filter(k => MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); MG_ORDER.splice(MG_ORDER.indexOf('cut'), 0, k); });
-['twist', 'pour'].filter(k => !MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); });
+['slot', 'peka', 'pour'].filter(k => MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); MG_ORDER.splice(MG_ORDER.indexOf('cut'), 0, k); });
+['peka', 'pour'].filter(k => !MG[k]).forEach(k => { const at = MG_ORDER.indexOf(k); if (at >= 0) MG_ORDER.splice(at, 1); });
 const pickW = list => { let r = Math.random() * list.reduce((s, x) => s + x[1], 0); for (const x of list) { r -= x[1]; if (r < 0) return x[0]; } return list[list.length - 1][0]; };
 
 /* =====================================================================
@@ -507,323 +507,259 @@ TOOLX.slot = {
 };
 
 /* =====================================================================
-   指ツイスター: スマホをテーブルに置いて、全員が自分の色の丸に指を1本ずつ置く。
-   丸は動き、ときどきイベント（入れかえ・ワープ・ぐるぐる…）が起きる。丸から指がはなれたまま、まわりのゲージが空になった人の負け。
-   同時に置ける指は5本まで（iPhone の上限）。6人からは2組に分けて、それぞれの負けどうしで決勝
+   ペカるのは誰だ！: ジャグラー風の台を1人ずつ回す。1/8 で GOGOランプがペカッと光ったら抜け、最後まで光らなかった人の負け。
+   台はもらった写真そのまま（PEKA_DATA: 台・光ったランプ・リールの図柄・音3つ）。動くのはリールとランプだけで、演出は一切なし。
+   光るのは レバーONの瞬間（先ペカ）か、最後のボタンを離した瞬間（後ペカ。押したままならリールは止まっても光らない）。
+   出目: 7揃い＝確定、チェリー（左リール）＝30%、ハズレ目＝たまに、ぶどう・リプレイ＝光らない。リプレイは もう1回
    ===================================================================== */
-const TW_EV = { swap: '入れかえ！', speed: 'スピードアップ！', shrink: 'ちぢむ！', warp: 'ワープ！', spin: 'ぐるぐる！', pick: 'ねらいうち！' };
-const TW_TOP = 26, TW_PAD = 6;   /* room at the top of the arena for the name tags and the clock; the gap to the other walls */
-Object.assign(SOUNDS, {
-  twOn: (A, t) => tone(A, t, { type: 'triangle', f: 660, f2: 990, d: 0.12, g: 0.16 }),
-  twTick: (A, t) => tone(A, t, { type: 'square', f: 1046.5, d: 0.03, g: 0.045, lp: 2600 }),
-  twTock: (A, t) => tone(A, t, { type: 'square', f: 783.99, d: 0.03, g: 0.04, lp: 2200 }),
-  twEv: (A, t) => { noise(A, t, { d: 0.22, g: 0.2, type: 'bandpass', f: 600, f2: 4200, q: 0.9 }); [587.33, 880, 1174.7].forEach((f, i) => tone(A, t + 0.08 + i * 0.08, { type: 'square', f, d: 0.11, g: 0.12, lp: 3200 })); },
-  twWarn: (A, t) => tone(A, t, { type: 'square', f: 1480, f2: 1245, d: 0.06, g: 0.11, lp: 4000 }),
-  twWarp: (A, t) => { tone(A, t, { type: 'sine', f: 300, f2: 2400, d: 0.2, g: 0.16 }); noise(A, t + 0.05, { d: 0.18, g: 0.12, type: 'highpass', f: 3000 }); },
-  twOut: (A, t) => { noise(A, t, { d: 0.6, g: 0.5, type: 'lowpass', f: 1800, f2: 120, rv: 0.4 }); kick(A, t, 1); tone(A, t, { type: 'sawtooth', f: 330, f2: 55, d: 0.6, g: 0.18, lp: 1600, lp2: 200 }); },
-});
-['twTick', 'twTock', 'twWarn', 'twOn'].forEach(k => NO_DUCK.add(k));
+const PEKA_DATA = __PEKA_DATA__;
+/* per 100 spins. pre = 先ペカ (its reels then show 7揃い). Lit in all: 3.125 + 3 + 8 × 30% + 58.875 × 6.75% = 12.5% = 1/8 */
+const PK_ODDS = [['pre', 3.125], ['seven', 3], ['cherry', 8], ['replay', 12], ['grape', 15], ['miss', 58.875]];
+const PK_LIT = { pre: 1, seven: 1, cherry: 0.3, miss: 0.0675, replay: 0, grape: 0 };
+const PK_LINE = { pre: 'seven', seven: 'seven', replay: 'tiger', grape: 'grape' };
+const PK_FILL = ['seven', 'bar', 'bell', 'tiger', 'grape'];
+const PK_SPIN0 = PK_FILL.concat('cherry');   /* the cherry is on the left reel only */
+const PK_V = 28;                             /* symbols per second (80 turns a minute, 21 symbols a turn) */
+const PK_SND = { buf: {}, started: false };
+let PK_IMG = null;
 
-function twistSetup() {
-  const T = tool, n = T.ps.length, idx = T.ps.map((_, j) => j);
-  let rounds;
-  if (n <= 5) rounds = [{ ids: idx, label: '' }];
-  else { const h = Math.ceil(n / 2); rounds = [{ ids: idx.slice(0, h), label: 'Aグループ' }, { ids: idx.slice(h), label: 'Bグループ' }, { ids: [], label: '決勝' }]; }
-  const ac = new AbortController();
-  const S = T.tw = { rounds, ri: 0, phase: 'idle', cs: [], ptrs: new Map(), ac, last: 0, t0: 0, W: 0, H: 0, R: 34, sp: 0, boost: 1, lv0: 0, ev: null, evAt: 0, evN: 0, lastEv: '', shr: 0, spd: 0, cnt: -1, warnAt: 0, tickAt: 0, tickK: 0, time: 0, hud: '' };
-  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + (rounds.length > 1 ? '2組に分かれて対決 → 負けた2人で決勝。決勝で負けた人が' : TOOL_INFO.twist.stake) + ' <b>' + amtTxt(T.cups) + '</b></p>' +
-    '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
-    '<div class="tw-arena" id="twA"></div><p class="tm-sub tw-sub" id="toolSub"></p>';
-  /* fingers anywhere on the overlay count (a finger may land beside the arena and slide in) */
-  const ov = $('toolOv'), A = $('twA'), sig = { signal: ac.signal }, np = { signal: ac.signal, passive: false };
-  ov.addEventListener('pointerdown', e => { S.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); }, sig);
-  ov.addEventListener('pointermove', e => { const q = S.ptrs.get(e.pointerId); if (q) { q.x = e.clientX; q.y = e.clientY; } }, sig);
-  ['pointerup', 'pointercancel'].forEach(k => ov.addEventListener(k, e => { S.ptrs.delete(e.pointerId); }, sig));
-  window.addEventListener('blur', () => S.ptrs.clear(), sig);
-  /* no scrolling, zooming, text selection or long-press menus under all those fingers */
-  ['touchstart', 'touchmove', 'touchend', 'contextmenu', 'gesturestart', 'gesturechange', 'dblclick', 'selectstart'].forEach(k => A.addEventListener(k, e => { if (e.cancelable) e.preventDefault(); }, np));
-  twistRound();
+/* the lottery, at the lever: what the reels will show, and whether (and when) the lamp lights */
+function pekaLot() {
+  const rig = TOOLX.peka.rig;
+  let kind, lit;
+  if (rig && rig.length) { const r = rig.shift(); kind = r.replace(/[+-]$/, ''); lit = kind === 'pre' || kind === 'seven' || /\+$/.test(r); }
+  else { kind = pickW(PK_ODDS); lit = Math.random() < PK_LIT[kind]; }
+  return { kind, lit, pre: kind === 'pre', grid: pekaGrid(kind) };
 }
-function twistRound() {
-  const T = tool, S = T.tw, rd = S.rounds[S.ri], A = $('twA'), m = rd.ids.length, heats = S.rounds.length > 1;
-  const rect = A.getBoundingClientRect(), W = S.W = rect.width, H = S.H = rect.height;
-  S.R = Math.round(Math.max(30, Math.min(46, Math.min(W, H) * 0.105)));
-  S.phase = 'wait'; S.boost = 1; S.ev = null; S.evN = 0; S.lastEv = ''; S.shr = 0; S.spd = 0; S.cnt = -1; S.hud = '';
-  S.lv0 = S.ri === 2 ? 2 : 0;   /* the final starts faster */
-  S.cs = rd.ids.map((j, k) => {
-    const a = -Math.PI / 2 + k * 2 * Math.PI / m;
-    return { j, x: W / 2 + Math.cos(a) * W * 0.29, y: (H + TW_TOP) / 2 + Math.sin(a) * (H - TW_TOP) * 0.3, a: Math.random() * 6.283, turn: 0, r: S.R, rt: S.R, held: false, life: 1, grace: 0, slow: 0, fast: 1, fastT: 0, mode: 'wander', warn: false, wp: null, cls: '', lf: -1, st: '' };
-  });
-  A.style.setProperty('--d', S.R * 2 + 'px');
-  A.className = 'tw-arena wait';
-  A.innerHTML = '<div class="tw-hud"><b id="twTime">0.0</b><i id="twLv">' + (rd.label || 'LV.1') + '</i></div>' +
-    S.cs.map((c, k) => '<i class="tw-ghost" id="twG' + k + '" style="--p:' + pc(T.ps[c.j]) + '"></i>').join('') +
-    S.cs.map((c, k) => '<div class="tw-c" id="twC' + k + '" style="--p:' + pc(T.ps[c.j]) + '"><i class="tw-ring"></i><i class="tw-disc"></i></div>').join('') +
-    S.cs.map((c, k) => '<span class="tw-nm" id="twN' + k + '" style="--p:' + pc(T.ps[c.j]) + '">' + esc(pname(T.ps[c.j])) + '</span>').join('') +
-    '<div class="tw-ban" id="twBan"></div><div class="tw-cnt" id="twCnt"></div>';
-  S.cs.forEach((c, k) => { c.el = $('twC' + k); c.nm = $('twN' + k); c.gh = $('twG' + k); });
-  T.ps.forEach((_, j) => {
-    const el = $('tlP' + j), v = $('tlV' + j), on = rd.ids.includes(j);
-    el.classList.toggle('now', on && heats); el.classList.toggle('wait', !on && !el.classList.contains('safe'));
-    if (on) { v.textContent = 'まだ'; v.classList.remove('bad', 'great'); }
-  });
-  $('toolSub').innerHTML = (rd.label ? '<b>' + rd.label + '</b>： ' : '') + '自分の色の丸に 指を1本！<small>スマホはテーブルに。全員そろうと スタート</small>';
-  toolActs(TOOL_CLOSE, false);
-  twistPaint();
-  if (!T.raf) { S.last = performance.now(); T.raf = requestAnimationFrame(twistFrame); }
-}
-function twBanner(html, cls) {
-  const b = $('twBan');
-  if (!b) return;
-  b.className = 'tw-ban'; b.innerHTML = html; void b.offsetWidth; b.className = 'tw-ban show ' + (cls || '');
-}
-const twWho = c => '<span style="color:' + pc(tool.ps[c.j]) + '">' + esc(pname(tool.ps[c.j])) + '</span><br>';
-function twCount(v) { const c = $('twCnt'); if (c) c.innerHTML = v === '' ? '' : '<b>' + v + '</b>'; }
-function twistFrame(now) {
-  const T = tool;
-  if (!T || T.kind !== 'twist') return;
-  const S = T.tw, A = $('twA');
-  T.raf = 0;
-  if (!A || S.phase === 'done') return;
-  const dt = Math.min(0.05, Math.max(0, (now - S.last) / 1000));
-  S.last = now;
-  const rect = A.getBoundingClientRect();
-  if (rect.width && (Math.abs(rect.width - S.W) > 0.5 || Math.abs(rect.height - S.H) > 0.5)) {
-    /* the arena changed size (a rotated phone, a resized window): everything keeps its place in proportion */
-    const fx = rect.width / (S.W || rect.width), fy = rect.height / (S.H || rect.height);
-    S.cs.forEach(c => { c.x *= fx; c.y *= fy; if (c.wp) { c.wp.x *= fx; c.wp.y *= fy; } if (c.mode === 'arc') { c.cx *= fx; c.cy *= fy; } });
-    S.W = rect.width; S.H = rect.height;
-  }
-  if (S.phase !== 'over') {
-    S.cs.forEach(c => {
-      let h = false;
-      const lim = c.r + 14;
-      S.ptrs.forEach(q => { const dx = q.x - rect.left - c.x, dy = q.y - rect.top - c.y; if (dx * dx + dy * dy <= lim * lim) h = true; });
-      if (h && !c.held && S.phase !== 'play') { SE.play('twOn'); vibrate(10); }
-      c.held = h;
+/* the stop picture, [reel][top, middle, bottom]: only the middle line counts, and nothing else may look like a line */
+function pekaGrid(kind) {
+  const line = PK_LINE[kind];
+  for (let n = 0; n < 800; n++) {
+    const g = [0, 1, 2].map(r => {
+      const mid = line || (kind === 'cherry' && r === 0 ? 'cherry' : PK_FILL[rint(0, PK_FILL.length - 1)]);
+      const rest = shuffle(PK_FILL.filter(s => s !== mid));
+      return [rest[0], mid, rest[1]];
     });
+    const L = [[g[0][1], g[1][1], g[2][1]], [g[0][0], g[1][0], g[2][0]], [g[0][2], g[1][2], g[2][2]], [g[0][0], g[1][1], g[2][2]], [g[0][2], g[1][1], g[2][0]]];
+    if (L.filter(l => l[0] === l[1] && l[1] === l[2]).length !== (line ? 1 : 0)) continue;
+    /* 7・7・BAR on a line is a bonus on the real machine: never on a picture that does not light */
+    if (L.some(l => l.filter(s => s === 'seven').length === 2 && l.includes('bar'))) continue;
+    return g;
   }
-  if (S.phase === 'wait') {
-    if (S.cs.every(c => c.held)) { S.phase = 'count'; S.t0 = now; S.cnt = -1; toolActs('', false); }
-  } else if (S.phase === 'count') {
-    if (!S.cs.every(c => c.held)) {
-      S.phase = 'wait'; twCount(''); twBanner('はなれた！ もういちど', 'ng'); SE.play('buzz');
-      toolActs(TOOL_CLOSE, false);
-    } else {
-      const k = Math.floor((now - S.t0) / 700);
-      if (k !== S.cnt) {
-        S.cnt = k;
-        if (k < 3) { twCount(3 - k); SE.play('beep'); vibrate(15); }
-        else {
-          twCount(''); twBanner('GO！', 'go'); SE.play('go'); vibrate(40);
-          S.phase = 'play'; S.t0 = now; S.evAt = 3.2; S.tickAt = 0;
-          A.className = 'tw-arena play';
-          S.cs.forEach(c => { c.life = 1; $('tlV' + c.j).textContent = 'GO!'; });
-          $('toolSub').innerHTML = '指を はなすな！<small>まわりのゲージが空になったら アウト</small>';
-        }
-      }
-    }
-  } else if (S.phase === 'play') twistStep(now, dt);
-  if (S.phase === 'wait' || S.phase === 'count') S.cs.forEach(c => { const st = c.held ? 'OK!' : 'まだ'; if (st !== c.st) { c.st = st; const v = $('tlV' + c.j); v.textContent = st; v.classList.toggle('great', c.held); } });
-  twistPaint();
-  T.raf = requestAnimationFrame(twistFrame);
+  return [['bell', 'bar', 'tiger'], ['grape', 'bell', 'bar'], ['tiger', 'grape', 'bell']];
 }
-function twistStep(now, dt) {
-  const T = tool, S = T.tw, W = S.W, H = S.H, u = Math.min(W, H), cs = S.cs;
-  /* a phone is small: even a slow finger crosses it in a second, so the circles get fast (about 1.2cm/s at first, 6cm/s and more half a minute in) */
-  const t = (now - S.t0) / 1000, lvl = S.lv0 + t / 3.5;
-  const sp = S.sp = Math.min(u * 1.9, u * 0.22 * Math.pow(1.2, lvl) * S.boost) * Math.min(1, t / 1.2);
-  const G = Math.max(0.5, 0.9 - lvl * 0.035);   /* seconds a finger may be off its circle */
-  cs.forEach(c => {
-    c.r += (c.rt - c.r) * Math.min(1, dt * 5);
-    if (c.fastT && now > c.fastT) { c.fast = 1; c.fastT = 0; }
-    if (c.wp && now >= c.wp.at) {
-      c.x = c.wp.x; c.y = c.wp.y; c.wp = null; c.grace = 0.95; c.slow = now + 900; c.a = Math.random() * 6.283;
-      SE.play('twWarp');
-    }
-    if (c.mode === 'wander') {
-      c.turn = Math.max(-2.4, Math.min(2.4, (c.turn + (Math.random() - 0.5) * dt * 10) * Math.pow(0.6, dt)));
-      let vx = Math.cos(c.a), vy = Math.sin(c.a);
-      cs.forEach(o => {
-        if (o === c) return;
-        const dx = c.x - o.x, dy = c.y - o.y, d = Math.hypot(dx, dy) || 1, R = c.r + o.r + 70;
-        if (d < R) { const k = (1 - d / R) * 2.4; vx += dx / d * k; vy += dy / d * k; }
-      });
-      const m = Math.min(80, 30 + sp * 0.12), l = c.x - c.r - TW_PAD, r = W - c.r - TW_PAD - c.x, tp = c.y - c.r - TW_TOP, bt = H - c.r - TW_PAD - c.y;
-      if (l < m) vx += (1 - l / m) * 1.8; if (r < m) vx -= (1 - r / m) * 1.8;
-      if (tp < m) vy += (1 - tp / m) * 1.8; if (bt < m) vy -= (1 - bt / m) * 1.8;
-      c.a = Math.atan2(vy, vx) + c.turn * dt;
-      const v = sp * c.fast * (c.slow > now ? 0.3 : 1);
-      c.x += Math.cos(c.a) * v * dt; c.y += Math.sin(c.a) * v * dt;
-    } else if (c.mode === 'arc') {
-      /* 入れかえ: half a turn around the point between the two */
-      const s = Math.max(0, Math.min(1, (now - c.m0) / c.md)), th = c.th * slEaseIO(s);
-      c.x = c.cx + Math.cos(c.a0 + th) * c.cr; c.y = c.cy + Math.sin(c.a0 + th) * c.cr;
-      if (s >= 1) { c.mode = 'wander'; c.a = c.a0 + c.th + Math.sign(c.th) * Math.PI / 2; c.turn = 0; }
-    } else if (c.mode === 'orbit') {
-      /* ぐるぐる: everyone lines up on a ring and the ring turns */
-      const s = Math.max(0, Math.min(1, (now - c.m0) / c.md)), e = slEaseOut(Math.min(1, s * 3));
-      const rho = c.q0 + (0.82 - c.q0) * e, ph = c.f0 + (c.f1 - c.f0) * e + c.th * slEaseIO(s);
-      const ax = W / 2 - c.r - TW_PAD - 2, ay = (H - TW_TOP - TW_PAD) / 2 - c.r - 2;
-      c.x = W / 2 + Math.cos(ph) * rho * ax; c.y = (H + TW_TOP - TW_PAD) / 2 + Math.sin(ph) * rho * ay;
-      if (s >= 1) { c.mode = 'wander'; c.a = ph + Math.sign(c.th) * Math.PI / 2; c.turn = 0; }
-    }
-  });
-  /* nobody overlaps, nobody leaves the arena */
-  for (let i = 0; i < cs.length; i++) for (let k = i + 1; k < cs.length; k++) {
-    const a = cs[i], b = cs[k];
-    if (a.mode !== 'wander' && b.mode !== 'wander') continue;
-    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, need = a.r + b.r + 10;
-    if (d >= need) continue;
-    const push = (need - d) * Math.min(1, dt * 12), fa = a.mode === 'wander' ? (b.mode === 'wander' ? 0.5 : 1) : 0, fb = b.mode === 'wander' ? (a.mode === 'wander' ? 0.5 : 1) : 0;
-    a.x -= dx / d * push * fa; a.y -= dy / d * push * fa; b.x += dx / d * push * fb; b.y += dy / d * push * fb;
-  }
-  cs.forEach(c => {
-    const x0 = c.r + TW_PAD, x1 = W - c.r - TW_PAD, y0 = c.r + TW_TOP, y1 = H - c.r - TW_PAD, w = c.mode === 'wander';
-    if (c.x < x0) { c.x = x0; if (w && Math.cos(c.a) < 0) c.a = Math.PI - c.a; }
-    if (c.x > x1) { c.x = x1; if (w && Math.cos(c.a) > 0) c.a = Math.PI - c.a; }
-    if (c.y < y0) { c.y = y0; if (w && Math.sin(c.a) < 0) c.a = -c.a; }
-    if (c.y > y1) { c.y = y1; if (w && Math.sin(c.a) > 0) c.a = -c.a; }
-  });
-  /* events */
-  if (!S.ev && t >= S.evAt) twistEvent(now, lvl);
-  else if (S.ev && now >= S.ev.end) { S.ev = null; S.evAt = t + Math.max(1.9, 3.8 - lvl * 0.2); $('twA').classList.remove('spin'); }
-  /* the gauge: it drains while the finger is off, and fills again quickly when the finger is back */
-  let out = null;
-  cs.forEach(c => {
-    if (c.grace > 0) { c.grace -= dt; if (c.held) c.grace = 0; }
-    c.warn = !c.held && c.grace <= 0;
-    if (c.held || c.grace > 0) c.life = Math.min(1, c.life + dt * 3);
-    else { c.life -= dt / G; if (c.life <= 0 && (!out || c.life < out.life)) out = c; }
-  });
-  if (cs.some(c => c.warn) && now >= S.warnAt) { SE.play('twWarn'); S.warnAt = now + 170; }
-  if (now >= S.tickAt) { SE.play(S.tickK++ % 2 ? 'twTock' : 'twTick'); S.tickAt = now + Math.max(190, 520 - lvl * 32); }
-  const hud = t.toFixed(1);
-  if (hud !== S.hud) { S.hud = hud; $('twTime').textContent = hud; const lv = S.rounds[S.ri].label ? S.rounds[S.ri].label + ' LV.' : 'LV.'; $('twLv').textContent = lv + (Math.floor(lvl - S.lv0) + 1); }
-  if (out) twistOut(out, now);
-}
-function twistEvent(now, lvl) {
-  const T = tool, S = T.tw, cs = S.cs, n = cs.length, W = S.W, H = S.H, A = $('twA');
-  let pool = ['swap', 'speed', 'spin'];
-  if (S.evN >= 1) pool.push('shrink', 'warp');
-  if (S.evN >= 2) pool.push('pick', 'warp');
-  pool = pool.filter(k => k !== S.lastEv && !(k === 'shrink' && S.shr >= 3) && !(k === 'speed' && S.spd >= 4));
-  const k = S.evN === 0 ? 'swap' : pool[rint(0, pool.length - 1)];
-  S.evN++; S.lastEv = k;
-  let dur = 900, text = TW_EV[k];
-  if (k === 'speed') { S.boost *= 1.3; S.spd++; }
-  else if (k === 'shrink') { cs.forEach(c => { c.rt = Math.max(22, c.rt * 0.82); }); S.shr++; }
-  else if (k === 'swap') {
-    const order = shuffle(cs.filter(c => c.mode === 'wander' && !c.wp)), pairs = [];
-    if (order.length >= 2) pairs.push([order[0], order[1]]);
-    if (order.length >= 4 && S.evN > 1) pairs.push([order[2], order[3]]);
-    pairs.forEach(([a, b]) => {
-      const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2, cr = Math.hypot(a.x - b.x, a.y - b.y) / 2, dir = Math.random() < 0.5 ? 1 : -1;
-      const md = Math.max(1100, Math.min(2600, Math.PI * cr / Math.max(150, S.sp * 2.4) * 1000));
-      [a, b].forEach(c => { c.mode = 'arc'; c.cx = cx; c.cy = cy; c.cr = cr; c.a0 = Math.atan2(c.y - cy, c.x - cx); c.th = dir * Math.PI; c.m0 = now + 450; c.md = md; });
-      dur = Math.max(dur, md + 450);
-    });
-  } else if (k === 'spin') {
-    const dir = Math.random() < 0.5 ? 1 : -1, md = Math.max(1800, Math.min(4200, 400000 / Math.max(1, S.sp * 1.3))), cy = (H + TW_TOP - TW_PAD) / 2;
-    const list = cs.filter(c => c.mode === 'wander');
-    list.forEach(c => { const ax = W / 2 - c.r - TW_PAD - 2, ay = (H - TW_TOP - TW_PAD) / 2 - c.r - 2, nx = (c.x - W / 2) / ax, ny = (c.y - cy) / ay; c.q0 = Math.min(1, Math.hypot(nx, ny)); c.f0 = Math.atan2(ny, nx); });
-    list.sort((a, b) => a.f0 - b.f0);
-    /* evenly spaced places on the ring, turned so that nobody has far to go */
-    const step = 2 * Math.PI / list.length;
-    let sx = 0, sy = 0;
-    list.forEach((c, i) => { sx += Math.cos(c.f0 - i * step); sy += Math.sin(c.f0 - i * step); });
-    const base = Math.atan2(sy, sx);
-    list.forEach((c, i) => {
-      let f1 = base + i * step;
-      while (f1 - c.f0 > Math.PI) f1 -= 2 * Math.PI;
-      while (f1 - c.f0 < -Math.PI) f1 += 2 * Math.PI;
-      c.f1 = f1; c.th = dir * Math.PI; c.m0 = now + 450; c.md = md; c.mode = 'orbit'; c.wp = null;
-    });
-    A.classList.add('spin'); A.style.setProperty('--dir', dir);
-    dur = md + 450;
-  } else if (k === 'warp') {
-    const picks = shuffle(cs.filter(c => c.mode === 'wander')).slice(0, n >= 3 && lvl >= 4 ? 2 : 1), dests = [];
-    picks.forEach(c => {
-      const x0 = c.r + TW_PAD + 8, x1 = W - c.r - TW_PAD - 8, y0 = c.r + TW_TOP + 8, y1 = H - c.r - TW_PAD - 8;
-      let best = null, bd = -1;
-      for (let i = 0; i < 40; i++) {
-        const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0);
-        let d = Math.hypot(x - c.x, y - c.y) * 0.7;   /* far from where it is now, and clear of the others */
-        cs.forEach(o => { if (o !== c) d = Math.min(d, Math.hypot(x - o.x, y - o.y)); });
-        dests.forEach(q => { d = Math.min(d, Math.hypot(x - q.x, y - q.y)); });
-        if (d > bd) { bd = d; best = { x, y }; }
-      }
-      dests.push(best);
-      c.wp = { x: best.x, y: best.y, at: now + 1150 };
-    });
-    if (!picks.length) text = TW_EV.speed, S.boost *= 1.15;
-    else if (picks.length === 1) text = twWho(picks[0]) + TW_EV.warp;
-    dur = 2100;
-  } else if (k === 'pick') {
-    const c = cs[rint(0, n - 1)];
-    c.fast = 1.7; c.fastT = now + 3200;
-    text = twWho(c) + TW_EV.pick;
-    dur = 3200;
-  }
-  S.ev = { k, end: now + dur };
-  twBanner(text, k);
-  SE.play('twEv'); vibrate(25);
-}
-function twistPaint() {
-  const T = tool, S = T.tw, now = performance.now();
-  S.cs.forEach(c => {
-    const sc = c.r / S.R;
-    c.el.style.transform = 'translate3d(' + c.x.toFixed(1) + 'px,' + c.y.toFixed(1) + 'px,0) scale(' + sc.toFixed(3) + ')';
-    c.nm.style.transform = 'translate3d(' + c.x.toFixed(1) + 'px,' + (c.y - c.r - 10).toFixed(1) + 'px,0) translate(-50%,-100%)';
-    const cls = (c.held ? ' held' : '') + (c.warn && S.phase === 'play' ? ' warn' : '') + (c.grace > 0 ? ' grace' : '') + (c.fastT ? ' pick' : '') + (c.mode === 'arc' ? ' mark' : '') + (c.wp ? ' going' : '') + (c.out ? ' out' : '') + (c.safe ? ' safe' : '');
-    if (cls !== c.cls) { c.cls = cls; c.el.className = 'tw-c' + cls; c.nm.className = 'tw-nm' + (c.out ? ' out' : ''); }
-    const lf = Math.max(0, Math.round(c.life * 50) / 50);
-    if (lf !== c.lf) { c.lf = lf; c.el.style.setProperty('--life', lf); }
-    const g = c.wp ? c.wp.x.toFixed(0) + ',' + c.wp.y.toFixed(0) : '';
-    if (g !== c.g) { c.g = g; c.gh.className = 'tw-ghost' + (c.wp ? ' on' : ''); if (c.wp) c.gh.style.transform = 'translate3d(' + c.wp.x.toFixed(1) + 'px,' + c.wp.y.toFixed(1) + 'px,0) scale(' + sc.toFixed(3) + ')'; }
+
+/* the three machine sounds: decoded once, played from where the sound starts (the files begin with a little silence) */
+function pekaSndLoad() {
+  const A = SE.ensure();
+  if (!A || PK_SND.started || !PEKA_DATA) return;
+  PK_SND.started = true;
+  Object.keys(PEKA_DATA.snd).forEach(k => {
+    try {
+      const bin = atob(PEKA_DATA.snd[k]), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      const done = b => {
+        if (!b || PK_SND.buf[k]) return;
+        const d = b.getChannelData(0);
+        let pk = 0; for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > pk) pk = v; }
+        let st = 0; while (st < d.length && Math.abs(d[st]) < pk * 0.02) st++;
+        PK_SND.buf[k] = { b, off: Math.max(0, st - 0.004 * b.sampleRate) / b.sampleRate };
+      };
+      const pr = A.c.decodeAudioData(u.buffer, done, () => { /* ignore */ });
+      if (pr && pr.then) pr.then(done, () => { /* ignore */ });
+    } catch (_) { /* ignore */ }
   });
 }
-function twistOut(c, now) {
-  const T = tool, S = T.tw, rd = S.rounds[S.ri];
-  S.phase = 'over'; S.time = (now - S.t0) / 1000; S.ev = null;
-  rd.loser = c.j;
-  c.out = true; c.warn = false; c.life = 0;
-  S.cs.forEach(o => { o.wp = null; o.fastT = 0; if (o !== c) o.safe = true; });
-  const A = $('twA'); A.className = 'tw-arena over';
-  SE.play('twOut'); SE.play('buzz'); flash('#e8233f'); shake(false); vibrate([120, 60, 220]);
-  const q = relPos(c.el); FXC.burst(q.x, q.y, 60, { speed: 13 });
-  twBanner('アウト！', 'out');
-  BGM.level(0.2, 0.1);
-  S.cs.forEach(o => { const v = $('tlV' + o.j); v.classList.remove('great'); v.textContent = o === c ? 'アウト' : 'セーフ'; v.classList.toggle('bad', o === c); });
-  $('toolSub').innerHTML = '<b>' + esc(pname(T.ps[c.j])) + '</b> の指がはなれた！<small>' + S.time.toFixed(1) + '秒</small>';
-  toolLater(twistRoundEnd, 1500);
+function pekaPlay(k) {
+  if (TOOLX.peka.log) TOOLX.peka.log.push([k, Math.round(performance.now())]);
+  if (!SE.on) return;
+  const A = SE.ensure(), s = PK_SND.buf[k];
+  if (!A || !s) return;
+  try {
+    const src = A.c.createBufferSource(), g = A.c.createGain();
+    src.buffer = s.b; g.gain.value = 0.7;
+    src.connect(g); g.connect(A.o);
+    src.start(A.c.currentTime, s.off);
+  } catch (_) { /* ignore */ }
 }
-function twistRoundEnd() {
-  const T = tool, S = T.tw, rd = S.rounds[S.ri], j = rd.loser;
-  if (S.ri === S.rounds.length - 1) {
-    S.phase = 'done';
-    const p = T.ps[j];
-    hushBeat('toolOv', 700, () => toolFinish([p], '<b>' + esc(pname(p)) + '</b> の指がはなれた！ ' + amtTxt(T.cups), k => $('tlP' + k)));
+
+function pekaSetup() {
+  const T = tool, n = T.ps.length;
+  if (!PEKA_DATA) {
+    $('toolStage').innerHTML = '<p class="tm-sub">このゲームは準備中です</p>';
+    toolActs(TOOL_CLOSE);
     return;
   }
-  /* a heat is over: its loser goes on to the final */
-  rd.ids.forEach(k => { const el = $('tlP' + k), v = $('tlV' + k); el.classList.remove('now'); el.classList.toggle('safe', k !== j); v.textContent = k === j ? '決勝へ' : 'セーフ'; v.classList.toggle('bad', k === j); });
-  S.ri++;
-  if (S.ri === 2) {
-    S.rounds[2].ids = [S.rounds[0].loser, S.rounds[1].loser];
-    S.rounds[2].ids.forEach(k => $('tlP' + k).classList.remove('safe'));
-    telop('決勝！<small>' + S.rounds[2].ids.map(k => esc(pname(T.ps[k]))).join(' vs ') + '</small>', 'red', 1700);
-  } else telop('Bグループ！', 'white', 1300);
-  SE.play('mgRound');
-  BGM.level(0.7, 0.4);
-  twistRound();
+  const M = PEKA_DATA.meta, pct = (v, of) => (v / of * 100).toFixed(4) + '%';
+  const box = (x, y, w, h, more) => 'left:' + pct(x, M.w) + ';top:' + pct(y, M.h) + ';width:' + pct(w, M.w) + ';height:' + (more ? 'calc(' + pct(h, M.h) + ' + var(--below, 0px))' : pct(h, M.h));
+  if (!PK_IMG) {
+    PK_IMG = new Image();
+    PK_IMG.src = PEKA_DATA.img.reels;
+  }
+  pekaSndLoad();
+  /* a stop button's area: a column around the button, down to the bottom of the machine and on into the free space below it
+     (--below, set in pekaSize: the buttons are small on a phone) */
+  const gap = (M.stops[1][0] - M.stops[0][0] + M.stops[2][0] - M.stops[1][0]) / 2;
+  const stopBox = i => box(M.stops[i][0] - gap / 2, M.stops[i][1] - 58, gap, M.h - M.stops[i][1] + 58, true);
+  const lx = M.lever[0], lw = M.stops[0][0] - gap / 2 - 70;
+  $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + TOOL_INFO.peka.stake + ' <b>' + amtTxt(T.cups) + '</b><small>1/8でペカッ。光った人から抜けていく</small></p>' +
+    '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
+    '<div class="pk-wrap"><div class="pk-m" id="pkM" style="--ar:' + M.w + ' / ' + M.h + ';--k:' + (M.w / M.h).toFixed(5) + '">' +
+    '<img class="pk-img" src="' + PEKA_DATA.img.machine + '" alt="" draggable="false">' +
+    '<img class="pk-lamp" id="pkLamp" src="' + PEKA_DATA.img.lamp + '" alt="" draggable="false" style="' + box(...M.lamp) + '">' +
+    M.reels.map((r, i) => '<canvas class="pk-reel" id="pkR' + i + '" style="' + box(...r) + '"></canvas>').join('') +
+    '<div class="pk-hit pk-lever" id="pkLever" role="button" tabindex="0" aria-label="レバー" style="' + box(Math.max(0, lx - 150), M.lever[1] - 70, lw - Math.max(0, lx - 150), M.h - M.lever[1] + 70, true) + '"></div>' +
+    [0, 1, 2].map(i => '<div class="pk-hit pk-stop" id="pkB' + i + '" role="button" tabindex="0" aria-label="' + ['左', '中', '右'][i] + 'のリールを止める" style="' + stopBox(i) + '"></div>').join('') +
+    '</div></div><p class="tm-sub sl-sub pk-sub" id="toolSub"></p>';
+  const ac = new AbortController(), sig = { signal: ac.signal };
+  const S = T.pk = {
+    ac, phase: 'ready', alive: T.ps.map((_, j) => j), at: 0, j: -1, lot: null, held: -1, t0: 0, last: 0, stops: 0, rel: false, spins: 0,
+    reels: [0, 1, 2].map(r => ({ r, pos: 0, v: 0, mode: 'idle', F: 0, cells: {}, cv: $('pkR' + r), cx: null })),
+  };
+  /* at rest, the reels show what the picture shows */
+  [['bell', 'seven', 'tiger'], ['tiger', 'seven', 'grape'], ['grape', 'seven', 'bar']].forEach((c, r) => { const R = S.reels[r]; R.cells[1] = c[0]; R.cells[0] = c[1]; R.cells[-1] = c[2]; });
+  S.reels.forEach(R => { R.cx = R.cv.getContext('2d'); });
+  /* one press at a time, as on a real machine: while a stop button is held the others do nothing */
+  const press = (el, down, up) => {
+    el.addEventListener('pointerdown', e => { if (e.button > 0) return; e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ } down(); }, sig);
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(k => el.addEventListener(k, () => up(), sig));
+    el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); down(); } }, sig);
+    el.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); up(); } }, sig);
+  };
+  press($('pkLever'), pekaLever, () => {});
+  [0, 1, 2].forEach(i => press($('pkB' + i), () => pekaStop(i), () => pekaRelease(i)));
+  ['contextmenu', 'selectstart', 'dragstart', 'dblclick'].forEach(k => $('pkM').addEventListener(k, e => { if (e.cancelable) e.preventDefault(); }, { signal: ac.signal, passive: false }));
+  window.addEventListener('resize', () => pekaSize(), sig);
+  BGM.level(0, 0.3);   /* the machine's own sounds only */
+  toolActs(TOOL_CLOSE, false);
+  pekaSize();
+  if (!PK_IMG.complete) PK_IMG.addEventListener('load', () => { if (tool === T) pekaPaint(); }, { once: true, signal: ac.signal });
+  pekaTurn(false);
 }
-TOOLX.twist = {
-  force: false,   /* tests: play without a multi-touch screen */
-  cant() { return this.force || navigator.maxTouchPoints > 1 ? '' : 'タッチ専用'; },
-  setup: twistSetup,
+/* canvas pixels follow the size on screen */
+function pekaSize() {
+  const T = tool, S = T && T.pk;
+  if (!S) return;
+  const dpr = Math.min(3, window.devicePixelRatio || 1), m = $('pkM'), mb = m.getBoundingClientRect(), wb = m.parentNode.getBoundingClientRect();
+  m.style.setProperty('--below', Math.round(Math.max(0, Math.min(wb.bottom - mb.bottom - 2, mb.height * 0.7))) + 'px');
+  S.reels.forEach(R => {
+    const b = R.cv.getBoundingClientRect(), w = Math.max(1, Math.round(b.width * dpr)), h = Math.max(1, Math.round(b.height * dpr));
+    if (R.cv.width !== w || R.cv.height !== h) { R.cv.width = w; R.cv.height = h; }
+  });
+  pekaPaint();
+}
+function pekaPaint() { const S = tool && tool.pk; if (S) S.reels.forEach(R => pekaDraw(R)); }
+function pekaCell(R, i) {
+  if (R.cells[i]) return R.cells[i];
+  const pool = R.r === 0 ? PK_SPIN0 : PK_FILL;
+  let s;
+  do s = pool[rint(0, pool.length - 1)]; while (s === R.cells[i - 1] || s === R.cells[i + 1]);
+  return (R.cells[i] = s);
+}
+function pekaDraw(R) {
+  if (!PK_IMG || !PK_IMG.complete || !PK_IMG.naturalWidth) return;
+  const M = PEKA_DATA.meta, [, ry, rw, rh] = M.reels[R.r], cx = R.cx, mid = M.mid - ry;
+  cx.setTransform(R.cv.width / rw, 0, 0, R.cv.height / rh, 0, 0);
+  cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = '#fff'; cx.fillRect(0, 0, rw, rh);
+  for (let i = Math.ceil(R.pos - 2.04); i <= Math.floor(R.pos + 2.04); i++) {
+    const s = pekaCell(R, i), list = M.sym[s], sp = list.find(x => x.reel === R.r) || list[0], sx = rw / sp.rw, a = sp.at;
+    cx.drawImage(PK_IMG, a[0], a[1], a[2], a[3], rw / 2 + sp.ax * sx, mid + (R.pos - i) * M.pitch + sp.ay, a[2] * sx, a[3]);
+  }
+  /* the paper's own shading from the picture (a lit drum), and its rounded window */
+  const sh = M.shade[R.r];
+  cx.globalCompositeOperation = 'multiply'; cx.drawImage(PK_IMG, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
+  cx.globalCompositeOperation = 'destination-in'; cx.drawImage(PK_IMG, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
+  cx.globalCompositeOperation = 'source-over';
+}
+function pekaTurn(again) {
+  const T = tool, S = T.pk, j = S.j = S.alive[S.at], p = T.ps[j];
+  S.phase = 'ready'; S.stops = 0; S.rel = false; S.held = -1; S.lot = null;
+  $('pkM').classList.remove('lit');
+  T.ps.forEach((_, k) => $('tlP' + k).classList.toggle('now', k === j));
+  $('toolSub').innerHTML = (again ? 'リプレイ！ ' : '') + '<b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> ' + (again ? 'もう1回' : 'の番') + '<small>レバー → ボタン3つでリールを止める</small>';
+}
+function pekaLever() {
+  const T = tool, S = T && T.pk;
+  if (!S || S.phase !== 'ready' || T.state === 'done') return;
+  const lot = S.lot = pekaLot(), now = performance.now();
+  S.phase = 'spin'; S.t0 = now; S.spins++;
+  pekaPlay('reba');
+  if (lot.pre) { $('pkM').classList.add('lit'); pekaPlay('gako'); }
+  S.reels.forEach(R => {
+    R.mode = 'spin'; R.v = 0;
+    /* forget what has gone by, keep what is on screen */
+    Object.keys(R.cells).forEach(k => { if (k < R.pos - 3) delete R.cells[k]; });
+  });
+  if (!T.raf) { S.last = now; T.raf = requestAnimationFrame(pekaFrame); }
+}
+function pekaStop(i) {
+  const T = tool, S = T && T.pk;
+  if (!S || S.phase !== 'spin' || S.held >= 0) return;
+  const R = S.reels[i];
+  if (R.mode !== 'spin' || performance.now() - S.t0 < 160) return;
+  S.held = i; S.stops++;
+  /* the stop picture goes onto cells that are not on screen yet, and the reel runs on to them (up to 4 symbols, ~0.15 s) */
+  const F = R.F = Math.ceil(R.pos + 3.05), c = S.lot.grid[i];
+  R.cells[F + 1] = c[0]; R.cells[F] = c[1]; R.cells[F - 1] = c[2];
+  R.mode = 'stopping';
+  pekaPlay('botan');
+}
+function pekaRelease(i) {
+  const T = tool, S = T && T.pk;
+  if (!S || S.held !== i) return;
+  S.held = -1;
+  if (S.stops === 3 && !S.rel) { S.rel = true; pekaAfter(); }
+}
+/* the last button is up: once its reel has come to rest, the lamp (後ペカ) and what happens next */
+function pekaAfter() {
+  const T = tool, S = T.pk;
+  if (S.reels.some(R => R.mode !== 'stopped')) { toolLater(pekaAfter, 16); return; }
+  const lot = S.lot, j = S.j, p = T.ps[j];
+  S.phase = 'after';
+  if (lot.lit && !lot.pre) { $('pkM').classList.add('lit'); pekaPlay('gako'); }
+  if (lot.lit) {
+    S.alive.splice(S.at, 1);
+    if (S.at >= S.alive.length) S.at = 0;
+    const el = $('tlP' + j), v = $('tlV' + j);
+    el.classList.add('safe'); el.classList.remove('now'); v.textContent = '抜け'; v.classList.add('great');
+    $('toolSub').innerHTML = '<b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> 抜け！<small>' + (S.alive.length > 1 ? 'のこり ' + S.alive.length + '人' : '') + '</small>';
+    if (S.alive.length === 1) { toolLater(pekaFinish, 1900); return; }
+    toolLater(() => pekaTurn(false), 1900);
+  } else if (lot.kind === 'replay') toolLater(() => pekaTurn(true), 450);
+  else { S.at = (S.at + 1) % S.alive.length; toolLater(() => pekaTurn(false), 650); }
+}
+function pekaFinish() {
+  const T = tool, S = T.pk, j = S.alive[0], p = T.ps[j];
+  S.phase = 'done';
+  $('pkM').classList.remove('lit');
+  hushBeat('toolOv', 700, () => toolFinish([p], '<b>' + esc(pname(p)) + '</b> だけ光らなかった！ ' + amtTxt(T.cups), k => $('tlP' + k)));
+}
+function pekaFrame(now) {
+  const T = tool;
+  if (!T || T.kind !== 'peka') return;
+  const S = T.pk;
+  T.raf = 0;
+  const dt = Math.min(0.05, Math.max(0, (now - S.last) / 1000));
+  S.last = now;
+  let moving = false;
+  S.reels.forEach(R => {
+    if (R.mode === 'spin') { R.v = PK_V * Math.min(1, (now - S.t0) / 140); R.pos += R.v * dt; }
+    else if (R.mode === 'stopping') { R.v = PK_V; R.pos = Math.min(R.F, R.pos + R.v * dt); if (R.pos >= R.F) { R.mode = 'stopped'; R.v = 0; } }
+    else return;
+    moving = moving || R.mode !== 'stopped';
+    pekaDraw(R);
+  });
+  if (moving) T.raf = requestAnimationFrame(pekaFrame);
+}
+TOOLX.peka = {
+  rig: null,   /* tests: the outcomes of the next spins: 'pre', 'seven', 'cherry+', 'cherry-', 'miss+', 'miss-', 'replay', 'grape' */
+  log: null,   /* tests: [sound, time] of every sound */
+  lot: pekaLot,   /* tests: the lottery on its own */
+  snd: PK_SND,     /* tests: the decoded sounds */
+  setup: pekaSetup,
   act() {},
-  close(T) { if (T.tw) T.tw.ac.abort(); },
+  close(T) { if (T.pk) T.pk.ac.abort(); },
 };
 
 /* =====================================================================
@@ -1210,7 +1146,7 @@ if (PLUS_OPEN) {
     const base = g.html;
     g.html = () => base() + gCard('プレミアムのミニゲーム', '<p><b>ミニゲームモード</b>の一覧で <b>NEW</b> がついているゲームです。ルーレットで当たるか、一覧からタップして選びます。</p>' +
       '<p><b>酒スロ</b>：1人ずつスロットを回して、出た枚数がいちばん少ない人の負け。レバー → ボタン3つで止めます。ランプの色（青 → 緑 → 赤 → 虹）・リーチ・カットインが出るほど大当たりのチャンス。<b>「酒」が3つそろうと、その人以外の全員が負け</b>。2人なら3回、3人なら2回ずつ回せて、最下位が同じ枚数ならサドンデス。</p>' +
-      '<p><b>指ツイスター</b>：スマホをテーブルに置いて、全員が自分の色の丸に指を1本。丸は動き、入れかわり、ワープします。指がはなれたまま、まわりのゲージが空になった人の負け。6人からは2組に分かれて、負けた2人で決勝。<span class="sub">指を同時に置くので、タッチ画面の端末だけ。</span></p>' +
+      '<p><b>ペカるのは誰だ！</b>：1人ずつ台を回して、GOGOランプが<b>ペカッ</b>と光ったら抜け。最後まで光らなかった人の負け。光るのは1/8。光るのは<b>レバーをたたいた瞬間</b>か、<b>最後のボタンを離した瞬間</b>だけ（押したままだと、リールは止まっても光りません）。<b>7がそろったら確定</b>、左リールのチェリーは30%、ハズレ目でもたまに光ります。ぶどう・リプレイがそろっても光りません。<b>リプレイ</b>がそろったら、もう1回まわせます。</p>' +
       '<p><b>黄金比チャレンジ</b>：スマホがグラス。1人ずつビールを注いで、<b>ビール7：泡3</b>でフチまで注げた人ほど高得点。いちばん低い人の負け。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。かたむけすぎ・注ぎすぎは、こぼれて減点。スマホをかたむけるか、指を左右にすべらせます。</p><div class="gd-rows">' +
       [['爆弾解除', '爆弾のコードを1本えらんで「切る！」。ハズレを切った人の負け'], ['21ゲーム', '数を1〜3個ずつ進めて、「21」を言った人の負け。ときどきイベント（リバース・パス・もう1回・ご指名・もどる・ワープ）で順番や数が変わるので、数えて誰かをはめることはできません'], ['メモリーリレー', '8つのボタンが光った順番どおりにタップ。1人ごとに1つ増えて、スピードも1.1倍ずつ速くなる。まちがえた人の負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +

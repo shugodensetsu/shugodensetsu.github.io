@@ -20,8 +20,19 @@ const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
+/* ペカるのは誰だ！: the machine pictures and the three machine sounds (src/private/peka, kept out of the repository until it is
+   settled that they may be published). Only test builds carry them; the app build gets null and the game stays Coming soon there */
+const pekaData = () => {
+  const d = path.join(dir, 'private', 'peka');
+  if (VERSION !== 'test' || !fs.existsSync(path.join(d, 'peka.json'))) return null;
+  const b64 = f => fs.readFileSync(path.join(d, f)).toString('base64');
+  return { meta: JSON.parse(fs.readFileSync(path.join(d, 'peka.json'), 'utf8')),
+    img: Object.fromEntries(['machine', 'lamp', 'reels'].map(k => [k, 'data:image/webp;base64,' + b64(k + '.webp')])),
+    snd: Object.fromEntries(['reba', 'botan', 'gako'].map(k => [k, b64(k + '.mp3')])) };
+};
 let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-arcade.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
-  .replace('__SMP_DATA__', () => JSON.stringify(smpData));
+  .replace('__SMP_DATA__', () => JSON.stringify(smpData)).replace('__PEKA_DATA__', () => JSON.stringify(pekaData()));
+if (VERSION !== 'test' && js.includes('data:image/webp;base64')) throw new Error('the app build must not carry the private pictures');
 /* the play-count collector (server/collector.js): its address is STAT_URL in part-game.js, and the page may talk to that one origin only.
    A test build can point it at a local stand-in:  STAT_TEST=http://localhost:8787/v1/p node src/build-app.js test */
 if (VERSION === 'test' && process.env.STAT_TEST) js = js.replace(/const STAT_URL = '[^']*';/, () => 'const STAT_URL = ' + JSON.stringify(process.env.STAT_TEST) + ';');

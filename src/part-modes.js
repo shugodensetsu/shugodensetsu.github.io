@@ -22,7 +22,7 @@ const PM_MODES = ['koi'];   /* 王様ゲームは 2026-11-12 にやめた */
 const PMX = {};
 /* the mini games with a screen of their own (part-arcade.js): TOOLX[kind] = { setup(), act(a, el), close(T) } */
 const TOOLX = {};
-const PLUS_MG = ['cut', 'n21', 'memo', 'slot', 'twist', 'pour'];
+const PLUS_MG = ['cut', 'n21', 'memo', 'slot', 'peka', 'pour'];
 function plusState() {
   try { const s = JSON.parse(localStorage.getItem(PLUS_KEY) || 'null'); return s && typeof s === 'object' && Number.isFinite(s.until) ? s : null; } catch (_) { return null; }
 }
@@ -45,7 +45,7 @@ const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.include
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }
 function isPM() { return !!(G && PM_MODES.includes(G.mode)); }
 const mgSoon = k => PLUS_MG.includes(k) && !PLUS_OPEN;
-/* a game this device cannot play (指ツイスター needs a multi-touch screen): '' or a short label for the list */
+/* a game this device cannot play: '' or a short label for the list (TOOLX[k].cant; no game needs it at the moment) */
 const mgCant = k => (TOOLX[k] && TOOLX[k].cant ? TOOLX[k].cant() : '');
 
 const CROWN_SVG = '<svg class="ic-crown" viewBox="0 0 32 26" aria-hidden="true"><path d="M3 21 L1.5 6.5 L9.5 12.5 L16 2.5 L22.5 12.5 L30.5 6.5 L29 21 Z" fill="#ffd83d" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/><rect x="3" y="20" width="26" height="4.5" rx="1.5" fill="#e0a400" stroke="#150733" stroke-width="2.2"/><circle cx="16" cy="14" r="2.6" fill="#ff4fa3" stroke="#150733" stroke-width="1.6"/><circle cx="8.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/><circle cx="23.5" cy="16" r="1.7" fill="#35e0ff" stroke="#150733" stroke-width="1.3"/></svg>';
@@ -448,7 +448,7 @@ Object.assign(TOOL_INFO, {
 Object.assign(PARTY_HINT, { cut: 'コードを1本えらんで「切る！」', n21: '「+1」を1〜3回押して「次の人へ」' });
 Object.assign(PARTY_LOSE, { cut: 'がハズレを切った！', n21: 'が「21」を言った！' });
 Object.assign(LOSE_SE, { cut: 'loseMine', n21: 'loseSkull', memo: 'loseReact' });
-Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', pour: '黄金比チャレンジ' });
+Object.assign(MINI_NAMES, { cut: '爆弾解除', n21: '21ゲーム', memo: 'メモリーリレー', slot: '酒スロ', twist: '指ツイスター', peka: 'ペカるのは誰だ！', pour: '黄金比チャレンジ' });
 
 /* 爆弾解除: a time bomb with 8 wires; one hidden wire sets it off. Every safe cut makes the timer tick faster.
    The wires fan out under the bomb and then run straight down, side by side, each to its own plug: every wire has a column of its own to tap.
