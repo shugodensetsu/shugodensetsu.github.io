@@ -16,7 +16,9 @@ const serialize = d => '{"version":1,\n"categories":[\n' + d.categories.map(c =>
 const deck = JSON.parse(fs.readFileSync(path.join(dir, 'deck.json'), 'utf8'));
 deck.categories = deck.categories.map(c => Object.assign({}, c, { on: true }));
 
-const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8');
+/* the app's name lives in part-head.js (APP_NAME); everything here follows it */
+const APP_NAME = /const APP_NAME = '([^']+)';/.exec(fs.readFileSync(path.join(dir, 'part-head.js'), 'utf8'))[1];
+const tpl = fs.readFileSync(path.join(dir, 'deck-template.html'), 'utf8').replace(/__APP_NAME__/g, () => APP_NAME);
 /* the recorded sounds (src/snd/*.mp3, Kenney CC0) go into the page as base64, so nothing has to be fetched */
 const smpData = Object.fromEntries(fs.readdirSync(path.join(dir, 'snd')).filter(f => f.endsWith('.mp3')).sort()
   .map(f => [f.slice(0, -4), fs.readFileSync(path.join(dir, 'snd', f)).toString('base64')]));
@@ -66,23 +68,23 @@ const html = `<!doctype html>
 <link rel="canonical" href="https://shugodensetsu.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:site_name" content="酒GO!!伝説">
-<meta property="og:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta property="og:site_name" content="${APP_NAME}">
+<meta property="og:title" content="${APP_NAME}｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <meta property="og:url" content="https://shugodensetsu.github.io/">
 <meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="酒GO!!伝説 — 引いたが最後！ 天国か、地獄か。">
+<meta property="og:image:alt" content="${APP_NAME} — 引いたが最後！ 天国か、地獄か。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="酒GO!!伝説｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta name="twitter:title" content="${APP_NAME}｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
 <meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="酒GO!!伝説">
+<meta name="apple-mobile-web-app-title" content="${APP_NAME}">
 <script>
 /* tablets: lay the app out at a phone-like size and let the browser scale it up, so it fills an iPad instead of
    sitting small in the middle (portrait gains the most; phones are left exactly as they are) */
@@ -132,7 +134,7 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => { naviga
 `;
 
 const manifest = {
-  id: './', name: '酒GO!!伝説', short_name: '酒GO!!伝説',
+  id: './', name: APP_NAME, short_name: APP_NAME,
   description: '飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。',
   categories: ['games', 'entertainment'],
   lang: 'ja', dir: 'ltr', start_url: './', scope: './', display: 'standalone', orientation: 'portrait',
@@ -151,7 +153,7 @@ const manifest = {
   ],
 };
 
-const sw = `/* 酒GO!!伝説 service worker — plays offline after the first visit.
+const sw = `/* ${APP_NAME} service worker — plays offline after the first visit.
    The page itself is fetched fresh when online (so updates arrive), falling back to the saved copy offline;
    icons and fonts come from the cache. Bump VERSION on every release.
    The 3D dice libraries (vendor/) live in their own cache, kept across releases (rename VENDOR when they change). */

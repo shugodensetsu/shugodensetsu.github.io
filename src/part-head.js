@@ -1,6 +1,20 @@
 (() => {
 'use strict';
 
+/* ---------- the app's name, in one place ----------
+   At the store release the app becomes 「DON!!でんパーティー」 (a party game, no 酒 in the name). Then:
+   1. change APP_NAME and PLUS_NAME here (the page title, home-screen name, share texts, result picture, premium screen follow;
+      src/build-app.js reads APP_NAME from this line for the manifest and the meta tags)
+   2. by hand, because they are drawings or wording rather than the name:
+      - the title logo (deck-template.html, .logo: one span per letter, animated) and the app icons (src/icon.js), the OGP picture
+      - 酒スロ: its name, the 「酒」 symbol and 「酒GO!!フリーズ」 (part-arcade.js)
+      - the age check wording (part-game.js, 「お酒の席で遊ぶ…」), privacy.html and terms.html, README.md, the dashboard (server/)
+      - for a lower store age rating, every mention of drinking: cards (deck.json) with 飲む/杯, the glass meter, 「+2杯」 amounts
+   3. keep as they are: the storage keys (sakego-*, nomige-*), the service worker cache names, the domain and the Worker URL —
+      renaming them would throw away what players have saved */
+const APP_NAME = '酒GO!!伝説';
+const PLUS_NAME = '酒GO!!プレミアム';
+
 /* ---------- page source, captured before anything renders (used to republish the page) ---------- */
 const SKELETON = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>';
 const SRC = Array.from(document.querySelectorAll('[data-src]'), el => ({ id: el.id, html: el.outerHTML }));

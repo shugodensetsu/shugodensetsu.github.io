@@ -386,7 +386,7 @@ function renderPlus(msg) {
   const left = m => tryLeft(m);
   const feat = (ic, b, s) => '<li>' + ic + '<span><b>' + b + '</b><small>' + s + '</small></span></li>';
   $('plusBox').innerHTML = '<button type="button" class="gd-x pl-x" data-pl="close" aria-label="閉じる">×</button>' +
-    '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">酒GO!!プレミアム</h2>' +
+    '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">' + PLUS_NAME + '</h2>' +
     (on ? '<p class="pl-lead"><b>プレミアム利用中</b>（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）</p>'
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
@@ -427,7 +427,7 @@ function titleModes() {
     const t = el.querySelector('.t-new'); if (t) { t.textContent = tag; t.hidden = !tag; }
   });
   const b = $('plusBtn');
-  if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>酒GO!!プレミアム</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : PLUS_SALE ? '<b>酒GO!!プレミアム</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
+  if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>' + PLUS_NAME + '</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : PLUS_SALE ? '<b>' + PLUS_NAME + '</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
 }
 
 /* =====================================================================

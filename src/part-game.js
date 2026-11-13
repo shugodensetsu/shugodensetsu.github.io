@@ -997,7 +997,7 @@ function ageOk() { try { return localStorage.getItem(AGE_KEY) === '1'; } catch (
 function ageAsk(no) {
   $('ageTitle').textContent = no ? '20歳になったら遊んでね' : '20歳以上ですか？';
   $('ageText').innerHTML = no ? 'お酒は20歳になってから。それまでは、ジュースで遊べるゲームで楽しもう！'
-    : '酒GO!!伝説は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。<br><small class="age-terms">「はい」で、<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>に同意したものとみなします</small>';
+    : APP_NAME + 'は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。<br><small class="age-terms">「はい」で、<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>に同意したものとみなします</small>';
   $('ageActs').innerHTML = no ? '<button type="button" class="pbtn white small" data-age="back">もどる</button>'
     : '<button type="button" class="pbtn" data-age="yes">はい、20歳以上です</button><button type="button" class="pbtn white small" data-age="no">いいえ</button>';
   $('ageOv').hidden = false;
@@ -5300,7 +5300,7 @@ async function resultImage(hide) {
   const maxK = key(order[0]), minK = key(order[order.length - 1]), spread = maxK > minK;
   const names = order.map(p => (hide ? 'プレイヤー' + (p.i + 1) : String(p.name)));
   try {
-    await Promise.all([document.fonts.load('80px "Dela Gothic One"', '酒GO!!伝説結果発表0123456789杯'), document.fonts.load('800 44px "M PLUS Rounded 1c"', names.join('') + '不運王セーフ王無敗')]);
+    await Promise.all([document.fonts.load('80px "Dela Gothic One"', APP_NAME + '結果発表0123456789杯'), document.fonts.load('800 44px "M PLUS Rounded 1c"', names.join('') + '不運王セーフ王無敗')]);
   } catch (_) { /* the fallback fonts are fine */ }
   const ink = cssVar('--ink', '#150733'), paper = cssVar('--paper', '#fffaf0'), yellow = cssVar('--yellow', '#ffd83d'), pink = cssVar('--pink', '#ff4fa3'), cyan = cssVar('--cyan', '#35e0ff');
   /* background: deep purple with rays from the top, like the app */
@@ -5314,7 +5314,7 @@ async function resultImage(hide) {
     c.font = font; c.textAlign = align || 'center'; c.textBaseline = 'alphabetic'; c.lineJoin = 'round';
     c.lineWidth = lw; c.strokeStyle = stroke; c.strokeText(t, x, y); c.fillStyle = fill; c.fillText(t, x, y);
   };
-  outlined('酒GO!!伝説', W / 2, 112, '64px ' + DISP, yellow, ink, 14);
+  outlined(APP_NAME, W / 2, 112, '64px ' + DISP, yellow, ink, 14);
   c.save(); c.translate(W / 2, 246); c.rotate(-0.03);
   outlined('結果発表！！', 6, 8, '112px ' + DISP, pink, ink, 22);
   outlined('結果発表！！', 0, 0, '112px ' + DISP, '#ffffff', ink, 14);
@@ -5436,7 +5436,7 @@ async function sendShot() {
     let can = false;
     try { can = navigator.canShare({ files: [file] }); } catch (_) { can = false; }
     if (can) {
-      try { await navigator.share({ files: [file], text: '「酒GO!!伝説」で遊んだよ！ ' + SHARE_URL }); } catch (_) { /* closed without sharing */ }
+      try { await navigator.share({ files: [file], text: '「' + APP_NAME + '」で遊んだよ！ ' + SHARE_URL }); } catch (_) { /* closed without sharing */ }
       return;
     }
   }
@@ -5456,11 +5456,11 @@ const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
   SE.play('tap');
   const text = from === 'result'
-    ? '「酒GO!!伝説」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
-    : '飲み会・宅飲みが盛り上がるパーティーゲーム「酒GO!!伝説」。スマホ1台で2〜8人、無料・広告なし！';
+    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料・広告なし！';
   useTrack('share', { from });
   if (navigator.share) {
-    try { await navigator.share({ title: '酒GO!!伝説', text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
+    try { await navigator.share({ title: APP_NAME, text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
     return;
   }
   try { await navigator.clipboard.writeText(text + '\n' + SHARE_URL); telop('リンクをコピーしました<small>LINEなどに貼り付けて送ってね</small>', 'white sm', 2000); }

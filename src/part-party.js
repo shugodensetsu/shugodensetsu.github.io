@@ -180,7 +180,7 @@ function gkSaveImage() {
   x.drawImage(art, 60, 220);
   x.font = '800 34px "M PLUS Rounded 1c","Hiragino Sans",sans-serif';
   x.fillStyle = '#c7b8f5';
-  x.fillText('ニセ画伯は ' + pname(cur.f) + (cur.res === 'caught' ? '（見破られた）' : '（逃げ切り）') + '　・　酒GO!!伝説', W / 2, 1260);
+  x.fillText('ニセ画伯は ' + pname(cur.f) + (cur.res === 'caught' ? '（見破られた）' : '（逃げ切り）') + '　・　' + APP_NAME, W / 2, 1260);
   c.toBlob(async b => {
     if (!b) return;
     const name = 'nisegahaku-' + Date.now() + '.png';
