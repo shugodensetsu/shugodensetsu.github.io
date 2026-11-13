@@ -917,6 +917,7 @@ function eligibleCards(n) { return deck.cards.filter(c => { const cat = catOf(c.
    killing the tab doesn't lose the night's game — 「続きから再開」 brings it back. Forgotten after 12 hours */
 const GAME_AT_KEY = 'nomige-game-at', GAME_TTL = 12 * 3600 * 1000;
 function saveGame() {
+  if (G && G.practice) return;   /* おためし: nothing is kept */
   try {
     if (G && !G.done) { localStorage.setItem(GAME_KEY, JSON.stringify(G)); localStorage.setItem(GAME_AT_KEY, String(Date.now())); }
     else { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); }
@@ -3333,7 +3334,7 @@ function explodeBomb() {
   bombTimer(() => {
     $('bombTop').innerHTML = '<p class="bm-now">爆発したとき持っていたのは…</p><p class="bm-name loser charred" style="--p:' + pc(b.holder) + '">' + esc(pname(b.holder)) + '<i class="bm-wisp"></i><i class="bm-wisp w2"></i></p>' +
       '<p class="bm-verdict ol">' + amtTxt(b.cups) + '！</p><p class="bm-meta"><span>パス ' + b.passes + '回</span><span>' + b.T.toFixed(1) + '秒で爆発</span></p>';
-    $('bombBottom').innerHTML = '<div class="bm-acts late"><button type="button" class="pbtn big main" data-b="rec">OK！ ' + amtTxt(b.cups) + 'を記録</button></div>';
+    $('bombBottom').innerHTML = '<div class="bm-acts late"><button type="button" class="pbtn big main" data-b="rec">' + recLabel(amtTxt(b.cups)) + '</button></div>';
     $('bombTop').insertAdjacentHTML('beforeend', '<i class="bm-smokeveil" aria-hidden="true"></i>');
     b.resultAt = performance.now(); b.recGuard = 1300;   /* the button fades in once the hanko has landed */
     SE.play('sizzle');
@@ -3369,6 +3370,7 @@ function closeBomb(rec) {
   bomb = null;
   closeOv('bombOv');
   BGM.play('party'); BGM.level(1, 0.3);
+  if (G && G.practice) { practiceEnd(); return; }
   if (b.state !== 'done') return;
   if (isMini()) { miniRecord([b.holder], b.cups); return; }
   renderGame();
@@ -3418,6 +3420,7 @@ function closeTimer() {
   timer = null;
   closeOv('timerOv');
   BGM.play('party'); BGM.level(1, 0.3);
+  if (G && G.practice) { practiceEnd(); return; }
   if (ran && needsPick()) setTimeout(() => { if (screen === 'game' && needsPick() && noOv()) openDecide(); }, 300);
 }
 function tmState(cls) { $('timerOv').className = 'ov timer-ov' + (timer && timer.mode === 'stop' ? ' swmode' : '') + (cls ? ' ' + cls : ''); }
@@ -3624,7 +3627,7 @@ function swResult(diffs) {
     if (lj.length === 1) {
       T.loser = T.ps[lj[0]];
       $('tmSub').innerHTML = 'いちばん遠かった <b>' + esc(pname(T.loser)) + '</b> の負け！ ' + amtTxt(T.cups);
-      tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>');
+      tmActs('<button type="button" class="pbtn big main" data-tm="rec">' + recLabel(amtTxt(T.cups)) + '</button>');
     } else {
       T.losers = lj.map(j => T.ps[j]);
       $('tmSub').innerHTML = 'まさかの同じ差！ ' + T.losers.map(p => '<b>' + esc(pname(p)) + '</b>').join('・') + ' の負け！ ' + amtTxt(T.cups) + 'ずつ';
@@ -3649,7 +3652,7 @@ function swResult(diffs) {
   tmLater(() => loseStamp('timerOv', [T.loser]), 160);
   $('tmSub').innerHTML = '<b>' + esc(pname(T.loser)) + '</b> の負け！ ' + amtTxt(T.cups);
   SE.play('loseStop'); flash('#e8233f'); vibrate([60, 40, 60]);
-  tmActs('<button type="button" class="pbtn big main" data-tm="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>');
+  tmActs('<button type="button" class="pbtn big main" data-tm="rec">' + recLabel(amtTxt(T.cups)) + '</button>');
 }
 
 /* ---------- tap duel ---------- */
@@ -4031,6 +4034,7 @@ function closeTool(mode) {
   clearVerdict('toolOv');
   closeOv('toolOv');
   BGM.play('party'); BGM.level(1, 0.3);
+  if (G && G.practice) { practiceEnd(); return; }
   if (T.state !== 'done' || !T.losers || !T.losers.length) return;
   if (isMini()) { miniRecord(T.losers, T.cups); return; }
   renderGame();
@@ -4074,8 +4078,8 @@ function toolFinish(losers, msg, panel) {
   toolActs('', false);
   toolLater(() => loseStamp('toolOv', losers, T.stamp), 160);
   toolLater(() => toolActs(losers.length === 1
-    ? '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + amtTxt(T.cups) + 'を記録</button>'
-    : '<button type="button" class="pbtn big main" data-tl="rec">OK！ ' + losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録</button>'), 1400);
+    ? '<button type="button" class="pbtn big main" data-tl="rec">' + recLabel(amtTxt(T.cups)) + '</button>'
+    : '<button type="button" class="pbtn big main" data-tl="rec">' + (G.practice ? recLabel('') : 'OK！ ' + losers.length + '人に' + amtTxt(T.cups) + 'ずつ記録') + '</button>'), 1400);
 }
 /* 3 or more people (the mini game mode): a list of everyone instead of the 1-on-1 「VS」 row */
 const tlGroup = T => T.ps.length > 2;
@@ -5878,6 +5882,45 @@ function miniStart() {
   const k = cur.mkind;
   if (k === 'bomb') openBomb(); else if (k === 'stop') openTimer(); else if (k === 'tap') openTool('react'); else openTool(k);
 }
+/* ---------- おためし: any mini game straight from 遊び方 (ミニゲーム), to show how it goes or just to try it.
+   It runs as a one-round mini game of its own: nothing is recorded or saved, and a game in progress is put aside
+   and given back untouched when the overlay closes (then 遊び方 opens again where it was) ---------- */
+let practice = null;
+function practiceStart(kind) {
+  if (practice || tool || bomb || timer || !MG[kind] || mgLocked(kind) || mgSoon(kind) || mgCant(kind)) return;
+  const real = G && !G.done && validGame(G) ? G : null;
+  const n = real ? real.players.length : Math.max(2, Math.min(8, setup.count || 4));
+  const names = real ? real.players.map(p => p.name) : Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
+  practice = { G, page: guidePage };
+  closeOv('howOv');
+  G = {
+    v: 2, mode: 'mini', practice: true, gid: 0, rounds: 1, unit: real ? real.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
+    players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], pts: 0, loss: 0 })),
+    mini: { total: 1, used: [kind], skip: [], log: [] },
+  };
+  startTurn();
+  const cur = G.cur;
+  cur.names = { '引いた人': 0, '左隣': 1 % n, '右隣': n - 1, 'ランダム': 1 % n };
+  cur.card = { id: 0, cat: 'mini', text: mgText(kind), cups: [MINI_LOSS], dur: false, note: '', fx: kind, catName: 'ミニゲーム', mark: '遊', color: 8 };
+  cur.mkind = kind; cur.miniT = kind; cur.mres = null; cur.msnap = null; cur.bombDone = false; cur.phase = 'drawn';
+  const tag = document.createElement('div');
+  tag.className = 'practice-tag'; tag.id = 'practiceTag'; tag.textContent = 'おためし（記録しません）';
+  document.body.appendChild(tag);
+  miniStart();
+}
+/* the overlay of the practice game has closed: back to the real game (if any) and to 遊び方 */
+function practiceEnd() {
+  const P = practice;
+  if (!P) return;
+  practice = null;
+  G = P.G;
+  const tag = $('practiceTag'); if (tag) tag.remove();
+  sceneBGM();
+  if (screen === 'game' && validGame(G)) renderGame();
+  setTimeout(() => { if (!practice && noOv()) { openGuide('games'); if (GUIDE[P.page]) { guidePage = P.page; renderGuide(); } } }, 220);
+}
+const recLabel = amt => (G && G.practice ? 'OK！（記録しません）' : 'OK！ ' + amt + 'を記録');
 /* the result of a round: +2 counts each, turned into cups at 3 */
 function miniRecord(losers, amt) {
   const cur = G.cur;
@@ -6252,6 +6295,12 @@ const GUIDE = [
   },
   { k: 'games', tab: 'ミニゲーム', html: () =>
     '<p class="gd-lead">カードによっては、アプリで遊べるボタンが出ます。カードの下のボタンをタップしてスタート。</p>' +
+    gCard('ためしに遊んでみる', '<p>タップしたゲームを、その場ですぐ遊べます。ルールを説明するときに「1回やってみよう」で。<b>記録はされません</b>。</p><div class="gd-try">' +
+      MG_ORDER.map(k => {
+        const off = mgSoon(k) ? 'Coming soon' : mgLocked(k) ? 'プレミアム' : mgCant(k);
+        return '<button type="button" class="gd-try-b' + (PLUS_MG.includes(k) ? ' plus' : '') + '" data-try="' + k + '"' + (off ? ' disabled' : '') + '>' + mgTitle(k) + (off ? '<small>' + off + '</small>' : '') + '</button>';
+      }).join('') + '</div>' +
+      '<p class="sub">遊ぶメンバーは、ゲーム中ならそのメンバー、それ以外はメンバー登録の人数と名前（未登録なら4人）。終わると、この画面に戻ります。</p>') +
     gCard('チャレンジ', '<p>アプリのミニゲームに挑戦。<b>クリアすれば飲まなくてOK</b>、失敗したらカードの杯数。</p><div class="gd-rows">' +
       [['ピタリストップ', '途中で見えなくなるタイマーを、目標の秒数で止める'], ['ジャストゲージ', '左右に動く針を、緑のゾーンで止める'], ['連打チャレンジ', '5秒で、指定の回数タップする'],
         ['まんまる', '指で一筆、きれいなまるを描く'], ['色当て', '書いてある言葉ではなく、文字の色を答える'], ['数字タッチ', '1〜9を順番にタッチ。お手つきはアウト'], ['ハイ&ロー', '次のトランプが上か下かを3回連続で当てる']]
@@ -6702,6 +6751,7 @@ function wireGame() {
   $('howBtn').addEventListener('click', () => openGuide('start'));
   $('helpBtn').addEventListener('click', () => openGuide(G && G.cur && G.cur.phase === 'drawn' ? 'record' : 'start'));
   $('gdTabs').addEventListener('click', e => { const b = e.target.closest('[data-gd]'); if (!b) return; guidePage = Number(b.dataset.gd); renderGuide(); SE.play('tap'); });
+  $('gdBody').addEventListener('click', e => { const b = e.target.closest('[data-try]'); if (!b || b.disabled) return; SE.play('tap'); practiceStart(b.dataset.try); });
   $('gdPrev').addEventListener('click', () => guideGo(-1));
   $('gdNext').addEventListener('click', () => guideGo(1));
   {
