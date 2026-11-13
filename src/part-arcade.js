@@ -21,6 +21,89 @@ Object.assign(LOSE_SE, { slot: 'loseCards', peka: 'loseCards', pour: 'loseChamp'
 const pickW = list => { let r = Math.random() * list.reduce((s, x) => s + x[1], 0); for (const x of list) { r -= x[1]; if (r < 0) return x[0]; } return list[list.length - 1][0]; };
 
 /* =====================================================================
+   台（筐体）: 酒スロ と ペカるのは誰だ！ は、もらった筐体の写真をそのまま使う。
+   CAB_DATA = { meta, img: { machine, lamp, reels }, snd }（src/private/cab。テスト版と claude.ai 版だけに入る）。
+   写真の上で動くのはリール（canvas。図柄は写真から切り出したもの、紙の陰影も写真のもの）と、DON!! ランプ（光った写真）だけ。
+   操作は写真のレバーとボタン: ボタンの下の台の部分まで、押せる範囲を広げてある（スマホだとボタンが小さい）。
+   台は縦長なので、横長の画面では下を切って見せる（受け皿まで → 腰のパネルまで → ボタンまで。.cab-view の --f）
+   ===================================================================== */
+const CAB_DATA = __CAB_DATA__;
+let CAB_IMG = null;
+const cabImg = () => { if (!CAB_IMG) { CAB_IMG = new Image(); CAB_IMG.src = CAB_DATA.img.reels; } return CAB_IMG; };
+const cabPct = (v, of) => (v / of * 100).toFixed(4) + '%';
+const cabBox = (x, y, w, h) => { const M = CAB_DATA.meta; return 'left:' + cabPct(x, M.w) + ';top:' + cabPct(y, M.h) + ';width:' + cabPct(w, M.w) + ';height:' + cabPct(h, M.h); };
+/* the cabinet. extra: what goes on top of the reels (酒スロ's lamps, payout and cut-in) */
+function cabHTML(cls, extra) {
+  const M = CAB_DATA.meta, gap = (M.stops[2][0] - M.stops[0][0]) / 2, bot = M.belly[1] + M.belly[3], top = M.stops[0][1] - M.stopR - 10;
+  const lx = M.stops[0][0] - gap / 2;
+  return '<div class="cab-wrap"><div class="cab-view" style="--ar:' + M.w + ' / ' + M.h + ';--k:' + (M.w / M.h).toFixed(5) + '"><div class="cab ' + cls + '" id="cabM">' +
+    '<img class="cab-img" src="' + CAB_DATA.img.machine + '" alt="" draggable="false">' +
+    '<img class="cab-lamp" id="cabLamp" src="' + CAB_DATA.img.lamp + '" alt="" draggable="false" style="' + cabBox(...M.lamp) + '">' +
+    M.reels.map((r, i) => '<canvas class="cab-reel" id="cabR' + i + '" style="' + cabBox(...r) + '"></canvas>').join('') + (extra || '') +
+    '<div class="cab-hit" id="cabLever" role="button" tabindex="0" aria-label="レバー" style="' + cabBox(M.belly[0], M.lever[1] - 62, lx - M.belly[0] - 2, bot - M.lever[1] + 62) + '"></div>' +
+    [0, 1, 2].map(i => '<div class="cab-hit" id="cabB' + i + '" role="button" tabindex="0" aria-label="' + ['左', '中', '右'][i] + 'のリールを止める" style="' + cabBox(M.stops[i][0] - gap / 2, top, gap, bot - top) + '"></div>').join('') +
+    '</div></div></div>';
+}
+/* canvas pixels follow the size on screen */
+function cabSize(reels) {
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  reels.forEach(R => {
+    const b = R.cv.getBoundingClientRect(), w = Math.max(1, Math.round(b.width * dpr)), h = Math.max(1, Math.round(b.height * dpr));
+    if (R.cv.width !== w || R.cv.height !== h) { R.cv.width = w; R.cv.height = h; }
+  });
+}
+/* one reel: items = [[symbol, rows below the middle row (may be fractional), lit up?]] */
+function cabDraw(R, items) {
+  const img = cabImg();
+  if (!img.complete || !img.naturalWidth) return;
+  const M = CAB_DATA.meta, [, ry, rw, rh] = M.reels[R.r], cx = R.cx, mid = M.mid - ry, P = M.pitch;
+  cx.setTransform(R.cv.width / rw, 0, 0, R.cv.height / rh, 0, 0);
+  cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = '#fff'; cx.fillRect(0, 0, rw, rh);
+  items.forEach(([s, d, hit]) => {
+    const list = M.sym[s], sp = list.find(x => x.reel === R.r) || list[0], sx = rw / sp.rw, a = sp.at, y = mid + d * P;
+    if (hit) {
+      const g = cx.createRadialGradient(rw / 2, y, 2, rw / 2, y, P * 0.7);
+      g.addColorStop(0, 'rgba(255,216,61,.95)'); g.addColorStop(1, 'rgba(255,216,61,0)');
+      cx.fillStyle = g; cx.fillRect(0, y - P * 0.6, rw, P * 1.2);
+    }
+    cx.drawImage(img, a[0], a[1], a[2], a[3], rw / 2 + sp.ax * sx, y + sp.ay, a[2] * sx, a[3]);
+  });
+  /* the paper's own shading from the picture (a lit drum), and its rounded window */
+  const sh = M.shade[R.r];
+  cx.globalCompositeOperation = 'multiply'; cx.drawImage(img, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
+  cx.globalCompositeOperation = 'destination-in'; cx.drawImage(img, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
+  cx.globalCompositeOperation = 'source-over';
+}
+/* how many rows of the strip can show (the window, plus the bits of symbols that stick out of their row) */
+const CAB_SEE = () => { const M = CAB_DATA.meta; return M.reels[0][3] / 2 / M.pitch + 0.55; };
+/* a press that knows when the finger comes up (ペカ: the lamp waits for the last button to be released) */
+function cabPress(el, down, up, sig) {
+  el.addEventListener('pointerdown', e => { if (e.button > 0) return; e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ } down(); }, sig);
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(k => el.addEventListener(k, () => up(), sig));
+  el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); down(); } }, sig);
+  el.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); up(); } }, sig);
+}
+function cabGuard(sig) {
+  ['contextmenu', 'selectstart', 'dragstart', 'dblclick'].forEach(k => $('cabM').addEventListener(k, e => { if (e.cancelable) e.preventDefault(); }, Object.assign({ passive: false }, sig)));
+}
+/* 7-segment digits for the PAYOUT display (酒スロ): lit segments over dim ones, like the display in the picture */
+const SEG7 = { a: [1.5, 1.5, 8.5, 1.5], g: [1.5, 9, 8.5, 9], d: [1.5, 16.5, 8.5, 16.5], f: [1.5, 1.5, 1.5, 9], b: [8.5, 1.5, 8.5, 9], e: [1.5, 9, 1.5, 16.5], c: [8.5, 9, 8.5, 16.5] };
+const SEG7_ON = ['abcdef', 'bc', 'abged', 'abgcd', 'fgbc', 'afgcd', 'afgedc', 'abc', 'abcdefg', 'abcdfg'];
+const seg7Path = ([x0, y0, x1, y1]) => x0 === x1
+  ? 'M' + x0 + ' ' + (y0 + 0.9) + 'l.9 .9V' + (y1 - 1.8) + 'l-.9 .9-.9-.9V' + (y0 + 1.8) + 'z'
+  : 'M' + (x0 + 0.9) + ' ' + y0 + 'l.9-.9H' + (x1 - 1.8) + 'l.9 .9-.9 .9H' + (x0 + 1.8) + 'z';
+function seg7(n, digits) {
+  const s = String(Math.max(0, Math.round(n))).slice(-digits).padStart(digits, ' ');
+  let h = '';
+  for (let i = 0; i < digits; i++) {
+    const v = s[i] === ' ' ? '' : SEG7_ON[+s[i]];
+    h += '<g transform="translate(' + (i * 11 + 1) + ' 0) skewX(-7)">' + Object.keys(SEG7).map(k => '<path class="' + (v.includes(k) ? 'on' : 'off') + '" d="' + seg7Path(SEG7[k]) + '"/>').join('') + '</g>';
+  }
+  return h;
+}
+
+/* =====================================================================
    酒スロ: 1人1回転。レバー → 3つのボタンでリールを止める。
    役は レバーを引いた瞬間に決まっていて（パチスロと同じ）、リールはその出目まですべる。
    予告ランプ（青 < 緑 < 赤 < 虹）・リーチ・カットイン・スロー停止で、当たりの期待度を見せる
@@ -34,30 +117,10 @@ const SL_STRIPS = [
 /* out of 1000 spins. rmiss = リーチしてハズレ */
 const SL_ODDS = [['sake', 15], ['big', 50], ['reg', 85], ['replay', 90], ['suika', 110], ['bell', 220], ['cherry', 130], ['rmiss', 120], ['miss', 180]];
 const SL_PAY = { sake: 1000, big: 300, reg: 100, suika: 15, bell: 8, cherry: 2 };
-const SL_NAME = { suika: 'スイカ', bell: 'ベル', cherry: 'チェリー' };
+const SL_NAME = { suika: 'ぶどう', bell: 'ベル', cherry: 'チェリー' };
 const SL_CUT = { green: 'チャンス！', red: '激アツ！！', gold: '超激アツ！！', rainbow: '確定！！！' };
-const SL_7 = 'M20 9H82V23L55 72H30L57 26H20Z';
-const SL_SYM = {
-  seven: '<path d="' + SL_7 + '" fill="none" stroke="#150733" stroke-width="13" stroke-linejoin="round"/><path d="' + SL_7 + '" fill="none" stroke="#ffd83d" stroke-width="8" stroke-linejoin="round"/>' +
-    '<path d="' + SL_7 + '" fill="url(#slRed)" stroke="#150733" stroke-width="2.5" stroke-linejoin="round"/><path d="M26 15H75" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".65"/>',
-  bar: '<rect x="8" y="19" width="84" height="42" rx="9" fill="#150733"/><rect x="13" y="24" width="74" height="32" rx="5" fill="#2a1a10" stroke="url(#slGold)" stroke-width="3"/>' +
-    '<text x="50" y="50.5" text-anchor="middle" font-size="27" fill="url(#slGold)" class="sl-tx">BAR</text>',
-  bell: '<circle cx="50" cy="64" r="7" fill="#ff9d1c" stroke="#150733" stroke-width="4"/>' +
-    '<path d="M50 9c-4 0-6.5 3-6.5 6.5C32 19.5 27 29 27 42c0 8-3 13-9 18h64c-6-5-9-10-9-18 0-13-5-22.5-16.5-26.500C56.5 12 54 9 50 9Z" fill="url(#slGold)" stroke="#150733" stroke-width="4" stroke-linejoin="round"/>' +
-    '<path d="M35 34c1.5-6 5-10 10-12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".85"/><path d="M24 54h52" stroke="#150733" stroke-width="3" opacity=".25"/>',
-  suika: '<path d="M11 24A39 39 0 0 0 89 24Z" fill="#2fae4b" stroke="#150733" stroke-width="4" stroke-linejoin="round"/><path d="M18 24A32 32 0 0 0 82 24Z" fill="#f7ffe0"/><path d="M22 24A28 28 0 0 0 78 24Z" fill="#ff4763"/>' +
-    '<g fill="#150733"><ellipse cx="36" cy="33" rx="2.3" ry="3.6" transform="rotate(-18 36 33)"/><ellipse cx="50" cy="38" rx="2.3" ry="3.6"/><ellipse cx="64" cy="33" rx="2.3" ry="3.6" transform="rotate(18 64 33)"/><ellipse cx="43" cy="45" rx="2" ry="3.2" transform="rotate(-8 43 45)"/><ellipse cx="57" cy="45" rx="2" ry="3.2" transform="rotate(8 57 45)"/></g>' +
-    '<path d="M11 24H89" stroke="#150733" stroke-width="4" stroke-linecap="round"/>',
-  cherry: '<path d="M52 13C44 25 35 33 31 44M52 13C57 25 64 31 70 42" fill="none" stroke="#150733" stroke-width="8" stroke-linecap="round"/><path d="M52 13C44 25 35 33 31 44M52 13C57 25 64 31 70 42" fill="none" stroke="#49b65a" stroke-width="3.5" stroke-linecap="round"/>' +
-    '<path d="M52 13c8-9 21-9 30-3-8 9-21 10-30 3Z" fill="#6ddc77" stroke="#150733" stroke-width="3.5" stroke-linejoin="round"/>' +
-    '<circle cx="30" cy="57" r="15" fill="url(#slRed)" stroke="#150733" stroke-width="4"/><circle cx="70" cy="55" r="15" fill="url(#slRed)" stroke="#150733" stroke-width="4"/>' +
-    '<circle cx="24" cy="51" r="4" fill="#fff" opacity=".85"/><circle cx="64" cy="49" r="4" fill="#fff" opacity=".85"/>',
-  replay: '<circle cx="50" cy="36" r="27" fill="#2fa8ff" stroke="#150733" stroke-width="4"/><path d="M37 37a13 13 0 1 1 5.5 10.6" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/><path d="M32.5 43.500l10.5 6.5-0.5-12z" fill="#fff"/>' +
-    '<text x="50" y="77" text-anchor="middle" font-size="12.5" fill="#1565c0" class="sl-tx">REPLAY</text>',
-  sake: '<circle cx="50" cy="40" r="36" fill="url(#slRb)" stroke="#150733" stroke-width="4"/><circle cx="50" cy="40" r="27.5" fill="url(#slGold)" stroke="#150733" stroke-width="3"/>' +
-    '<text x="50" y="54" text-anchor="middle" font-size="39" fill="#c4001d" stroke="#150733" stroke-width="1.2" paint-order="stroke" class="sl-tx">酒</text>',
-};
-const slSvg = k => '<svg viewBox="0 0 100 80" aria-hidden="true">' + SL_SYM[k] + '</svg>';
+/* the symbols on the cabinet's reels: the picture's bear is the replay and its grapes stand in for the watermelon */
+const SL_KEY = { replay: 'tiger', suika: 'grape' };
 const slAt = (reel, i) => SL_STRIPS[reel][((i % SL_N) + SL_N) % SL_N];
 const slIdx = (reel, sym) => { const a = []; SL_STRIPS[reel].forEach((s, i) => { if (s === sym) a.push(i); }); return a[rint(0, a.length - 1)]; };
 /* three of a kind on any of the 5 lines (only the middle line pays, but nothing else may look like a win) */
@@ -128,9 +191,14 @@ Object.assign(SOUNDS, {
 const slEaseBack = u => { const c = 1.9, v = u - 1; return 1 + (c + 1) * v * v * v + c * v * v; };
 const slEaseIO = u => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
 const slEaseOut = u => 1 - Math.pow(1 - u, 3);
+/* cell k of the strip sits k - p rows below the middle row (the strip runs downward, so spinning lowers p) */
 function slotPaint(i) {
-  const R = tool.sl.reels[i], pm = ((R.p % SL_N) + SL_N) % SL_N;
-  R.el.style.transform = 'translate3d(0,' + (-(SL_N + pm - 0.7) / (SL_N * 3) * 100).toFixed(3) + '%,0)';
+  const R = tool.sl.reels[i], see = CAB_SEE(), items = [];
+  for (let k = Math.ceil(R.p - see); k <= Math.floor(R.p + see); k++) {
+    const s = slAt(i, k);
+    items.push([SL_KEY[s] || s, k - R.p, R.hit != null && ((k % SL_N) + SL_N) % SL_N === R.hit]);
+  }
+  cabDraw(R, items);
 }
 function slotFrame(now) {
   const T = tool;
@@ -169,7 +237,7 @@ function slotSpinUp(i, rev) {
   const R = tool.sl.reels[i];
   R.mode = rev ? 'rev' : 'spin'; R.v = 0; R.vmax = 30; R.acc = 9;
   R.box.classList.add('spin');
-  R.el.querySelectorAll('.hit').forEach(c => c.classList.remove('hit'));
+  R.hit = null; R.box.classList.remove('hit');
   slotKick();
 }
 /* stop on the cell `idx` (the next time it comes round, at least `lead` cells ahead) */
@@ -190,7 +258,11 @@ function slotLcd(html, cls) {
   el.className = 'sl-lcd ' + (cls || '');
   el.innerHTML = '<span>' + html + '</span>';
 }
-const slotLamp = c => { const m = $('slM'); if (m) m.dataset.lamp = c; };
+/* 予告ランプ: the cabinet's top light bar glows in the colour; a bonus lights the DON!! lamp itself */
+const slotLamp = c => { const m = $('cabM'); if (m) m.dataset.lamp = c; };
+const slotDon = on => { const m = $('cabM'); if (m) m.classList.toggle('lit', on); };
+const slotPayShow = n => { const el = $('slPay'); if (el) el.innerHTML = seg7(n, 4); };
+/* rings over the picture's lever and buttons: which one to press next */
 function slotButtons() {
   const S = tool.sl, ph = S.phase, at = ph === 'stop0' ? 0 : ph === 'stop1' ? 1 : ph === 'stop2' ? 2 : -1;
   $('slLever').classList.toggle('on', ph === 'ready');
@@ -199,38 +271,37 @@ function slotButtons() {
     b.classList.toggle('on', at >= 0 && i >= at);
     b.classList.toggle('next', i === at);
     b.classList.toggle('push', i === at && i === 2 && !!S.res && !!S.res.reach);
-    b.innerHTML = i === at && i === 2 && S.res && S.res.reach ? 'PUSH' : 'STOP';
   });
 }
 function slotSetup() {
   const T = tool, n = T.ps.length;
+  if (!CAB_DATA) { $('toolStage').innerHTML = '<p class="tm-sub">このゲームは準備中です</p>'; toolActs(TOOL_CLOSE); return; }
   /* few players: more spins each, so a round is never over in a blink */
-  T.res = []; T.sl = { phase: 'idle', replays: 0, res: null, reels: [], last: 0, auto: 0, spins: n <= 2 ? 3 : n === 3 ? 2 : 1, left: 0, sum: 0, order: T.ps.map((_, j) => j), oi: 0, sd: 0, lastP: -1 };
-  const spins = T.sl.spins;
-  const strip = r => { let h = ''; for (let c = 0; c < 3; c++) SL_STRIPS[r].forEach(s => { h += '<div class="sl-cell">' + slSvg(s) + '</div>'; }); return h; };
+  T.res = []; T.sl = { phase: 'idle', replays: 0, res: null, reels: [], last: 0, auto: 0, spins: n <= 2 ? 3 : n === 3 ? 2 : 1, left: 0, sum: 0, order: T.ps.map((_, j) => j), oi: 0, sd: 0, lastP: -1, ac: new AbortController() };
+  const spins = T.sl.spins, M = CAB_DATA.meta, sig = { signal: T.sl.ac.signal };
+  const ring = (x, y, r, id, cls) => '<i class="cab-ring ' + (cls || '') + '" id="' + id + '" style="' + cabBox(x - r, y - r, r * 2, r * 2) + '"></i>';
   $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + (spins > 1 ? '1人' + spins + '回転。合計がいちばん少ない人が' : TOOL_INFO.slot.stake) + ' <b>' + amtTxt(T.cups) + '</b><small>「酒」が3つそろったら、その人以外の全員が負け</small></p>' +
     '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
-    '<div class="sl-wrap"><div class="sl-machine" id="slM" data-lamp="idle">' +
-    '<svg class="sl-defs" width="0" height="0" aria-hidden="true"><defs>' +
-    '<linearGradient id="slRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7d8a"/><stop offset=".45" stop-color="#ef1f3a"/><stop offset="1" stop-color="#a30019"/></linearGradient>' +
-    '<linearGradient id="slGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c4"/><stop offset=".5" stop-color="#ffd83d"/><stop offset="1" stop-color="#e09a00"/></linearGradient>' +
-    '<linearGradient id="slRb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3d4f"/><stop offset=".22" stop-color="#ffd83d"/><stop offset=".45" stop-color="#30d158"/><stop offset=".65" stop-color="#35e0ff"/><stop offset=".85" stop-color="#b17cff"/><stop offset="1" stop-color="#ff4fa3"/></linearGradient>' +
-    '</defs></svg>' +
-    '<div class="sl-top"><span class="sl-who" id="slWho"></span><div class="sl-lamp" id="slLamp"><b>酒スロ</b></div><span class="sl-pay"><small>PAYOUT</small><b id="slPay">0</b></span></div>' +
-    '<div class="sl-lcd" id="slLcd"></div>' +
-    '<div class="sl-win" id="slWin">' + [0, 1, 2].map(r => '<div class="sl-reel" id="slR' + r + '"><div class="sl-strip" id="slS' + r + '">' + strip(r) + '</div></div>').join('') +
-    '<i class="sl-arrow l" aria-hidden="true"></i><i class="sl-arrow r" aria-hidden="true"></i><div class="sl-cutin" id="slCut" hidden></div></div>' +
-    '<div class="sl-panel"><button type="button" class="sl-lever" id="slLever" aria-label="レバーを引く"><i class="sl-slot"></i><i class="sl-ball"></i><b>LEVER</b></button>' +
-    [0, 1, 2].map(i => '<button type="button" class="sl-stop" id="slB' + i + '" aria-label="リール' + (i + 1) + 'を止める">STOP</button>').join('') + '</div></div></div>' +
-    '<p class="tm-sub sl-sub" id="toolSub"></p>';
+    cabHTML('sl-cab', '<i class="cab-top" id="cabTop" style="' + cabBox(...M.topbar) + '"></i>' +
+      '<div class="cab-pay" style="' + cabBox(...M.payout) + '"><svg viewBox="0 0 45 18" id="slPay" aria-label="PAYOUT"></svg></div>' +
+      '<div class="cab-win" id="slWin" style="' + cabBox(...M.win) + '"><div class="sl-cutin" id="slCut" hidden></div></div>' +
+      ring(M.lever[0], M.lever[1], 40, 'slLever', 'lever') + [0, 1, 2].map(i => ring(M.stops[i][0], M.stops[i][1], M.stopR + 5, 'slB' + i)).join('')) +
+    '<div class="sl-lcd" id="slLcd"></div><p class="tm-sub sl-sub" id="toolSub"></p>';
   [0, 1, 2].forEach(i => {
-    const R = { el: $('slS' + i), box: $('slR' + i), p: rint(0, SL_N - 1), v: 0, mode: 'idle', to: 0, from: 0, t0: 0, dur: 0, ez: null, done: null, vmax: 30, acc: 9 };
+    const cv = $('cabR' + i);
+    const R = { r: i, cv, cx: cv.getContext('2d'), box: cv, p: rint(0, SL_N - 1), v: 0, mode: 'idle', to: 0, from: 0, t0: 0, dur: 0, ez: null, done: null, vmax: 30, acc: 9, hit: null };
     T.sl.reels.push(R);
-    slotPaint(i);
-    onPress($('slB' + i), slotPress);
-    onPress(R.box, slotPress);
+    onPress($('cabB' + i), slotPress);
   });
-  onPress($('slLever'), slotLever);
+  onPress($('slWin'), slotPress);
+  onPress($('cabLever'), slotLever);
+  cabGuard(sig);
+  const fit = () => { if (tool === T) { cabSize(T.sl.reels); [0, 1, 2].forEach(slotPaint); } };
+  window.addEventListener('resize', fit, sig);
+  const img = cabImg();
+  if (!img.complete) img.addEventListener('load', fit, Object.assign({ once: true }, sig));
+  fit();
+  slotPayShow(0);
   toolActs(TOOL_CLOSE, false);
   slotTurn();
 }
@@ -238,7 +309,6 @@ function slotTurn() {
   const T = tool, S = T.sl, i = T.k = S.order[S.oi], p = T.ps[i];
   S.replays = 0; S.left = S.spins; S.sum = 0;
   T.ps.forEach((_, j) => { const el = $('tlP' + j); el.classList.toggle('now', j === i); el.classList.toggle('wait', S.order.indexOf(j) > S.oi); });
-  const who = $('slWho'); who.textContent = pname(p); who.style.setProperty('--p', pc(p));
   const pass = S.lastP >= 0 && S.lastP !== i;
   S.lastP = i;
   $('toolSub').innerHTML = (pass ? 'スマホを渡して… ' : '') + '<b>' + esc(pname(p)) + '</b> の番！<small>レバーをタップ → ボタンでリールを止める' + (S.spins > 1 ? '（' + S.spins + '回まわせる）' : '') + '</small>';
@@ -248,14 +318,14 @@ function slotTurn() {
 function slotReady(replay) {
   const T = tool, S = T.sl, i = T.k;
   S.phase = 'ready'; S.res = null;
-  const m = $('slM'); m.classList.remove('reach', 'zoom', 'lost', 'won');
-  slotLamp('idle');
+  const m = $('cabM'); m.classList.remove('reach', 'zoom', 'lost', 'won');
+  slotLamp('idle'); slotDon(false);
   const done = S.order.slice(0, S.oi).map(j => T.res[j]), min = done.length ? Math.min(...done) : null;
   if (replay) slotLcd('REPLAY！ もう1回まわせる', 'win');
   else if (S.left < S.spins) slotLcd((S.left === 1 ? 'ラスト1回！' : 'あと<b>' + S.left + '回</b>！') + ' いま <b>' + S.sum + '枚</b>' + (min != null ? '（最下位 ' + min + '枚）' : ''), '');
   else if (min == null) slotLcd('レバーを たたけ！', '');
   else slotLcd(S.oi + 1 >= S.order.length && S.spins === 1 ? '<b>' + min + '枚</b>より多ければ セーフ！' : 'いまの最下位は <b>' + min + '枚</b>', '');
-  $('slPay').textContent = S.sum;
+  slotPayShow(S.sum);
   slotButtons();
 }
 function slotLever() {
@@ -265,7 +335,7 @@ function slotLever() {
   if (S.phase !== 'ready') return;
   const res = S.res = slotLot(T);
   S.phase = 'pre';
-  const lv = $('slLever'); lv.classList.remove('pull'); void lv.offsetWidth; lv.classList.add('pull');
+  restartAnim($('slLever'), 'pull');
   SE.play('slLever'); vibrate(20);
   slotButtons();
   slotLamp('off');
@@ -281,7 +351,7 @@ function slotLever() {
       slotLcd({ blue: 'チャンス…？', green: 'アツいかも！', red: '激アツ！！', rainbow: '虹ランプ！！！' }[res.lamp], res.lamp);
       SE.play({ blue: 'slBlue', green: 'slGreen', red: 'slRed', rainbow: 'slRainbow' }[res.lamp]);
       if (res.lamp === 'red') { flash('#ff2d3f'); shake(false); vibrate([40, 30, 40]); }
-      if (res.lamp === 'rainbow') { flash('#ffffff'); shake(false); vibrate([40, 30, 40, 30, 80]); const q = relPos($('slLamp')); FXC.burst(q.x, q.y, 50, { star: true, speed: 11 }); }
+      if (res.lamp === 'rainbow') { flash('#ffffff'); shake(false); vibrate([40, 30, 40, 30, 80]); const q = relPos($('cabTop')); FXC.burst(q.x, q.y, 50, { star: true, speed: 11 }); }
     }, 380);
   }
   toolLater(() => slotArm('stop0'), wait);
@@ -315,7 +385,7 @@ function slotPress() {
 /* 2 reels show the same bonus symbol: リーチ. A cut-in may follow; then the last button says PUSH */
 function slotReach(res) {
   const T = tool;
-  $('slM').classList.add('reach');
+  $('cabM').classList.add('reach');
   slotLcd('リーチ！！', 'reach');
   SE.play('slReach'); vibrate([30, 40, 30]);
   BGM.level(0.25, 0.2);
@@ -339,7 +409,7 @@ function slotReach(res) {
 function slotCreep(res) {
   const T = tool, f = res.stops[2], hit = res.kind !== 'rmiss';
   const s = hit ? f : res.end === 'short' ? f - 1 : f + 1, K = 4;
-  const m = $('slM');
+  const m = $('cabM');
   slotStopAt(2, s + K, () => {
     SE.play('slStep');
     m.classList.add('zoom');
@@ -365,12 +435,12 @@ function slotCreep(res) {
   }, 0.9);
 }
 function slotCount(pay, ms) {
-  const T = tool, el = $('slPay'), base = T.sl.sum, steps = Math.min(pay, Math.max(4, Math.round(ms / 55)));
-  for (let k = 1; k <= steps; k++) toolLater(() => { el.textContent = base + Math.round(pay * k / steps); if (k % 2 || steps < 12) SE.play('coin'); }, Math.round(ms * k / steps));
+  const T = tool, base = T.sl.sum, steps = Math.min(pay, Math.max(4, Math.round(ms / 55)));
+  for (let k = 1; k <= steps; k++) toolLater(() => { slotPayShow(base + Math.round(pay * k / steps)); if (k % 2 || steps < 12) SE.play('coin'); }, Math.round(ms * k / steps));
 }
 function slotHit(sym) {
   const S = tool.sl;
-  S.reels.forEach((R, i) => { const c = ((Math.round(R.p) % SL_N) + SL_N) % SL_N; if (!sym || slAt(i, c) === sym) R.el.children[SL_N + c].classList.add('hit'); });
+  S.reels.forEach((R, i) => { const c = ((Math.round(R.p) % SL_N) + SL_N) % SL_N; if (!sym || slAt(i, c) === sym) { R.hit = c; R.box.classList.add('hit'); slotPaint(i); } });
 }
 function slotScore(pay, wait) {
   const T = tool, S = T.sl, i = T.k, v = $('tlV' + i);
@@ -382,7 +452,7 @@ function slotScore(pay, wait) {
   toolLater(slotNext, wait);
 }
 function slotResult(res) {
-  const T = tool, S = T.sl, k = res.kind, m = $('slM');
+  const T = tool, S = T.sl, k = res.kind, m = $('cabM');
   S.phase = 'busy';
   m.classList.remove('reach', 'zoom');
   BGM.level(0.7, 0.4);
@@ -403,7 +473,7 @@ function slotResult(res) {
   if (k === 'big' || k === 'reg') {
     const big = k === 'big';
     slotHit(big ? 'seven' : 'bar');
-    slotLamp('rainbow');
+    slotLamp('rainbow'); slotDon(true);
     slotLcd(big ? 'BIG BONUS！！ +300枚' : 'REGULAR BONUS！ +100枚', 'bonus');
     SE.play(big ? 'slBig' : 'slReg'); if (big) SE.play('fanfare');
     flash('#ffd83d'); shake(big); vibrate(big ? [80, 40, 80, 40, 200] : [60, 40, 120]);
@@ -414,7 +484,7 @@ function slotResult(res) {
     return;
   }
   slotHit(k === 'cherry' ? null : k);
-  if (k === 'cherry') { S.reels[1].el.querySelectorAll('.hit').forEach(c => c.classList.remove('hit')); S.reels[2].el.querySelectorAll('.hit').forEach(c => c.classList.remove('hit')); }
+  if (k === 'cherry') [1, 2].forEach(i => { const R = S.reels[i]; R.hit = null; R.box.classList.remove('hit'); slotPaint(i); });
   slotLamp('green');
   slotLcd(SL_NAME[k] + '！ +' + res.pay + '枚', 'win');
   SE.play('slWin');
@@ -424,7 +494,7 @@ function slotResult(res) {
 }
 /* 酒GO!!フリーズ: everything goes dark and still, the reels run backwards, and 酒・酒・酒 lands by itself */
 function slotFreeze(res) {
-  const T = tool, S = T.sl, m = $('slM');
+  const T = tool, S = T.sl, m = $('cabM');
   [0, 1, 2].forEach(i => toolLater(() => slotSpinUp(i), 60 + i * 90));
   toolLater(() => {
     S.reels.forEach((R, i) => { R.mode = 'idle'; R.box.classList.remove('spin'); R.p = Math.round(R.p); slotPaint(i); });
@@ -435,7 +505,7 @@ function slotFreeze(res) {
   }, 620);
   toolLater(() => { SE.play('slRumble'); [0, 1, 2].forEach(i => slotSpinUp(i, true)); m.classList.add('god'); }, 2300);
   ['酒', '酒 GO', '酒 GO !!'].forEach((t, k) => toolLater(() => { slotLcd(t, 'bonus'); SE.play('slStep'); }, 3000 + k * 480));
-  toolLater(() => { m.classList.remove('freeze'); slotLamp('rainbow'); flash('#ffffff'); }, 4500);
+  toolLater(() => { m.classList.remove('freeze'); slotLamp('rainbow'); slotDon(true); flash('#ffffff'); }, 4500);
   [0, 1, 2].forEach(i => toolLater(() => {
     const R = S.reels[i], idx = res.stops[i];
     R.mode = 'idle';
@@ -475,7 +545,7 @@ function slotNext() {
   });
   S.phase = 'busy';
   slotButtons();
-  $('slM').classList.remove('lost', 'won');
+  $('cabM').classList.remove('lost', 'won');
   slotLamp('red'); slotLcd('サドンデス！！', 'red');
   SE.play('slCut'); flash('#ff2d3f'); shake(false); vibrate([60, 40, 60]);
   telop('サドンデス!!<small>同じ ' + min + '枚の' + tied.length + '人で もう1回転</small>', '', 1900);
@@ -503,16 +573,15 @@ TOOLX.slot = {
   rig: null,   /* tests: a list of roles to come up next */
   setup: slotSetup,
   act() {},
-  close(T) { clearTimeout(T.sl && T.sl.auto); $('toolOv').classList.remove('sl-dark'); },
+  close(T) { if (T.sl) { clearTimeout(T.sl.auto); if (T.sl.ac) T.sl.ac.abort(); } $('toolOv').classList.remove('sl-dark'); },
 };
 
 /* =====================================================================
    ペカるのは誰だ！: ジャグラー風の台を1人ずつ回す。1/8 で GOGOランプがペカッと光ったら抜け、最後まで光らなかった人の負け。
-   台はもらった写真そのまま（PEKA_DATA: 台・光ったランプ・リールの図柄・音3つ）。動くのはリールとランプだけで、演出は一切なし。
+   台は酒スロと共通の筐体の写真（CAB_DATA）。動くのはリールとランプだけで、演出は一切なし。
    光るのは レバーONの瞬間（先ペカ）か、最後のボタンを離した瞬間（後ペカ。押したままならリールは止まっても光らない）。
    出目: 7揃い＝確定、チェリー（左リール）＝30%、ハズレ目＝たまに、ぶどう・リプレイ＝光らない。リプレイは もう1回
    ===================================================================== */
-const PEKA_DATA = __PEKA_DATA__;
 /* per 100 spins. pre = 先ペカ (its reels then show 7揃い). Lit in all: 3.125 + 3 + 8 × 30% + 58.875 × 6.75% = 12.5% = 1/8 */
 const PK_ODDS = [['pre', 3.125], ['seven', 3], ['cherry', 8], ['replay', 12], ['grape', 15], ['miss', 58.875]];
 const PK_LIT = { pre: 1, seven: 1, cherry: 0.3, miss: 0.0675, replay: 0, grape: 0 };
@@ -521,7 +590,6 @@ const PK_FILL = ['seven', 'bar', 'bell', 'tiger', 'grape'];
 const PK_SPIN0 = PK_FILL.concat('cherry');   /* the cherry is on the left reel only */
 const PK_V = 28;                             /* symbols per second (80 turns a minute, 21 symbols a turn) */
 const PK_SND = { buf: {}, started: false };
-let PK_IMG = null;
 
 /* the lottery, at the lever: what the reels will show, and whether (and when) the lamp lights */
 function pekaLot() {
@@ -552,11 +620,11 @@ function pekaGrid(kind) {
 /* the three machine sounds: decoded once, played from where the sound starts (the files begin with a little silence) */
 function pekaSndLoad() {
   const A = SE.ensure();
-  if (!A || PK_SND.started || !PEKA_DATA) return;
+  if (!A || PK_SND.started || !CAB_DATA) return;
   PK_SND.started = true;
-  Object.keys(PEKA_DATA.snd).forEach(k => {
+  Object.keys(CAB_DATA.snd).forEach(k => {
     try {
-      const bin = atob(PEKA_DATA.snd[k]), u = new Uint8Array(bin.length);
+      const bin = atob(CAB_DATA.snd[k]), u = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
       const done = b => {
         if (!b || PK_SND.buf[k]) return;
@@ -585,67 +653,39 @@ function pekaPlay(k) {
 
 function pekaSetup() {
   const T = tool, n = T.ps.length;
-  if (!PEKA_DATA) {
+  if (!CAB_DATA) {
     $('toolStage').innerHTML = '<p class="tm-sub">このゲームは準備中です</p>';
     toolActs(TOOL_CLOSE);
     return;
   }
-  const M = PEKA_DATA.meta, pct = (v, of) => (v / of * 100).toFixed(4) + '%';
-  const box = (x, y, w, h, more) => 'left:' + pct(x, M.w) + ';top:' + pct(y, M.h) + ';width:' + pct(w, M.w) + ';height:' + (more ? 'calc(' + pct(h, M.h) + ' + var(--below, 0px))' : pct(h, M.h));
-  if (!PK_IMG) {
-    PK_IMG = new Image();
-    PK_IMG.src = PEKA_DATA.img.reels;
-  }
   pekaSndLoad();
-  /* a stop button's area: a column around the button, down to the bottom of the machine and on into the free space below it
-     (--below, set in pekaSize: the buttons are small on a phone) */
-  const gap = (M.stops[1][0] - M.stops[0][0] + M.stops[2][0] - M.stops[1][0]) / 2;
-  const stopBox = i => box(M.stops[i][0] - gap / 2, M.stops[i][1] - 58, gap, M.h - M.stops[i][1] + 58, true);
-  const lx = M.lever[0], lw = M.stops[0][0] - gap / 2 - 70;
   $('toolStage').innerHTML = '<p class="tl-stake sl-stake">' + TOOL_INFO.peka.stake + ' <b>' + amtTxt(T.cups) + '</b><small>1/8でペカッ。光った人から抜けていく</small></p>' +
     '<div class="sl-ps" style="--cols:' + Math.min(4, n) + ';--n:' + n + '">' + T.ps.map((p, j) => '<div class="cc-row tl-r sl-p" id="tlP' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand tl-v" id="tlV' + j + '">--</b></div>').join('') + '</div>' +
-    '<div class="pk-wrap"><div class="pk-m" id="pkM" style="--ar:' + M.w + ' / ' + M.h + ';--k:' + (M.w / M.h).toFixed(5) + '">' +
-    '<img class="pk-img" src="' + PEKA_DATA.img.machine + '" alt="" draggable="false">' +
-    '<img class="pk-lamp" id="pkLamp" src="' + PEKA_DATA.img.lamp + '" alt="" draggable="false" style="' + box(...M.lamp) + '">' +
-    M.reels.map((r, i) => '<canvas class="pk-reel" id="pkR' + i + '" style="' + box(...r) + '"></canvas>').join('') +
-    '<div class="pk-hit pk-lever" id="pkLever" role="button" tabindex="0" aria-label="レバー" style="' + box(Math.max(0, lx - 150), M.lever[1] - 70, lw - Math.max(0, lx - 150), M.h - M.lever[1] + 70, true) + '"></div>' +
-    [0, 1, 2].map(i => '<div class="pk-hit pk-stop" id="pkB' + i + '" role="button" tabindex="0" aria-label="' + ['左', '中', '右'][i] + 'のリールを止める" style="' + stopBox(i) + '"></div>').join('') +
-    '</div></div><p class="tm-sub sl-sub pk-sub" id="toolSub"></p>';
+    cabHTML('pk-cab') + '<p class="tm-sub sl-sub pk-sub" id="toolSub"></p>';
   const ac = new AbortController(), sig = { signal: ac.signal };
   const S = T.pk = {
     ac, phase: 'ready', alive: T.ps.map((_, j) => j), at: 0, j: -1, lot: null, held: -1, t0: 0, last: 0, stops: 0, rel: false, spins: 0,
-    reels: [0, 1, 2].map(r => ({ r, pos: 0, v: 0, mode: 'idle', F: 0, cells: {}, cv: $('pkR' + r), cx: null })),
+    reels: [0, 1, 2].map(r => ({ r, pos: 0, v: 0, mode: 'idle', F: 0, cells: {}, cv: $('cabR' + r), cx: null })),
   };
   /* at rest, the reels show what the picture shows */
   [['bell', 'seven', 'tiger'], ['tiger', 'seven', 'grape'], ['grape', 'seven', 'bar']].forEach((c, r) => { const R = S.reels[r]; R.cells[1] = c[0]; R.cells[0] = c[1]; R.cells[-1] = c[2]; });
   S.reels.forEach(R => { R.cx = R.cv.getContext('2d'); });
   /* one press at a time, as on a real machine: while a stop button is held the others do nothing */
-  const press = (el, down, up) => {
-    el.addEventListener('pointerdown', e => { if (e.button > 0) return; e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ } down(); }, sig);
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(k => el.addEventListener(k, () => up(), sig));
-    el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); down(); } }, sig);
-    el.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); up(); } }, sig);
-  };
-  press($('pkLever'), pekaLever, () => {});
-  [0, 1, 2].forEach(i => press($('pkB' + i), () => pekaStop(i), () => pekaRelease(i)));
-  ['contextmenu', 'selectstart', 'dragstart', 'dblclick'].forEach(k => $('pkM').addEventListener(k, e => { if (e.cancelable) e.preventDefault(); }, { signal: ac.signal, passive: false }));
+  cabPress($('cabLever'), pekaLever, () => {}, sig);
+  [0, 1, 2].forEach(i => cabPress($('cabB' + i), () => pekaStop(i), () => pekaRelease(i), sig));
+  cabGuard(sig);
   window.addEventListener('resize', () => pekaSize(), sig);
   BGM.level(0, 0.3);   /* the machine's own sounds only */
   toolActs(TOOL_CLOSE, false);
   pekaSize();
-  if (!PK_IMG.complete) PK_IMG.addEventListener('load', () => { if (tool === T) pekaPaint(); }, { once: true, signal: ac.signal });
+  const img = cabImg();
+  if (!img.complete) img.addEventListener('load', () => { if (tool === T) pekaPaint(); }, { once: true, signal: ac.signal });
   pekaTurn(false);
 }
-/* canvas pixels follow the size on screen */
 function pekaSize() {
-  const T = tool, S = T && T.pk;
+  const S = tool && tool.pk;
   if (!S) return;
-  const dpr = Math.min(3, window.devicePixelRatio || 1), m = $('pkM'), mb = m.getBoundingClientRect(), wb = m.parentNode.getBoundingClientRect();
-  m.style.setProperty('--below', Math.round(Math.max(0, Math.min(wb.bottom - mb.bottom - 2, mb.height * 0.7))) + 'px');
-  S.reels.forEach(R => {
-    const b = R.cv.getBoundingClientRect(), w = Math.max(1, Math.round(b.width * dpr)), h = Math.max(1, Math.round(b.height * dpr));
-    if (R.cv.width !== w || R.cv.height !== h) { R.cv.width = w; R.cv.height = h; }
-  });
+  cabSize(S.reels);
   pekaPaint();
 }
 function pekaPaint() { const S = tool && tool.pk; if (S) S.reels.forEach(R => pekaDraw(R)); }
@@ -656,26 +696,16 @@ function pekaCell(R, i) {
   do s = pool[rint(0, pool.length - 1)]; while (s === R.cells[i - 1] || s === R.cells[i + 1]);
   return (R.cells[i] = s);
 }
+/* cell i sits pos - i rows below the middle row (higher cells come down from the top) */
 function pekaDraw(R) {
-  if (!PK_IMG || !PK_IMG.complete || !PK_IMG.naturalWidth) return;
-  const M = PEKA_DATA.meta, [, ry, rw, rh] = M.reels[R.r], cx = R.cx, mid = M.mid - ry;
-  cx.setTransform(R.cv.width / rw, 0, 0, R.cv.height / rh, 0, 0);
-  cx.globalCompositeOperation = 'source-over';
-  cx.fillStyle = '#fff'; cx.fillRect(0, 0, rw, rh);
-  for (let i = Math.ceil(R.pos - 2.04); i <= Math.floor(R.pos + 2.04); i++) {
-    const s = pekaCell(R, i), list = M.sym[s], sp = list.find(x => x.reel === R.r) || list[0], sx = rw / sp.rw, a = sp.at;
-    cx.drawImage(PK_IMG, a[0], a[1], a[2], a[3], rw / 2 + sp.ax * sx, mid + (R.pos - i) * M.pitch + sp.ay, a[2] * sx, a[3]);
-  }
-  /* the paper's own shading from the picture (a lit drum), and its rounded window */
-  const sh = M.shade[R.r];
-  cx.globalCompositeOperation = 'multiply'; cx.drawImage(PK_IMG, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
-  cx.globalCompositeOperation = 'destination-in'; cx.drawImage(PK_IMG, sh[0], sh[1], sh[2], sh[3], 0, 0, rw, rh);
-  cx.globalCompositeOperation = 'source-over';
+  const see = CAB_SEE(), items = [];
+  for (let i = Math.ceil(R.pos - see); i <= Math.floor(R.pos + see); i++) items.push([pekaCell(R, i), R.pos - i, false]);
+  cabDraw(R, items);
 }
 function pekaTurn(again) {
   const T = tool, S = T.pk, j = S.j = S.alive[S.at], p = T.ps[j];
   S.phase = 'ready'; S.stops = 0; S.rel = false; S.held = -1; S.lot = null;
-  $('pkM').classList.remove('lit');
+  $('cabM').classList.remove('lit');
   T.ps.forEach((_, k) => $('tlP' + k).classList.toggle('now', k === j));
   $('toolSub').innerHTML = (again ? 'リプレイ！ ' : '') + '<b style="color:' + pc(p) + '">' + esc(pname(p)) + '</b> ' + (again ? 'もう1回' : 'の番') + '<small>レバー → ボタン3つでリールを止める</small>';
 }
@@ -685,7 +715,7 @@ function pekaLever() {
   const lot = S.lot = pekaLot(), now = performance.now();
   S.phase = 'spin'; S.t0 = now; S.spins++;
   pekaPlay('reba');
-  if (lot.pre) { $('pkM').classList.add('lit'); pekaPlay('gako'); }
+  if (lot.pre) { $('cabM').classList.add('lit'); pekaPlay('gako'); }
   S.reels.forEach(R => {
     R.mode = 'spin'; R.v = 0;
     /* forget what has gone by, keep what is on screen */
@@ -700,7 +730,7 @@ function pekaStop(i) {
   if (R.mode !== 'spin' || performance.now() - S.t0 < 160) return;
   S.held = i; S.stops++;
   /* the stop picture goes onto cells that are not on screen yet, and the reel runs on to them (up to 4 symbols, ~0.15 s) */
-  const F = R.F = Math.ceil(R.pos + 3.05), c = S.lot.grid[i];
+  const F = R.F = Math.ceil(R.pos + CAB_SEE() + 1.02), c = S.lot.grid[i];
   R.cells[F + 1] = c[0]; R.cells[F] = c[1]; R.cells[F - 1] = c[2];
   R.mode = 'stopping';
   pekaPlay('botan');
@@ -717,7 +747,7 @@ function pekaAfter() {
   if (S.reels.some(R => R.mode !== 'stopped')) { toolLater(pekaAfter, 16); return; }
   const lot = S.lot, j = S.j, p = T.ps[j];
   S.phase = 'after';
-  if (lot.lit && !lot.pre) { $('pkM').classList.add('lit'); pekaPlay('gako'); }
+  if (lot.lit && !lot.pre) { $('cabM').classList.add('lit'); pekaPlay('gako'); }
   if (lot.lit) {
     S.alive.splice(S.at, 1);
     if (S.at >= S.alive.length) S.at = 0;
@@ -732,7 +762,7 @@ function pekaAfter() {
 function pekaFinish() {
   const T = tool, S = T.pk, j = S.alive[0], p = T.ps[j];
   S.phase = 'done';
-  $('pkM').classList.remove('lit');
+  $('cabM').classList.remove('lit');
   hushBeat('toolOv', 700, () => toolFinish([p], '<b>' + esc(pname(p)) + '</b> だけ光らなかった！ ' + amtTxt(T.cups), k => $('tlP' + k)));
 }
 function pekaFrame(now) {
