@@ -12700,9 +12700,11 @@ const SL_STRIPS = [
   ['suika', 'bell', 'bar', 'replay', 'seven', 'bell', 'cherry', 'suika', 'replay', 'sake', 'bell', 'bar'],
 ];
 /* out of 1000 spins. rmiss = リーチしてハズレ */
-const SL_ODDS = [['sake', 15], ['big', 50], ['reg', 85], ['replay', 90], ['suika', 110], ['bell', 220], ['cherry', 130], ['rmiss', 120], ['miss', 180]];
-const SL_PAY = { sake: 1000, big: 300, reg: 100, suika: 15, bell: 8, cherry: 2 };
-const SL_NAME = { suika: 'ぶどう', bell: 'ベル', cherry: 'チェリー' };
+/* per 1000 spins. A cherry on the left reel is either the weak one (2) or 強チェリー (50, cherries on all three reels):
+   which one only shows when the other two reels stop, so a cherry is never a sure loss */
+const SL_ODDS = [['sake', 15], ['big', 50], ['reg', 85], ['replay', 90], ['suika', 110], ['bell', 220], ['cherry', 100], ['scherry', 30], ['rmiss', 120], ['miss', 180]];
+const SL_PAY = { sake: 1000, big: 300, reg: 100, scherry: 50, suika: 15, bell: 8, cherry: 2 };
+const SL_NAME = { suika: 'ぶどう', bell: 'ベル', cherry: 'チェリー', scherry: '強チェリー' };
 const SL_CUT = { green: 'チャンス！', red: '激アツ！！', gold: '超激アツ！！', rainbow: '確定！！！' };
 /* the symbols on the cabinet's reels: the picture's bear is the replay and its grapes stand in for the watermelon */
 const SL_KEY = { replay: 'tiger', suika: 'grape' };
@@ -12714,7 +12716,7 @@ function slotLines(st) {
   return [[a[1], b[1], c[1]], [a[0], b[0], c[0]], [a[2], b[2], c[2]], [a[0], b[1], c[2]], [a[2], b[1], c[0]]].some(l => l[0] === l[1] && l[1] === l[2]);
 }
 function slotStops(r) {
-  const k = r.kind, line = { big: 'seven', reg: 'bar', sake: 'sake', suika: 'suika', bell: 'bell', replay: 'replay' }[k];
+  const k = r.kind, line = { big: 'seven', reg: 'bar', sake: 'sake', scherry: 'cherry', suika: 'suika', bell: 'bell', replay: 'replay' }[k];
   if (line) return [slIdx(0, line), slIdx(1, line), slIdx(2, line)];
   for (let n = 0; n < 500; n++) {
     const st = k === 'rmiss' ? [slIdx(0, r.reach), slIdx(1, r.reach), slIdx(2, r.reach) + (r.end === 'short' ? 1 : -1)]
@@ -12722,7 +12724,7 @@ function slotStops(r) {
     const c = [slAt(0, st[0]), slAt(1, st[1]), slAt(2, st[2])];
     if (slotLines(st)) continue;
     if (k === 'miss' && (c[0] === 'cherry' || c[0] === c[1])) continue;   /* a plain miss: nothing pays, and no リーチ by accident */
-    if (k === 'cherry' && c[1] === 'cherry') continue;
+    if (k === 'cherry' && (c[2] === 'cherry' || (c[1] === 'cherry') !== r.tease)) continue;   /* the weak one: sometimes 2 cherries, never 3 */
     return st;
   }
   return [1, 3, 4];
@@ -12742,7 +12744,9 @@ function slotLot(T) {
     r.reach = Math.random() < 0.45 ? 'seven' : 'bar'; r.lamp = pickW([['', 38], ['blue', 36], ['green', 20], ['red', 6]]); r.cut = pickW([['', 58], ['green', 32], ['red', 10]]);
     r.slow = Math.random() < 0.55; r.end = Math.random() < 0.5 ? 'short' : 'over';
   } else if (kind === 'suika') r.lamp = pickW([['green', 40], ['blue', 40], ['', 20]]);
-  else if (kind === 'bell' || kind === 'cherry') r.lamp = pickW([['', 72], ['blue', 28]]);
+  else if (kind === 'scherry') { r.lamp = pickW([['green', 34], ['blue', 30], ['red', 18], ['', 18]]); r.cut = pickW([['', 70], ['green', 30]]); }
+  else if (kind === 'cherry') { r.lamp = pickW([['', 62], ['blue', 30], ['green', 8]]); r.tease = Math.random() < 0.22; }
+  else if (kind === 'bell') r.lamp = pickW([['', 72], ['blue', 28]]);
   else if (kind === 'miss') r.lamp = pickW([['', 80], ['blue', 17], ['green', 3]]);
   r.stops = slotStops(r);
   return r;
@@ -13066,6 +13070,16 @@ function slotResult(res) {
     if (big) { FXC.rain(90, GOLD); telop('BIG BONUS!!<small>+300枚</small>', '', 1700); }
     slotCount(res.pay, big ? 2000 : 1300);
     slotScore(res.pay, big ? 3300 : 2300);
+    return;
+  }
+  if (k === 'scherry') {
+    slotHit('cherry');
+    slotLamp('red');
+    slotLcd('強チェリー！！ +50枚', 'bonus');
+    SE.play('slReg'); flash('#ff4f6d'); vibrate([60, 40, 90]);
+    FXC.burst(q.x, q.y, 60, { colors: GOLD, star: true, speed: 12 });
+    slotCount(res.pay, 1100);
+    slotScore(res.pay, 2100);
     return;
   }
   slotHit(k === 'cherry' ? null : k);
@@ -13768,7 +13782,7 @@ if (PLUS_OPEN) {
   if (g) {
     const base = g.html;
     g.html = () => base() + gCard('プレミアムのミニゲーム', '<p><b>ミニゲームモード</b>の一覧で <b>NEW</b> がついているゲームです。ルーレットで当たるか、一覧からタップして選びます。</p>' +
-      '<p><b>酒スロ</b>：1人ずつスロットを回して、出た枚数がいちばん少ない人の負け。レバー → ボタン3つで止めます。ランプの色（青 → 緑 → 赤 → 虹）・リーチ・カットインが出るほど大当たりのチャンス。<b>「酒」が3つそろうと、その人以外の全員が負け</b>。2人なら3回、3人なら2回ずつ回せて、最下位が同じ枚数ならサドンデス。</p>' +
+      '<p><b>酒スロ</b>：1人ずつスロットを回して、出た枚数がいちばん少ない人の負け。レバー → ボタン3つで止めます。ランプの色（青 → 緑 → 赤 → 虹）・リーチ・カットインが出るほど大当たりのチャンス。左リールにチェリーが止まったら、残りのリールにもチェリーがそろう<b>強チェリー（+50枚）</b>で逆転のチャンス。<b>「酒」が3つそろうと、その人以外の全員が負け</b>。2人なら3回、3人なら2回ずつ回せて、最下位が同じ枚数ならサドンデス。</p>' +
       '<p><b>DON!!チャンス</b>：1人ずつ台を回して、DON!!ランプが<b>ペカッ</b>と光ったら抜け。最後まで光らなかった人の負け。光るのは1/4。光るのは<b>最後のボタンを離した瞬間</b>だけ（押したままだと、リールは止まっても光りません）。<b>7がそろったら確定</b>、左リールのチェリーは30%、ハズレ目でもたまに光ります。ぶどう・リプレイがそろっても光りません。<b>リプレイ</b>がそろったら、もう1回まわせます。</p>' +
       '<p><b>黄金比チャレンジ</b>：スマホがグラス。1人ずつビールを注いで、<b>ビール7：泡3</b>でフチまで注げた人ほど高得点。いちばん低い人の負け。かたむけて注ぐと泡は少なく、まっすぐ注ぐと泡だらけ。かたむけすぎ・注ぎすぎは、こぼれて減点。スマホをかたむけるか、指を左右にすべらせます。</p><div class="gd-rows">' +
       [['爆弾解除', '爆弾のコードを1本えらんで「切る！」。ハズレを切った人の負け'], ['21ゲーム', '数を1〜3個ずつ進めて、「21」を言った人の負け。ときどきイベント（リバース・パス・もう1回・ご指名・もどる・ワープ）で順番や数が変わるので、数えて誰かをはめることはできません'], ['メモリーリレー', '8つのボタンが光った順番どおりにタップ。1人ごとに1つ増えて、スピードも1.1倍ずつ速くなる。まちがえた人の負け']]
