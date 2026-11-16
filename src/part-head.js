@@ -121,15 +121,15 @@ const D_END = '[。！!]*$';
    device, a card typed from memory — are read through this, so 「{左隣}は1杯グイ」 still means {左隣}は1DON */
 function donText(t) {
   if (t == null) return t;
-  return String(t).replace(/乾杯して/g, 'ハイタッチして').replace(/杯数/g, 'DON数')
-    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/杯/g, 'DON');
+  return String(t).replace(/杯数/g, 'DON数')
+    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/(?<![乾一])杯/g, 'DON');
 }
 function guessDrink(text) {
   const t = donText(String(text || '').replace(/\s+/g, ''));
   if (new RegExp('^全員(?:で|に|が)?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'all';
   if (new RegExp('^' + D_TAG + '以外の全員[がは]?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'others';
   if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+DON(?:ずつ)?|し、一緒に\\d+DONずつ)' + D_END).test(t)) return 'pick';
-  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
+  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
   return 'judge';
 }
 /* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
@@ -206,6 +206,14 @@ const APP_DECK_KEY = 'sakego-deck';
 /* built-in cards that were rewritten later: a deck saved on the device still has the old wording, so it is updated too —
    only while that card is exactly the old text (a card the user changed themselves is left alone) */
 const DECK_FIXES = [
+  /* 2026-11-17: toasts, glasses and the butler came back after one day of drink-free wording */
+  [11, '{引いた人}と{ランダム}でハイタッチして1DONずつ', '{引いた人}と{ランダム}で乾杯して1DONずつ'],
+  [90, '全員セーフ。{引いた人}の音頭でハイタッチして次へ', '全員セーフ。{引いた人}の音頭で乾杯だけして次へ'],
+  [44, '{引いた人}が1人を「執事」に指名。{引いた人}が手を挙げたら「はい、ご主人さま」と返事すること。忘れたら1DON', '{引いた人}が1人を「執事」に指名。{引いた人}のグラスが空いたら注ぐこと。忘れたら1DON'],
+  [71, 'コップを置くときは2回トントンする。忘れたら1DON', 'グラスを置くときは2回トントンする。忘れたら1DON'],
+  [73, '利き手でコップを持ったら1DON', '利き手でグラスを持ったら1DON'],
+  [64, '{引いた人}が{ランダム}の好きな食べ物を当てる。外したら{引いた人}が1DON', '{引いた人}が{ランダム}の好きなお酒を当てる。外したら{引いた人}が1DON'],
+  [96, '{引いた人}は好きな人に肩をもんでもらえる。このターンはセーフ', '{引いた人}は好きな人に肩をもんでもらえる'],
   [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
   [106, '{引いた人}は「数字タッチ」に挑戦。1〜9を5秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯', '{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯'],
   [87, '{引いた人}は次に飲むとき、その量を{ランダム}に押し付けられる', '{引いた人}は次に飲むとき、その量を好きな人に押し付けられる'],

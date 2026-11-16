@@ -1448,7 +1448,7 @@ function waterCheck() {
   G.water = now;
   saveGame();
   setTimeout(() => {
-    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>水分補給もしてね</small>', 'cyan', 2600); SE.play('ding'); }
+    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>お水も一杯どうぞ</small>', 'cyan', 2600); SE.play('ding'); }
     else G.water = now - WATER_EVERY + 60 * 1000;   /* busy right now: try again in a minute */
   }, 1800);
 }
@@ -3240,7 +3240,7 @@ function playHilo(st) {
 }
 
 /* ---------- 爆弾パス回し: topic draw, ignite, pass clockwise; a hidden 12–40 s fuse; whoever holds it at the blast drinks ---------- */
-const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', '飲み物の種類', 'お菓子の名前',
+const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', 'お酒の種類', '居酒屋のおつまみ',
   'コンビニで買えるもの', '赤いもの', '白いもの', '丸いもの', '冷たいもの', '甘いもの', 'キッチンにあるもの', '学校にあるもの', '夏といえば', '冬といえば',
   'スポーツ', '楽器', '乗り物', 'お菓子', '寿司ネタ', 'ラーメンの具', '色の名前', '花の名前', '職業', '体の部位', '家電', '世界の首都',
   '「あ」から始まる言葉', '「か」から始まる言葉', 'カタカナ3文字の言葉', 'ゆるキャラ・マスコット'];
@@ -5439,7 +5439,7 @@ async function resultImage(hide) {
   });
   /* footer: what this is and where to get it */
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。みんなで盛り上がるパーティーゲーム', W / 2, H - 92);
+  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。飲み会が盛り上がるパーティーゲーム', W / 2, H - 92);
   outlined(SHARE_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''), W / 2, H - 40, '36px ' + DISP, yellow, ink, 10);
   return new Promise(ok => cv.toBlob(b => ok(b), 'image/png'));
 }
@@ -5497,8 +5497,8 @@ const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
   SE.play('tap');
   const text = from === 'result'
-    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、みんなで盛り上がるパーティーゲーム（無料）'
-    : 'みんなで盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料で遊べる！';
+    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料・広告なし！';
   useTrack('share', { from });
   if (navigator.share) {
     try { await navigator.share({ title: APP_NAME, text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }

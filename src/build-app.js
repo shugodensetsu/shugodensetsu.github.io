@@ -65,12 +65,12 @@ const html = `<!doctype html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'${statOrigin ? ' ' + statOrigin : ''}; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="パーティー・集まりを盛り上げるカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <link rel="canonical" href="https://shugodensetsu.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:site_name" content="${APP_NAME}">
-<meta property="og:title" content="${APP_NAME}｜みんなで盛り上がるパーティーゲーム">
+<meta property="og:title" content="${APP_NAME}｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <meta property="og:url" content="https://shugodensetsu.github.io/">
 <meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
@@ -78,7 +78,7 @@ const html = `<!doctype html>
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${APP_NAME} — 引いたが最後！ 天国か、地獄か。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${APP_NAME}｜みんなで盛り上がるパーティーゲーム">
+<meta name="twitter:title" content="${APP_NAME}｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
 <meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
@@ -136,7 +136,7 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => { naviga
 
 const manifest = {
   id: './', name: APP_NAME, short_name: APP_NAME,
-  description: 'パーティー・集まりを盛り上げるカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。',
+  description: '飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。',
   categories: ['games', 'entertainment'],
   lang: 'ja', dir: 'ltr', start_url: './', scope: './', display: 'standalone', orientation: 'portrait',
   background_color: '#2a1266', theme_color: '#2a1266',

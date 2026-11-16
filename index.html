@@ -5,12 +5,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://sakego.shugodensetsu.workers.dev; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="パーティー・集まりを盛り上げるカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <link rel="canonical" href="https://shugodensetsu.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:site_name" content="DON!!でんパーティー">
-<meta property="og:title" content="DON!!でんパーティー｜みんなで盛り上がるパーティーゲーム">
+<meta property="og:title" content="DON!!でんパーティー｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <meta property="og:url" content="https://shugodensetsu.github.io/">
 <meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="DON!!でんパーティー — 引いたが最後！ 天国か、地獄か。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DON!!でんパーティー｜みんなで盛り上がるパーティーゲーム">
+<meta name="twitter:title" content="DON!!でんパーティー｜飲み会・宅飲みを盛り上げるパーティーゲーム">
 <meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
 <meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
@@ -2963,7 +2963,7 @@ button.rp-pick{cursor:pointer}
 {"id":8,"cat":"hit","text":"{ランダム}は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":9,"cat":"hit","text":"{ランダム}は2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":10,"cat":"hit","text":"{引いた人}と{左隣}は1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":11,"cat":"hit","text":"{引いた人}と{ランダム}でハイタッチして1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":11,"cat":"hit","text":"{引いた人}と{ランダム}で乾杯して1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":13,"cat":"hit","text":"{引いた人}は2DON。{左隣}が肩代わりを申し出たら、2人で1DONずつに分けられる","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":14,"cat":"hit","text":"{引いた人}と{ランダム}でにらめっこ。2人とも1DON、先に笑った方はもう1DON","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":15,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケン。負けた方が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
@@ -2988,7 +2988,7 @@ button.rp-pick{cursor:pointer}
 {"id":41,"cat":"name","text":"{引いた人}が1人を指名。その人へ質問を1つ投げ、指名された人は正直に答えるか2DONかを選ぶ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":42,"cat":"name","text":"{引いた人}が1人を指名し、その人を動物で例える。周りが当たりと認めたら指名された人、違うなら{引いた人}が1DON","cups":[1],"min":4,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":43,"cat":"name","text":"{引いた人}が「インシュメイト」を1人指名。どちらかがDONをくらうときは、もう片方も同じだけくらう","cups":[],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":"mate","drink":null},
-{"id":44,"cat":"name","text":"{引いた人}が1人を「執事」に指名。{引いた人}が手を挙げたら「はい、ご主人さま」と返事すること。忘れたら1DON","cups":[1],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
+{"id":44,"cat":"name","text":"{引いた人}が1人を「執事」に指名。{引いた人}のグラスが空いたら注ぐこと。忘れたら1DON","cups":[1],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
 {"id":45,"cat":"all","text":"全員で1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":46,"cat":"all","text":"{引いた人}以外の全員が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":48,"cat":"all","text":"全員で手を挙げる。最後だった人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
@@ -3006,12 +3006,12 @@ button.rp-pick{cursor:pointer}
 {"id":60,"cat":"c1","text":"チンチロで負けた人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"chinchiro","drink":null},
 {"id":62,"cat":"c1","text":"{引いた人}と{ランダム}でインディアンポーカー。負けた方が1DON。JOKERが出たら2人とも1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"indian","drink":null},
 {"id":63,"cat":"topic","text":"{引いた人}が「〇〇したことがある人」とお題を出す。当てはまる人は全員1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":64,"cat":"topic","text":"{引いた人}が{ランダム}の好きな食べ物を当てる。外したら{引いた人}が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":64,"cat":"topic","text":"{引いた人}が{ランダム}の好きなお酒を当てる。外したら{引いた人}が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":69,"cat":"rule","text":"誰かの名前を呼んだら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
 {"id":70,"cat":"rule","text":"「DON」と言ったら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":71,"cat":"rule","text":"コップを置くときは2回トントンする。忘れたら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":71,"cat":"rule","text":"グラスを置くときは2回トントンする。忘れたら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
 {"id":72,"cat":"rule","text":"カタカナ語禁止。言ったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
-{"id":73,"cat":"rule","text":"利き手でコップを持ったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
+{"id":73,"cat":"rule","text":"利き手でグラスを持ったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
 {"id":74,"cat":"rule","text":"{ランダム}は敬語禁止。破ったら1DON","cups":[1],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
 {"id":75,"cat":"rule","text":"{ランダム}は語尾に「にゃん」をつける。忘れたら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
 {"id":76,"cat":"rule","text":"{引いた人}は「王様」。全員が{引いた人}を王様と呼ぶこと。呼ばなかったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
@@ -3028,7 +3028,7 @@ button.rp-pick{cursor:pointer}
 {"id":87,"cat":"app","text":"{引いた人}は次にDONをくらうとき、それを好きな人に押し付けられる","cups":[],"min":2,"dur":null,"note":"押し付け券として手札に入る。押し付ける相手は使うときに選ぶ","on":true,"fx":"push","drink":null},
 {"id":88,"cat":"app","text":"{引いた人}は好きな1人と、ここまでのDONの記録を入れ替えられる","cups":[],"min":2,"dur":null,"note":"結果発表のランキングに反映","on":true,"fx":"swap","drink":null},
 {"id":89,"cat":"safe","text":"セーフ！{引いた人}は何もなし","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":90,"cat":"safe","text":"全員セーフ。{引いた人}の音頭でハイタッチして次へ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":90,"cat":"safe","text":"全員セーフ。{引いた人}の音頭で乾杯だけして次へ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":91,"cat":"safe","text":"全員セーフ。{引いた人}が全員に一言ずつ褒め言葉を言う","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":92,"cat":"safe","text":"{引いた人}は{ランダム}へ感謝を述べ休憩。このターンはセーフ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":93,"cat":"safe","text":"{引いた人}はセーフ券を獲得。次にDONをくらうとき、1回だけ回避できる","cups":[],"min":2,"dur":null,"note":"セーフ券として手札に入る","on":true,"fx":"safe","drink":null},
@@ -3185,15 +3185,15 @@ const D_END = '[。！!]*$';
    device, a card typed from memory — are read through this, so 「{左隣}は1杯グイ」 still means {左隣}は1DON */
 function donText(t) {
   if (t == null) return t;
-  return String(t).replace(/乾杯して/g, 'ハイタッチして').replace(/杯数/g, 'DON数')
-    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/杯/g, 'DON');
+  return String(t).replace(/杯数/g, 'DON数')
+    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/(?<![乾一])杯/g, 'DON');
 }
 function guessDrink(text) {
   const t = donText(String(text || '').replace(/\s+/g, ''));
   if (new RegExp('^全員(?:で|に|が)?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'all';
   if (new RegExp('^' + D_TAG + '以外の全員[がは]?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'others';
   if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+DON(?:ずつ)?|し、一緒に\\d+DONずつ)' + D_END).test(t)) return 'pick';
-  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
+  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
   return 'judge';
 }
 /* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
@@ -3270,6 +3270,14 @@ const APP_DECK_KEY = 'sakego-deck';
 /* built-in cards that were rewritten later: a deck saved on the device still has the old wording, so it is updated too —
    only while that card is exactly the old text (a card the user changed themselves is left alone) */
 const DECK_FIXES = [
+  /* 2026-11-17: toasts, glasses and the butler came back after one day of drink-free wording */
+  [11, '{引いた人}と{ランダム}でハイタッチして1DONずつ', '{引いた人}と{ランダム}で乾杯して1DONずつ'],
+  [90, '全員セーフ。{引いた人}の音頭でハイタッチして次へ', '全員セーフ。{引いた人}の音頭で乾杯だけして次へ'],
+  [44, '{引いた人}が1人を「執事」に指名。{引いた人}が手を挙げたら「はい、ご主人さま」と返事すること。忘れたら1DON', '{引いた人}が1人を「執事」に指名。{引いた人}のグラスが空いたら注ぐこと。忘れたら1DON'],
+  [71, 'コップを置くときは2回トントンする。忘れたら1DON', 'グラスを置くときは2回トントンする。忘れたら1DON'],
+  [73, '利き手でコップを持ったら1DON', '利き手でグラスを持ったら1DON'],
+  [64, '{引いた人}が{ランダム}の好きな食べ物を当てる。外したら{引いた人}が1DON', '{引いた人}が{ランダム}の好きなお酒を当てる。外したら{引いた人}が1DON'],
+  [96, '{引いた人}は好きな人に肩をもんでもらえる。このターンはセーフ', '{引いた人}は好きな人に肩をもんでもらえる'],
   [56, 'ここから30秒、全員しゃべったら負け。最初に声を出した人が2杯', 'ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）'],
   [106, '{引いた人}は「数字タッチ」に挑戦。1〜9を5秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯', '{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯'],
   [87, '{引いた人}は次に飲むとき、その量を{ランダム}に押し付けられる', '{引いた人}は次に飲むとき、その量を好きな人に押し付けられる'],
@@ -5429,7 +5437,7 @@ function waterCheck() {
   G.water = now;
   saveGame();
   setTimeout(() => {
-    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>水分補給もしてね</small>', 'cyan', 2600); SE.play('ding'); }
+    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>お水も一杯どうぞ</small>', 'cyan', 2600); SE.play('ding'); }
     else G.water = now - WATER_EVERY + 60 * 1000;   /* busy right now: try again in a minute */
   }, 1800);
 }
@@ -7221,7 +7229,7 @@ function playHilo(st) {
 }
 
 /* ---------- 爆弾パス回し: topic draw, ignite, pass clockwise; a hidden 12–40 s fuse; whoever holds it at the blast drinks ---------- */
-const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', '飲み物の種類', 'お菓子の名前',
+const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', 'お酒の種類', '居酒屋のおつまみ',
   'コンビニで買えるもの', '赤いもの', '白いもの', '丸いもの', '冷たいもの', '甘いもの', 'キッチンにあるもの', '学校にあるもの', '夏といえば', '冬といえば',
   'スポーツ', '楽器', '乗り物', 'お菓子', '寿司ネタ', 'ラーメンの具', '色の名前', '花の名前', '職業', '体の部位', '家電', '世界の首都',
   '「あ」から始まる言葉', '「か」から始まる言葉', 'カタカナ3文字の言葉', 'ゆるキャラ・マスコット'];
@@ -9420,7 +9428,7 @@ async function resultImage(hide) {
   });
   /* footer: what this is and where to get it */
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。みんなで盛り上がるパーティーゲーム', W / 2, H - 92);
+  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。飲み会が盛り上がるパーティーゲーム', W / 2, H - 92);
   outlined(SHARE_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''), W / 2, H - 40, '36px ' + DISP, yellow, ink, 10);
   return new Promise(ok => cv.toBlob(b => ok(b), 'image/png'));
 }
@@ -9478,8 +9486,8 @@ const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
   SE.play('tap');
   const text = from === 'result'
-    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、みんなで盛り上がるパーティーゲーム（無料）'
-    : 'みんなで盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料で遊べる！';
+    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料・広告なし！';
   useTrack('share', { from });
   if (navigator.share) {
     try { await navigator.share({ title: APP_NAME, text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
@@ -11225,7 +11233,7 @@ const KO_QS = [
   { id: 139, g: 'bare', t: 'ask', lv: 3, q: '人に言われて、いちばん刺さったひと言は？' },
   { id: 140, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんウソがうまそうな人は？' },
   { id: 141, g: 'bare', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん秘密が多そうな人は？' },
-  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝起きが悪そうな人は？' },
+  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん酒グセが悪そうな人は？' },
   { id: 143, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんお金持ちになりそうな人は？' },
   { id: 144, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝坊しそうな人は？' },
   { id: 145, g: 'bare', t: 'point', lv: 1, q: 'この中で、怒らせたらいちばんこわい人は？' },
@@ -11878,8 +11886,8 @@ const GK_WORDS = [
   ['スポーツ・遊び', 1, 'サッカー ボウリング 野球 スキー けん玉 すべり台'],
   ['職業', 2, '美容師 消防士 漫画家 寿司職人 宇宙飛行士 警察官 マジシャン 歯医者さん'],
   ['世界の名所', 2, '自由の女神 ピラミッド モアイ 大仏 エッフェル塔 万里の長城'],
-  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 寝不足 失恋 合格 迷子 満員電車'],
-  ['パーティー', 2, 'ハイタッチ ピザ 焼き鳥 カラオケ 終電 割り勘 二次会 クラッカー'],
+  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 二日酔い 失恋 合格 迷子 満員電車'],
+  ['飲み会', 2, '乾杯 生ビール 焼き鳥 カラオケ 終電 割り勘 二次会 お通し'],
   ['昔話・物語', 2, '桃太郎 浦島太郎 かぐや姫 シンデレラ 人魚姫 赤ずきん'],
   ['家電', 2, '洗濯機 冷蔵庫 掃除機 電子レンジ エアコン 扇風機'],
 ].flatMap(([g, lv, ws], gi) => ws.split(' ').map((w, j) => ({ id: (gi + 1) * 100 + j, g, lv, w })));
@@ -12083,16 +12091,16 @@ const RP_MSGS = [
   // 0 = だれでも, 1 = 恋愛
   ['上司', '明日の朝、ちょっと時間ある？', 0], ['上司', 'この前の件、どうなってる？', 0], ['母', '元気にしてる？ ちゃんとご飯食べてる？', 0],
   ['母', 'お父さんがスマホを買ったから、使い方を教えてあげて', 0], ['父', '今度の休み、帰ってくるのか？', 0], ['大家さん', '今月の家賃が、まだ入っていないようです', 0],
-  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ ご飯行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
+  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ 飲み行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
   ['友達', 'ごめん、今日ドタキャンしていい？', 0], ['友達', '結婚することになった！', 0], ['友達', 'お金、少し貸してくれない？', 0],
   ['美容師さん', '次回のご予約はいかがですか？', 0], ['推し', 'みんな、今日なにしてた？', 0], ['推し', '明日、大事なお知らせがあります', 0],
   ['同窓会の幹事', '10年ぶりに同窓会やります！ 出欠お願いします', 0], ['おばあちゃん', 'お年玉、今年もあげるからね', 0], ['取引先', '至急、お電話いただけますか', 0],
   ['弟', 'ゲームのアカウント、ちょっと貸して', 0], ['担任の先生', 'タイムカプセルを開けます。来られますか？', 0], ['10年後の自分', '今のうちに、あれだけはやっておけ', 0],
   ['実家の犬', 'おなかすいた', 0], ['バイトの店長', '明日シフト入れる？', 0], ['元同僚', '最近どう？ 実はおもしろい副業があって…', 0],
   ['社長', '👍', 0], ['となりの部屋の人', '夜、少し声が響いています…', 0], ['グループの全員', '（あなた以外、全員既読）', 0],
-  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日のパーティーの写真、送っといた', 0],
+  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日の飲み会の写真、送っといた', 0],
   ['元恋人', '元気？', 1], ['元恋人', '久しぶりに会えない？', 1], ['元恋人', 'ごめん、まちがえて送った', 1], ['好きな人', '今なにしてる？', 1],
-  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと遊んでたの？', 1],
+  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと飲んでたの？', 1],
   ['恋人', '今日なんの日か覚えてる？', 1], ['マッチングした人', 'プロフィールの写真と、だいぶ雰囲気ちがいますね', 1], ['マッチングした人', 'はじめまして！ 趣味が合いそうでうれしいです', 1],
   ['合コンで会った人', '昨日は楽しかったです！ また会えますか？', 1], ['片思いの相手', '好きな人いるの？', 1], ['幼なじみ', '実は昔、好きだったんだよね', 1],
   ['職場の気になる人', 'この前のお礼に、今度ごちそうさせて', 1], ['告白した相手', 'ごめん、返事おそくなった', 1], ['元恋人', '結婚しました', 1],
@@ -12236,11 +12244,11 @@ PMX.reply = {
 };
 
 /* =====================================================================
-   しれっとミッション: 全員が秘密のミッションを持って、ふつうに話して楽しむ。達成したら名乗り出る、あやしい人は「見破った！」
+   しれっとミッション: 全員が秘密のミッションを持って、ふつうに飲んで話す。達成したら名乗り出る、あやしい人は「見破った！」
    ===================================================================== */
 const MS_LIST = [
   // lv 1 = かんたん, 2 = むずかしい
-  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回ハイタッチする'], [1, 'だれかに「なんで？」と聞き返させる'],
+  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回乾杯する'], [1, 'だれかに「なんで？」と聞き返させる'],
   [1, 'だれかの持ち物をほめる'], [1, 'だれかに「ありがとう」と言わせる'], [1, '3回続けて「たしかに」と相づちを打つ'], [1, 'だれかに自分の名前を呼ばせる'],
   [1, '会話の中で、都道府県を3つ言う'], [1, 'だれかに「え？」と言わせる'], [1, '会話に「昭和」という言葉を入れる'], [1, 'だれかに好きな食べ物を言わせる'],
   [1, 'だれかに今何時か聞かれる'], [1, 'だれかに、最近見た動画の話をさせる'], [1, '話の途中で、一度だけ英語を混ぜる'], [1, 'だれかとハイタッチする'],
@@ -12298,7 +12306,7 @@ PMX.mission = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに話して楽しむだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'peek') {
       if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を渡すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
       const p = pxPeekWho(), m = msOf(p);
@@ -12306,7 +12314,7 @@ PMX.mission = {
         (cur.peek.check ? '' : '<button type="button" class="pm-link" data-g="x-reroll">ほかのミッションにする</button>') + '</div>';
     }
     const board = '<div class="ms-list">' + G.players.map((pl, i) => '<span class="ms-p" style="--p:' + pc(i) + '"><b>' + esc(pl.name) + '</b><small>達成 ' + pl.done + ' ・ 見破られ ' + pl.caught + '</small></span>').join('') + '</div>';
-    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに話して楽しもう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
+    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
     if (cur.phase === 'checkWho') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを確認</p><p class="pm-ask">確認する人をタップ（本人だけ見てね）</p>' + pxChips(pxAll(), null, 'check') + '</div>';
     if (cur.phase === 'claimWho') return head + '<div class="pm-body"><p class="pm-lead ol">達成した人は？</p><p class="pm-ask">名乗り出た人をタップ</p>' + pxChips(pxAll(), null, 'claim') + '</div>';
     if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1DON</p></div>';
@@ -12406,7 +12414,7 @@ const US_TOPICS = [
   ['l', '寝坊してやらかした話'], ['l', '夢で見たことが本当になった話'], ['l', '子どものころに集めていたもの'], ['l', '人生でいちばんの大当たり'], ['l', '人に言うと驚かれる経歴'],
   ['l', 'ちょっと自慢できる記録'], ['l', '地元の変わった名物'], ['l', '人生でいちばん寒かった（暑かった）日'], ['l', 'お店でのちょっとした事件'], ['l', '見知らぬ人に助けられた話'],
   ['d', '人生でいちばん恥ずかしかったこと'], ['d', '恋人とのケンカの話'], ['d', 'フラれた話'], ['d', '告白の話'], ['d', '人に言えない失敗'],
-  ['d', '寝ぼけてやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
+  ['d', '酔っぱらってやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
   ['d', 'デートでの事件'], ['d', '職場や学校でのやらかし'], ['d', '人生でいちばん泣いた日'], ['d', 'ドキッとした瞬間'], ['d', 'モテた話'],
   ['d', '友達とケンカした話'], ['d', 'いちばん怒られた話'], ['d', 'お金の失敗談'], ['d', '人生の大ピンチ'], ['d', 'だれにも言っていない秘密'],
 ].map(([d, t], i) => ({ id: i + 1, d, t }));
@@ -12512,7 +12520,7 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
     '<p>見破られたらニセ画伯が1DON。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1DON</b>。描いた絵は保存できます。</p>', 1) +
   gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
     '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
-  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに話して楽しむだけ。</p>' +
+  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
     '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
@@ -13944,7 +13952,7 @@ const WORDS = [
   { k: 'insu', w: 'インシュメイト', re: /インシュメイト/,
     d: '「道連れ仲間」をつくるルール。指名した人とされた人はペアになって、<b>どちらかがくらうと、もう片方も同じだけくらいます</b>。アプリが2人ぶん自動で記録します。ルールが消えるまで続きます。' },
   { k: 'shitsuji', w: '執事', re: /「執事」/,
-    d: '指名された人は、引いた人の<b>お世話係</b>。ご主人さま（引いた人）が手を挙げたら、すぐに「はい、ご主人さま」と返事します。気づかずに放っておいたら1DON。' },
+    d: '指名された人は、引いた人の<b>お世話係</b>。ご主人さま（引いた人）のグラスが空いたら、すぐに飲み物を注ぎます。気づかずに放っておいたら1DON。' },
   { k: 'qm', w: 'クエスチョンマスター', re: /クエスチョンマスター/,
     d: '略して「QM」。QMに<b>質問されて、答えてしまったら1DON</b>。QMの質問には答えずに無視するか、質問で返せばセーフです。「今なんじ？」のような何気ない質問で引っかけるのがQMの腕の見せどころ。' },
   { k: 'oya', w: '親指マスター', re: /親指マスター/,
