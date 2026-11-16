@@ -22,47 +22,6 @@ checks() {
   fi
   [ "$ok" = 1 ]
 }
-# One-off readout of the recent-games lists (to find the owner's own games). The repository is public, so the readout is
-# encrypted to a key only the maintainer holds and printed as base64; nothing readable is logged. Removed after use.
-DIAG_PUB='-----BEGIN PUBLIC KEY-----
-MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA0+byR/dHesOiYcDa9wOq
-Wwvtd0lCaAJ7YABP04DUjfProAokL8MLlpkEVBNcxLeOto0RivUmBecC5aUsFpIC
-KJBuv7fsvwbW2NQyRDecjPaUaOhqK9qjXKUhs8VHjGtjOopr8K+acXgXNQLBAgwd
-ywq96Z2GmzDjqbvAkcLF0/fJjRNOuROUg8WHKLx2P/mOJjc8KkvLcokrNw+cDBE6
-2F3FMg5Hv+rqd4FlqdrWnI1Sw0AjmAhRkFsE0Pf0l4qGw7UMKeWY1XQ1KCSUOwqE
-NogtlY7FnddoixoaLoKQJGnyyN8fEJIlfSTMQDToz8U2seTWKY2cVSQ26GsF4GLO
-T4t9dXtRz7f5cFgEZloI7vRe1FY5lu9ZXBk0yCWVawCGbsA8goUW+7Ob5FbB0cRE
-/BBzF5RvZsCITDedJ8P3IDWh/JFve+FFdsOrg97GZ1jTHpbVZlSYmmWfbi3KxHMW
-ikiWOKnjGZeoQ7g/dfdQ4Sq9W00RfiNnJXe/0B2vskCpAgMBAAE=
------END PUBLIC KEY-----'
-diag() {
-  [ -n "$STATS_PASSWORD" ] || return 0
-  jar=$(mktemp); t=$(mktemp -d)
-  curl -s -o /dev/null --max-time 15 -c "$jar" --data-urlencode "password=$STATS_PASSWORD" "$url/login"
-  for me in 0 1; do
-    curl -s --max-time 30 -b "$jar" "$url/?d=90&me=$me" > "$t/p$me.html"
-    { echo "=== me=$me"; grep -o '<div class="tile"><b>[^<]*</b><span>[^<]*</span>' "$t/p$me.html" | sed -E 's/<[^>]+>/ /g';
-      sed 's#</li>#</li>\n#g' "$t/p$me.html" | grep 'name="sid"' | sed -E 's/.*value="([a-z0-9]+)".*<span>/\1 /; s/<[^>]+>/ /g; s/  +/ /g'; } >> "$t/out.txt"
-  done
-  rm -f "$jar"
-  printf '%s\n' "$DIAG_PUB" > "$t/pub.pem"
-  key=$(openssl rand -hex 32)
-  echo "DIAG-KEY $(printf '%s' "$key" | openssl pkeyutl -encrypt -pubin -inkey "$t/pub.pem" -pkeyopt rsa_padding_mode:oaep | base64 -w0)"
-  echo "DIAG-DATA $(gzip -c "$t/out.txt" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass "pass:$key" | base64 -w0)"
-  rm -rf "$t"
-}
-# One-off: the owner's own phone (one home-screen app; its game numbers run 6, 7, 8, 14 … 21) goes to 「自分の端末」.
-MOVE_SIDS='xi6tv20py0xglp56 0se17z88wbz5rxu1 dc44boeeswvy4v4d joj9rrxg15yoq8iu n1mivhy6refiqg6n bzwh0xf945x1p0id e3a2ys0r3c4dv1fs g0xpjsq8ahm01f92 qxd9lgg4dqx58nxx 3ad0o5y6we0xtlvy o76m94jvpzescqq1'
-move() {
-  [ -n "$STATS_PASSWORD" ] || return 0
-  jar=$(mktemp); args=()
-  curl -s -o /dev/null --max-time 15 -c "$jar" --data-urlencode "password=$STATS_PASSWORD" "$url/login"
-  for s in $MOVE_SIDS; do args+=(--data-urlencode "sid=$s"); done
-  r=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 -b "$jar" -H "Origin: $url" "${args[@]}" --data-urlencode 'to=me' --data-urlencode 'back=/?d=90&me=0' "$url/move")
-  rm -f "$jar"; echo "move: $r（303 なら移した）"
-}
-move
-diag
 for n in $(seq 1 "$tries"); do
   if checks; then printf '%s' "$out"; echo "→ すべてOK（$n 回目）"; exit 0; fi
   [ "$n" -lt "$tries" ] && sleep 15
