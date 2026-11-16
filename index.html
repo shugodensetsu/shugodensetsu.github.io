@@ -369,7 +369,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .floaty.safe{color:var(--mint)}
 @keyframes floatUp{0%{transform:translate(-50%,-50%) scale(.4); opacity:0} 18%{transform:translate(-50%,-90%) scale(1.25); opacity:1} 100%{transform:translate(-50%,-260%) scale(1); opacity:0}}
 .flyer{position:absolute; z-index:7; width:34px; height:46px; box-sizing:border-box; border-radius:6px; border:2.5px solid var(--ink); background:var(--c); box-shadow:0 3px 0 var(--ink); pointer-events:none; display:grid; place-items:center; font-family:var(--f-display); font-size:16px; color:var(--ink)}
-.g-log{flex:none; height:30px; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
+.g-log{flex:none; height:40px; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
 .g-log::-webkit-scrollbar{display:none}
 .lg{flex:none; display:inline-flex; align-items:center; gap:5px; background:var(--chip-bg); border:2px solid var(--ink); border-radius:999px; padding:1px 10px 1px 5px; font-size:12.5px; font-weight:800; white-space:nowrap}
 .lg b{font-family:var(--f-display); font-weight:400; color:var(--yellow)}
@@ -380,7 +380,13 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .res-back{align-self:center; background:none; border:0; padding:4px 8px; color:var(--muted); font-size:12.5px; font-weight:800; text-decoration:underline}
 .back-card{background:var(--white); border:2.5px solid var(--ink); border-radius:12px; padding:8px 12px; font-size:13.5px !important; line-height:1.6}
 .lg-hint{font-size:12.5px; font-weight:800; color:var(--muted); white-space:nowrap}
-.dock{flex:none; display:flex; flex-direction:column; gap:8px}
+.dock{flex:none; display:flex; flex-direction:column; gap:8px; position:relative}
+/* a held-open bar (see holdDock): its row fills the height */
+.dock > .dock-row:last-child{flex:1}
+/* a card's own buttons take the log line's place, so the bar keeps its height */
+.dock-row.acts{position:absolute; left:0; right:0; bottom:calc(100% + 6px); height:40px; z-index:4}
+.dock-row.acts .pbtn{height:100%; padding-block:0; font-size:min(15px, 3.8vw)}
+.s-game:has(.dock-row.acts) .g-log{visibility:hidden}
 .dock-row{display:flex; gap:8px}
 .dock-row .pbtn{flex:1; min-width:0}
 .dock-row .pbtn.main{flex:2}
@@ -651,7 +657,24 @@ button:disabled{cursor:not-allowed; opacity:.5}
 /* ---------- small helps ---------- */
 .g-top-r{display:flex; align-items:center; gap:6px}
 /* 継続中: a thin strip of the rules still running (tap = record a rule break / see what it does) */
-.g-rules{flex:none; display:flex; align-items:center; gap:5px; margin:-2px 0 0}
+.g-rules{flex:none; display:flex; align-items:center; gap:5px; margin:-2px 0 0; height:30px; position:relative}
+/* the strip keeps one line: chips side by side, words on one line */
+.g-rules > .gr-grid{grid-template-columns:repeat(var(--n, 2), minmax(0, 1fr)); gap:4px; height:100%}
+.g-rules > .gr-grid.c1{--n:1} .g-rules > .gr-grid.c3{--n:3}
+.g-rules > .gr-grid .gr-chip{min-height:0; height:100%}
+.g-rules > .gr-grid .gr-t{-webkit-line-clamp:1; display:block; white-space:nowrap; text-overflow:ellipsis}
+.g-rules > .gr-grid .gr-r, .g-rules > .gr-grid .gr-w{display:inline}
+.g-rules > .gr-grid .gr-w::before{content:"："}
+.g-rules > .gr-grid .gr-left{font-size:9.5px; padding:0 5px}
+.gr-more{justify-content:center; gap:3px; --c:var(--yellow); font-family:var(--f-display); font-size:13px}
+.gr-more small{font-family:var(--f-body); font-size:10px; color:var(--muted)}
+.g-rules.gr-off .gr-l{opacity:.55}
+.g-rules > .gr-l{font-size:9px; letter-spacing:0}
+.gr-none{margin:0; flex:1; height:100%; display:flex; align-items:center; padding:0 10px; border:2px dashed rgba(255,255,255,.22); border-radius:12px; font-size:11px; font-weight:800; color:var(--muted)}
+/* every rule, opened from 「+N」: a panel over the table, not a taller strip */
+.gr-all{position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:12; background:var(--bg-deep); border:3px solid var(--ink); border-radius:16px; padding:8px; box-shadow:0 6px 0 var(--ink), 0 12px 30px rgba(0,0,0,.45)}
+.gr-all-h{margin:0 0 6px; font-size:12px; font-weight:800; color:var(--white)} .gr-all-h small{margin-left:6px; color:var(--muted); font-size:10.5px}
+.gr-all .gr-grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
 .gr-l{flex:none; writing-mode:vertical-rl; font-size:10px; font-weight:800; color:var(--muted); letter-spacing:.14em; line-height:1}
 .gr-grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px}
 .gr-grid.one{grid-template-columns:minmax(0, 1fr)}
@@ -6129,7 +6152,7 @@ function decideGo() {
   decide = null;
   closeOv('decideOv');
   if (d.kind === 'durpick') { setDurPick(d.owner, d.item, ps[0]); return; }
-  if (d.kind === 'rule') { autoRecord(ps, d.base, { src: 'rule', from: '#gRules [data-rule="' + d.item.uid + '"]' }); return; }
+  if (d.kind === 'rule') { const ch = $('gRules').querySelector('.gr-grid > [data-rule="' + d.item.uid + '"]'); autoRecord(ps, d.base, { src: 'rule', from: ch ? '#gRules .gr-grid > [data-rule="' + d.item.uid + '"]' : '#gRules' }); return; }
   const bases = decideBases(d);
   autoRecord(ps, p => bases[p], { src: d.kind === 'free' ? 'add' : d.kind, decided: d.kind !== 'free' });
 }
@@ -6375,22 +6398,33 @@ function ruleHint() {
   lsSet(RULE_HINT_KEY, String((Number(lsGet(RULE_HINT_KEY)) || 0) + 1));
   setTimeout(() => { if (screen === 'game') telop('続くルールは<b>上の帯</b>に表示！<br>違反した人がいたら、帯をタップ', 'hint', 3000); }, 1500);
 }
-/* every running rule stays in view: the chips wrap into 2 columns (3 when there are lots), never a sideways scroll */
+/* The running rules sit in one fixed-height strip above the table, there for the whole card game even when empty, so the
+   table never jumps when a rule comes or goes. As many chips as fit in one line (2 on a phone, 3 when wider), newest
+   last; with more, the last place is a 「+N」 button that opens every rule in a panel over the table. */
+let rulesOpen = false;
 function renderRules() {
   const el = $('gRules'), rows = durRows();
-  el.hidden = !rows.length;
-  if (!rows.length) { el.innerHTML = ''; return; }
-  const cols = rows.length === 1 ? 'one' : rows.length >= 7 ? 'dense' : '';
-  el.innerHTML = '<span class="gr-l">継続中</span><div class="gr-grid ' + cols + '">' + rows.map(([i, h]) => {
+  el.hidden = false;
+  el.classList.toggle('gr-off', !rows.length);
+  if (!rows.length) { rulesOpen = false; el.innerHTML = '<span class="gr-l">継続中</span><p class="gr-none">続くルールは、まだありません</p>'; return; }
+  const fit = innerWidth >= 600 ? 3 : 2, many = rows.length > fit;
+  const shown = many ? rows.slice(-(fit - 1)) : rows;
+  if (!many) rulesOpen = false;
+  const fresh = new Set(rows.filter(([, h]) => !rulesShown.has(h.uid)).map(([, h]) => h.uid));
+  fresh.forEach(u => rulesShown.add(u));
+  const chip = ([i, h]) => {
     const cls = ['gr-chip'];
     if (h.pick && h.who == null) cls.push('wait');
-    if (!rulesShown.has(h.uid)) { cls.push('in'); rulesShown.add(h.uid); }
+    if (fresh.has(h.uid)) cls.push('in');
     const cups = ruleCups(h);
-    return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（' + ruleAge(h) + 'ターン目・いつ消えるかはランダム）' + (cups ? '。タップで違反を記録' : '') + '">' +
+    return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（' + ruleAge(h) + 'ターン目・いつ消えるかはランダム）' + (h.pick && h.who == null ? '・タップして指名' : cups ? '・違反したらタップ' : '') + '">' +
       '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + chipLabel(i, h) + '</span>' +
       (cups > 1 ? '<span class="gr-cup">' + cups + 'DON</span>' : '') +
       '<span class="gr-left">' + ruleAge(h) + 'ターン目</span></button>';
-  }).join('') + '</div>';
+  };
+  el.innerHTML = '<span class="gr-l">継続中</span><div class="gr-grid c' + (many ? fit : shown.length) + '">' + shown.map(chip).join('') +
+    (many ? '<button type="button" class="gr-chip gr-more" data-rmore="1" aria-expanded="' + rulesOpen + '">+' + (rows.length - shown.length) + '<small>すべて</small></button>' : '') + '</div>' +
+    (many ? '<div class="gr-all"' + (rulesOpen ? '' : ' hidden') + '><p class="gr-all-h">継続中のルール（' + rows.length + '）<small>違反した人がいたらタップ</small></p><div class="gr-grid">' + rows.map(chip).join('') + '</div></div>' : '');
 }
 function ruleTap(uid) {
   if (!G || picking || G.cur.select) return;
@@ -10565,7 +10599,7 @@ function renderDock() {
       '<button type="button" class="pbtn big main pulse" data-g="draw">カードを引く！</button></div>';
   } else {
     const acts = cardActs();
-    if (acts.length) h += '<div class="dock-row">' + acts.map(a => '<button type="button" class="pbtn ' + a[2] + ' small" data-g="' + a[0] + '">' + a[1] + '</button>').join('') + '</div>';
+    if (acts.length) h += '<div class="dock-row acts">' + acts.map(a => '<button type="button" class="pbtn ' + a[2] + ' small" data-g="' + a[0] + '">' + a[1] + '</button>').join('') + '</div>';
     const last = G.rounds && G.turn + 1 >= G.rounds * n;
     const dw = durWaiting(false);
     const left = needsPick() ? '<button type="button" class="pbtn pink small pulse" data-g="decide">誰がくらう？<span class="sub">タップして選ぶ</span></button>'
@@ -10577,6 +10611,49 @@ function renderDock() {
   }
   $('dock').innerHTML = h;
 }
+/* The bottom bar must not change height during a game, or everything above it (the table, the board) jumps:
+   - a card's own buttons (アプリで遊ぶ…) sit in the log line's place above the bar (.dock-row.acts), not in a new row;
+   - and the bar never gets shorter than it has been in this game on this screen size (a 「ルーレット中…」 note is
+     shorter than the button it replaces), so its row stretches instead. Watched on every change of #dock. */
+let dockHold = { key: '', h: 0 };
+/* from the first moment of a game the bar is at least as tall as a big two-line button, so a game whose first bar is a
+   small one (ウソかホントか: 「見る！」) does not grow when the big button arrives */
+function bigDockH(d) {
+  if (!d.offsetWidth) return 0;
+  const pr = d.cloneNode(false);
+  pr.removeAttribute('id'); pr.setAttribute('aria-hidden', 'true');
+  pr.style.cssText = 'position:absolute; visibility:hidden; pointer-events:none; left:0; top:0; min-height:0; width:' + d.offsetWidth + 'px';
+  pr.innerHTML = '<div class="dock-row"><button type="button" class="pbtn white small" tabindex="-1">あ<span class="sub">あ</span></button><button type="button" class="pbtn big main" tabindex="-1">あ<span class="sub">あ</span></button></div>';
+  d.parentNode.appendChild(pr);
+  const h = layoutH(pr); pr.remove(); return h;
+}
+/* the height in layout pixels, fractions kept: the game screen may be mid zoom-in (a transform) */
+function layoutH(el) {
+  const r = el.getBoundingClientRect(), k = el.offsetWidth ? r.width / el.offsetWidth : 1;
+  return Math.round(r.height / (k || 1) * 100) / 100;
+}
+function holdDock() {
+  const d = $('dock'); if (!d || !G) return;
+  const key = screen + ':' + innerWidth + 'x' + innerHeight + ':' + G.gid + ':' + (G.mode || 'card');
+  if (key !== dockHold.key) dockHold = { key, h: bigDockH(d) };
+  d.style.minHeight = '';
+  const h = layoutH(d);
+  if (h > dockHold.h) dockHold.h = h;
+  if (dockHold.h > h + 0.05) {
+    const cs = getComputedStyle(d), extra = cs.boxSizing === 'border-box' ? 0 : ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, k) => t + (parseFloat(cs[k]) || 0), 0);
+    d.style.minHeight = (dockHold.h - extra) + 'px';
+  }
+}
+if (window.MutationObserver) new MutationObserver(() => { if (screen === 'game') holdDock(); }).observe($('dock'), { childList: true });
+/* the bar can also grow without a change of its buttons (the web font arriving, a label wrapping): remember that height too */
+if (window.ResizeObserver) new ResizeObserver(() => {
+  const d = $('dock'); if (screen !== 'game' || !G || !d.offsetParent) return;
+  const key = screen + ':' + innerWidth + 'x' + innerHeight + ':' + G.gid + ':' + (G.mode || 'card');
+  if (key !== dockHold.key) dockHold = { key, h: bigDockH(d) };
+  const h = layoutH(d);
+  if (h > dockHold.h) dockHold.h = h;
+}).observe($('dock'));
+window.addEventListener('resize', () => { dockHold.key = ''; });
 function entryPills(e) {
   const pill = (p, text) => '<span class="lg"><span class="dot" style="--p:' + pc(p) + '"></span>' + esc(pname(p)) + '<b>' + text + '</b></span>';
   if (e.kind === 'swap') return '<span class="lg">記録チェンジ<b>' + esc(pname(e.a)) + '⇄' + esc(pname(e.b)) + '</b></span>';
@@ -10638,7 +10715,9 @@ function layoutTable() {
   const sw = Math.round(Math.max(72, Math.min(n <= 4 ? 132 : 108, W * (n <= 4 ? 0.3 : n === 5 ? 0.235 : 0.205))));
   wrap.style.setProperty('--sw', sw + 'px');
   const seats = Array.from($('seats').children);
-  const sh = seats.length ? Math.max.apply(null, seats.map(s => s.offsetHeight)) : 54;
+  /* every seat is sized as if it wore a role badge (王様…), so a badge coming or going does not shrink the card in the middle */
+  const BADGE = $('seats').classList.contains('narrow') ? 16 : 18;
+  const sh = seats.length ? Math.max.apply(null, seats.map(s => { const bd = s.querySelector('.seat-badges'); if (!bd) return s.offsetHeight + BADGE; bd.style.display = 'none'; const h = s.offsetHeight; bd.style.display = ''; return h + BADGE; })) : 54;
   const padTop = 16, padBot = 16, padX = 3;
   const innerH = H - padTop - padBot;
   const cy = padTop + innerH / 2;
@@ -10949,7 +11028,12 @@ function wireGame() {
     else if (a === 'later') decideLater();
   });
   $('askBox').addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b && !b.disabled) askAct(b.dataset.a, b); });
-  $('gRules').addEventListener('click', e => { const b = e.target.closest('[data-rule]'); if (b) ruleTap(Number(b.dataset.rule)); });
+  $('gRules').addEventListener('click', e => {
+    if (e.target.closest('[data-rmore]')) { rulesOpen = !rulesOpen; SE.play('tap'); renderRules(); return; }
+    const b = e.target.closest('[data-rule]');
+    if (b) { if (rulesOpen) { rulesOpen = false; renderRules(); } ruleTap(Number(b.dataset.rule)); }
+  });
+  document.addEventListener('click', e => { if (rulesOpen && e.target.isConnected && !e.target.closest('#gRules')) { rulesOpen = false; renderRules(); } });
   $('infoBox').addEventListener('click', e => { if (e.target.closest('[data-if="close"]')) closeOv('infoOv'); });
   /* darts: remember the aim at the touch itself */
   $('toolOv').addEventListener('pointerdown', e => {

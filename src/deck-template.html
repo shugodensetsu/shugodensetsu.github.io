@@ -305,7 +305,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .floaty.safe{color:var(--mint)}
 @keyframes floatUp{0%{transform:translate(-50%,-50%) scale(.4); opacity:0} 18%{transform:translate(-50%,-90%) scale(1.25); opacity:1} 100%{transform:translate(-50%,-260%) scale(1); opacity:0}}
 .flyer{position:absolute; z-index:7; width:34px; height:46px; box-sizing:border-box; border-radius:6px; border:2.5px solid var(--ink); background:var(--c); box-shadow:0 3px 0 var(--ink); pointer-events:none; display:grid; place-items:center; font-family:var(--f-display); font-size:16px; color:var(--ink)}
-.g-log{flex:none; height:30px; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
+.g-log{flex:none; height:40px; display:flex; align-items:center; gap:6px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none}
 .g-log::-webkit-scrollbar{display:none}
 .lg{flex:none; display:inline-flex; align-items:center; gap:5px; background:var(--chip-bg); border:2px solid var(--ink); border-radius:999px; padding:1px 10px 1px 5px; font-size:12.5px; font-weight:800; white-space:nowrap}
 .lg b{font-family:var(--f-display); font-weight:400; color:var(--yellow)}
@@ -316,7 +316,13 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .res-back{align-self:center; background:none; border:0; padding:4px 8px; color:var(--muted); font-size:12.5px; font-weight:800; text-decoration:underline}
 .back-card{background:var(--white); border:2.5px solid var(--ink); border-radius:12px; padding:8px 12px; font-size:13.5px !important; line-height:1.6}
 .lg-hint{font-size:12.5px; font-weight:800; color:var(--muted); white-space:nowrap}
-.dock{flex:none; display:flex; flex-direction:column; gap:8px}
+.dock{flex:none; display:flex; flex-direction:column; gap:8px; position:relative}
+/* a held-open bar (see holdDock): its row fills the height */
+.dock > .dock-row:last-child{flex:1}
+/* a card's own buttons take the log line's place, so the bar keeps its height */
+.dock-row.acts{position:absolute; left:0; right:0; bottom:calc(100% + 6px); height:40px; z-index:4}
+.dock-row.acts .pbtn{height:100%; padding-block:0; font-size:min(15px, 3.8vw)}
+.s-game:has(.dock-row.acts) .g-log{visibility:hidden}
 .dock-row{display:flex; gap:8px}
 .dock-row .pbtn{flex:1; min-width:0}
 .dock-row .pbtn.main{flex:2}
@@ -587,7 +593,24 @@ button:disabled{cursor:not-allowed; opacity:.5}
 /* ---------- small helps ---------- */
 .g-top-r{display:flex; align-items:center; gap:6px}
 /* 継続中: a thin strip of the rules still running (tap = record a rule break / see what it does) */
-.g-rules{flex:none; display:flex; align-items:center; gap:5px; margin:-2px 0 0}
+.g-rules{flex:none; display:flex; align-items:center; gap:5px; margin:-2px 0 0; height:30px; position:relative}
+/* the strip keeps one line: chips side by side, words on one line */
+.g-rules > .gr-grid{grid-template-columns:repeat(var(--n, 2), minmax(0, 1fr)); gap:4px; height:100%}
+.g-rules > .gr-grid.c1{--n:1} .g-rules > .gr-grid.c3{--n:3}
+.g-rules > .gr-grid .gr-chip{min-height:0; height:100%}
+.g-rules > .gr-grid .gr-t{-webkit-line-clamp:1; display:block; white-space:nowrap; text-overflow:ellipsis}
+.g-rules > .gr-grid .gr-r, .g-rules > .gr-grid .gr-w{display:inline}
+.g-rules > .gr-grid .gr-w::before{content:"："}
+.g-rules > .gr-grid .gr-left{font-size:9.5px; padding:0 5px}
+.gr-more{justify-content:center; gap:3px; --c:var(--yellow); font-family:var(--f-display); font-size:13px}
+.gr-more small{font-family:var(--f-body); font-size:10px; color:var(--muted)}
+.g-rules.gr-off .gr-l{opacity:.55}
+.g-rules > .gr-l{font-size:9px; letter-spacing:0}
+.gr-none{margin:0; flex:1; height:100%; display:flex; align-items:center; padding:0 10px; border:2px dashed rgba(255,255,255,.22); border-radius:12px; font-size:11px; font-weight:800; color:var(--muted)}
+/* every rule, opened from 「+N」: a panel over the table, not a taller strip */
+.gr-all{position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:12; background:var(--bg-deep); border:3px solid var(--ink); border-radius:16px; padding:8px; box-shadow:0 6px 0 var(--ink), 0 12px 30px rgba(0,0,0,.45)}
+.gr-all-h{margin:0 0 6px; font-size:12px; font-weight:800; color:var(--white)} .gr-all-h small{margin-left:6px; color:var(--muted); font-size:10.5px}
+.gr-all .gr-grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
 .gr-l{flex:none; writing-mode:vertical-rl; font-size:10px; font-weight:800; color:var(--muted); letter-spacing:.14em; line-height:1}
 .gr-grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px}
 .gr-grid.one{grid-template-columns:minmax(0, 1fr)}
