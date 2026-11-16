@@ -34,6 +34,6 @@
 
 - ゲーム本体のソースは `src/` にあります（`part-*.js` と `deck-template.html`、はじめのカードは `deck.json`）。
 - `node src/build-app.js` で、ルートの `index.html` / `manifest.webmanifest` / `sw.js` を作り直します。
-- アイコンは `node src/icon.js` で作り直せます（Playwright と日本語フォントが必要）。
+- アイコンは `ICON_FONT=〈Dela Gothic One の .ttf〉 node src/icon.js` で作り直せます（Playwright が必要。フォントは Google Fonts の Dela Gothic One。指定しないと Noto Sans CJK JP で描きます）。
 - `vendor/` は、チンチロ・サイコロ勝負の3D表示と物理演算に使うライブラリ（three.js r160 と cannon-es 0.20.0、どちらもMITライセンス）です。サイコロのゲームを開いたときだけ読み込み、読み込めないときは平面のサイコロで遊べます。
 - GitHub Pages（main ブランチのルート）で公開しています。
