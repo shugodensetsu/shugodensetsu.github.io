@@ -204,6 +204,8 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .t-row .pbtn{flex:1}
 .t-grid{display:grid; grid-template-columns:1fr 1fr; gap:min(10px, 1.4cqh) 10px}
 .fine{margin:0; font-size:11px; line-height:1.5; color:var(--muted); max-width:34em}
+/* the prototype notice in the title footer: a small chip, no more */
+.fine .beta{display:inline-block; background:var(--yellow); color:var(--ink); font-weight:800; font-size:10px; line-height:1; padding:3px 6px; border-radius:6px; margin-right:3px; vertical-align:1px}
 
 /* ---------- setup ---------- */
 .scr-title{margin:0; text-align:center; font-family:var(--f-display); font-weight:400; font-size:min(28px, 5cqh); line-height:1.2; color:var(--yellow)}
@@ -2555,7 +2557,7 @@ button.rp-pick{cursor:pointer}
         <button type="button" class="t-plus" id="plusBtn"></button>
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加して、アプリとして使う</button>
       </div>
-      <p class="fine">20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+      <p class="fine"><span class="beta">試作版</span>のため、予告なくアップデートが入ることがあります。<br>20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
     </section>
 
     <section class="screen s-setup" id="scr-setup" aria-label="メンバー登録" hidden>
