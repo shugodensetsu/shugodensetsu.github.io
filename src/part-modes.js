@@ -54,7 +54,7 @@ const MEDAL_SVG = '<svg class="ic-medal" viewBox="0 0 24 30" aria-hidden="true">
 const DICE_SVG = '<svg class="ic-dice" viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg>';
 
 /* ---------- 暴露トークの質問. g: koi（恋バナ）/ bare（暴露・本音）. t: ask（番の人が答える）/ point（全員で指さし）/ vote（こっそり投票）/ all（全員で答える）.
-   lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、飲む（tease）か.
+   lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、DONをくらう（tease）か.
    id は集計とダッシュボードが数えているので、変えない ---------- */
 const KO_QS = [
   { id: 1, g: 'koi', t: 'ask', lv: 1, q: '初恋はいつ？ どんな人だった？', more: ['その人と今も連絡とってる？', '当時、気持ちは伝えた？'] },
@@ -165,7 +165,7 @@ const KO_QS = [
   { id: 139, g: 'bare', t: 'ask', lv: 3, q: '人に言われて、いちばん刺さったひと言は？' },
   { id: 140, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんウソがうまそうな人は？' },
   { id: 141, g: 'bare', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん秘密が多そうな人は？' },
-  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん酒グセが悪そうな人は？' },
+  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝起きが悪そうな人は？' },
   { id: 143, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんお金持ちになりそうな人は？' },
   { id: 144, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝坊しそうな人は？' },
   { id: 145, g: 'bare', t: 'point', lv: 1, q: 'この中で、怒らせたらいちばんこわい人は？' },
@@ -179,7 +179,7 @@ const KO_QS = [
   { id: 153, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんサブスクを解約し忘れていそうな人は？' },
   { id: 154, g: 'bare', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん秘密を守ってくれそうな人は？' },
   { id: 155, g: 'bare', t: 'point', lv: 2, q: 'この中で、いちばん有名人になりそうな人は？' },
-  { id: 160, g: 'bare', t: 'all', lv: 1, q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1杯' },
+  { id: 160, g: 'bare', t: 'all', lv: 1, q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1DON' },
   { id: 161, g: 'bare', t: 'all', lv: 1, q: '今日いちばんのハイライトを、ひと言ずつ' },
   { id: 162, g: 'bare', t: 'all', lv: 1, q: '最近いちばん笑ったことを、1人ずつ' },
   { id: 163, g: 'bare', t: 'all', lv: 1, q: '「実は〇〇できない」を、1人1つずつ' },
@@ -215,7 +215,7 @@ function pmSetupInfo(mode) {
   info.innerHTML = '<span class="si-run">' + (few ? P.title + 'は' + P.min + '人から遊べます'
     : (PMX[mode].poolWord + ' <b>' + pool + '</b> ' + PMX[mode].poolUnit) + ' ・ ' +
       (!setup.rounds ? '「終了」を押すまで続く' : P.flat ? '<b>' + setup.rounds + '</b> ' + P.word + 'あそぶ' : setup.rounds + '周で <b>' + setup.rounds * n + '</b> ' + P.word) +
-      (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
+      (setup.unit !== 'cup' ? ' ・ 1DON＝' + UNITS[setup.unit].long : '') +
       (left !== Infinity ? ' ・ 今日のお試し あと <b>' + left + '</b>' + P.word : '')) + '</span>';
   $('startGame').disabled = few;
   fitInfo();
@@ -287,16 +287,16 @@ const pmUse = id => { G.pm.used.push(id); if (G.pm.used.length > 60) G.pm.used.s
 function pmBoard() {
   const cur = G.cur, X = PMX[G.mode], mark = X ? X.mark() : cur.drawer, mark2 = X && X.mark2 ? X.mark2() : null;
   const tag = X ? X.tag : '回答', icon = X && X.icon ? X.icon : MEDAL_SVG;
-  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯">' +
+  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + 'DON">' +
     (i === mark ? '<span class="mg-tag">' + tag + '</span>' : i === mark2 ? '<span class="mg-tag ask">' + X.tag2 + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + icon + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
-    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>杯</small></span></span></div>').join('');
+    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
 }
 function pmLog() {
   const log = G.pm.log;
   const X = PMX[G.mode];
-  if (!log.length) return '<span class="lg-hint">' + (X ? X.hint : '答えるか、飲むか。パスは <b>1杯</b>') + '</span>';
+  if (!log.length) return '<span class="lg-hint">' + (X ? X.hint : '答えるか、DONか。パスは <b>1DON</b>') + '</span>';
   return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + (X && X.logPre ? X.logPre(e) : '') + (e.k != null && G.players[e.k] ? esc(pname(e.k)) : '') + (e.ok ? ' ○' : '') + '</span>' +
-    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>' + fmtAmt(it.amt) + '杯</b></span>').join('')).join('');
+    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>' + fmtAmt(it.amt) + 'DON</b></span>').join('')).join('');
 }
 function renderPM(anim) {
   const n = G.players.length;
@@ -335,7 +335,7 @@ function pmNext(items, ok) {
   saveGame();
   if (end) { if (items.length) SE.play('gulp'); finishGame(); return; }
   renderPM();
-  items.forEach((it, k) => setTimeout(() => { if (G && screen === 'game') floatAt(it.p, '+' + fmtAmt(it.amt) + '杯'); }, k * 200));
+  items.forEach((it, k) => setTimeout(() => { if (G && screen === 'game') floatAt(it.p, '+' + fmtAmt(it.amt) + 'DON'); }, k * 200));
   if (items.length) SE.play('gulp');
   const last = pmLast();
   if (!(X && X.quiet)) { telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1000); SE.play('mgRound'); }
@@ -366,11 +366,11 @@ function renderPMResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">' + (X ? X.resLine(p) : '答えた ' + p.ans + '回 ・ パス ' + p.pass + '回') + '</span></span>' +
-      '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small>' + unitX(p.total) + '</span></li>';
+      '<span class="res-total">' + fmtAmt(p.total) + '<small>DON</small>' + unitX(p.total) + '</span></li>';
   }).join('');
   const most = k => { const m = Math.max(...G.players.map(p => p[k])); return m ? G.players.filter(p => p[k] === m).map(p => p.name).slice(0, 2).join('・') : '—'; };
-  if (X) { $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + X.resCount + '</span></div>' + X.resStats(most); return; }
-  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>質問</span></div>' +
+  if (X) { $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + X.resCount + '</span></div>' + X.resStats(most); return; }
+  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.turn + '</b><span>質問</span></div>' +
     '<div class="stat wide"><b>' + esc(most('ans')) + '</b><span>いちばん答えた' + '</span></div>' +
     '<div class="stat wide"><b>' + esc(most('pass')) + '</b><span>いちばんパス' + '</span></div>';
 }
@@ -386,7 +386,7 @@ function renderPlus(msg) {
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
+    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
@@ -716,14 +716,14 @@ function memoAct(a) { if (a === 'watch') memoShow(); }
 
 /* 遊び方ガイド: the new modes get a page of their own (after ミニゲーム) */
 if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '暴露トーク', html: () =>
-  '<p class="gd-lead">タイトル画面の<b>「暴露トーク」</b>から遊べるモードです（2人から）。答えるか、飲むか。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
+  '<p class="gd-lead">タイトル画面の<b>「暴露トーク」</b>から遊べるモードです（2人から）。答えるか、DONか。人数・名前・何周はふつうのゲームと同じように決めます。</p>' +
   gCard('質問を選んで、読み上げる', '<p>番の人が<b>答える人</b>、その左隣が<b>聞き手</b>。聞き手が2枚の質問から1枚を選んで、声に出して読みます（2枚とも入れかえは1回まで）。</p>' +
-    '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1杯</b>。理由は聞かないのがルール。</p>', 1) +
-  gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>半分飲む</b>か。</p>' +
+    '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1DON</b>。理由は聞かないのがルール。</p>', 1) +
+  gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>0.5DON</b>か。</p>' +
     '<p>いい話には<b>「♡いい話！」</b>。もうひと声に答えても ♡ がもう1つ。♡ がいちばん多い人が、結果発表の<b>グランプリ</b>。</p>', 2) +
-  gCard('「この中で」の質問', '<p><b>全員で指さし</b>は、せーので指さして、いちばん指された人をタップ → 1杯。</p>' +
-    '<p><b>こっそり投票</b>は、スマホを回して1人ずつ投票。3位から順に発表します。だれがだれに入れたかは残りません。ほめる質問なら1位に ♡、いじる質問なら1位が1杯。全員1票ずつなら「意見が割れた！」でだれも飲みません。</p>' +
-    '<p><b>全員で答える</b>は、答えられなかった人をタップ → 1杯。</p>', 3) +
+  gCard('「この中で」の質問', '<p><b>全員で指さし</b>は、せーので指さして、いちばん指された人をタップ → 1DON。</p>' +
+    '<p><b>こっそり投票</b>は、スマホを回して1人ずつ投票。3位から順に発表します。だれがだれに入れたかは残りません。ほめる質問なら1位に ♡、いじる質問なら1位が1DON。全員1票ずつなら「意見が割れた！」でだれもくらいません。</p>' +
+    '<p><b>全員で答える</b>は、答えられなかった人をタップ → 1DON。</p>', 3) +
   gCard('だんだん深く', '<p>1周目はかるい質問だけ。2周目から少し深く、3周目からはいちばん深い質問も出ます。ジャンルで<b>「かるめ」</b>を選ぶと、いちばん深い質問は出ません。</p>', 4) +
   gTip('答えたくない質問は、パスしてOK。理由は聞かないのがルールです。')
 });

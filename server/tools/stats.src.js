@@ -285,7 +285,6 @@ ${tile(pct(tot.inst || 0, n), 'ホーム画面から', 'タブレット ' + pct(
 ${tile(evN('share'), '「友達に教える」', '結果画面から ' + evN('share', d => d === 'result'))}
 ${tile(evN('install', d => d === 'done'), 'ホーム画面に追加', '追加の案内を開いた ' + evN('install', d => d.startsWith('guide')))}
 ${tile(pct(tot.lively || 0, tot.mixn || 0), 'にぎやかモード', '出かたを選んだゲーム ' + (tot.mixn || 0) + 'のうち')}
-${tile(pct(tot.unone || 0, tot.unitn || 0), 'お酒なしで遊んだ', '一口 ' + pct(tot.uone || 0, tot.unitn || 0) + ' ・ 半分 ' + pct(tot.uhalf || 0, tot.unitn || 0))}
 ${tile(pct(ownN, allDraws), '自作・書きかえたカード', '引いたカード ' + allDraws + '枚のうち')}
 </div>
 <section><h2>プレミアム<small>お支払いの受付前：画面を開いた回数と、選ばれたプラン</small></h2><div class="tiles">

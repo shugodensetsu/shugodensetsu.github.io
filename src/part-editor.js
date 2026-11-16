@@ -43,7 +43,7 @@ function fill(text, card) {
 function cupsHTML(card) {
   if (!card.cups.length) return card.cat === 'safe' ? '<span class="cups">SAFE</span>' : '<span class="cups fx">効果カード</span>';
   const label = card.cups.length > 1 ? card.cups[0] + '–' + card.cups[1] : card.cups[0];
-  return '<span class="cups">' + label + '<small>杯</small></span>';
+  return '<span class="cups">' + label + '<small>DON</small></span>';
 }
 function changeCount() {
   let n = 0;
@@ -146,7 +146,7 @@ function formCard(card, isNew) {
     '<form class="ed" id="ed-form" novalidate>' +
       '<div class="ed-main">' +
         '<div class="fld"><label class="lbl" for="ed-text">指示文</label>' +
-          '<textarea class="field" id="ed-text" rows="3" maxlength="200" placeholder="例：{引いた人}と{ランダム}でジャンケン。負けた方が1杯">' + esc(d.text) + '</textarea></div>' +
+          '<textarea class="field" id="ed-text" rows="3" maxlength="200" placeholder="例：{引いた人}と{ランダム}でジャンケン。負けた方が1DON">' + esc(d.text) + '</textarea></div>' +
         '<div class="ins" role="group" aria-label="タグを挿入"><span class="lbl">タグを挿入</span>' +
           TAGS.map(t => '<button type="button" data-ins="{' + t + '}">{' + t + '}</button>').join('') + '</div>' +
         '<div class="fld"><label class="lbl" for="ed-note">補足（任意）</label>' +
@@ -154,20 +154,20 @@ function formCard(card, isNew) {
       '</div>' +
       '<div class="ed-side">' +
         '<div class="fld"><label class="lbl" for="ed-cat">系統</label><select class="field" id="ed-cat">' + catOpts + '</select></div>' +
-        '<div class="fld"><span class="lbl" id="lbl-cups">杯数</span>' +
+        '<div class="fld"><span class="lbl" id="lbl-cups">DON数</span>' +
           '<div class="cups-in" role="group" aria-labelledby="lbl-cups">' +
-            '<input class="field" id="ed-cmin" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmin) + '" aria-label="杯数">' +
+            '<input class="field" id="ed-cmin" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmin) + '" aria-label="DON数">' +
             '<span>〜</span>' +
-            '<input class="field" id="ed-cmax" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmax) + '" aria-label="杯数の上限（範囲のときだけ）">' +
-            '<span>杯</span></div>' +
-          '<span class="hint">1〜99の整数。範囲のときだけ右にも入力。両方空欄なら杯数なし（セーフ・効果カード）</span></div>' +
+            '<input class="field" id="ed-cmax" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmax) + '" aria-label="DON数の上限（範囲のときだけ）">' +
+            '<span>DON</span></div>' +
+          '<span class="hint">1〜99の整数。範囲のときだけ右にも入力。両方空欄ならDON数なし（セーフ・効果カード）</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-min">最低人数</label><select class="field" id="ed-min">' + minOpts + '</select></div>' +
         '<div class="fld"><label class="lbl" for="ed-dur">継続</label>' +
           '<select class="field" id="ed-dur"><option value=""' + (d.dur ? '' : ' selected') + '>しない（その場で終わり）</option><option value="' + esc(d.dur || 'ランダム') + '"' + (d.dur ? ' selected' : '') + '>する（ルールとして続く）</option></select>' +
-          '<span class="hint">続くルールは、4〜10ターンのどこかで突然消えます。消えた瞬間、次にカードを引く人が1杯</span></div>' +
+          '<span class="hint">続くルールは、4〜10ターンのどこかで突然消えます。消えた瞬間、次にカードを引く人が1DON</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-fx">アプリ連動</label><select class="field" id="ed-fx">' + fxOptions(d.fx) + '</select>' +
           '<span class="hint" id="ed-fx-hint">' + esc(fxHint(d.fx)) + '</span></div>' +
-        '<div class="fld"><label class="lbl" for="ed-drink">飲む人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
+        '<div class="fld"><label class="lbl" for="ed-drink">くらう人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
           '<span class="hint" id="ed-drink-hint">' + esc(drinkHint(d)) + '</span></div>' +
       '</div>' +
       '<p class="ed-err" id="ed-err" role="alert"' + (editing.err ? '' : ' hidden') + '>' + esc(editing.err || '') + '</p>' +
@@ -183,7 +183,7 @@ function fxOptions(sel) {
     (known ? '' : '<option value="' + esc(sel) + '" selected>' + esc(sel) + '（不明な効果）</option>');
 }
 function fxHint(k) {
-  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリの効果はなし（飲む人の記録は、下の「飲む人の決め方」のとおり）。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
+  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリの効果はなし（くらう人の記録は、下の「くらう人の決め方」のとおり）。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
 }
 function drinkOptions(sel) {
   return '<option value=""' + (sel ? '' : ' selected') + '>自動で判定（おすすめ）</option>' +
@@ -192,11 +192,11 @@ function drinkOptions(sel) {
 const DRINK_DESC = {
   auto: 'カードを閉じると、文章に出てくる人（{引いた人}など）に自動で記録します',
   all: 'カードを閉じると、全員に自動で記録します', others: 'カードを閉じると、引いた人以外の全員に自動で記録します',
-  least: 'いちばん少ない人に自動で記録します（アプリ連動）', last: '直前に飲んだ人に自動で記録します（アプリ連動）',
+  least: 'いちばん少ない人に自動で記録します（アプリ連動）', last: '直前にくらった人に自動で記録します（アプリ連動）',
   pick: '「誰を指名する？」画面が出ます。人数は文章の「2人を指名」などから読み取ります',
-  judge: '「誰が飲む？」画面が出て、負けた人などをタップして記録します',
+  judge: '「誰がくらう？」画面が出て、負けた人などをタップして記録します',
   app: 'アプリ連動のミニゲーム・ルーレットの結果で、自動で記録します',
-  none: '飲む人の画面は出ません（ルール違反などは、その人の席をタップして記録）',
+  none: 'くらう人の画面は出ません（ルール違反などは、その人の席をタップして記録）',
 };
 /* what the game will do with the card as it is in the form right now */
 function drinkHint(f) {
@@ -204,7 +204,7 @@ function drinkHint(f) {
   const fx = f.fx || null;
   const mode = drinkOf({ text: f.text, note: f.note, cups, dur: String(f.dur || '').trim() || null, fx, drink: null });
   if (fx && (mode === 'app' || mode === 'least' || mode === 'last')) return 'アプリ連動で決まります：' + DRINK_DESC[mode];
-  if (!cups.length) return '杯数なしのカードなので、飲む人は記録しません';
+  if (!cups.length) return 'DON数なしのカードなので、くらう人は記録しません';
   if (f.drink) return DRINK_DESC[f.drink] || '';
   return '文章から判定：' + DRINK_DESC[mode];
 }
@@ -287,13 +287,13 @@ function validate(f) {
   if (bad && bad.some(t => !TAGS.includes(t.slice(1, -1)))) return { err: '使えるタグは {引いた人} {ランダム} {左隣} {右隣} の4つです。', field: 'ed-text' };
   const isInt = s => /^\d+$/.test(s) && Number(s) >= 1 && Number(s) <= 99;
   let cups = [];
-  if (f.cmin === '' && f.cmax !== '') return { err: '杯数は左の欄から入力してください。', field: 'ed-cmin' };
+  if (f.cmin === '' && f.cmax !== '') return { err: 'DON数は左の欄から入力してください。', field: 'ed-cmin' };
   if (f.cmin !== '') {
-    if (!isInt(f.cmin)) return { err: '杯数は1〜99の整数で入力してください。', field: 'ed-cmin' };
+    if (!isInt(f.cmin)) return { err: 'DON数は1〜99の整数で入力してください。', field: 'ed-cmin' };
     cups = [Number(f.cmin)];
     if (f.cmax !== '') {
-      if (!isInt(f.cmax)) return { err: '杯数は1〜99の整数で入力してください。', field: 'ed-cmax' };
-      if (Number(f.cmax) < cups[0]) return { err: '範囲は「少ない杯数〜多い杯数」の順で入力してください。', field: 'ed-cmax' };
+      if (!isInt(f.cmax)) return { err: 'DON数は1〜99の整数で入力してください。', field: 'ed-cmax' };
+      if (Number(f.cmax) < cups[0]) return { err: '範囲は「少ないDON数〜多いDON数」の順で入力してください。', field: 'ed-cmax' };
       if (Number(f.cmax) > cups[0]) cups.push(Number(f.cmax));
     }
   }

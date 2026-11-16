@@ -27,7 +27,7 @@ const RO_CODES = ['not_writer', 'not_granted', 'consent_required', 'capability_d
 const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* app-linked effects a card can carry (chosen in the card editor; the game reacts to card.fx) */
-const CH_STAKE = '。クリアで回避、失敗でカードの杯数（範囲なら多い方・杯数なしなら1杯）';
+const CH_STAKE = '。クリアで回避、失敗でカードのDON数（範囲なら多い方・DON数なしなら1DON）';
 const FX_GROUPS = [
   ['チャレンジ（クリアで回避）', [
     ['ch_random', 'チャレンジ（ランダム）', 'アプリが7種類のミニゲームから1つ選ぶ' + CH_STAKE],
@@ -40,47 +40,47 @@ const FX_GROUPS = [
     ['ch_hilo', 'ハイ&ロー', '次のトランプが今より上か下かを3連続で当てる（同じ数はやり直し）' + CH_STAKE],
   ]],
   ['みんなで遊ぶ', [
-    ['bomb', '爆弾パス回し', 'お題に答えながらスマホを左隣へパス。爆発したときに持っていた人がカードの杯数（杯数なしなら1杯）'],
-    ['taru', '酒樽危機一髪', '引いた人から順番に、酒樽の穴へ剣を1本ずつ刺す。親父を飛ばした人がカードの杯数'],
-    ['wani', 'パクッとワニ', '引いた人から順番に、ワニの歯を1本ずつ押す。パクッとされた人がカードの杯数'],
-    ['mine', 'マインスイーパー', '引いた人から順番に、5×5のマスを1つずつ掘る（数字はとなりの地雷の数）。地雷を踏んだ人がカードの杯数'],
-    ['skull', 'ドクロめくり', '引いた人から順番に、伏せた16枚を好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人がカードの杯数（+1カードが出るたびに1杯増える）'],
-    ['balloon', '風船パンク', '引いた人から順番に、風船へ空気を1〜3回入れて次へ。割った人がカードの杯数'],
-    ['champ', 'シャンパン振り', '引いた人から順番に、シャンパンを1〜5回振って次へ。栓を飛ばした人がカードの杯数'],
+    ['bomb', '爆弾パス回し', 'お題に答えながらスマホを左隣へパス。爆発したときに持っていた人がカードのDON数（DON数なしなら1DON）'],
+    ['taru', '酒樽危機一髪', '引いた人から順番に、酒樽の穴へ剣を1本ずつ刺す。親父を飛ばした人がカードのDON数'],
+    ['wani', 'パクッとワニ', '引いた人から順番に、ワニの歯を1本ずつ押す。パクッとされた人がカードのDON数'],
+    ['mine', 'マインスイーパー', '引いた人から順番に、5×5のマスを1つずつ掘る（数字はとなりの地雷の数）。地雷を踏んだ人がカードのDON数'],
+    ['skull', 'ドクロめくり', '引いた人から順番に、伏せた16枚を好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人がカードのDON数（+1カードが出るたびに1DON増える）'],
+    ['balloon', '風船パンク', '引いた人から順番に、風船へ空気を1〜3回入れて次へ。割った人がカードのDON数'],
+    ['champ', 'シャンパン振り', '引いた人から順番に、シャンパンを1〜5回振って次へ。栓を飛ばした人がカードのDON数'],
   ]],
   ['アプリの演出', [
     ['pick', '名前ルーレット', 'アプリのルーレットで1人を選び、その人の記録画面を開く'],
     ['tap', '早押し対決', '引いた人とランダムの人で、合図のあと画面タップの早押し'],
     ['hh', '天国と地獄（無料）', '引いた人が、特殊ルールの回数を使わずに天国と地獄を回せる'],
-    ['least', '一番少ない人に目印', '今いちばん飲んでいない人の席に目印を出す'],
-    ['last', '直前に飲んだ人に目印', '直前に記録された人の席に目印を出す'],
+    ['least', '一番少ない人に目印', '今いちばんDONが少ない人の席に目印を出す'],
+    ['last', '直前にくらった人に目印', '直前に記録された人の席に目印を出す'],
   ]],
   ['道具をアプリで（本物の道具で遊んでもOK）', [
-    ['chinchiro', 'チンチロ', '全員が順番にお椀へサイコロ3個を振り、いちばん弱い役の人がカードの杯数（同じなら全員）。ピンゾロが出たら×5、ゾロ目×3、シゴロ・ヒフミ×2（いくつも出たら掛け算）'],
-    ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードの杯数（同じなら両方）'],
-    ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードの杯数（同じなら両方）'],
-    ['indian', 'インディアンポーカー', '2人にトランプを配り、順番に相手のカードだけを見てから、引き直すか決めて勝負。低い方がカードの杯数（JOKERが出たら2人とも）'],
-    ['darts', 'ダーツ勝負', '本物そっくりのダーツボードに1本ずつ投げ、得点の低い方がカードの杯数（トリプル3倍・ダブル2倍・ブル50点、同点なら両方）'],
+    ['chinchiro', 'チンチロ', '全員が順番にお椀へサイコロ3個を振り、いちばん弱い役の人がカードのDON数（同じなら全員）。ピンゾロが出たら×5、ゾロ目×3、シゴロ・ヒフミ×2（いくつも出たら掛け算）'],
+    ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードのDON数（同じなら両方）'],
+    ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードのDON数（同じなら両方）'],
+    ['indian', 'インディアンポーカー', '2人にトランプを配り、順番に相手のカードだけを見てから、引き直すか決めて勝負。低い方がカードのDON数（JOKERが出たら2人とも）'],
+    ['darts', 'ダーツ勝負', '本物そっくりのダーツボードに1本ずつ投げ、得点の低い方がカードのDON数（トリプル3倍・ダブル2倍・ブル50点、同点なら両方）'],
   ]],
   ['手札に入る券', [
-    ['safe', 'セーフ券', '引いた人の手札へ。飲む対象になったとき1回だけ回避'],
+    ['safe', 'セーフ券', '引いた人の手札へ。DONの対象になったとき1回だけ回避'],
     ['givesafe', 'セーフ券を渡す', '引いた人が選んだ人の手札にセーフ券を入れる'],
-    ['push', '押し付け券', '引いた人の手札へ。次に飲むとき、その量を好きな人に押し付けられる（相手は使うときに選ぶ）'],
+    ['push', '押し付け券', '引いた人の手札へ。次にくらうとき、そのDONを好きな人に押し付けられる（相手は使うときに選ぶ）'],
     ['heavenpass', '天国パス', '天国と地獄で地獄マスを1回だけ天国にできる'],
-    ['freecospa', 'コスパ無料券', '次のコスパの前払い1杯が不要になる'],
-    ['rest', '休憩券（最多の人へ）', '今いちばん飲んでいる人の手札に休憩券（1回回避）'],
+    ['freecospa', 'コスパ無料券', '次のコスパの前払い1DONが不要になる'],
+    ['rest', '休憩券（最多の人へ）', '今いちばんDONが多い人の手札に休憩券（1回回避）'],
   ]],
-  ['次に飲む人への効果', [
-    ['x2next', '次の人2倍', '次に飲む人の量を2倍にする'],
-    ['halfnext', '次の人半分', '次に飲む人の量を半分にする'],
+  ['次にくらう人への効果', [
+    ['x2next', '次の人2倍', '次にくらう人の量を2倍にする'],
+    ['halfnext', '次の人半分', '次にくらう人の量を半分にする'],
   ]],
   ['継続中の効果（「継続」の入力が必要）', [
-    ['half', '飲む量半分', '継続しているあいだ、引いた人の飲む量が半分'],
+    ['half', 'DON半分', '継続しているあいだ、引いた人のDONが半分'],
     ['nodouble', '倍倍無効', '継続しているあいだ、引いた人は倍倍FIGHT！で倍にされない'],
-    ['mate', 'インシュメイト（一緒に飲む）', '引いた人が1人を指名。継続しているあいだ、どちらかが飲むと、もう片方にも同じ量を自動で記録'],
+    ['mate', 'インシュメイト（一緒にくらう）', '引いた人が1人を指名。継続しているあいだ、どちらかがくらうと、もう片方にも同じ量を自動で記録'],
   ]],
   ['その他', [
-    ['swap', '記録の入れ替え', '引いた人と、選んだ人の杯数を入れ替える'],
+    ['swap', '記録の入れ替え', '引いた人と、選んだ人のDON数を入れ替える'],
     ['endrule', 'ルールを終わらせる', '場に残っている継続カードを1枚終わらせる'],
   ]],
 ];
@@ -101,28 +101,35 @@ function timerOf(c) {
 }
 function fmtSec(s) { return s >= 60 && s % 60 === 0 ? s / 60 + '分' : s + '秒'; }
 
-/* who drinks when a card is drawn. Picked in the card editor (「飲む人の決め方」); empty = worked out from the text.
+/* who drinks when a card is drawn. Picked in the card editor (「くらう人の決め方」); empty = worked out from the text.
    auto / all / others / least / last: the app knows who, and records it by itself when the card is closed.
-   pick: someone names people (指名画面). judge: decided by playing (「誰が飲む？」画面). app: the app's mini game decides. none: nobody now. */
+   pick: someone names people (指名画面). judge: decided by playing (「誰がくらう？」画面). app: the app's mini game decides. none: nobody now. */
 const DRINK_OPTS = [
-  ['auto', '書かれた人が飲む（自動で記録）'],
-  ['all', '全員が飲む（自動で記録）'],
+  ['auto', '書かれた人がくらう（自動で記録）'],
+  ['all', '全員がくらう（自動で記録）'],
   ['others', '引いた人以外の全員（自動で記録）'],
   ['pick', '指名して決める（指名画面が出る）'],
-  ['judge', '遊んだ結果で決まる（「誰が飲む？」画面が出る）'],
-  ['none', 'このカードでは飲まない'],
+  ['judge', '遊んだ結果で決まる（「誰がくらう？」画面が出る）'],
+  ['none', 'このカードではくらわない'],
 ];
 const DRINK_INFO = Object.fromEntries(DRINK_OPTS);
 const DRINK_SHORT = { auto: '自動で記録', all: '全員を自動で記録', others: '引いた人以外を自動で記録', least: '少ない人を自動で記録', last: '直前の人を自動で記録',
-  pick: '指名画面', judge: '誰が飲む？画面', app: 'ミニゲームの結果で記録', none: '飲まない' };
+  pick: '指名画面', judge: '誰がくらう？画面', app: 'ミニゲームの結果で記録', none: 'くらわない' };
 const D_TAG = '\\{(?:引いた人|ランダム|左隣|右隣)\\}';
-const D_END = '(?:グイ|飲む|飲み)?[。！!]*$';
+const D_END = '[。！!]*$';
+/* 2026-11: the penalty unit became 「DON」 (it was 「杯」, with グイ/飲む). Card texts written the old way — a deck saved on the
+   device, a card typed from memory — are read through this, so 「{左隣}は1杯グイ」 still means {左隣}は1DON */
+function donText(t) {
+  if (t == null) return t;
+  return String(t).replace(/乾杯して/g, 'ハイタッチして').replace(/杯数/g, 'DON数')
+    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/杯/g, 'DON');
+}
 function guessDrink(text) {
-  const t = String(text || '').replace(/\s+/g, '');
-  if (new RegExp('^全員で?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'all';
-  if (new RegExp('^' + D_TAG + '以外の全員[がは]?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t)) return 'others';
-  if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+杯(?:ずつ)?|し、一緒に\\d+杯ずつ)' + D_END).test(t)) return 'pick';
-  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|で)\\d+杯(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'auto';
+  const t = donText(String(text || '').replace(/\s+/g, ''));
+  if (new RegExp('^全員(?:で|に|が)?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'all';
+  if (new RegExp('^' + D_TAG + '以外の全員[がは]?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'others';
+  if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+DON(?:ずつ)?|し、一緒に\\d+DONずつ)' + D_END).test(t)) return 'pick';
+  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
   return 'judge';
 }
 /* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
@@ -221,6 +228,10 @@ const DECK_DROPS = [
 /* built-in cards added later: put into a deck saved on the device once (a card the user then deletes stays deleted) */
 const DECK_ADDS = [114, 115, 116, 117, 118, 119];
 const DECK_ADDS_KEY = 'sakego-deck-added';
+/* 2026-11, 杯 → DON: the built-in cards as they read before (id → [text, note]), so a saved deck's untouched cards take the new
+   wording; generated from src/deck-before-don.json by the build */
+const DECK_BEFORE_DON = __DECK_BEFORE_DON__;
+const DON_KEY = 'sakego-deck-don';
 function appDeck() {
   if (!IS_APP) return null;
   try {
@@ -229,6 +240,19 @@ function appDeck() {
     DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
     NOTE_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.note === from) c.note = to; }));
     d.cards = d.cards.filter(c => !(c && DECK_DROPS.some(([id, text]) => c.id === id && c.text === text)));
+    if (localStorage.getItem(DON_KEY) !== '1') {
+      let base = null;
+      try { base = JSON.parse($('deck-data').textContent); } catch (_) { base = null; }
+      const now = new Map(base ? base.cards.map(c => [c.id, c]) : []);
+      d.cards.forEach(c => {
+        if (!c) return;
+        const was = DECK_BEFORE_DON[c.id], to = now.get(c.id);
+        if (was && to && c.text === was[0]) c.text = to.text; else c.text = donText(c.text);
+        if (was && to && (c.note || null) === (was[1] || null)) c.note = to.note; else if (c.note) c.note = donText(c.note);
+      });
+      localStorage.setItem(APP_DECK_KEY, JSON.stringify(d));
+      localStorage.setItem(DON_KEY, '1');
+    }
     let done = [];
     try { done = JSON.parse(localStorage.getItem(DECK_ADDS_KEY) || '[]'); } catch (_) { done = []; }
     const todo = DECK_ADDS.filter(id => !done.includes(id));

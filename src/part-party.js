@@ -89,8 +89,8 @@ const GK_WORDS = [
   ['スポーツ・遊び', 1, 'サッカー ボウリング 野球 スキー けん玉 すべり台'],
   ['職業', 2, '美容師 消防士 漫画家 寿司職人 宇宙飛行士 警察官 マジシャン 歯医者さん'],
   ['世界の名所', 2, '自由の女神 ピラミッド モアイ 大仏 エッフェル塔 万里の長城'],
-  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 二日酔い 失恋 合格 迷子 満員電車'],
-  ['飲み会', 2, '乾杯 生ビール 焼き鳥 カラオケ 終電 割り勘 二次会 お通し'],
+  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 寝不足 失恋 合格 迷子 満員電車'],
+  ['パーティー', 2, 'ハイタッチ ピザ 焼き鳥 カラオケ 終電 割り勘 二次会 クラッカー'],
   ['昔話・物語', 2, '桃太郎 浦島太郎 かぐや姫 シンデレラ 人魚姫 赤ずきん'],
   ['家電', 2, '洗濯機 冷蔵庫 掃除機 電子レンジ エアコン 扇風機'],
 ].flatMap(([g, lv, ws], gi) => ws.split(' ').map((w, j) => ({ id: (gi + 1) * 100 + j, g, lv, w })));
@@ -233,7 +233,7 @@ PMX.gaka = {
     const caught = cur.res === 'caught';
     return head + '<div class="gk-end"><p class="gk-res ' + (caught ? 'ok' : 'ng') + ' ol">' + (caught ? '見破った！' : cur.res === 'guess' ? 'お題を当てて逆転！' : 'ニセ画伯の逃げ切り！') + '</p>' +
       '<p class="gk-ans">お題は <b>' + esc(w.w) + '</b> ・ ニセ画伯は ' + pmName(cur.f) + '</p></div>' + canvas +
-      '<p class="pm-ask">' + (caught ? esc(pname(cur.f)) + ' が1杯' : 'ニセ画伯以外の全員が1杯') + '</p>';
+      '<p class="pm-ask">' + (caught ? esc(pname(cur.f)) + ' が1DON' : 'ニセ画伯以外の全員が1DON') + '</p>';
   },
   dock() {
     const cur = G.cur;
@@ -294,16 +294,16 @@ const RP_MSGS = [
   // 0 = だれでも, 1 = 恋愛
   ['上司', '明日の朝、ちょっと時間ある？', 0], ['上司', 'この前の件、どうなってる？', 0], ['母', '元気にしてる？ ちゃんとご飯食べてる？', 0],
   ['母', 'お父さんがスマホを買ったから、使い方を教えてあげて', 0], ['父', '今度の休み、帰ってくるのか？', 0], ['大家さん', '今月の家賃が、まだ入っていないようです', 0],
-  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ 飲み行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
+  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ ご飯行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
   ['友達', 'ごめん、今日ドタキャンしていい？', 0], ['友達', '結婚することになった！', 0], ['友達', 'お金、少し貸してくれない？', 0],
   ['美容師さん', '次回のご予約はいかがですか？', 0], ['推し', 'みんな、今日なにしてた？', 0], ['推し', '明日、大事なお知らせがあります', 0],
   ['同窓会の幹事', '10年ぶりに同窓会やります！ 出欠お願いします', 0], ['おばあちゃん', 'お年玉、今年もあげるからね', 0], ['取引先', '至急、お電話いただけますか', 0],
   ['弟', 'ゲームのアカウント、ちょっと貸して', 0], ['担任の先生', 'タイムカプセルを開けます。来られますか？', 0], ['10年後の自分', '今のうちに、あれだけはやっておけ', 0],
   ['実家の犬', 'おなかすいた', 0], ['バイトの店長', '明日シフト入れる？', 0], ['元同僚', '最近どう？ 実はおもしろい副業があって…', 0],
   ['社長', '👍', 0], ['となりの部屋の人', '夜、少し声が響いています…', 0], ['グループの全員', '（あなた以外、全員既読）', 0],
-  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日の飲み会の写真、送っといた', 0],
+  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日のパーティーの写真、送っといた', 0],
   ['元恋人', '元気？', 1], ['元恋人', '久しぶりに会えない？', 1], ['元恋人', 'ごめん、まちがえて送った', 1], ['好きな人', '今なにしてる？', 1],
-  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと飲んでたの？', 1],
+  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと遊んでたの？', 1],
   ['恋人', '今日なんの日か覚えてる？', 1], ['マッチングした人', 'プロフィールの写真と、だいぶ雰囲気ちがいますね', 1], ['マッチングした人', 'はじめまして！ 趣味が合いそうでうれしいです', 1],
   ['合コンで会った人', '昨日は楽しかったです！ また会えますか？', 1], ['片思いの相手', '好きな人いるの？', 1], ['幼なじみ', '実は昔、好きだったんだよね', 1],
   ['職場の気になる人', 'この前のお礼に、今度ごちそうさせて', 1], ['告白した相手', 'ごめん、返事おそくなった', 1], ['元恋人', '結婚しました', 1],
@@ -335,7 +335,7 @@ function rpOut(k, pick, named) {
 }
 const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick"><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
 PMX.reply = {
-  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1杯</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
+  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
   poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
   pool: o => rpPool(o).length,
   stats: () => ({ best: 0, worst: 0 }),
@@ -447,11 +447,11 @@ PMX.reply = {
 };
 
 /* =====================================================================
-   しれっとミッション: 全員が秘密のミッションを持って、ふつうに飲んで話す。達成したら名乗り出る、あやしい人は「見破った！」
+   しれっとミッション: 全員が秘密のミッションを持って、ふつうに話して楽しむ。達成したら名乗り出る、あやしい人は「見破った！」
    ===================================================================== */
 const MS_LIST = [
   // lv 1 = かんたん, 2 = むずかしい
-  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回乾杯する'], [1, 'だれかに「なんで？」と聞き返させる'],
+  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回ハイタッチする'], [1, 'だれかに「なんで？」と聞き返させる'],
   [1, 'だれかの持ち物をほめる'], [1, 'だれかに「ありがとう」と言わせる'], [1, '3回続けて「たしかに」と相づちを打つ'], [1, 'だれかに自分の名前を呼ばせる'],
   [1, '会話の中で、都道府県を3つ言う'], [1, 'だれかに「え？」と言わせる'], [1, '会話に「昭和」という言葉を入れる'], [1, 'だれかに好きな食べ物を言わせる'],
   [1, 'だれかに今何時か聞かれる'], [1, 'だれかに、最近見た動画の話をさせる'], [1, '話の途中で、一度だけ英語を混ぜる'], [1, 'だれかとハイタッチする'],
@@ -483,7 +483,7 @@ function msGive(ps) {
 }
 const msBack = () => pxBtn('back', 'もどる', 'white small');
 PMX.mission = {
-  tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1杯</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
+  tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1DON</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
   poolWord: 'ミッション', poolUnit: '個', resCount: '回の判定', quiet: true,
   pool: o => msPool(o).length,
   stats: () => ({ done: 0, caught: 0, spot: 0 }),
@@ -509,7 +509,7 @@ PMX.mission = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに話して楽しむだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'peek') {
       if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を渡すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
       const p = pxPeekWho(), m = msOf(p);
@@ -517,10 +517,10 @@ PMX.mission = {
         (cur.peek.check ? '' : '<button type="button" class="pm-link" data-g="x-reroll">ほかのミッションにする</button>') + '</div>';
     }
     const board = '<div class="ms-list">' + G.players.map((pl, i) => '<span class="ms-p" style="--p:' + pc(i) + '"><b>' + esc(pl.name) + '</b><small>達成 ' + pl.done + ' ・ 見破られ ' + pl.caught + '</small></span>').join('') + '</div>';
-    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
+    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに話して楽しもう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
     if (cur.phase === 'checkWho') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを確認</p><p class="pm-ask">確認する人をタップ（本人だけ見てね）</p>' + pxChips(pxAll(), null, 'check') + '</div>';
     if (cur.phase === 'claimWho') return head + '<div class="pm-body"><p class="pm-lead ol">達成した人は？</p><p class="pm-ask">名乗り出た人をタップ</p>' + pxChips(pxAll(), null, 'claim') + '</div>';
-    if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1杯</p></div>';
+    if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1DON</p></div>';
     if (cur.phase === 'accBy') return head + '<div class="pm-body"><p class="pm-lead ol">見破った人は？</p><p class="pm-ask">「見破った！」と言った人をタップ</p>' + pxChips(pxAll(), null, 'by') + '</div>';
     if (cur.phase === 'accWho') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.by) + ' が見破った！</p><p class="pm-lead ol">あやしいのはだれ？</p>' + pxChips(pxOthers(cur.by), null, 'who') + '</div>';
     if (cur.phase === 'accSay') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを予想して！</p><p class="pm-note">' + pmName(cur.by) + ' は、' + pmName(cur.w) + ' のミッションを<br>声に出して言ってね</p><p class="pm-note">言えたら、' + esc(pname(cur.w)) + ' だけが<br>答え合わせをする</p></div>';
@@ -531,8 +531,8 @@ PMX.mission = {
     if (cur.phase === 'accRes') {
       const hit = cur.ev === 'caught';
       return head + '<div class="pm-body"><p class="gk-res ' + (hit ? 'ok' : 'ng') + ' ol">' + (hit ? '見破った！' : 'ハズレ！') + '</p>' +
-        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1杯。新しいミッションを渡すよ</p>'
-          : '<p class="pm-note">' + pmName(cur.w) + ' のミッションはまだヒミツ</p><p class="pm-ask">まちがえた ' + esc(pname(cur.by)) + ' が1杯</p>') + '</div>';
+        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1DON。新しいミッションを渡すよ</p>'
+          : '<p class="pm-note">' + pmName(cur.w) + ' のミッションはまだヒミツ</p><p class="pm-ask">まちがえた ' + esc(pname(cur.by)) + ' が1DON</p>') + '</div>';
     }
     return head;
   },
@@ -542,7 +542,7 @@ PMX.mission = {
     if (cur.phase === 'peek') return pxRow(cur.peek.open ? pxPeekNextBtn('覚えた！ スタート ▶', cur.peek.check || cur.peek.newm ? '覚えた！ もどる ▶' : '') : pxPeekOpenBtn());
     if (cur.phase === 'live') return pxRow(pxBtn('checkWho', '自分の<span class="sub">ミッション確認</span>', 'white small') + pxBtn('accBy', '見破った！', 'big main pink grow') + pxBtn('claimWho', '達成<span class="sub">した！</span>', 'cyan small'));
     if (['checkWho', 'claimWho', 'accBy', 'accWho'].includes(cur.phase)) return pxRow(msBack());
-    if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1杯</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
+    if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1DON</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
     if (cur.phase === 'accSay') return pxRow(msBack() + pxBtn('say', '言った！ 答え合わせ', 'big main grow'));
     if (cur.phase === 'accCheck') return pxRow(!cur.open ? pxBtn('aopen', esc(pname(cur.w)) + 'です。見る！', 'big main pulse') : pxBtn('ang', 'ハズレ', 'white big') + pxBtn('aok', '当たってた', 'big main pink grow'));
     if (cur.phase === 'accRes') return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : 'つづける ▶', 'big main'));
@@ -575,8 +575,8 @@ PMX.mission = {
     if ((a === 'cyes' || a === 'cno') && cur.phase === 'claimShow') {
       const w = cur.w;
       G.pm.need = [w];
-      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1杯</small>', '', 1600); pmNext(pxCups(pxOthers(w)), true); }
-      else { cur.ev = 'no'; SE.play('bubuu'); telop('認められず…<small>' + esc(pname(w)) + ' が1杯</small>', 'red', 1500); pmNext(pxCups([w]), false); }
+      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1DON</small>', '', 1600); pmNext(pxCups(pxOthers(w)), true); }
+      else { cur.ev = 'no'; SE.play('bubuu'); telop('認められず…<small>' + esc(pname(w)) + ' が1DON</small>', 'red', 1500); pmNext(pxCups([w]), false); }
       return;
     }
     if (a === 'by' && cur.phase === 'accBy' && p != null) { cur.by = p; cur.phase = 'accWho'; SE.play('select'); pxSave(); return; }
@@ -617,7 +617,7 @@ const US_TOPICS = [
   ['l', '寝坊してやらかした話'], ['l', '夢で見たことが本当になった話'], ['l', '子どものころに集めていたもの'], ['l', '人生でいちばんの大当たり'], ['l', '人に言うと驚かれる経歴'],
   ['l', 'ちょっと自慢できる記録'], ['l', '地元の変わった名物'], ['l', '人生でいちばん寒かった（暑かった）日'], ['l', 'お店でのちょっとした事件'], ['l', '見知らぬ人に助けられた話'],
   ['d', '人生でいちばん恥ずかしかったこと'], ['d', '恋人とのケンカの話'], ['d', 'フラれた話'], ['d', '告白の話'], ['d', '人に言えない失敗'],
-  ['d', '酔っぱらってやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
+  ['d', '寝ぼけてやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
   ['d', 'デートでの事件'], ['d', '職場や学校でのやらかし'], ['d', '人生でいちばん泣いた日'], ['d', 'ドキッとした瞬間'], ['d', 'モテた話'],
   ['d', '友達とケンカした話'], ['d', 'いちばん怒られた話'], ['d', 'お金の失敗談'], ['d', '人生の大ピンチ'], ['d', 'だれにも言っていない秘密'],
 ].map(([d, t], i) => ({ id: i + 1, d, t }));
@@ -626,7 +626,7 @@ const usPool = o => US_TOPICS.filter(q => o === 'mix' || q.d === (o === 'light' 
 const THUMB = up => '<svg class="us-th' + (up ? '' : ' down') + '" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="' + (up ? '#a8f03a' : '#ff4fa3') + '" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const usQ = () => US_BY_ID.get(G.cur.q) || US_TOPICS[0];
 PMX.uso = {
-  tag: '話す', hint: 'ホントかウソか、外した人は <b>1杯</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
+  tag: '話す', hint: 'ホントかウソか、外した人は <b>1DON</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
   poolWord: 'お題', poolUnit: '個', resCount: '話',
   pool: o => usPool(o).length,
   stats: () => ({ told: 0, fool: 0, miss: 0 }),
@@ -652,7 +652,7 @@ PMX.uso = {
     if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p></div>';
     const others = pxOthers(p), fool = cur.sel.length === others.length;
     return head + '<div class="pm-body"><p class="us-ans ' + (cur.truth ? 'true' : 'lie') + ' ol">' + (cur.truth ? 'ホント！' : 'ウソ！') + '</p><p class="us-topic open sm">' + esc(q.t) + '</p>' +
-      '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1杯</p>' + pxChips(others, cur.sel, 'sel', '1杯') +
+      '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1DON</p>' + pxChips(others, cur.sel, 'sel', '1DON') +
       (fool ? '<p class="pm-ask gold">全員だまされた！ ' + esc(pname(p)) + ' に勲章</p>' : '') + '</div>';
   },
   dock() {
@@ -720,14 +720,14 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
   '<p class="gd-lead">タイトル画面の下の段、<b>4つの新モード</b>です。どれもスマホ1台で遊べます。「こっそり見る」場面では、名前が出た人にスマホを渡してね。</p>' +
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
     '<p>1人1筆ずつ、2周で1枚の絵を描きます。<b>指を離したら次の人</b>。描き終わったら、せーので<b>ニセ画伯だと思う人を指さし</b>。</p>' +
-    '<p>見破られたらニセ画伯が1杯。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1杯</b>。描いた絵は保存できます。</p>', 1) +
+    '<p>見破られたらニセ画伯が1DON。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1DON</b>。描いた絵は保存できます。</p>', 1) +
   gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
-    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1杯。最後に名前がわかります。</p>', 2) +
-  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
-    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1杯。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1杯。</p>' +
+    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
+  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに話して楽しむだけ。</p>' +
+    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
-    '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1杯</b>。全員だませたら、話した人に勲章。</p>', 4) +
+    '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
   gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')
 });
 
@@ -781,7 +781,7 @@ function koReveal() {
   step();
 }
 PMX.koi = {
-  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、飲むか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露トーク！<small>答えるか、飲むか</small>',
+  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、DONか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露トーク！<small>答えるか、DONか</small>',
   poolWord: '質問', poolUnit: '問', resCount: '問',
   pool: o => koPool(o).length,
   stats: () => ({ more: 0, votes: 0 }),
@@ -813,8 +813,8 @@ PMX.koi = {
     if (cur.phase === 'pick') return head + '<div class="pm-body"><p class="pm-ask">' + esc(pname(a)) + '、' + esc(pname(p)) + ' に聞く質問をタップ</p><div class="ko-picks' + (anim === 'pick' ? ' enter' : '') + '">' +
       cur.opts.map((id, i) => { const q = koQ(id); return '<button type="button" class="ko-pick g-' + q.g + (cur.pk === i ? ' sel' : '') + '" data-g="x-pk" data-i="' + i + '" aria-pressed="' + (cur.pk === i) + '"><span class="ko-pt">' + KO_TYPE[q.t] + ' ' + koDepth(q.lv) + '</span><span class="ko-pq">' + esc(q.q) + '</span></button>'; }).join('') + '</div></div>';
     const q = koQ(cur.q);
-    if (cur.phase === 'q' && q.t === 'ask') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' が答える</p>' + koCard(q, '<p class="ko-rule">' + esc(pname(a)) + '、読み上げて！ 答えたくなければパス（1杯）</p>', anim === 'q' ? 'enter' : '') + '</div>';
-    if (cur.phase === 'more') return head + '<div class="pm-body"><p class="ko-who">もうひと声！</p>' + koCard(q, '', 'small') + '<div class="ko-card face more g-' + q.g + (anim === 'more' ? ' enter' : '') + '"><span class="ko-tag">もうひと声</span><p class="ko-q">' + esc(q.more[cur.mi]) + '</p><p class="ko-rule">答えるか、半分飲むか</p></div></div>';
+    if (cur.phase === 'q' && q.t === 'ask') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' が答える</p>' + koCard(q, '<p class="ko-rule">' + esc(pname(a)) + '、読み上げて！ 答えたくなければパス（1DON）</p>', anim === 'q' ? 'enter' : '') + '</div>';
+    if (cur.phase === 'more') return head + '<div class="pm-body"><p class="ko-who">もうひと声！</p>' + koCard(q, '', 'small') + '<div class="ko-card face more g-' + q.g + (anim === 'more' ? ' enter' : '') + '"><span class="ko-tag">もうひと声</span><p class="ko-q">' + esc(q.more[cur.mi]) + '</p><p class="ko-rule">答えるか、0.5DONか</p></div></div>';
     if (cur.phase === 'heart') {
       const canMore = q.more && q.more.length && !cur.md;
       return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<p class="pm-lead ol">いい話だった？</p><p class="pm-note">よかったら「♡いい話！」。' + (canMore ? 'もっと聞きたければ「もうひと声！」' : '') + '</p>' +
@@ -822,8 +822,8 @@ PMX.koi = {
     }
     if (cur.phase === 'q') {
       const pt = q.t === 'point';
-      return head + '<div class="pm-body">' + koCard(q, '<p class="ko-rule">' + (pt ? 'せーので一斉に指さし！ いちばん指された人が1杯。指した理由も1人ずつ' : esc(pname(p)) + ' から1人ずつ答える。答えられなかった人が1杯') + '</p>', anim === 'q' ? 'enter' : '') +
-        '<p class="pm-ask">' + (pt ? 'いちばん指された人をタップ' : '答えられなかった・パスした人をタップ') + '</p>' + pxChips(pxAll(), cur.sel, 'sel', '1杯') + '</div>';
+      return head + '<div class="pm-body">' + koCard(q, '<p class="ko-rule">' + (pt ? 'せーので一斉に指さし！ いちばん指された人が1DON。指した理由も1人ずつ' : esc(pname(p)) + ' から1人ずつ答える。答えられなかった人が1DON') + '</p>', anim === 'q' ? 'enter' : '') +
+        '<p class="pm-ask">' + (pt ? 'いちばん指された人をタップ' : '答えられなかった・パスした人をタップ') + '</p>' + pxChips(pxAll(), cur.sel, 'sel', '1DON') + '</div>';
     }
     if (cur.phase === 'vote') {
       if (!cur.peek.open) return head + pxPeekCover('だれに入れたかは、だれにも分からない');
@@ -837,7 +837,7 @@ PMX.koi = {
       const t = cur.tally[i], on = steps - 1 - i < cur.shown;
       rows += '<li class="ko-rank' + (on ? ' on' : '') + (done && top.includes(t.p) ? ' top' : '') + '"><b>' + (1 + cur.tally.filter(x => x.n > t.n).length) + '位</b>' + (on ? pmName(t.p) + '<i>' + t.n + '票</i>' : '<span class="ko-hide">？？？</span>') + '</li>';
     }
-    const res = !done ? '' : koSplit() ? '<p class="pm-ask gold">意見が割れた！ だれも飲まない</p>' : q.k === 'praise' ? '<p class="pm-ask gold">' + top.map(x => esc(pname(x))).join('・') + ' に ♡</p>' : '<p class="pm-ask">' + top.map(x => esc(pname(x))).join('・') + ' が1杯</p>';
+    const res = !done ? '' : koSplit() ? '<p class="pm-ask gold">意見が割れた！ だれもくらわない</p>' : q.k === 'praise' ? '<p class="pm-ask gold">' + top.map(x => esc(pname(x))).join('・') + ' に ♡</p>' : '<p class="pm-ask">' + top.map(x => esc(pname(x))).join('・') + ' が1DON</p>';
     return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<ol class="ko-ranks">' + rows + '</ol>' + res + '</div>';
   },
   dock() {
@@ -845,8 +845,8 @@ PMX.koi = {
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('flip', '質問をめくる！', 'big main pulse pink'));
     if (cur.phase === 'pick') return pxRow(pxBtn('re', '2枚とも<span class="sub">入れかえ' + (cur.re ? '済み' : '（1回）') + '</span>', 'white small', cur.re ? ' disabled' : '') + pxBtn('go', cur.pk == null ? '質問をタップ' : 'これにする！', 'big main grow', cur.pk == null ? ' disabled' : ''));
     const q = koQ(cur.q), last = pmLast() ? '結果発表へ！' : '次へ ▶';
-    if (cur.phase === 'q' && q.t === 'ask') return pxRow(pxBtn('pass', 'パス<span class="sub">1杯飲む</span>', 'white small') + pxBtn('ok', '答えた！', 'big main grow'));
-    if (cur.phase === 'more') return pxRow(pxBtn('mhalf', '半分<span class="sub">飲む</span>', 'white small') + pxBtn('mok', '答えた！', 'big main grow'));
+    if (cur.phase === 'q' && q.t === 'ask') return pxRow(pxBtn('pass', 'パス<span class="sub">1DON</span>', 'white small') + pxBtn('ok', '答えた！', 'big main grow'));
+    if (cur.phase === 'more') return pxRow(pxBtn('mhalf', 'パス<span class="sub">0.5DON</span>', 'white small') + pxBtn('mok', '答えた！', 'big main grow'));
     if (cur.phase === 'heart') {
       const canMore = q.more && q.more.length && !cur.md;
       return pxRow((canMore ? pxBtn('more', 'もうひと声！', 'cyan small') : '') + pxBtn('heart', (cur.heart ? '♡ 送った' : '♡いい話！'), (cur.heart ? 'pink' : 'white') + ' small', cur.heart ? ' aria-pressed="true"' : '') + pxBtn('next', last, 'big main'));

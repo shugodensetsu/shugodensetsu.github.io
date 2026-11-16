@@ -5,12 +5,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://sakego.shugodensetsu.workers.dev; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
+<meta name="description" content="パーティー・集まりを盛り上げるカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <link rel="canonical" href="https://shugodensetsu.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:site_name" content="DON!!でんパーティー">
-<meta property="og:title" content="DON!!でんパーティー｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta property="og:title" content="DON!!でんパーティー｜みんなで盛り上がるパーティーゲーム">
 <meta property="og:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
 <meta property="og:url" content="https://shugodensetsu.github.io/">
 <meta property="og:image" content="https://shugodensetsu.github.io/icons/og.jpg">
@@ -18,7 +18,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="DON!!でんパーティー — 引いたが最後！ 天国か、地獄か。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DON!!でんパーティー｜飲み会・宅飲みを盛り上げるパーティーゲーム">
+<meta name="twitter:title" content="DON!!でんパーティー｜みんなで盛り上がるパーティーゲーム">
 <meta name="twitter:description" content="スマホ1台で2〜8人。無料・広告なし・オフラインOK。">
 <meta name="twitter:image" content="https://shugodensetsu.github.io/icons/og.jpg">
 <meta name="theme-color" content="#2a1266">
@@ -265,10 +265,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .mix-row button[aria-pressed="true"] small{color:var(--ink)}
 #mix-lively[aria-pressed="true"]{background:var(--yellow)}
 #mixPanel .p-h{flex-wrap:nowrap; white-space:nowrap}
-.unit-sel{margin-left:auto; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800}
-.unit-sel select{appearance:none; -webkit-appearance:none; font:inherit; font-size:13px; font-weight:800; color:var(--ink); background:var(--lime) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23150733' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center / 10px 6px;
   border:2.5px solid var(--ink); border-radius:999px; padding:2px 24px 2px 10px; box-shadow:0 2px 0 var(--ink); cursor:pointer}
-.unit-sel select:focus-visible{outline:3px solid var(--cyan); outline-offset:2px}
 .g-unit{text-shadow:none; -webkit-text-stroke:0; paint-order:normal; display:inline-block; margin-left:6px; font-family:var(--f-body); font-size:11px; font-weight:800; color:var(--ink); background:var(--lime); border-radius:999px; padding:1px 7px; vertical-align:3px}
 @media (max-width: 420px){ .g-top.has-pend .g-unit{display:none} }
 /* the top row of the game never wraps (a two-line 「？ 遊び方」 was cut off at the top); on the narrowest phones the 1杯 badge makes room */
@@ -501,16 +498,6 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .shot-opt input{width:20px; height:20px; accent-color:var(--pink); margin:0}
 .shot-hint{margin:0; font-size:13px; font-weight:800; color:var(--pink); line-height:1.5}
 .dialog-acts .grow{flex:1}
-.age-ov{z-index:95; background:radial-gradient(circle at 50% 40%, #3a1d88 0, var(--bg-deep) 75%)}
-.age-terms{display:block; margin-top:6px; font-size:12px; color:var(--ink-muted)}
-.age-terms a{color:var(--pink)}
-.age-box{max-width:360px; align-items:center; text-align:center; gap:14px; padding:24px 20px 20px}
-.age-box h2{font-size:24px}
-.age-box p{font-weight:700; line-height:1.65; color:var(--ink-muted)}
-.age-box .dialog-acts{align-self:stretch}
-.age-mark{width:92px; height:92px; border-radius:50%; background:var(--yellow); border:4px solid var(--ink); box-shadow:0 5px 0 var(--ink); display:grid; place-content:center; line-height:1; transform:rotate(-6deg)}
-.age-mark b{font-family:var(--f-display); font-weight:400; font-size:40px; color:var(--ink)}
-.age-mark small{font-weight:800; font-size:12px; color:var(--ink)}
 
 /* ---------- 「誰が飲む？」「誰を指名する？」: choose the drinkers, then drink or use a special rule ---------- */
 .decide{gap:10px}
@@ -1434,7 +1421,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .glass{width:28px; height:39px; flex:none; overflow:visible}
 .glass.sm{width:12px; height:16px; vertical-align:-3px; margin-left:2px}
 .gl-bg{fill:#fffdf6}
-.gl-s{fill:#ffaa1a}
+.gl-s{fill:#ff6fb5}
 .gl-s.nw{transform-box:fill-box; transform-origin:50% 100%; animation:glFill .45s var(--d, 0s) cubic-bezier(.3,1.3,.5,1) both}
 .gl-s.nw.slow{animation:glFill .8s ease-in-out both}
 .mg-p.cupfx{animation:cupFx 1.1s cubic-bezier(.2,1.4,.4,1); z-index:2}
@@ -1442,7 +1429,7 @@ button:disabled{cursor:not-allowed; opacity:.5}
 @keyframes cupFx{0%{transform:scale(1)} 18%{transform:scale(1.22) rotate(-3deg); box-shadow:0 4px 0 var(--ink), 0 0 0 4px var(--yellow), 0 0 30px 12px rgba(255,216,61,.85)} 45%{transform:scale(1.1) rotate(2deg)} 100%{transform:none}}
 @keyframes cupNum{0%{transform:scale(1)} 30%{transform:scale(1.8); background:var(--yellow)} 100%{transform:scale(1)}}
 @keyframes glFill{from{transform:scaleY(0)} to{transform:none}}
-.gl-top{fill:#fff6d6}
+.gl-top{fill:#ffd3e8}
 .gl-mk{stroke:rgba(21,7,51,.55); stroke-width:1.3; stroke-linecap:round; fill:none}
 .gl-line{fill:none; stroke:var(--ink); stroke-width:2.2; stroke-linejoin:round}
 .gl-hi{stroke:rgba(255,255,255,.95); stroke-width:1.6; stroke-linecap:round; mix-blend-mode:screen}
@@ -2604,8 +2591,6 @@ button.rp-pick{cursor:pointer}
   .s-setup .row-btns .pbtn.small{font-size:min(14px, 4.4cqh); padding-block:min(8px, 2.4cqh)}
   .s-setup .nm-row{gap:4px; padding-right:4px}
 }
-/* the narrowest sideways phones: the 1杯の量 label gives its room to the select */
-@media (orientation: landscape) and (max-height: 600px) and (max-width: 740px){ .s-setup .unit-sel > span{display:none} }
 </style>
 <script>window.SAKEGO_APP = true;</script>
 </head>
@@ -2668,7 +2653,7 @@ button.rp-pick{cursor:pointer}
       </div>
       <footer class="t-foot">
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加</button>
-        <p class="fine"><span class="beta">試作版</span>予告なくアップデートすることがあります ・ <a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a><br>20歳未満の飲酒は法律で禁止。飲めない人はソフトドリンクでOK、無理に飲ませるのはやめましょう。</p>
+        <p class="fine"><span class="beta">試作版</span>予告なくアップデートすることがあります ・ <a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
       </footer>
     </section>
 
@@ -2688,7 +2673,7 @@ button.rp-pick{cursor:pointer}
       </div>
       <div class="panel" id="mixPanel">
         <div class="p-h"><span class="num-badge" id="mixNum">4</span><span id="mixHead">カードの出かた</span>
-          <label class="unit-sel"><span>1杯の量</span><select id="unitSel" aria-label="1杯の量"></select></label></div>
+</div>
         <div class="mix-row" id="mixGrid" role="group" aria-label="カードの出かた"></div>
       </div>
       <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>はじめての人向けに、1ターン目に操作の案内を出す</span></label>
@@ -2946,13 +2931,6 @@ button.rp-pick{cursor:pointer}
   <div class="ov center gloss-ov" id="glossOv" hidden><div class="dialog gloss-box" id="glossBox" role="dialog" aria-modal="true" aria-labelledby="glossTitle"></div></div>
   <div class="ov center plus-ov" id="plusOv" hidden><div class="dialog plus-box" id="plusBox" role="dialog" aria-modal="true" aria-labelledby="plusTitle"></div></div>
 
-  <div class="ov center age-ov" id="ageOv" hidden>
-    <div class="dialog age-box" role="dialog" aria-modal="true" aria-labelledby="ageTitle">
-      <div class="age-mark" aria-hidden="true"><b>20</b><small>歳以上</small></div>
-      <h2 id="ageTitle">20歳以上ですか？</h2>
-      <p id="ageText"></p>
-      <div class="dialog-acts col" id="ageActs"></div>
-    </div>
   </div>
 
   <canvas class="fx-canvas" id="fxCanvas" aria-hidden="true"></canvas>
@@ -2976,110 +2954,110 @@ button.rp-pick{cursor:pointer}
 {"key":"c1","name":"遊び系","mark":"新","color":9,"on":true}
 ],
 "cards":[
-{"id":1,"cat":"hit","text":"{引いた人}は1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":2,"cat":"hit","text":"{引いた人}は2杯グイ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":3,"cat":"hit","text":"{引いた人}は3杯グイ","cups":[3],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":4,"cat":"hit","text":"{左隣}は1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":5,"cat":"hit","text":"{右隣}は1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":7,"cat":"hit","text":"{左隣}と{右隣}は1杯ずつグイ","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":8,"cat":"hit","text":"{ランダム}は1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":9,"cat":"hit","text":"{ランダム}は2杯グイ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":10,"cat":"hit","text":"{引いた人}と{左隣}は1杯ずつグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":11,"cat":"hit","text":"{引いた人}と{ランダム}で乾杯して1杯ずつグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":13,"cat":"hit","text":"{引いた人}は2杯。{左隣}が肩代わりを申し出たら、2人で1杯ずつに分けられる","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":14,"cat":"hit","text":"{引いた人}と{ランダム}は目を合わせたまま1杯グイ。先に目をそらした方はもう1杯","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":15,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケン。負けた方が1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":16,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケン。負けた方が2杯グイ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":17,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケンを3回。それぞれ負けた回数ぶん飲む","cups":[1,3],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":18,"cat":"duel","text":"{引いた人}は1杯。ただし{ランダム}とのジャンケンに勝てば回避","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":19,"cat":"duel","text":"{引いた人}は1杯。ただし{ランダム}とのあっち向いてホイに勝てば回避","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":20,"cat":"duel","text":"{引いた人}と{左隣}で指スマ。負けた方が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":22,"cat":"duel","text":"{引いた人}と{ランダム}が、せーので指を0〜5本出す。合計が偶数なら{引いた人}、奇数なら{ランダム}が1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":26,"cat":"duel","text":"{引いた人}と{ランダム}で「あぶりかるび」を3回言う。噛んだ方が1杯","cups":[1],"min":2,"dur":null,"note":"両方噛んだら両方","on":true,"fx":null,"drink":null},
-{"id":27,"cat":"duel","text":"{引いた人}と{ランダム}で10秒ストップ対決。スマホのストップウォッチを画面を見ずに止め、10秒から遠い方が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":29,"cat":"duel","text":"{引いた人}と{ランダム}が、せーので同じ駅名を言う。揃わなければ2人とも1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":30,"cat":"duel","text":"{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1杯ずつ、1回でも負けたら{引いた人}が2杯","cups":[1,2],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":31,"cat":"name","text":"{引いた人}が1人を指名。その人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":33,"cat":"name","text":"{引いた人}が2人を指名。その2人が1杯ずつ","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":34,"cat":"name","text":"{引いた人}が2人を指名。その2人でジャンケンし、負けた方が2杯","cups":[2],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":35,"cat":"name","text":"{引いた人}が1人を指名し、一緒に1杯ずつ飲む","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":37,"cat":"name","text":"{引いた人}が1人を指名。その人は{引いた人}の良いところを10秒で3つ言えなければ2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":38,"cat":"name","text":"{引いた人}が「この中で一番〇〇な人」とお題を出して全員で誰かを指名。指名された数が最も多い人が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら該当者全員","on":true,"fx":null,"drink":null},
-{"id":39,"cat":"name","text":"{ランダム}が1人を指名。その人が1杯","cups":[1],"min":2,"dur":null,"note":"自分や{引いた人}を指名してもOK","on":true,"fx":null,"drink":null},
-{"id":40,"cat":"name","text":"{引いた人}が1人を指名してジャンケン。勝てば相手が2杯、負ければ自分が1杯","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":41,"cat":"name","text":"{引いた人}が1人を指名。その人へ質問を1つ投げ、指名された人は正直に答えるか2杯飲むかを選ぶ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":42,"cat":"name","text":"{引いた人}が1人を指名し、その人を動物で例える。周りが当たりと認めたら指名された人、違うなら{引いた人}が1杯","cups":[1],"min":4,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":43,"cat":"name","text":"{引いた人}が「インシュメイト」を1人指名。どちらかが飲むときは、もう片方も同じ量を飲む","cups":[],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":"mate","drink":null},
-{"id":44,"cat":"name","text":"{引いた人}が1人を「執事」に指名。{引いた人}のグラスが空いたら注ぐこと。忘れたら1杯","cups":[1],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
-{"id":45,"cat":"all","text":"全員でグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":46,"cat":"all","text":"{引いた人}以外の全員がグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":48,"cat":"all","text":"全員で手を挙げる。最後だった人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":49,"cat":"all","text":"全員でジャンケン。最後まで負け残った1人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":50,"cat":"all","text":"全員で1回ジャンケン。あいこなら全員1杯、決着したら負けた側の全員が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":51,"cat":"all","text":"この中で黒髪じゃない人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":52,"cat":"all","text":"スマホの充電が一番少ない人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":53,"cat":"all","text":"誕生日が一番近い人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":54,"cat":"all","text":"{引いた人}が2択のお題を出す。せーので全員が選び、少数派が1杯","cups":[1],"min":3,"dur":null,"note":"同数ならセーフ","on":true,"fx":null,"drink":null},
-{"id":55,"cat":"all","text":"全員がせーので指を1〜5本出す。誰とも被らなかった人が1杯","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":56,"cat":"all","text":"ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":57,"cat":"topic","text":"{引いた人}がお題を決めて、時計回りに山手線ゲーム。答えられなかった人が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":58,"cat":"all","text":"この中で黒髪の人はグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":1,"cat":"hit","text":"{引いた人}は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":2,"cat":"hit","text":"{引いた人}は2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":3,"cat":"hit","text":"{引いた人}は3DON","cups":[3],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":4,"cat":"hit","text":"{左隣}は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":5,"cat":"hit","text":"{右隣}は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":7,"cat":"hit","text":"{左隣}と{右隣}は1DONずつ","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":8,"cat":"hit","text":"{ランダム}は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":9,"cat":"hit","text":"{ランダム}は2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":10,"cat":"hit","text":"{引いた人}と{左隣}は1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":11,"cat":"hit","text":"{引いた人}と{ランダム}でハイタッチして1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":13,"cat":"hit","text":"{引いた人}は2DON。{左隣}が肩代わりを申し出たら、2人で1DONずつに分けられる","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":14,"cat":"hit","text":"{引いた人}と{ランダム}でにらめっこ。2人とも1DON、先に笑った方はもう1DON","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":15,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケン。負けた方が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":16,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケン。負けた方が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":17,"cat":"duel","text":"{引いた人}と{ランダム}でジャンケンを3回。それぞれ負けた回数ぶんDON","cups":[1,3],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":18,"cat":"duel","text":"{引いた人}は1DON。ただし{ランダム}とのジャンケンに勝てば回避","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":19,"cat":"duel","text":"{引いた人}は1DON。ただし{ランダム}とのあっち向いてホイに勝てば回避","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":20,"cat":"duel","text":"{引いた人}と{左隣}で指スマ。負けた方が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":22,"cat":"duel","text":"{引いた人}と{ランダム}が、せーので指を0〜5本出す。合計が偶数なら{引いた人}、奇数なら{ランダム}が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":26,"cat":"duel","text":"{引いた人}と{ランダム}で「あぶりかるび」を3回言う。噛んだ方が1DON","cups":[1],"min":2,"dur":null,"note":"両方噛んだら両方","on":true,"fx":null,"drink":null},
+{"id":27,"cat":"duel","text":"{引いた人}と{ランダム}で10秒ストップ対決。スマホのストップウォッチを画面を見ずに止め、10秒から遠い方が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":29,"cat":"duel","text":"{引いた人}と{ランダム}が、せーので同じ駅名を言う。揃わなければ2人とも1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":30,"cat":"duel","text":"{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1DONずつ、1回でも負けたら{引いた人}が2DON","cups":[1,2],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":31,"cat":"name","text":"{引いた人}が1人を指名。その人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":33,"cat":"name","text":"{引いた人}が2人を指名。その2人が1DONずつ","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":34,"cat":"name","text":"{引いた人}が2人を指名。その2人でジャンケンし、負けた方が2DON","cups":[2],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":35,"cat":"name","text":"{引いた人}が1人を指名し、一緒に1DONずつ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":37,"cat":"name","text":"{引いた人}が1人を指名。その人は{引いた人}の良いところを10秒で3つ言えなければ2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":38,"cat":"name","text":"{引いた人}が「この中で一番〇〇な人」とお題を出して全員で誰かを指名。指名された数が最も多い人が1DON","cups":[1],"min":2,"dur":null,"note":"同数なら該当者全員","on":true,"fx":null,"drink":null},
+{"id":39,"cat":"name","text":"{ランダム}が1人を指名。その人が1DON","cups":[1],"min":2,"dur":null,"note":"自分や{引いた人}を指名してもOK","on":true,"fx":null,"drink":null},
+{"id":40,"cat":"name","text":"{引いた人}が1人を指名してジャンケン。勝てば相手が2DON、負ければ自分が1DON","cups":[1,2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":41,"cat":"name","text":"{引いた人}が1人を指名。その人へ質問を1つ投げ、指名された人は正直に答えるか2DONかを選ぶ","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":42,"cat":"name","text":"{引いた人}が1人を指名し、その人を動物で例える。周りが当たりと認めたら指名された人、違うなら{引いた人}が1DON","cups":[1],"min":4,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":43,"cat":"name","text":"{引いた人}が「インシュメイト」を1人指名。どちらかがDONをくらうときは、もう片方も同じだけくらう","cups":[],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":"mate","drink":null},
+{"id":44,"cat":"name","text":"{引いた人}が1人を「執事」に指名。{引いた人}が手を挙げたら「はい、ご主人さま」と返事すること。忘れたら1DON","cups":[1],"min":3,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
+{"id":45,"cat":"all","text":"全員で1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":46,"cat":"all","text":"{引いた人}以外の全員が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":48,"cat":"all","text":"全員で手を挙げる。最後だった人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":49,"cat":"all","text":"全員でジャンケン。最後まで負け残った1人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":50,"cat":"all","text":"全員で1回ジャンケン。あいこなら全員1DON、決着したら負けた側の全員が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":51,"cat":"all","text":"この中で黒髪じゃない人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":52,"cat":"all","text":"スマホの充電が一番少ない人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":53,"cat":"all","text":"誕生日が一番近い人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":54,"cat":"all","text":"{引いた人}が2択のお題を出す。せーので全員が選び、少数派が1DON","cups":[1],"min":3,"dur":null,"note":"同数ならセーフ","on":true,"fx":null,"drink":null},
+{"id":55,"cat":"all","text":"全員がせーので指を1〜5本出す。誰とも被らなかった人が1DON","cups":[1],"min":3,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":56,"cat":"all","text":"ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2DON（判定は{引いた人}）","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":57,"cat":"topic","text":"{引いた人}がお題を決めて、時計回りに山手線ゲーム。答えられなかった人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":58,"cat":"all","text":"この中で黒髪の人は1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":59,"cat":"safe","text":"何も起こらない。","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":60,"cat":"c1","text":"チンチロで負けた人が1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"chinchiro","drink":null},
-{"id":62,"cat":"c1","text":"{引いた人}と{ランダム}でインディアンポーカー。負けた方がグイ。JOKERが出たら2人ともグイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"indian","drink":null},
-{"id":63,"cat":"topic","text":"{引いた人}が「〇〇したことがある人」とお題を出す。当てはまる人は全員1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":64,"cat":"topic","text":"{引いた人}が{ランダム}の好きなお酒を当てる。外したら{引いた人}が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":69,"cat":"rule","text":"誰かの名前を呼んだら1杯","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":70,"cat":"rule","text":"「グイ」と言ったら1杯","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":71,"cat":"rule","text":"グラスを置くときは2回トントンする。忘れたら1杯","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":72,"cat":"rule","text":"カタカナ語禁止。言ったら1杯","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
-{"id":73,"cat":"rule","text":"利き手でグラスを持ったら1杯","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
-{"id":74,"cat":"rule","text":"{ランダム}は敬語禁止。破ったら1杯","cups":[1],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
-{"id":75,"cat":"rule","text":"{ランダム}は語尾に「にゃん」をつける。忘れたら1杯","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
-{"id":76,"cat":"rule","text":"{引いた人}は「王様」。全員が{引いた人}を王様と呼ぶこと。呼ばなかったら1杯","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
-{"id":77,"cat":"rule","text":"{引いた人}は「クエスチョンマスター」。{引いた人}の質問に答えてしまった人は1杯","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":78,"cat":"rule","text":"{引いた人}は「親指マスター」。{引いた人}がこっそりテーブルに親指を置いたら全員続く。最後の人が1杯","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
-{"id":79,"cat":"app","text":"現時点で飲んだ杯数が一番少ない人が1杯","cups":[1],"min":2,"dur":null,"note":"アプリの集計を参照。同数なら該当者全員","on":true,"fx":"least","drink":null},
-{"id":80,"cat":"app","text":"直前に飲んだ人がもう1杯","cups":[1],"min":2,"dur":null,"note":"アプリの記録を参照","on":true,"fx":"last","drink":null},
-{"id":81,"cat":"app","text":"アプリのルーレットで1人を選ぶ。当たった人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"pick","drink":null},
-{"id":82,"cat":"app","text":"アプリの3秒カウントダウンのあと、{引いた人}と{ランダム}が同時に画面をタップ。遅かった方が1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"tap","drink":null},
-{"id":83,"cat":"app","text":"{引いた人}は1杯を賭けて天国と地獄を回す","cups":[1],"min":2,"dur":null,"note":"天国→回避／地獄→2杯／大天国→好きな人に押し付け／大地獄→3杯。デビルモードと大天使降臨も発生する。特殊ルールの使用には数えない","on":true,"fx":"hh","drink":null},
-{"id":84,"cat":"app","text":"次に飲む人の量は2倍。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"倍倍FIGHT！と重ねがけ可（上限99杯）","on":true,"fx":"x2next","drink":null},
-{"id":85,"cat":"app","text":"次に飲む人の量は半分。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"0.5杯はそれ以上半分にならない","on":true,"fx":"halfnext","drink":null},
-{"id":86,"cat":"app","text":"現時点で飲んだ杯数が一番多い人は、次に飲む1回を回避できる","cups":[],"min":2,"dur":null,"note":"休憩券として手札に入る（全員同じ杯数なら該当なし）","on":true,"fx":"rest","drink":null},
-{"id":87,"cat":"app","text":"{引いた人}は次に飲むとき、その量を好きな人に押し付けられる","cups":[],"min":2,"dur":null,"note":"押し付け券として手札に入る。押し付ける相手は使うときに選ぶ","on":true,"fx":"push","drink":null},
-{"id":88,"cat":"app","text":"{引いた人}は好きな1人と、ここまでの飲んだ杯数の記録を入れ替えられる","cups":[],"min":2,"dur":null,"note":"結果発表のランキングに反映","on":true,"fx":"swap","drink":null},
+{"id":60,"cat":"c1","text":"チンチロで負けた人が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"chinchiro","drink":null},
+{"id":62,"cat":"c1","text":"{引いた人}と{ランダム}でインディアンポーカー。負けた方が1DON。JOKERが出たら2人とも1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"indian","drink":null},
+{"id":63,"cat":"topic","text":"{引いた人}が「〇〇したことがある人」とお題を出す。当てはまる人は全員1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":64,"cat":"topic","text":"{引いた人}が{ランダム}の好きな食べ物を当てる。外したら{引いた人}が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":69,"cat":"rule","text":"誰かの名前を呼んだら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":70,"cat":"rule","text":"「DON」と言ったら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":71,"cat":"rule","text":"コップを置くときは2回トントンする。忘れたら1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":72,"cat":"rule","text":"カタカナ語禁止。言ったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
+{"id":73,"cat":"rule","text":"利き手でコップを持ったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
+{"id":74,"cat":"rule","text":"{ランダム}は敬語禁止。破ったら1DON","cups":[1],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
+{"id":75,"cat":"rule","text":"{ランダム}は語尾に「にゃん」をつける。忘れたら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
+{"id":76,"cat":"rule","text":"{引いた人}は「王様」。全員が{引いた人}を王様と呼ぶこと。呼ばなかったら1DON","cups":[1],"min":2,"dur":"1周","note":null,"on":true,"fx":null,"drink":null},
+{"id":77,"cat":"rule","text":"{引いた人}は「クエスチョンマスター」。{引いた人}の質問に答えてしまった人は1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":78,"cat":"rule","text":"{引いた人}は「親指マスター」。{引いた人}がこっそりテーブルに親指を置いたら全員続く。最後の人が1DON","cups":[1],"min":2,"dur":"2周","note":null,"on":true,"fx":null,"drink":null},
+{"id":79,"cat":"app","text":"今の時点でDONがいちばん少ない人が1DON","cups":[1],"min":2,"dur":null,"note":"アプリの集計を参照。同数なら該当者全員","on":true,"fx":"least","drink":null},
+{"id":80,"cat":"app","text":"直前にDONをくらった人がもう1DON","cups":[1],"min":2,"dur":null,"note":"アプリの記録を参照","on":true,"fx":"last","drink":null},
+{"id":81,"cat":"app","text":"アプリのルーレットで1人を選ぶ。当たった人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"pick","drink":null},
+{"id":82,"cat":"app","text":"アプリの3秒カウントダウンのあと、{引いた人}と{ランダム}が同時に画面をタップ。遅かった方が1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"tap","drink":null},
+{"id":83,"cat":"app","text":"{引いた人}は1DONを賭けて天国と地獄を回す","cups":[1],"min":2,"dur":null,"note":"天国→回避／地獄→2DON／大天国→好きな人に押し付け／大地獄→3DON。デビルモードと大天使降臨も発生する。特殊ルールの使用には数えない","on":true,"fx":"hh","drink":null},
+{"id":84,"cat":"app","text":"次にDONをくらう人は2倍。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"倍倍FIGHT！と重ねがけ可（上限99DON）","on":true,"fx":"x2next","drink":null},
+{"id":85,"cat":"app","text":"次にDONをくらう人は半分。誰に当たるかはお楽しみ","cups":[],"min":2,"dur":null,"note":"0.5DONはそれ以上半分にならない","on":true,"fx":"halfnext","drink":null},
+{"id":86,"cat":"app","text":"今の時点でDONがいちばん多い人は、次のDONを1回回避できる","cups":[],"min":2,"dur":null,"note":"休憩券として手札に入る（全員同じDONなら該当なし）","on":true,"fx":"rest","drink":null},
+{"id":87,"cat":"app","text":"{引いた人}は次にDONをくらうとき、それを好きな人に押し付けられる","cups":[],"min":2,"dur":null,"note":"押し付け券として手札に入る。押し付ける相手は使うときに選ぶ","on":true,"fx":"push","drink":null},
+{"id":88,"cat":"app","text":"{引いた人}は好きな1人と、ここまでのDONの記録を入れ替えられる","cups":[],"min":2,"dur":null,"note":"結果発表のランキングに反映","on":true,"fx":"swap","drink":null},
 {"id":89,"cat":"safe","text":"セーフ！{引いた人}は何もなし","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":90,"cat":"safe","text":"全員セーフ。{引いた人}の音頭で乾杯だけして次へ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
+{"id":90,"cat":"safe","text":"全員セーフ。{引いた人}の音頭でハイタッチして次へ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":91,"cat":"safe","text":"全員セーフ。{引いた人}が全員に一言ずつ褒め言葉を言う","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
 {"id":92,"cat":"safe","text":"{引いた人}は{ランダム}へ感謝を述べ休憩。このターンはセーフ","cups":[],"min":2,"dur":null,"note":null,"on":true,"fx":null,"drink":null},
-{"id":93,"cat":"safe","text":"{引いた人}はセーフ券を獲得。次に飲む対象になったとき、1回だけ回避できる","cups":[],"min":2,"dur":null,"note":"セーフ券として手札に入る","on":true,"fx":"safe","drink":null},
-{"id":94,"cat":"safe","text":"{引いた人}が1人を指名し、その人にセーフ券を渡す","cups":[],"min":2,"dur":null,"note":"渡した相手の手札にセーフ券が入る。次に飲む対象になったとき1回だけ回避できる","on":true,"fx":"givesafe","drink":null},
-{"id":95,"cat":"safe","text":"{引いた人}は飲む量が半分になる","cups":[],"min":2,"dur":"次のターンまで","note":"0.5杯はそれ以上半分にならない","on":true,"fx":"half","drink":null},
-{"id":96,"cat":"safe","text":"{引いた人}はお酒の代わりにソフトドリンクで飲んでいい","cups":[],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
+{"id":93,"cat":"safe","text":"{引いた人}はセーフ券を獲得。次にDONをくらうとき、1回だけ回避できる","cups":[],"min":2,"dur":null,"note":"セーフ券として手札に入る","on":true,"fx":"safe","drink":null},
+{"id":94,"cat":"safe","text":"{引いた人}が1人を指名し、その人にセーフ券を渡す","cups":[],"min":2,"dur":null,"note":"渡した相手の手札にセーフ券が入る。次にDONをくらうとき1回だけ回避できる","on":true,"fx":"givesafe","drink":null},
+{"id":95,"cat":"safe","text":"{引いた人}はDONが半分になる","cups":[],"min":2,"dur":"次のターンまで","note":"0.5DONはそれ以上半分にならない","on":true,"fx":"half","drink":null},
+{"id":96,"cat":"safe","text":"{引いた人}は好きな人に肩をもんでもらえる","cups":[],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":null,"drink":null},
 {"id":97,"cat":"safe","text":"{引いた人}は倍倍FIGHT！で倍にされない","cups":[],"min":2,"dur":"次のターンまで","note":null,"on":true,"fx":"nodouble","drink":null},
 {"id":98,"cat":"safe","text":"{引いた人}は次に天国と地獄を回すとき、地獄マスを1回だけ天国マスとして扱える","cups":[],"min":2,"dur":null,"note":"天国パスとして手札に入る。大地獄マスとデビルモードには効かない","on":true,"fx":"heavenpass","drink":null},
-{"id":99,"cat":"safe","text":"{引いた人}は次にコストパフォーマンスを使うとき、前払いの1杯が不要","cups":[],"min":2,"dur":null,"note":"コスパ無料券として手札に入る","on":true,"fx":"freecospa","drink":null},
+{"id":99,"cat":"safe","text":"{引いた人}は次にコストパフォーマンスを使うとき、前払いの1DONが不要","cups":[],"min":2,"dur":null,"note":"コスパ無料券として手札に入る","on":true,"fx":"freecospa","drink":null},
 {"id":100,"cat":"safe","text":"{引いた人}は、場に残っているルール追加カードを1枚選んで終了させられる","cups":[],"min":2,"dur":null,"note":"場になければ何もなし","on":true,"fx":"endrule","drink":null},
-{"id":101,"cat":"chal","text":"{引いた人}は「ピタリストップ」に挑戦。クリアで回避、失敗したら1杯","cups":[1],"min":2,"dur":null,"note":"カウントダウンのあとタイマーが動き出し、1.5秒で見えなくなる。目標の秒数ぴったり（誤差0.3秒以内）で止める","on":true,"fx":"ch_stop","drink":null},
-{"id":102,"cat":"chal","text":"{引いた人}は「ジャストゲージ」に挑戦。クリアで回避、失敗したら2杯","cups":[2],"min":2,"dur":null,"note":"左右に動く針を緑のゾーンで止める。ゾーンの幅は毎回ちがう。チャンスは1回","on":true,"fx":"ch_gauge","drink":null},
-{"id":103,"cat":"chal","text":"{引いた人}は「連打チャレンジ」に挑戦。5秒で指定の回数タップできたら回避、失敗したら1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_mash","drink":null},
-{"id":104,"cat":"chal","text":"{引いた人}は「まんまるチャレンジ」に挑戦。指で描いたまるが80点以上なら回避、失敗したら1杯グイ","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_circle","drink":null},
-{"id":105,"cat":"chal","text":"{引いた人}は「色当てチャレンジ」に挑戦。5問連続で正解したら回避、失敗したら2杯","cups":[2],"min":2,"dur":null,"note":"書いてある言葉ではなく、文字の色を答える","on":true,"fx":"ch_color","drink":null},
-{"id":106,"cat":"chal","text":"{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_order","drink":null},
-{"id":107,"cat":"chal","text":"{引いた人}はアプリが選ぶチャレンジに挑戦。クリアで回避、失敗したら2杯","cups":[2],"min":2,"dur":null,"note":"7種類のミニゲームからランダム","on":true,"fx":"ch_random","drink":null},
-{"id":108,"cat":"chal","text":"{引いた人}は「素直に1杯飲む」か「チャレンジに挑む（クリアで0杯・失敗で3杯）」かを選ぶ","cups":[1,3],"min":2,"dur":null,"note":"「素直に1杯飲む」を押すと、そのまま記録。挑むなら「チャレンジ抽選！」を押す","on":true,"fx":"ch_random","drink":null},
-{"id":109,"cat":"chal","text":"{引いた人}は「ハイ&ロー」に挑戦。3連続で当てたら回避、失敗したら1杯","cups":[1],"min":2,"dur":null,"note":"つぎのトランプが上か下かを当てる。同じ数はやり直し","on":true,"fx":"ch_hilo","drink":null},
-{"id":110,"cat":"chal","text":"全員で「爆弾パス回し」。お題に答えながら左隣へパス。爆発したときに持っていた人が2杯","cups":[2],"min":2,"dur":null,"note":"{引いた人}からスタート。答えに詰まってもパスしないと爆発する","on":true,"fx":"bomb","drink":null},
-{"id":111,"cat":"c1","text":"{引いた人}と{ランダム}でダーツの矢を1本投げ、得点の低い方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同点なら両方","on":true,"fx":"darts","drink":null},
-{"id":112,"cat":"c1","text":"{引いた人}と{ランダム}がサイコロを振り、数字の小さい方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"dice","drink":null},
-{"id":113,"cat":"hit","text":"{引いた人}と{ランダム}がトランプを1枚ずつ引き数字の低い方が1杯グイ","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"cards","drink":null},
-{"id":114,"cat":"c1","text":"{引いた人}から順番に「酒樽危機一髪」。樽の穴に剣を1本ずつ刺して、親父を飛ばした人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"taru","drink":null},
-{"id":115,"cat":"c1","text":"{引いた人}から順番に「パクッとワニ」。歯を1本ずつ押して、パクッとされた人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"wani","drink":null},
-{"id":116,"cat":"c1","text":"{引いた人}から順番に「マインスイーパー」。マスを1つずつ掘って、地雷を踏んだ人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"mine","drink":null},
-{"id":117,"cat":"c1","text":"{引いた人}から順番に「ドクロめくり」。好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が1杯（+1カードが出るたびに増える）","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"skull","drink":null},
-{"id":118,"cat":"c1","text":"{引いた人}から順番に「風船パンク」。空気を1〜3回入れて次の人へ。割った人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"balloon","drink":null},
-{"id":119,"cat":"c1","text":"{引いた人}から順番に「シャンパン振り」。1〜5回振って次の人へ。栓を飛ばした人が2杯","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"champ","drink":null}
+{"id":101,"cat":"chal","text":"{引いた人}は「ピタリストップ」に挑戦。クリアで回避、失敗したら1DON","cups":[1],"min":2,"dur":null,"note":"カウントダウンのあとタイマーが動き出し、1.5秒で見えなくなる。目標の秒数ぴったり（誤差0.3秒以内）で止める","on":true,"fx":"ch_stop","drink":null},
+{"id":102,"cat":"chal","text":"{引いた人}は「ジャストゲージ」に挑戦。クリアで回避、失敗したら2DON","cups":[2],"min":2,"dur":null,"note":"左右に動く針を緑のゾーンで止める。ゾーンの幅は毎回ちがう。チャンスは1回","on":true,"fx":"ch_gauge","drink":null},
+{"id":103,"cat":"chal","text":"{引いた人}は「連打チャレンジ」に挑戦。5秒で指定の回数タップできたら回避、失敗したら1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_mash","drink":null},
+{"id":104,"cat":"chal","text":"{引いた人}は「まんまるチャレンジ」に挑戦。指で描いたまるが80点以上なら回避、失敗したら1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_circle","drink":null},
+{"id":105,"cat":"chal","text":"{引いた人}は「色当てチャレンジ」に挑戦。5問連続で正解したら回避、失敗したら2DON","cups":[2],"min":2,"dur":null,"note":"書いてある言葉ではなく、文字の色を答える","on":true,"fx":"ch_color","drink":null},
+{"id":106,"cat":"chal","text":"{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1DON","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"ch_order","drink":null},
+{"id":107,"cat":"chal","text":"{引いた人}はアプリが選ぶチャレンジに挑戦。クリアで回避、失敗したら2DON","cups":[2],"min":2,"dur":null,"note":"7種類のミニゲームからランダム","on":true,"fx":"ch_random","drink":null},
+{"id":108,"cat":"chal","text":"{引いた人}は「素直に1DON」か「チャレンジに挑む（クリアで0DON・失敗で3DON）」かを選ぶ","cups":[1,3],"min":2,"dur":null,"note":"「素直に1DON」を押すと、そのまま記録。挑むなら「チャレンジ抽選！」を押す","on":true,"fx":"ch_random","drink":null},
+{"id":109,"cat":"chal","text":"{引いた人}は「ハイ&ロー」に挑戦。3連続で当てたら回避、失敗したら1DON","cups":[1],"min":2,"dur":null,"note":"つぎのトランプが上か下かを当てる。同じ数はやり直し","on":true,"fx":"ch_hilo","drink":null},
+{"id":110,"cat":"chal","text":"全員で「爆弾パス回し」。お題に答えながら左隣へパス。爆発したときに持っていた人が2DON","cups":[2],"min":2,"dur":null,"note":"{引いた人}からスタート。答えに詰まってもパスしないと爆発する","on":true,"fx":"bomb","drink":null},
+{"id":111,"cat":"c1","text":"{引いた人}と{ランダム}でダーツの矢を1本投げ、得点の低い方が1DON","cups":[1],"min":2,"dur":null,"note":"同点なら両方","on":true,"fx":"darts","drink":null},
+{"id":112,"cat":"c1","text":"{引いた人}と{ランダム}がサイコロを振り、数字の小さい方が1DON","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"dice","drink":null},
+{"id":113,"cat":"hit","text":"{引いた人}と{ランダム}がトランプを1枚ずつ引き数字の低い方が1DON","cups":[1],"min":2,"dur":null,"note":"同数なら両方","on":true,"fx":"cards","drink":null},
+{"id":114,"cat":"c1","text":"{引いた人}から順番に「樽危機一髪」。樽の穴に剣を1本ずつ刺して、親父を飛ばした人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"taru","drink":null},
+{"id":115,"cat":"c1","text":"{引いた人}から順番に「パクッとワニ」。歯を1本ずつ押して、パクッとされた人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"wani","drink":null},
+{"id":116,"cat":"c1","text":"{引いた人}から順番に「マインスイーパー」。マスを1つずつ掘って、地雷を踏んだ人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"mine","drink":null},
+{"id":117,"cat":"c1","text":"{引いた人}から順番に「ドクロめくり」。好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が1DON（+1カードが出るたびに増える）","cups":[1],"min":2,"dur":null,"note":null,"on":true,"fx":"skull","drink":null},
+{"id":118,"cat":"c1","text":"{引いた人}から順番に「風船パンク」。空気を1〜3回入れて次の人へ。割った人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"balloon","drink":null},
+{"id":119,"cat":"c1","text":"{引いた人}から順番に「炭酸ボトル振り」。1〜5回振って次の人へ。栓を飛ばした人が2DON","cups":[2],"min":2,"dur":null,"note":null,"on":true,"fx":"champ","drink":null}
 ]}
 </script>
 
@@ -3113,7 +3091,7 @@ const RO_CODES = ['not_writer', 'not_granted', 'consent_required', 'capability_d
 const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /* app-linked effects a card can carry (chosen in the card editor; the game reacts to card.fx) */
-const CH_STAKE = '。クリアで回避、失敗でカードの杯数（範囲なら多い方・杯数なしなら1杯）';
+const CH_STAKE = '。クリアで回避、失敗でカードのDON数（範囲なら多い方・DON数なしなら1DON）';
 const FX_GROUPS = [
   ['チャレンジ（クリアで回避）', [
     ['ch_random', 'チャレンジ（ランダム）', 'アプリが7種類のミニゲームから1つ選ぶ' + CH_STAKE],
@@ -3126,47 +3104,47 @@ const FX_GROUPS = [
     ['ch_hilo', 'ハイ&ロー', '次のトランプが今より上か下かを3連続で当てる（同じ数はやり直し）' + CH_STAKE],
   ]],
   ['みんなで遊ぶ', [
-    ['bomb', '爆弾パス回し', 'お題に答えながらスマホを左隣へパス。爆発したときに持っていた人がカードの杯数（杯数なしなら1杯）'],
-    ['taru', '酒樽危機一髪', '引いた人から順番に、酒樽の穴へ剣を1本ずつ刺す。親父を飛ばした人がカードの杯数'],
-    ['wani', 'パクッとワニ', '引いた人から順番に、ワニの歯を1本ずつ押す。パクッとされた人がカードの杯数'],
-    ['mine', 'マインスイーパー', '引いた人から順番に、5×5のマスを1つずつ掘る（数字はとなりの地雷の数）。地雷を踏んだ人がカードの杯数'],
-    ['skull', 'ドクロめくり', '引いた人から順番に、伏せた16枚を好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人がカードの杯数（+1カードが出るたびに1杯増える）'],
-    ['balloon', '風船パンク', '引いた人から順番に、風船へ空気を1〜3回入れて次へ。割った人がカードの杯数'],
-    ['champ', 'シャンパン振り', '引いた人から順番に、シャンパンを1〜5回振って次へ。栓を飛ばした人がカードの杯数'],
+    ['bomb', '爆弾パス回し', 'お題に答えながらスマホを左隣へパス。爆発したときに持っていた人がカードのDON数（DON数なしなら1DON）'],
+    ['taru', '酒樽危機一髪', '引いた人から順番に、酒樽の穴へ剣を1本ずつ刺す。親父を飛ばした人がカードのDON数'],
+    ['wani', 'パクッとワニ', '引いた人から順番に、ワニの歯を1本ずつ押す。パクッとされた人がカードのDON数'],
+    ['mine', 'マインスイーパー', '引いた人から順番に、5×5のマスを1つずつ掘る（数字はとなりの地雷の数）。地雷を踏んだ人がカードのDON数'],
+    ['skull', 'ドクロめくり', '引いた人から順番に、伏せた16枚を好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人がカードのDON数（+1カードが出るたびに1DON増える）'],
+    ['balloon', '風船パンク', '引いた人から順番に、風船へ空気を1〜3回入れて次へ。割った人がカードのDON数'],
+    ['champ', 'シャンパン振り', '引いた人から順番に、シャンパンを1〜5回振って次へ。栓を飛ばした人がカードのDON数'],
   ]],
   ['アプリの演出', [
     ['pick', '名前ルーレット', 'アプリのルーレットで1人を選び、その人の記録画面を開く'],
     ['tap', '早押し対決', '引いた人とランダムの人で、合図のあと画面タップの早押し'],
     ['hh', '天国と地獄（無料）', '引いた人が、特殊ルールの回数を使わずに天国と地獄を回せる'],
-    ['least', '一番少ない人に目印', '今いちばん飲んでいない人の席に目印を出す'],
-    ['last', '直前に飲んだ人に目印', '直前に記録された人の席に目印を出す'],
+    ['least', '一番少ない人に目印', '今いちばんDONが少ない人の席に目印を出す'],
+    ['last', '直前にくらった人に目印', '直前に記録された人の席に目印を出す'],
   ]],
   ['道具をアプリで（本物の道具で遊んでもOK）', [
-    ['chinchiro', 'チンチロ', '全員が順番にお椀へサイコロ3個を振り、いちばん弱い役の人がカードの杯数（同じなら全員）。ピンゾロが出たら×5、ゾロ目×3、シゴロ・ヒフミ×2（いくつも出たら掛け算）'],
-    ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードの杯数（同じなら両方）'],
-    ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードの杯数（同じなら両方）'],
-    ['indian', 'インディアンポーカー', '2人にトランプを配り、順番に相手のカードだけを見てから、引き直すか決めて勝負。低い方がカードの杯数（JOKERが出たら2人とも）'],
-    ['darts', 'ダーツ勝負', '本物そっくりのダーツボードに1本ずつ投げ、得点の低い方がカードの杯数（トリプル3倍・ダブル2倍・ブル50点、同点なら両方）'],
+    ['chinchiro', 'チンチロ', '全員が順番にお椀へサイコロ3個を振り、いちばん弱い役の人がカードのDON数（同じなら全員）。ピンゾロが出たら×5、ゾロ目×3、シゴロ・ヒフミ×2（いくつも出たら掛け算）'],
+    ['dice', 'サイコロ勝負', '名前の出てくる2人がお椀にサイコロを1個ずつ振り、小さい目の方がカードのDON数（同じなら両方）'],
+    ['cards', 'トランプ勝負', '名前の出てくる2人がトランプを1枚ずつ引き、低い方（A=1）がカードのDON数（同じなら両方）'],
+    ['indian', 'インディアンポーカー', '2人にトランプを配り、順番に相手のカードだけを見てから、引き直すか決めて勝負。低い方がカードのDON数（JOKERが出たら2人とも）'],
+    ['darts', 'ダーツ勝負', '本物そっくりのダーツボードに1本ずつ投げ、得点の低い方がカードのDON数（トリプル3倍・ダブル2倍・ブル50点、同点なら両方）'],
   ]],
   ['手札に入る券', [
-    ['safe', 'セーフ券', '引いた人の手札へ。飲む対象になったとき1回だけ回避'],
+    ['safe', 'セーフ券', '引いた人の手札へ。DONの対象になったとき1回だけ回避'],
     ['givesafe', 'セーフ券を渡す', '引いた人が選んだ人の手札にセーフ券を入れる'],
-    ['push', '押し付け券', '引いた人の手札へ。次に飲むとき、その量を好きな人に押し付けられる（相手は使うときに選ぶ）'],
+    ['push', '押し付け券', '引いた人の手札へ。次にくらうとき、そのDONを好きな人に押し付けられる（相手は使うときに選ぶ）'],
     ['heavenpass', '天国パス', '天国と地獄で地獄マスを1回だけ天国にできる'],
-    ['freecospa', 'コスパ無料券', '次のコスパの前払い1杯が不要になる'],
-    ['rest', '休憩券（最多の人へ）', '今いちばん飲んでいる人の手札に休憩券（1回回避）'],
+    ['freecospa', 'コスパ無料券', '次のコスパの前払い1DONが不要になる'],
+    ['rest', '休憩券（最多の人へ）', '今いちばんDONが多い人の手札に休憩券（1回回避）'],
   ]],
-  ['次に飲む人への効果', [
-    ['x2next', '次の人2倍', '次に飲む人の量を2倍にする'],
-    ['halfnext', '次の人半分', '次に飲む人の量を半分にする'],
+  ['次にくらう人への効果', [
+    ['x2next', '次の人2倍', '次にくらう人の量を2倍にする'],
+    ['halfnext', '次の人半分', '次にくらう人の量を半分にする'],
   ]],
   ['継続中の効果（「継続」の入力が必要）', [
-    ['half', '飲む量半分', '継続しているあいだ、引いた人の飲む量が半分'],
+    ['half', 'DON半分', '継続しているあいだ、引いた人のDONが半分'],
     ['nodouble', '倍倍無効', '継続しているあいだ、引いた人は倍倍FIGHT！で倍にされない'],
-    ['mate', 'インシュメイト（一緒に飲む）', '引いた人が1人を指名。継続しているあいだ、どちらかが飲むと、もう片方にも同じ量を自動で記録'],
+    ['mate', 'インシュメイト（一緒にくらう）', '引いた人が1人を指名。継続しているあいだ、どちらかがくらうと、もう片方にも同じ量を自動で記録'],
   ]],
   ['その他', [
-    ['swap', '記録の入れ替え', '引いた人と、選んだ人の杯数を入れ替える'],
+    ['swap', '記録の入れ替え', '引いた人と、選んだ人のDON数を入れ替える'],
     ['endrule', 'ルールを終わらせる', '場に残っている継続カードを1枚終わらせる'],
   ]],
 ];
@@ -3187,28 +3165,35 @@ function timerOf(c) {
 }
 function fmtSec(s) { return s >= 60 && s % 60 === 0 ? s / 60 + '分' : s + '秒'; }
 
-/* who drinks when a card is drawn. Picked in the card editor (「飲む人の決め方」); empty = worked out from the text.
+/* who drinks when a card is drawn. Picked in the card editor (「くらう人の決め方」); empty = worked out from the text.
    auto / all / others / least / last: the app knows who, and records it by itself when the card is closed.
-   pick: someone names people (指名画面). judge: decided by playing (「誰が飲む？」画面). app: the app's mini game decides. none: nobody now. */
+   pick: someone names people (指名画面). judge: decided by playing (「誰がくらう？」画面). app: the app's mini game decides. none: nobody now. */
 const DRINK_OPTS = [
-  ['auto', '書かれた人が飲む（自動で記録）'],
-  ['all', '全員が飲む（自動で記録）'],
+  ['auto', '書かれた人がくらう（自動で記録）'],
+  ['all', '全員がくらう（自動で記録）'],
   ['others', '引いた人以外の全員（自動で記録）'],
   ['pick', '指名して決める（指名画面が出る）'],
-  ['judge', '遊んだ結果で決まる（「誰が飲む？」画面が出る）'],
-  ['none', 'このカードでは飲まない'],
+  ['judge', '遊んだ結果で決まる（「誰がくらう？」画面が出る）'],
+  ['none', 'このカードではくらわない'],
 ];
 const DRINK_INFO = Object.fromEntries(DRINK_OPTS);
 const DRINK_SHORT = { auto: '自動で記録', all: '全員を自動で記録', others: '引いた人以外を自動で記録', least: '少ない人を自動で記録', last: '直前の人を自動で記録',
-  pick: '指名画面', judge: '誰が飲む？画面', app: 'ミニゲームの結果で記録', none: '飲まない' };
+  pick: '指名画面', judge: '誰がくらう？画面', app: 'ミニゲームの結果で記録', none: 'くらわない' };
 const D_TAG = '\\{(?:引いた人|ランダム|左隣|右隣)\\}';
-const D_END = '(?:グイ|飲む|飲み)?[。！!]*$';
+const D_END = '[。！!]*$';
+/* 2026-11: the penalty unit became 「DON」 (it was 「杯」, with グイ/飲む). Card texts written the old way — a deck saved on the
+   device, a card typed from memory — are read through this, so 「{左隣}は1杯グイ」 still means {左隣}は1DON */
+function donText(t) {
+  if (t == null) return t;
+  return String(t).replace(/乾杯して/g, 'ハイタッチして').replace(/杯数/g, 'DON数')
+    .replace(/(\d+(?:\.\d+)?)杯(ずつ)?(?:グイ|飲む|飲み|飲んで)?/g, '$1DON$2').replace(/グイ/g, '1DON').replace(/杯/g, 'DON');
+}
 function guessDrink(text) {
-  const t = String(text || '').replace(/\s+/g, '');
-  if (new RegExp('^全員で?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'all';
-  if (new RegExp('^' + D_TAG + '以外の全員[がは]?(?:\\d+杯)?(?:ずつ)?' + D_END).test(t)) return 'others';
-  if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+杯(?:ずつ)?|し、一緒に\\d+杯ずつ)' + D_END).test(t)) return 'pick';
-  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|で乾杯して|で)\\d+杯(?:ずつ)?' + D_END).test(t) && /(グイ|飲)/.test(t)) return 'auto';
+  const t = donText(String(text || '').replace(/\s+/g, ''));
+  if (new RegExp('^全員(?:で|に|が)?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'all';
+  if (new RegExp('^' + D_TAG + '以外の全員[がは]?\\d+DON(?:ずつ)?' + D_END).test(t)) return 'others';
+  if (new RegExp('^' + D_TAG + 'が[1-3１-３]人を指名(?:。その(?:[1-3１-３]人|人)[がは]\\d+DON(?:ずつ)?|し、一緒に\\d+DONずつ)' + D_END).test(t)) return 'pick';
+  if (new RegExp('^' + D_TAG + '(?:と' + D_TAG + ')*(?:は|が|でハイタッチして|で)\\d+DON(?:ずつ)?' + D_END).test(t)) return 'auto';
   return 'judge';
 }
 /* app versions of real-world tools (dice, cards …): set as an app effect, or read from the text of a card left on 「自動で判定」 */
@@ -3307,6 +3292,10 @@ const DECK_DROPS = [
 /* built-in cards added later: put into a deck saved on the device once (a card the user then deletes stays deleted) */
 const DECK_ADDS = [114, 115, 116, 117, 118, 119];
 const DECK_ADDS_KEY = 'sakego-deck-added';
+/* 2026-11, 杯 → DON: the built-in cards as they read before (id → [text, note]), so a saved deck's untouched cards take the new
+   wording; generated from src/deck-before-don.json by the build */
+const DECK_BEFORE_DON = {"1":["{引いた人}は1杯グイ",null],"2":["{引いた人}は2杯グイ",null],"3":["{引いた人}は3杯グイ",null],"4":["{左隣}は1杯グイ",null],"5":["{右隣}は1杯グイ",null],"7":["{左隣}と{右隣}は1杯ずつグイ",null],"8":["{ランダム}は1杯グイ",null],"9":["{ランダム}は2杯グイ",null],"10":["{引いた人}と{左隣}は1杯ずつグイ",null],"11":["{引いた人}と{ランダム}で乾杯して1杯ずつグイ",null],"13":["{引いた人}は2杯。{左隣}が肩代わりを申し出たら、2人で1杯ずつに分けられる",null],"14":["{引いた人}と{ランダム}は目を合わせたまま1杯グイ。先に目をそらした方はもう1杯",null],"15":["{引いた人}と{ランダム}でジャンケン。負けた方が1杯グイ",null],"16":["{引いた人}と{ランダム}でジャンケン。負けた方が2杯グイ",null],"17":["{引いた人}と{ランダム}でジャンケンを3回。それぞれ負けた回数ぶん飲む",null],"18":["{引いた人}は1杯。ただし{ランダム}とのジャンケンに勝てば回避",null],"19":["{引いた人}は1杯。ただし{ランダム}とのあっち向いてホイに勝てば回避",null],"20":["{引いた人}と{左隣}で指スマ。負けた方が1杯",null],"22":["{引いた人}と{ランダム}が、せーので指を0〜5本出す。合計が偶数なら{引いた人}、奇数なら{ランダム}が1杯グイ",null],"26":["{引いた人}と{ランダム}で「あぶりかるび」を3回言う。噛んだ方が1杯","両方噛んだら両方"],"27":["{引いた人}と{ランダム}で10秒ストップ対決。スマホのストップウォッチを画面を見ずに止め、10秒から遠い方が1杯",null],"29":["{引いた人}と{ランダム}が、せーので同じ駅名を言う。揃わなければ2人とも1杯グイ",null],"30":["{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1杯ずつ、1回でも負けたら{引いた人}が2杯",null],"31":["{引いた人}が1人を指名。その人が1杯",null],"33":["{引いた人}が2人を指名。その2人が1杯ずつ",null],"34":["{引いた人}が2人を指名。その2人でジャンケンし、負けた方が2杯",null],"35":["{引いた人}が1人を指名し、一緒に1杯ずつ飲む",null],"37":["{引いた人}が1人を指名。その人は{引いた人}の良いところを10秒で3つ言えなければ2杯",null],"38":["{引いた人}が「この中で一番〇〇な人」とお題を出して全員で誰かを指名。指名された数が最も多い人が1杯グイ","同数なら該当者全員"],"39":["{ランダム}が1人を指名。その人が1杯","自分や{引いた人}を指名してもOK"],"40":["{引いた人}が1人を指名してジャンケン。勝てば相手が2杯、負ければ自分が1杯",null],"41":["{引いた人}が1人を指名。その人へ質問を1つ投げ、指名された人は正直に答えるか2杯飲むかを選ぶ",null],"42":["{引いた人}が1人を指名し、その人を動物で例える。周りが当たりと認めたら指名された人、違うなら{引いた人}が1杯",null],"43":["{引いた人}が「インシュメイト」を1人指名。どちらかが飲むときは、もう片方も同じ量を飲む",null],"44":["{引いた人}が1人を「執事」に指名。{引いた人}のグラスが空いたら注ぐこと。忘れたら1杯",null],"45":["全員でグイ",null],"46":["{引いた人}以外の全員がグイ",null],"48":["全員で手を挙げる。最後だった人が1杯",null],"49":["全員でジャンケン。最後まで負け残った1人が2杯",null],"50":["全員で1回ジャンケン。あいこなら全員1杯、決着したら負けた側の全員が1杯",null],"51":["この中で黒髪じゃない人が1杯",null],"52":["スマホの充電が一番少ない人が1杯",null],"53":["誕生日が一番近い人が1杯",null],"54":["{引いた人}が2択のお題を出す。せーので全員が選び、少数派が1杯","同数ならセーフ"],"55":["全員がせーので指を1〜5本出す。誰とも被らなかった人が1杯",null],"56":["ここから30秒、{引いた人}以外の全員が{引いた人}のマネをする。マネできなかった人が2杯（判定は{引いた人}）",null],"57":["{引いた人}がお題を決めて、時計回りに山手線ゲーム。答えられなかった人が1杯",null],"58":["この中で黒髪の人はグイ",null],"60":["チンチロで負けた人が1杯グイ",null],"62":["{引いた人}と{ランダム}でインディアンポーカー。負けた方がグイ。JOKERが出たら2人ともグイ",null],"63":["{引いた人}が「〇〇したことがある人」とお題を出す。当てはまる人は全員1杯",null],"64":["{引いた人}が{ランダム}の好きなお酒を当てる。外したら{引いた人}が1杯",null],"69":["誰かの名前を呼んだら1杯",null],"70":["「グイ」と言ったら1杯",null],"71":["グラスを置くときは2回トントンする。忘れたら1杯",null],"72":["カタカナ語禁止。言ったら1杯",null],"73":["利き手でグラスを持ったら1杯",null],"74":["{ランダム}は敬語禁止。破ったら1杯",null],"75":["{ランダム}は語尾に「にゃん」をつける。忘れたら1杯",null],"76":["{引いた人}は「王様」。全員が{引いた人}を王様と呼ぶこと。呼ばなかったら1杯",null],"77":["{引いた人}は「クエスチョンマスター」。{引いた人}の質問に答えてしまった人は1杯",null],"78":["{引いた人}は「親指マスター」。{引いた人}がこっそりテーブルに親指を置いたら全員続く。最後の人が1杯",null],"79":["現時点で飲んだ杯数が一番少ない人が1杯","アプリの集計を参照。同数なら該当者全員"],"80":["直前に飲んだ人がもう1杯","アプリの記録を参照"],"81":["アプリのルーレットで1人を選ぶ。当たった人が2杯",null],"82":["アプリの3秒カウントダウンのあと、{引いた人}と{ランダム}が同時に画面をタップ。遅かった方が1杯",null],"83":["{引いた人}は1杯を賭けて天国と地獄を回す","天国→回避／地獄→2杯／大天国→好きな人に押し付け／大地獄→3杯。デビルモードと大天使降臨も発生する。特殊ルールの使用には数えない"],"84":["次に飲む人の量は2倍。誰に当たるかはお楽しみ","倍倍FIGHT！と重ねがけ可（上限99杯）"],"85":["次に飲む人の量は半分。誰に当たるかはお楽しみ","0.5杯はそれ以上半分にならない"],"86":["現時点で飲んだ杯数が一番多い人は、次に飲む1回を回避できる","休憩券として手札に入る（全員同じ杯数なら該当なし）"],"87":["{引いた人}は次に飲むとき、その量を好きな人に押し付けられる","押し付け券として手札に入る。押し付ける相手は使うときに選ぶ"],"88":["{引いた人}は好きな1人と、ここまでの飲んだ杯数の記録を入れ替えられる","結果発表のランキングに反映"],"90":["全員セーフ。{引いた人}の音頭で乾杯だけして次へ",null],"93":["{引いた人}はセーフ券を獲得。次に飲む対象になったとき、1回だけ回避できる","セーフ券として手札に入る"],"94":["{引いた人}が1人を指名し、その人にセーフ券を渡す","渡した相手の手札にセーフ券が入る。次に飲む対象になったとき1回だけ回避できる"],"95":["{引いた人}は飲む量が半分になる","0.5杯はそれ以上半分にならない"],"96":["{引いた人}はお酒の代わりにソフトドリンクで飲んでいい",null],"99":["{引いた人}は次にコストパフォーマンスを使うとき、前払いの1杯が不要","コスパ無料券として手札に入る"],"101":["{引いた人}は「ピタリストップ」に挑戦。クリアで回避、失敗したら1杯","カウントダウンのあとタイマーが動き出し、1.5秒で見えなくなる。目標の秒数ぴったり（誤差0.3秒以内）で止める"],"102":["{引いた人}は「ジャストゲージ」に挑戦。クリアで回避、失敗したら2杯","左右に動く針を緑のゾーンで止める。ゾーンの幅は毎回ちがう。チャンスは1回"],"103":["{引いた人}は「連打チャレンジ」に挑戦。5秒で指定の回数タップできたら回避、失敗したら1杯グイ",null],"104":["{引いた人}は「まんまるチャレンジ」に挑戦。指で描いたまるが80点以上なら回避、失敗したら1杯グイ",null],"105":["{引いた人}は「色当てチャレンジ」に挑戦。5問連続で正解したら回避、失敗したら2杯","書いてある言葉ではなく、文字の色を答える"],"106":["{引いた人}は「数字タッチ」に挑戦。1〜9を3秒以内に順番どおりタッチできたら回避。お手つきか時間切れで1杯",null],"107":["{引いた人}はアプリが選ぶチャレンジに挑戦。クリアで回避、失敗したら2杯","7種類のミニゲームからランダム"],"108":["{引いた人}は「素直に1杯飲む」か「チャレンジに挑む（クリアで0杯・失敗で3杯）」かを選ぶ","「素直に1杯飲む」を押すと、そのまま記録。挑むなら「チャレンジ抽選！」を押す"],"109":["{引いた人}は「ハイ&ロー」に挑戦。3連続で当てたら回避、失敗したら1杯","つぎのトランプが上か下かを当てる。同じ数はやり直し"],"110":["全員で「爆弾パス回し」。お題に答えながら左隣へパス。爆発したときに持っていた人が2杯","{引いた人}からスタート。答えに詰まってもパスしないと爆発する"],"111":["{引いた人}と{ランダム}でダーツの矢を1本投げ、得点の低い方が1杯グイ","同点なら両方"],"112":["{引いた人}と{ランダム}がサイコロを振り、数字の小さい方が1杯グイ","同数なら両方"],"113":["{引いた人}と{ランダム}がトランプを1枚ずつ引き数字の低い方が1杯グイ","同数なら両方"],"114":["{引いた人}から順番に「酒樽危機一髪」。樽の穴に剣を1本ずつ刺して、親父を飛ばした人が2杯",null],"115":["{引いた人}から順番に「パクッとワニ」。歯を1本ずつ押して、パクッとされた人が2杯",null],"116":["{引いた人}から順番に「マインスイーパー」。マスを1つずつ掘って、地雷を踏んだ人が2杯",null],"117":["{引いた人}から順番に「ドクロめくり」。好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が1杯（+1カードが出るたびに増える）",null],"118":["{引いた人}から順番に「風船パンク」。空気を1〜3回入れて次の人へ。割った人が2杯",null],"119":["{引いた人}から順番に「シャンパン振り」。1〜5回振って次の人へ。栓を飛ばした人が2杯",null]};
+const DON_KEY = 'sakego-deck-don';
 function appDeck() {
   if (!IS_APP) return null;
   try {
@@ -3315,6 +3304,19 @@ function appDeck() {
     DECK_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.text === from) c.text = to; }));
     NOTE_FIXES.forEach(([id, from, to]) => d.cards.forEach(c => { if (c && c.id === id && c.note === from) c.note = to; }));
     d.cards = d.cards.filter(c => !(c && DECK_DROPS.some(([id, text]) => c.id === id && c.text === text)));
+    if (localStorage.getItem(DON_KEY) !== '1') {
+      let base = null;
+      try { base = JSON.parse($('deck-data').textContent); } catch (_) { base = null; }
+      const now = new Map(base ? base.cards.map(c => [c.id, c]) : []);
+      d.cards.forEach(c => {
+        if (!c) return;
+        const was = DECK_BEFORE_DON[c.id], to = now.get(c.id);
+        if (was && to && c.text === was[0]) c.text = to.text; else c.text = donText(c.text);
+        if (was && to && (c.note || null) === (was[1] || null)) c.note = to.note; else if (c.note) c.note = donText(c.note);
+      });
+      localStorage.setItem(APP_DECK_KEY, JSON.stringify(d));
+      localStorage.setItem(DON_KEY, '1');
+    }
     let done = [];
     try { done = JSON.parse(localStorage.getItem(DECK_ADDS_KEY) || '[]'); } catch (_) { done = []; }
     const todo = DECK_ADDS.filter(id => !done.includes(id));
@@ -3385,7 +3387,7 @@ function fill(text, card) {
 function cupsHTML(card) {
   if (!card.cups.length) return card.cat === 'safe' ? '<span class="cups">SAFE</span>' : '<span class="cups fx">効果カード</span>';
   const label = card.cups.length > 1 ? card.cups[0] + '–' + card.cups[1] : card.cups[0];
-  return '<span class="cups">' + label + '<small>杯</small></span>';
+  return '<span class="cups">' + label + '<small>DON</small></span>';
 }
 function changeCount() {
   let n = 0;
@@ -3488,7 +3490,7 @@ function formCard(card, isNew) {
     '<form class="ed" id="ed-form" novalidate>' +
       '<div class="ed-main">' +
         '<div class="fld"><label class="lbl" for="ed-text">指示文</label>' +
-          '<textarea class="field" id="ed-text" rows="3" maxlength="200" placeholder="例：{引いた人}と{ランダム}でジャンケン。負けた方が1杯">' + esc(d.text) + '</textarea></div>' +
+          '<textarea class="field" id="ed-text" rows="3" maxlength="200" placeholder="例：{引いた人}と{ランダム}でジャンケン。負けた方が1DON">' + esc(d.text) + '</textarea></div>' +
         '<div class="ins" role="group" aria-label="タグを挿入"><span class="lbl">タグを挿入</span>' +
           TAGS.map(t => '<button type="button" data-ins="{' + t + '}">{' + t + '}</button>').join('') + '</div>' +
         '<div class="fld"><label class="lbl" for="ed-note">補足（任意）</label>' +
@@ -3496,20 +3498,20 @@ function formCard(card, isNew) {
       '</div>' +
       '<div class="ed-side">' +
         '<div class="fld"><label class="lbl" for="ed-cat">系統</label><select class="field" id="ed-cat">' + catOpts + '</select></div>' +
-        '<div class="fld"><span class="lbl" id="lbl-cups">杯数</span>' +
+        '<div class="fld"><span class="lbl" id="lbl-cups">DON数</span>' +
           '<div class="cups-in" role="group" aria-labelledby="lbl-cups">' +
-            '<input class="field" id="ed-cmin" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmin) + '" aria-label="杯数">' +
+            '<input class="field" id="ed-cmin" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmin) + '" aria-label="DON数">' +
             '<span>〜</span>' +
-            '<input class="field" id="ed-cmax" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmax) + '" aria-label="杯数の上限（範囲のときだけ）">' +
-            '<span>杯</span></div>' +
-          '<span class="hint">1〜99の整数。範囲のときだけ右にも入力。両方空欄なら杯数なし（セーフ・効果カード）</span></div>' +
+            '<input class="field" id="ed-cmax" type="number" inputmode="numeric" min="1" max="99" step="1" value="' + esc(d.cmax) + '" aria-label="DON数の上限（範囲のときだけ）">' +
+            '<span>DON</span></div>' +
+          '<span class="hint">1〜99の整数。範囲のときだけ右にも入力。両方空欄ならDON数なし（セーフ・効果カード）</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-min">最低人数</label><select class="field" id="ed-min">' + minOpts + '</select></div>' +
         '<div class="fld"><label class="lbl" for="ed-dur">継続</label>' +
           '<select class="field" id="ed-dur"><option value=""' + (d.dur ? '' : ' selected') + '>しない（その場で終わり）</option><option value="' + esc(d.dur || 'ランダム') + '"' + (d.dur ? ' selected' : '') + '>する（ルールとして続く）</option></select>' +
-          '<span class="hint">続くルールは、4〜10ターンのどこかで突然消えます。消えた瞬間、次にカードを引く人が1杯</span></div>' +
+          '<span class="hint">続くルールは、4〜10ターンのどこかで突然消えます。消えた瞬間、次にカードを引く人が1DON</span></div>' +
         '<div class="fld"><label class="lbl" for="ed-fx">アプリ連動</label><select class="field" id="ed-fx">' + fxOptions(d.fx) + '</select>' +
           '<span class="hint" id="ed-fx-hint">' + esc(fxHint(d.fx)) + '</span></div>' +
-        '<div class="fld"><label class="lbl" for="ed-drink">飲む人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
+        '<div class="fld"><label class="lbl" for="ed-drink">くらう人の決め方</label><select class="field" id="ed-drink">' + drinkOptions(d.drink) + '</select>' +
           '<span class="hint" id="ed-drink-hint">' + esc(drinkHint(d)) + '</span></div>' +
       '</div>' +
       '<p class="ed-err" id="ed-err" role="alert"' + (editing.err ? '' : ' hidden') + '>' + esc(editing.err || '') + '</p>' +
@@ -3525,7 +3527,7 @@ function fxOptions(sel) {
     (known ? '' : '<option value="' + esc(sel) + '" selected>' + esc(sel) + '（不明な効果）</option>');
 }
 function fxHint(k) {
-  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリの効果はなし（飲む人の記録は、下の「飲む人の決め方」のとおり）。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
+  return k ? (FX_INFO[k] ? FX_INFO[k].desc : 'このアプリでは使えない効果です') : 'アプリの効果はなし（くらう人の記録は、下の「くらう人の決め方」のとおり）。指示文に「30秒」のような時間を書くとタイマーが、「10秒ストップ」と書くとストップ対決が使えます。';
 }
 function drinkOptions(sel) {
   return '<option value=""' + (sel ? '' : ' selected') + '>自動で判定（おすすめ）</option>' +
@@ -3534,11 +3536,11 @@ function drinkOptions(sel) {
 const DRINK_DESC = {
   auto: 'カードを閉じると、文章に出てくる人（{引いた人}など）に自動で記録します',
   all: 'カードを閉じると、全員に自動で記録します', others: 'カードを閉じると、引いた人以外の全員に自動で記録します',
-  least: 'いちばん少ない人に自動で記録します（アプリ連動）', last: '直前に飲んだ人に自動で記録します（アプリ連動）',
+  least: 'いちばん少ない人に自動で記録します（アプリ連動）', last: '直前にくらった人に自動で記録します（アプリ連動）',
   pick: '「誰を指名する？」画面が出ます。人数は文章の「2人を指名」などから読み取ります',
-  judge: '「誰が飲む？」画面が出て、負けた人などをタップして記録します',
+  judge: '「誰がくらう？」画面が出て、負けた人などをタップして記録します',
   app: 'アプリ連動のミニゲーム・ルーレットの結果で、自動で記録します',
-  none: '飲む人の画面は出ません（ルール違反などは、その人の席をタップして記録）',
+  none: 'くらう人の画面は出ません（ルール違反などは、その人の席をタップして記録）',
 };
 /* what the game will do with the card as it is in the form right now */
 function drinkHint(f) {
@@ -3546,7 +3548,7 @@ function drinkHint(f) {
   const fx = f.fx || null;
   const mode = drinkOf({ text: f.text, note: f.note, cups, dur: String(f.dur || '').trim() || null, fx, drink: null });
   if (fx && (mode === 'app' || mode === 'least' || mode === 'last')) return 'アプリ連動で決まります：' + DRINK_DESC[mode];
-  if (!cups.length) return '杯数なしのカードなので、飲む人は記録しません';
+  if (!cups.length) return 'DON数なしのカードなので、くらう人は記録しません';
   if (f.drink) return DRINK_DESC[f.drink] || '';
   return '文章から判定：' + DRINK_DESC[mode];
 }
@@ -3629,13 +3631,13 @@ function validate(f) {
   if (bad && bad.some(t => !TAGS.includes(t.slice(1, -1)))) return { err: '使えるタグは {引いた人} {ランダム} {左隣} {右隣} の4つです。', field: 'ed-text' };
   const isInt = s => /^\d+$/.test(s) && Number(s) >= 1 && Number(s) <= 99;
   let cups = [];
-  if (f.cmin === '' && f.cmax !== '') return { err: '杯数は左の欄から入力してください。', field: 'ed-cmin' };
+  if (f.cmin === '' && f.cmax !== '') return { err: 'DON数は左の欄から入力してください。', field: 'ed-cmin' };
   if (f.cmin !== '') {
-    if (!isInt(f.cmin)) return { err: '杯数は1〜99の整数で入力してください。', field: 'ed-cmin' };
+    if (!isInt(f.cmin)) return { err: 'DON数は1〜99の整数で入力してください。', field: 'ed-cmin' };
     cups = [Number(f.cmin)];
     if (f.cmax !== '') {
-      if (!isInt(f.cmax)) return { err: '杯数は1〜99の整数で入力してください。', field: 'ed-cmax' };
-      if (Number(f.cmax) < cups[0]) return { err: '範囲は「少ない杯数〜多い杯数」の順で入力してください。', field: 'ed-cmax' };
+      if (!isInt(f.cmax)) return { err: 'DON数は1〜99の整数で入力してください。', field: 'ed-cmax' };
+      if (Number(f.cmax) < cups[0]) return { err: '範囲は「少ないDON数〜多いDON数」の順で入力してください。', field: 'ed-cmax' };
       if (Number(f.cmax) > cups[0]) cups.push(Number(f.cmax));
     }
   }
@@ -4849,12 +4851,13 @@ const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'ca
 let screen = 'title';
 let G = null;
 const setup = { count: 4, names: [], rounds: 3, mix: 'even', unit: 'cup', loaded: false, coach: null, mode: 'card' };
-/* 1杯の量: what one 「杯」 in the game means. Only a guide shown during the game and on the results — the counting stays the same */
-const UNITS = { one: { btn: '一口', short: '一口', long: '一口' }, half: { btn: '半分', short: '半分', long: 'グラス半分' }, cup: { btn: '1杯', short: '1杯', long: 'グラス1杯' }, none: { btn: 'お酒なし', short: 'ソフドリ一口', long: 'ソフトドリンク一口' } };
-const UNIT_KEYS = ['one', 'half', 'cup', 'none'];
-const unitOf = g => (g && UNITS[g.unit] && g.unit) || 'cup';
-const unitNote = g => (unitOf(g) === 'cup' ? '' : '1杯＝' + UNITS[unitOf(g)].long);
-const unitBadge = g => (unitOf(g) === 'cup' ? '' : '<span class="g-unit">1杯＝' + UNITS[unitOf(g)].short + '</span>');
+/* 1杯の量 (一口・半分・1杯・お酒なし) was a setting until 2026-11, when the penalty became 「DON」 and the app stopped talking about
+   drinks. Everything is now counted in plain DON; a game saved with another setting is shown in plain DON too */
+const UNITS = { cup: { btn: '1DON', short: '1DON', long: '1DON' } };
+const UNIT_KEYS = ['cup'];
+const unitOf = () => 'cup';
+const unitNote = g => (unitOf(g) === 'cup' ? '' : '1DON＝' + UNITS[unitOf(g)].long);
+const unitBadge = g => (unitOf(g) === 'cup' ? '' : '<span class="g-unit">1DON＝' + UNITS[unitOf(g)].short + '</span>');
 /* カードの出かた: バランス = every card equally likely; にぎやか = these categories come up more often */
 const MIX_KEYS = ['app', 'rule', 'chal', 'c1'], MIX_WEIGHT = 2.5;
 const cardWeight = (c, mix) => (mix === 'lively' && MIX_KEYS.includes(c.cat) ? MIX_WEIGHT : 1);
@@ -4951,7 +4954,7 @@ async function requestWake() {
 function releaseWake() { try { if (wakeLock) wakeLock.release(); } catch (_) { /* ignore */ } wakeLock = null; }
 
 /* opaque full-screen overlays: while one is up, the screen and the spinning background under it stop being drawn (see .app.covered) */
-const FULL_OV = ['ageOv', 'wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
+const FULL_OV = ['wheelOv', 'chalOv', 'bombOv', 'tapOv', 'timerOv', 'toolOv', 'howOv', 'statsOv'];
 let coverTimer = 0;
 function syncCover() {
   const on = FULL_OV.some(id => !$(id).hidden);
@@ -4971,18 +4974,6 @@ function closeOv(id) {
   coachQueue();
   if (!document.querySelector('.ov:not([hidden])') && lastFocus && document.contains(lastFocus)) { try { lastFocus.focus({ preventScroll: true }); } catch (_) { /* ignore */ } }
 }
-/* 20歳以上の確認: asked once on this phone, before anything else; 「いいえ」 keeps the game closed */
-const AGE_KEY = 'sakego-age';
-function ageOk() { try { return localStorage.getItem(AGE_KEY) === '1'; } catch (_) { return false; } }
-function ageAsk(no) {
-  $('ageTitle').textContent = no ? '20歳になったら遊んでね' : '20歳以上ですか？';
-  $('ageText').innerHTML = no ? 'お酒は20歳になってから。それまでは、ジュースで遊べるゲームで楽しもう！'
-    : APP_NAME + 'は、お酒の席で遊ぶパーティーゲームです。<br>20歳未満の飲酒は法律で禁止されています。<br><small class="age-terms">「はい」で、<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>に同意したものとみなします</small>';
-  $('ageActs').innerHTML = no ? '<button type="button" class="pbtn white small" data-age="back">もどる</button>'
-    : '<button type="button" class="pbtn" data-age="yes">はい、20歳以上です</button><button type="button" class="pbtn white small" data-age="no">いいえ</button>';
-  $('ageOv').hidden = false;
-  syncCover();
-}
 function closeAllOverlays() {
   if (picking) { clearTimeout(picking.timer); picking = null; }
   if (tap) { tap.timers.forEach(clearTimeout); tap = null; }
@@ -4992,7 +4983,7 @@ function closeAllOverlays() {
   if (timer) stopTimerWork(timer);
   if (tool) { tool.timers.forEach(clearTimeout); if (tool.raf) cancelAnimationFrame(tool.raf); if (tool.bowl) tool.bowl.dispose(); }
   wheel = null; sheet = null; decide = null; zoom = null; chal = null; bomb = null; timer = null; tool = null; ask = null;
-  document.querySelectorAll('.ov:not(#ageOv)').forEach(o => { o.hidden = true; });
+  document.querySelectorAll('.ov').forEach(o => { o.hidden = true; });
   syncCover();
 }
 function showScreen(name) {
@@ -5056,7 +5047,7 @@ function loadSetup() {
       if (s.count >= 2 && s.count <= 8) setup.count = s.count;
       if (ROUND_OPTS.includes(s.rounds)) setup.rounds = s.rounds;
       if (s.mix === 'lively' || s.mix === 'even') setup.mix = s.mix;
-      if (UNITS[s.unit]) setup.unit = s.unit;
+      setup.unit = 'cup';
       PM_MODES.forEach(m => { if (typeof s[m] === 'string') setup[m] = s[m]; });
     }
   } catch (_) { /* ignore */ }
@@ -5083,13 +5074,12 @@ function renderSetup(full) {
   const mini = setup.mode === 'mini';
   $('setupTitle').textContent = mini ? 'ミニゲームモード' : pm ? PM[pm].title : 'メンバー登録';
   $('roundHead').textContent = pm && PM[pm].flat ? '何回あそぶ？' : '何周あそぶ？';
-  $('unitSel').innerHTML = UNIT_KEYS.map(k => '<option value="' + k + '"' + (setup.unit === k ? ' selected' : '') + '>' + UNITS[k].btn + '</option>').join('');
   $('roundPanel').hidden = mini; $('mixGrid').hidden = mini; $('coachRow').hidden = mini || !!pm;
-  $('mixNum').textContent = mini ? '3' : '4'; $('mixHead').textContent = mini ? 'お酒の量' : pm ? PM[pm].optHead : 'カードの出かた';
+  $('mixPanel').hidden = mini; $('mixNum').textContent = '4'; $('mixHead').textContent = pm ? PM[pm].optHead : 'カードの出かた';
   if (pm) { pmSetupInfo(pm); return; }
   if (mini) {
     $('setupInfo').classList.remove('bad', 'one', 'marquee');
-    $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、グラスのメモリ3つで <b>1杯</b>' + (setup.unit !== 'cup' ? '（1杯＝' + UNITS[setup.unit].long + '）' : '');
+    $('setupInfo').innerHTML = '全<b>8</b>戦、毎回ちがうミニゲームで勝負！ 負けた人は <b>+2</b>、ゲージのメモリ3つで <b>1DON</b>' + (setup.unit !== 'cup' ? '（1DON＝' + UNITS[setup.unit].long + '）' : '');
     $('startGame').disabled = false;
     return;
   }
@@ -5102,7 +5092,7 @@ function renderSetup(full) {
   info.classList.add('one');
   info.innerHTML = '<span class="si-run">' + (pool
     ? '使えるカード <b>' + pool + '</b> 枚 ・ ' + (setup.rounds ? setup.rounds + '周で <b>' + setup.rounds * setup.count + '</b> ターン' : '「終了」を押すまで続く（カードは毎回ランダム）') +
-      (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
+      (setup.unit !== 'cup' ? ' ・ 1DON＝' + UNITS[setup.unit].long : '') +
       (setup.mix !== 'lively' ? '' : liveOff ? ' ・ にぎやか向けのカードがOFFなので、どのカードも同じくらい出ます'
         : ' ・ にぎやか：' + live.map(c => '「' + esc(c.name) + '」').join('') + 'が出やすい')
     : 'この人数で使えるカードがありません。カード編集でONにしてね') + '</span>';
@@ -5244,7 +5234,7 @@ function drawCard() {
   if (fx === 'rest') {
     const vals = G.players.map(p => p.total), mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
     if (mx > mn) G.players.forEach((p, i) => { if (p.total === mx) gifts.push([i, giveItem(i, ticket('avoid', '休憩券'))]); });
-    else restNote = '全員同じ杯数なので該当なし';
+    else restNote = '全員同じDON数なので該当なし';
   }
   saveGame();
   renderGame();
@@ -5274,7 +5264,7 @@ function cardActs() {
   const cur = G.cur, fx = cur.card && cur.card.fx, acts = [];
   if (fx === 'bomb' && !cur.bombDone) acts.push(['bomb', '爆弾パス回しスタート！', 'pink']);
   if (isChal(fx) && !cur.chalDone) acts.push(['chal', CHAL[fx] ? CHAL[fx].title + 'に挑戦！' : 'チャレンジ抽選！', 'cyan']);
-  if (isChal(fx) && !cur.chalDone && cur.card.cups.length > 1) acts.push(['plain', '素直に' + cur.card.cups[0] + '杯飲む', 'white']);
+  if (isChal(fx) && !cur.chalDone && cur.card.cups.length > 1) acts.push(['plain', '素直に' + cur.card.cups[0] + 'DON', 'white']);
   if (fx === 'pick' && cur.pickDone == null) acts.push(['pick', 'ルーレットで決める！', 'cyan']);
   if (fx === 'tap') acts.push(['tap', '早押し対決スタート！', 'cyan']);
   if (fx === 'hh' && !cur.hhFreeDone) acts.push(['hhfree', '天国と地獄を回す！', 'cyan']);
@@ -5407,8 +5397,8 @@ function useCospa() {
   if (mx.length) mateFx(mx, 900);
   useTrack('special_rule', { type: 'cospa' });
   SE.play(free ? 'ticket' : 'coin');
-  telop((free ? 'コスパ無料！' : 'コスパ発動！') + '<small>このターン、' + esc(pname(d)) + 'が飲む量は半分</small>', 'lime', 1700);
-  floatAt(d, amt ? '+1杯' : 'FREE', !amt);
+  telop((free ? 'コスパ無料！' : 'コスパ発動！') + '<small>このターン、' + esc(pname(d)) + 'のDONは半分</small>', 'lime', 1700);
+  floatAt(d, amt ? '+1DON' : 'FREE', !amt);
 }
 function nextTurn(force) {
   if (!G || G.cur.phase !== 'drawn' || picking) return;
@@ -5439,7 +5429,7 @@ function waterCheck() {
   G.water = now;
   saveGame();
   setTimeout(() => {
-    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>お水も一杯どうぞ</small>', 'cyan', 2600); SE.play('ding'); }
+    if (screen === 'game' && !document.querySelector('.ov:not([hidden])')) { telop('ひと休み！<small>水分補給もしてね</small>', 'cyan', 2600); SE.play('ding'); }
     else G.water = now - WATER_EVERY + 60 * 1000;   /* busy right now: try again in a minute */
   }, 1800);
 }
@@ -5530,7 +5520,7 @@ function floatAt(p, text, safe) {
 function computeAmount(s) {
   const p = s.p, cur = G.cur, n = G.players.length, P = pendFor(s);
   const pushTo = d => (s.to != null && s.to !== p && G.players[s.to] ? s.to : d);
-  let a = s.base; const steps = [s.base + '杯'], pushes = [];
+  let a = s.base; const steps = [s.base + 'DON'], pushes = [];
   if (pendHits(P, p)) {
     if (P.mult !== 1) { a *= P.mult; steps.push('×' + P.mult + '（' + P.src + '）'); }
     if (P.half) { a = halfOf(a); steps.push('半分（カードの効果）'); }
@@ -5554,7 +5544,7 @@ function computeAmount(s) {
   return { amt: Math.min(99, a), pushes: pushes.map(x => ({ to: x.to, amt: Math.min(99, x.amt) })), steps, ticketUsed };
 }
 /* opts.replace: index of an auto entry — re-record that person's drink with a special rule / ticket (やめる = keep the auto record)
-   opts.batch: opened from 「誰が飲む？」 — {others, back}: the others are recorded together, やめる goes back to the choosing screen
+   opts.batch: opened from 「誰がくらう？」 — {others, back}: the others are recorded together, やめる goes back to the choosing screen
    opts.owed: a mini game's loser — やめる (「使わずに記録」) records the drink as it is */
 function openSheet(p, opts) {
   makeSheet(p, opts);
@@ -5583,14 +5573,14 @@ function renderSheet() {
   const c = cur.card;
   const freeAvail = c && c.fx === 'hh' && p === cur.drawer && !cur.hhFreeDone && !s.hh;
   const calc = computeAmount(s);
-  const cardAmt = c && c.cups.length ? (c.cups.length > 1 ? c.cups[0] + '–' + c.cups[1] + '杯' : c.cups[0] + '杯') : 'なし';
+  const cardAmt = c && c.cups.length ? (c.cups.length > 1 ? c.cups[0] + '–' + c.cups[1] + 'DON' : c.cups[0] + 'DON') : 'なし';
   const mods = [], P = pendFor(s);
   if (pendHits(P, p)) mods.push((P.mult !== 1 ? '×' + P.mult : '') + (P.half ? (P.mult !== 1 ? '・' : '') + '半分' : '') + '（' + P.src + '）');
-  if (cur.cospa && p === cur.drawer) mods.push('コスパ中：この人が飲む量は半分');
-  if (hasDur(p, 'half')) mods.push('手札：飲む量半分');
+  if (cur.cospa && p === cur.drawer) mods.push('コスパ中：この人のDONは半分');
+  if (hasDur(p, 'half')) mods.push('手札：DON半分');
   if (immuneP(P, p) && pendOn(P)) mods.push('手札：倍倍無効');
   const withOthers = s.batch && s.batch.others ? s.batch.others : [];
-  const ctx = s.replace != null ? '<p class="sh-ctx">自動で記録した <b>' + fmtAmt(s.was) + '杯</b> を、特殊ルール・券を使って記録し直します' +
+  const ctx = s.replace != null ? '<p class="sh-ctx">自動で記録した <b>' + fmtAmt(s.was) + 'DON</b> を、特殊ルール・券を使って記録し直します' +
       '<button type="button" class="sh-link" data-s="asnew">別の記録として追加する</button></p>'
     : withOthers.length ? '<p class="sh-ctx">' + withOthers.map(q => '<span class="sh-mini" style="--p:' + pc(q) + '">' + esc(pname(q)) + '</span>').join('') + 'も「記録する！」で一緒に記録します</p>'
     : s.owed ? '<p class="sh-ctx">特殊ルール・券を使わないなら「使わずに記録」</p>' : '';
@@ -5602,15 +5592,15 @@ function renderSheet() {
   const usable = pl.hand.filter(h => h.kind === 'ticket' && (h.fx === 'avoid' || h.fx === 'push'));
   const others = pl.hand.filter(h => !(h.kind === 'ticket' && (h.fx === 'avoid' || h.fx === 'push')));
   $('sheetBox').innerHTML =
-    '<div class="sh-head"><h2 id="sheetTitle"><span class="sh-name" style="--p:' + pc(p) + '">' + esc(pl.name) + '</span>が飲む</h2><span class="sh-card">カード：' + cardAmt + '</span></div>' + ctx +
-    '<div class="amt-row"><button type="button" class="stepper" data-s="minus" aria-label="1杯減らす"' + (s.locked || s.base <= 1 ? ' disabled' : '') + '>−</button>' +
-      '<span class="amt-base"><b>' + s.base + '</b><small>もとの杯数</small></span>' +
-      '<button type="button" class="stepper" data-s="plus" aria-label="1杯増やす"' + (s.locked || s.base >= 99 ? ' disabled' : '') + '>＋</button></div>' +
+    '<div class="sh-head"><h2 id="sheetTitle"><span class="sh-name" style="--p:' + pc(p) + '">' + esc(pl.name) + '</span>がくらう</h2><span class="sh-card">カード：' + cardAmt + '</span></div>' + ctx +
+    '<div class="amt-row"><button type="button" class="stepper" data-s="minus" aria-label="1DON減らす"' + (s.locked || s.base <= 1 ? ' disabled' : '') + '>−</button>' +
+      '<span class="amt-base"><b>' + s.base + '</b><small>もとのDON数</small></span>' +
+      '<button type="button" class="stepper" data-s="plus" aria-label="1DON増やす"' + (s.locked || s.base >= 99 ? ' disabled' : '') + '>＋</button></div>' +
     sheetHint(c, s) +
     (mods.length ? '<ul class="mods">' + mods.map(m => '<li>' + esc(m) + '</li>').join('') + '</ul>' : '') +
     '<p class="sp-h">特殊ルール ' + (used ? '<span class="used">このターンは使用済み</span>' : '<span>1ターンに1つまで</span>') + '<button type="button" class="sp-help" data-s="help">？ 特殊ルールって？</button></p>' +
     '<div class="specials">' +
-      '<button type="button" class="sp sp-dbl" data-s="dbl" aria-pressed="' + s.dbl + '"' + (dblDis ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分×2、次に飲む人も×2</span></button>' +
+      '<button type="button" class="sp sp-dbl" data-s="dbl" aria-pressed="' + s.dbl + '"' + (dblDis ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分×2、次にくらう人も×2</span></button>' +
       '<button type="button" class="sp sp-hh" data-s="hh"' + (hhDis ? ' disabled' : '') + '><span class="sp-t">天国と地獄</span><span class="sp-d">回避か2倍か。回したら戻せない</span></button>' +
       (freeAvail ? '<button type="button" class="sp sp-free" data-s="hhfree"><span class="sp-t">天国と地獄（カードの効果）</span><span class="sp-d">特殊ルールの回数には数えない</span></button>' : '') +
     '</div>' +
@@ -5620,17 +5610,17 @@ function renderSheet() {
     (others.length ? '<div class="hand-list">' + others.map(h => handRow(h)).join('') + '</div>' : '') +
     (calc.pushes.length ? '<p class="sp-h push-h">押し付ける相手<span>タップで選ぶ</span></p><div class="pick-players push-to" role="group" aria-label="押し付ける相手">' +
       G.players.map((q, i) => i === p ? '' : '<button type="button" data-s="to" data-to="' + i + '" style="--p:' + pc(i) + '" aria-pressed="' + (calc.pushes[0].to === i) + '"><span class="dot"></span>' + esc(q.name) + '</button>').join('') + '</div>' : '') +
-    '<div class="final"><span class="final-l">飲む量</span><span class="final-v' + (calc.amt ? '' : ' zero') + '">' + (calc.amt ? fmtAmt(calc.amt) + '<small>杯</small>' : 'SAFE') + '</span>' +
-      calc.pushes.map(x => '<span class="push">' + esc(pname(x.to)) + 'に' + fmtAmt(x.amt) + '杯を押し付け！</span>').join('') +
+    '<div class="final"><span class="final-l">DON数</span><span class="final-v' + (calc.amt ? '' : ' zero') + '">' + (calc.amt ? fmtAmt(calc.amt) + '<small>DON</small>' : 'SAFE') + '</span>' +
+      calc.pushes.map(x => '<span class="push">' + esc(pname(x.to)) + 'に' + fmtAmt(x.amt) + 'DONを押し付け！</span>').join('') +
       '<span class="steps">' + esc(calc.steps.join(' → ')) + '</span></div>' +
     '<div class="sh-actions"><button type="button" class="pbtn white small" data-s="close"' + (s.locked ? ' disabled' : '') + '>' + cancel + '</button>' +
       '<button type="button" class="pbtn main" id="sheetRecord" data-s="record">記録する！</button></div>';
 }
-/* a line under the cups: always for range cards ("1〜3杯"), and for the first few records otherwise */
+/* a line under the cups: always for range cards ("1〜3DON"), and for the first few records otherwise */
 function sheetHint(c, s) {
   if (s.locked || s.replace != null || s.batch || s.owed) return '';
-  if (c && c.cups.length > 1) return '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で実際の杯数に合わせてね</p>';
-  if ((Number(lsGet(RECS_KEY)) || 0) < 5) return '<p class="sh-hint">' + (c && c.cups.length ? 'カードの杯数が入っています。' : '') + 'ちがうときは −／＋ で直してから「記録する！」</p>';
+  if (c && c.cups.length > 1) return '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + 'DON</b>。−／＋で実際のDON数に合わせてね</p>';
+  if ((Number(lsGet(RECS_KEY)) || 0) < 5) return '<p class="sh-hint">' + (c && c.cups.length ? 'カードのDON数が入っています。' : '') + 'ちがうときは −／＋ で直してから「記録する！」</p>';
   return '';
 }
 function handRow(h) {
@@ -5652,7 +5642,7 @@ function closeSheet() {
 }
 function recordSheet() {
   const s = sheet, p = s.p, cur = G.cur;
-  /* from 「誰が飲む？」 with several people: the others drink the plain amount, recorded first (NEXT ×2 hits them too) */
+  /* from 「誰がくらう？」 with several people: the others drink the plain amount, recorded first (NEXT ×2 hits them too) */
   let extra = [], fix = null;
   if (s.batch && s.batch.others && s.batch.others.length) {
     const bs = s.batch.bases;
@@ -5706,14 +5696,14 @@ function recordSheet() {
   closeOv('sheetOv');
   saveGame();
   renderGame();
-  own.concat(extra).forEach((it, k) => setTimeout(() => floatAt(it.p, !it.amt ? 'SAFE!' : fix && it.p === p ? fmtAmt(it.amt) + '杯に！' : '+' + fmtAmt(it.amt) + '杯', !it.amt), k * 250));
+  own.concat(extra).forEach((it, k) => setTimeout(() => floatAt(it.p, !it.amt ? 'SAFE!' : fix && it.p === p ? fmtAmt(it.amt) + 'DONに！' : '+' + fmtAmt(it.amt) + 'DON', !it.amt), k * 250));
   if (mx.length) mateFx(mx, 700);
   if (s.dbl) {
     SE.play('double'); flash('#ff8b2b'); shake(false);
     telop('倍倍FIGHT！<small>次の人は×' + G.pending.mult + '</small>', 'pink', 1600);
   } else if (calc.pushes.length) { SE.play('ticket'); telop('押し付け！', 'cyan', 1200); }
   else if (!calc.amt) SE.play('ticket');
-  else if (calc.amt >= 5) { SE.play('hell'); shake(true); telop(fmtAmt(calc.amt) + '杯！！', 'red', 1500); vibrate([80, 40, 120]); }
+  else if (calc.amt >= 5) { SE.play('hell'); shake(true); telop(fmtAmt(calc.amt) + 'DON！！', 'red', 1500); vibrate([80, 40, 120]); }
   else SE.play('gulp');
 }
 function undoLast() {
@@ -5728,7 +5718,7 @@ function undoLast() {
 }
 /* ---------- auto-record: the app records whoever the card names, and asks only when it can't know ----------
    drinkOf(card) (part-head) says how: auto / all / others / least / last = recorded when the card is closed;
-   pick / judge = the 「誰を指名する？」「誰が飲む？」 screen; app = the mini game's result; none = nothing now */
+   pick / judge = the 「誰を指名する？」「誰がくらう？」 screen; app = the mini game's result; none = nothing now */
 const AUTO_MODES = ['auto', 'all', 'others', 'least', 'last'];
 const BEER = ['#ffd83d', '#ffb627', '#fff3b8', '#ffffff'];
 const pcHex = i => getComputedStyle(document.documentElement).getPropertyValue('--p' + ((i % 8) + 1)).trim() || '#ffd83d';
@@ -5761,11 +5751,11 @@ function zoomHint() {
     if (!pl.ps.length) return { auto: true, html: '該当する人がいないので、今回はセーフ' };
     const who = pl.ps.length === n && n > 2 ? '<b>全員</b>' : pl.mode === 'others' ? '<b>' + esc(pname(cur.drawer)) + '以外の全員</b>'
       : pl.ps.length > 2 ? '<b>' + pl.ps.length + '人</b>' : pl.ps.map(p => '<b>' + esc(pname(p)) + '</b>').join('と');
-    return { auto: true, html: '閉じると ' + who + ' に' + pl.base + '杯' + (pl.ps.length > 1 ? 'ずつ' : '') + '、自動で記録します' };
+    return { auto: true, html: '閉じると ' + who + ' に' + pl.base + 'DON' + (pl.ps.length > 1 ? 'ずつ' : '') + '、自動で記録します' };
   }
   if (pl.mode === 'pick') return { auto: true, html: '閉じると「誰を指名する？」画面になります' };
-  if (pl.mode === 'judge' && toolOf(c)) return { auto: true, html: '下のボタンならアプリで遊んで、負けた人を自動で記録。<br>本物の道具で遊ぶなら、閉じると「誰が飲む？」画面' };
-  if (pl.mode === 'judge') return { auto: true, html: timerOf(c) ? 'タイマーのあと「誰が飲む？」画面になります' : '閉じると「誰が飲む？」画面になります' };
+  if (pl.mode === 'judge' && toolOf(c)) return { auto: true, html: '下のボタンならアプリで遊んで、負けた人を自動で記録。<br>本物の道具で遊ぶなら、閉じると「誰がくらう？」画面' };
+  if (pl.mode === 'judge') return { auto: true, html: timerOf(c) ? 'タイマーのあと「誰がくらう？」画面になります' : '閉じると「誰がくらう？」画面になります' };
   if (pl.mode === 'app') {
     const fx = c.fx || '';
     if (fx === 'hh') return { auto: true, html: '下のボタンから天国と地獄を回そう' };
@@ -5829,14 +5819,14 @@ function autoRecord(ps, base, o) {
   }
   return { e, used };
 }
-/* "+1杯" tokens fly from the card to each seat; the seat's total counts up as each one lands.
+/* "+1DON" tokens fly from the card to each seat; the seat's total counts up as each one lands.
    Drinks that follow an インシュメイト fly afterwards, from the partner's seat */
 function flyDrink(it, src, delay, from0, cls) {
   const seatOf = p => document.querySelector('.seat[data-seat="' + p + '"]');
   const seat = seatOf(it.p);
   if (!seat) return;
   const tot = seat.querySelector('.seat-total');
-  if (tot && !reduceMotion) tot.innerHTML = fmtAmt(from0) + '<small>杯</small>';
+  if (tot && !reduceMotion) tot.innerHTML = fmtAmt(from0) + '<small>DON</small>';
   let landed = false;
   const land = () => {
     if (landed) return;
@@ -5862,7 +5852,7 @@ function flyDrink(it, src, delay, from0, cls) {
   const to = relPos(seat);
   const el = document.createElement('div');
   el.className = 'gulp-tok' + (it.amt ? '' : ' safe') + (cls ? ' ' + cls : '');
-  el.innerHTML = it.amt ? '+' + fmtAmt(it.amt) + '<small>杯</small>' : 'SAFE';
+  el.innerHTML = it.amt ? '+' + fmtAmt(it.amt) + '<small>DON</small>' : 'SAFE';
   el.style.opacity = '0';
   $('shell').appendChild(el);
   const w = el.offsetWidth, h = el.offsetHeight, x0 = src.x - w / 2, y0 = src.y - h / 2;
@@ -5900,14 +5890,14 @@ function mateFx(extra, delay, befores) {
   const names = extra.map(it => pname(it.p)).join('・'), amts = extra.map(it => it.amt);
   setTimeout(() => {
     if (screen !== 'game') return;
-    telop('インシュメイト！<small>' + esc(names) + 'も' + (amts.every(a => a === amts[0]) ? fmtAmt(amts[0]) + '杯' : '一緒に') + '</small>', 'pink sm', 1400);
+    telop('インシュメイト！<small>' + esc(names) + 'も' + (amts.every(a => a === amts[0]) ? fmtAmt(amts[0]) + 'DON' : '一緒に') + '</small>', 'pink sm', 1400);
     SE.play('double');
   }, (reduceMotion ? 200 : delay + 900));
 }
 function countUp(seat, from, to) {
   const t = seat.querySelector('.seat-total');
   if (!t) return;
-  const show = v => { t.innerHTML = fmtAmt(v) + '<small>杯</small>'; };
+  const show = v => { t.innerHTML = fmtAmt(v) + '<small>DON</small>'; };
   if (reduceMotion || to <= from) { show(to); return; }
   const unit = Number.isInteger(to - from) ? 1 : 0.5;
   const steps = Math.min(12, Math.max(1, Math.round((to - from) / unit)));
@@ -5920,9 +5910,9 @@ function autoTelop(items, o) {
   const amts = drink.map(it => it.amt), same = amts.every(a => a === amts[0]), max = Math.max.apply(null, amts);
   const nm = p => '<span style="color:' + pc(p) + '">' + esc(pname(p)) + '</span>';
   let html;
-  if (drink.length === n && n > 2) { html = '全員' + (same ? fmtAmt(amts[0]) + '杯！' : 'グイ！') + '<small>カンパーイ！</small>'; FXC.rain(70); SE.play('cat_all', 0.05); }
-  else if (drink.length === 1) html = '<small>' + head + nm(drink[0].p) + '</small>' + fmtAmt(amts[0]) + '杯！';
-  else html = '<small>' + head + (drink.length <= 3 ? drink.map(it => nm(it.p)).join('・') : drink.length + '人') + '</small>' + (same ? fmtAmt(amts[0]) + '杯ずつ！' : 'グイ！');
+  if (drink.length === n && n > 2) { html = '全員' + (same ? fmtAmt(amts[0]) + 'DON！' : 'DON！') + '<small>DON!!</small>'; FXC.rain(70); SE.play('cat_all', 0.05); }
+  else if (drink.length === 1) html = '<small>' + head + nm(drink[0].p) + '</small>' + fmtAmt(amts[0]) + 'DON！';
+  else html = '<small>' + head + (drink.length <= 3 ? drink.map(it => nm(it.p)).join('・') : drink.length + '人') + '</small>' + (same ? fmtAmt(amts[0]) + 'DONずつ！' : 'DON！');
   if (max >= 5) { SE.play('hell'); shake(true); telop(html, 'red sm', 1500); }
   else { SE.play('gulp'); telop(html, 'sm', 1300); }
 }
@@ -5957,7 +5947,7 @@ function turnTask() {
   const dw = durWaiting(true);
   if (dw) return { title: 'まだ「' + (dw[1].title || '指名') + '」を指名していません', text: '指名しないで次の人へ進む？（あとで上の帯からも選べます）', go: 'durpick', goLabel: '指名する', skip: '指名しないで次へ' };
   if (!cur.card || recordedThisTurn()) return null;
-  if (needsPick()) return { title: 'まだ飲む人を記録していません', text: 'このカードで飲んだ人は、いなかった？', go: 'decide', goLabel: '飲む人を選ぶ', skip: '誰も飲まなかった' };
+  if (needsPick()) return { title: 'まだくらう人を記録していません', text: 'このカードでくらった人は、いなかった？', go: 'decide', goLabel: 'くらう人を選ぶ', skip: '誰もくらわなかった' };
   if (drinkOf(cur.card) === 'app') {
     const a = cardActs().find(x => GAME_NAMES[x[0]] || (x[0] === 'tool' && PARTY_FX.includes(cur.card.fx)));
     if (a) return { title: 'まだ「' + (a[0] === 'chal' && CHAL[cur.card.fx] ? CHAL[cur.card.fx].title : a[0] === 'tool' ? TOOL_INFO[cur.card.fx].title : GAME_NAMES[a[0]]) + '」をやっていません', text: 'やらずに次の人へ進む？', go: a[0], goLabel: 'やる！', skip: 'やらずに次へ' };
@@ -5973,20 +5963,20 @@ function openNextAsk(t) {
   const b = $('nextBox').querySelector('[data-nx="go"]'); if (b) b.focus({ preventScroll: true });
 }
 
-/* ---------- 「誰を指名する？」「誰が飲む？」: choose people, then [飲む！] or [特殊ルール・券] ----------
-   kind pick: exactly N people (the namer is shown; 「一緒に」 cards keep the namer in). judge: anyone, or 誰も飲まなかった.
+/* ---------- 「誰を指名する？」「誰がくらう？」: choose people, then [DON！] or [特殊ルール・券] ----------
+   kind pick: exactly N people (the namer is shown; 「一緒に」 cards keep the namer in). judge: anyone, or 誰もくらわなかった.
    free: 追加で記録 (rule breaks …). who: one person out of a list, for 特殊ルール・券 */
-/* built-in cards where people drink different amounts. The 「誰が飲む？」 screen starts each person at the right amount
+/* built-in cards where people drink different amounts. The 「誰がくらう？」 screen starts each person at the right amount
    (only while the card is exactly as shipped — a rewritten card falls back to tapping to set each amount).
-   split: 1人なら多い方、2人以上なら少ない方ずつ ・ role: 引いた人とそれ以外で量がちがう ・ pre: はじめから選んでおく（目をそらした方はもう1回タップで +1杯） */
+   split: 1人なら多い方、2人以上なら少ない方ずつ ・ role: 引いた人とそれ以外で量がちがう ・ pre: はじめから選んでおく（目をそらした方はもう1回タップで +1DON） */
 const AMT_RULES = {
-  13: { text: '{引いた人}は2杯。{左隣}が肩代わりを申し出たら、2人で1杯ずつに分けられる', split: true },
-  14: { text: '{引いた人}と{ランダム}は目を合わせたまま1杯グイ。先に目をそらした方はもう1杯', pre: true },
-  30: { text: '{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1杯ずつ、1回でも負けたら{引いた人}が2杯', role: { drawer: 2, other: 1 } },
-  40: { text: '{引いた人}が1人を指名してジャンケン。勝てば相手が2杯、負ければ自分が1杯', role: { drawer: 1, other: 2 } },
+  13: { text: '{引いた人}は2DON。{左隣}が肩代わりを申し出たら、2人で1DONずつに分けられる', split: true },
+  14: { text: '{引いた人}と{ランダム}でにらめっこ。2人とも1DON、先に笑った方はもう1DON', pre: true },
+  30: { text: '{引いた人}が{左隣}、{右隣}の順にジャンケン。2連勝なら2人が1DONずつ、1回でも負けたら{引いた人}が2DON', role: { drawer: 2, other: 1 } },
+  40: { text: '{引いた人}が1人を指名してジャンケン。勝てば相手が2DON、負ければ自分が1DON', role: { drawer: 1, other: 2 } },
 };
 const amtRule = c => { const r = c && AMT_RULES[c.id]; return r && r.text === c.text ? r : null; };
-/* the amount a seat's own record sheet starts at for this card (No.13: the drawer alone drinks 2杯 …) */
+/* the amount a seat's own record sheet starts at for this card (No.13: the drawer alone drinks 2DON …) */
 function cardDef(c, p) {
   if (!c || !c.cups.length) return 1;
   const r = amtRule(c);
@@ -6033,7 +6023,7 @@ function closeDecide() {
   if (G && screen === 'game') { renderDock(); renderLog(); }
 }
 const decidePicks = d => d.sel.filter(p => !d.lock.includes(p)).length;
-/* each person's amount in 「誰が飲む？」: set by tapping (range cards), else the card's rule, else the one amount for everyone */
+/* each person's amount in 「誰がくらう？」: set by tapping (range cards), else the card's rule, else the one amount for everyone */
 function decideBase(d, p) {
   if (d.per && d.per[p] != null) return d.per[p];
   const r = d.rule;
@@ -6053,11 +6043,11 @@ function renderDecide() {
   if (who) { title = '特殊ルール・券を使うのは？'; sub = d.kind === 'who' ? 'タップすると、その人の記録画面が開きます' : 'ほかの人は、そのまま一緒に記録されます'; }
   else if (d.kind === 'pick') {
     title = '誰を指名する？';
-    sub = '<b>' + esc(pname(d.by)) + '</b> が指名した人をタップ' + (d.need > 1 ? '（' + d.need + '人）' : '') + (d.self ? '<br>' + esc(pname(d.by)) + 'も一緒に飲みます' : '');
-  } else if (d.kind === 'judge') { title = '誰が飲む？'; sub = '負けた人・当てはまった人をタップ（何人でもOK）'; }
+    sub = '<b>' + esc(pname(d.by)) + '</b> が指名した人をタップ' + (d.need > 1 ? '（' + d.need + '人）' : '') + (d.self ? '<br>' + esc(pname(d.by)) + 'も一緒にくらいます' : '');
+  } else if (d.kind === 'judge') { title = '誰がくらう？'; sub = '負けた人・当てはまった人をタップ（何人でもOK）'; }
   else if (d.kind === 'rule') { title = '違反したのは？'; sub = '違反した人をタップ（何人でもOK） ・ このルールはあと<b>' + d.item.left + '</b>ターン'; }
   else if (d.kind === 'durpick') { title = '誰を指名する？'; sub = '<b>' + esc(pname(d.by)) + '</b> が「' + esc(d.item.title || '指名') + '」に指名した人をタップ'; }
-  else { title = '追加で記録'; sub = 'ルール違反などで飲む人をタップ（何人でもOK）'; }
+  else { title = '追加で記録'; sub = 'ルール違反などでくらう人をタップ（何人でもOK）'; }
   const roleOf = i => (c && cur.names ? ROLE_ORDER.filter(k => cur.names[k] === i) : []);
   const btn = i => {
     const on = !who && d.sel.includes(i), r = roleOf(i);
@@ -6069,26 +6059,26 @@ function renderDecide() {
     const cand = !who && (d.kind === 'judge' || d.kind === 'rule') && (d.cands || []).includes(i);
     return '<button type="button" class="dc-p' + (cand ? ' cand' : '') + (d.lock.includes(i) ? ' locked' : '') + '" data-d="' + (who ? 'who' : 'sel') + '" data-i="' + i + '" aria-pressed="' + on + '" style="--p:' + pc(i) + '"' + (off ? ' disabled' : '') + '>' + tag +
       '<span class="dot"></span><span class="dc-nm">' + esc(pname(i)) + '</span>' + tk +
-      (on && d.kind !== 'durpick' ? '<span class="dc-amt">' + (amt ? fmtAmt(amt) + '<small>杯</small>' : 'SAFE') + '</span>' : '') +
+      (on && d.kind !== 'durpick' ? '<span class="dc-amt">' + (amt ? fmtAmt(amt) + '<small>DON</small>' : 'SAFE') + '</span>' : '') +
       (on && (d.kind === 'pick' || d.kind === 'durpick') && !d.lock.includes(i) ? '<span class="dc-stamp">指名！</span>' : on && d.kind === 'rule' ? '<span class="dc-stamp">違反！</span>' : '') + '</button>';
   };
   const pend = !who && pendingActive() ? '<p class="dc-note">NEXT ' + (G.pending.mult !== 1 ? '×' + G.pending.mult : '') + (G.pending.half ? (G.pending.mult !== 1 ? '・' : '') + '半分' : '') + ' は、選んだ人全員にかかります</p>' : '';
   const naming = d.kind === 'durpick';
-  const amtRow = who || naming || decideRange(d) ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1杯減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
-    '<span class="amt-base"><b>' + d.base + '</b><small>1人あたりの杯数</small></span>' +
-    '<button type="button" class="stepper" data-d="plus" aria-label="1杯増やす"' + (d.base >= 99 ? ' disabled' : '') + '>＋</button></div>';
+  const amtRow = who || naming || decideRange(d) ? '' : '<div class="amt-row"><button type="button" class="stepper" data-d="minus" aria-label="1DON減らす"' + (d.base <= 1 ? ' disabled' : '') + '>−</button>' +
+    '<span class="amt-base"><b>' + d.base + '</b><small>1人あたりのDON数</small></span>' +
+    '<button type="button" class="stepper" data-d="plus" aria-label="1DON増やす"' + (d.base >= 99 ? ' disabled' : '') + '>＋</button></div>';
   const r = d.rule;
-  const lead = !r ? 'このカードは<b>' + d.lo + '〜' + d.hi + '杯</b>。' : r.split ? '1人なら<b>' + d.hi + '杯</b>、2人で分けたら<b>' + d.lo + '杯ずつ</b>。'
-    : r.pre ? '2人とも<b>' + d.lo + '杯</b>。目をそらした方は、もう一度タップで<b>' + d.hi + '杯</b>。'
-    : r.role ? '<b>' + esc(pname(cur.drawer)) + 'は' + r.role.drawer + '杯</b>、相手は<b>' + r.role.other + '杯</b>。' : '';
-  const range = who ? '' : decideRange(d) ? '<p class="sh-hint">' + lead + (r && r.pre ? '' : (r ? 'ちがうときは、' : '') + '選んだ人をもう一度タップすると<b>+1杯</b>') + '（' + d.hi + '杯の次は外れる）</p>'
-    : c && c.cups.length > 1 && d.kind === 'pick' ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + '杯</b>。−／＋で合わせてね</p>' : '';
+  const lead = !r ? 'このカードは<b>' + d.lo + '〜' + d.hi + 'DON</b>。' : r.split ? '1人なら<b>' + d.hi + 'DON</b>、2人で分けたら<b>' + d.lo + 'DONずつ</b>。'
+    : r.pre ? '2人とも<b>' + d.lo + 'DON</b>。先に笑った方は、もう一度タップで<b>' + d.hi + 'DON</b>。'
+    : r.role ? '<b>' + esc(pname(cur.drawer)) + 'は' + r.role.drawer + 'DON</b>、相手は<b>' + r.role.other + 'DON</b>。' : '';
+  const range = who ? '' : decideRange(d) ? '<p class="sh-hint">' + lead + (r && r.pre ? '' : (r ? 'ちがうときは、' : '') + '選んだ人をもう一度タップすると<b>+1DON</b>') + '（' + d.hi + 'DONの次は外れる）</p>'
+    : c && c.cups.length > 1 && d.kind === 'pick' ? '<p class="sh-hint">このカードは<b>' + c.cups[0] + '〜' + c.cups[1] + 'DON</b>。−／＋で合わせてね</p>' : '';
   const names = d.sel.slice().sort((a, b) => a - b).map(i => pname(i)).join('・');
   const acts = who ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-d="back">' + (d.kind === 'who' ? 'とじる' : 'もどる') + '</button></div>'
     : naming ? '<div class="dc-acts"><button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '決定！<span class="sub">' + esc(names) + '</span>' : '指名してね') + '</button></div>'
     : '<div class="dc-acts">' +
-      '<button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? '飲む！<span class="sub">' + esc(names) + '</span>' : d.kind === 'pick' ? '指名してね' : '飲む人をタップ') + '</button></div>';
-  const none = !who && d.kind === 'judge' ? '<button type="button" class="dc-none" data-d="none">誰も飲まなかった</button>' : '';
+      '<button type="button" class="pbtn main" id="decideGo" data-d="go"' + (ready ? '' : ' disabled') + '>' + (ready ? 'DON！<span class="sub">' + esc(names) + '</span>' : d.kind === 'pick' ? '指名してね' : 'くらう人をタップ') + '</button></div>';
+  const none = !who && d.kind === 'judge' ? '<button type="button" class="dc-none" data-d="none">誰もくらわなかった</button>' : '';
   $('decideBox').innerHTML = '<div class="dc-head"><h2 id="decideTitle">' + title + '</h2><button type="button" class="dc-later" data-d="later">' + (who && d.kind !== 'who' ? 'もどる' : who ? 'とじる' : 'あとで') + '</button></div>' +
     (d.item && !who ? '<p class="dc-card">' + esc(d.item.text) + '</p>' + wordsBtn(d.item.text) : c && !who && d.kind !== 'free' ? '<p class="dc-card">' + fillGame(c.text) + '</p>' + wordsBtn(c.text) : '') +
     '<p class="dc-sub">' + sub + '</p><div class="dc-players">' + list.map(btn).join('') + '</div>' + pend + amtRow + range + acts + none;
@@ -6097,7 +6087,7 @@ function decideSel(i) {
   const d = decide;
   if (d.lock.includes(i)) { SE.play('tap'); return; }
   const k = d.sel.indexOf(i);
-  /* range cards: another tap on someone chosen adds 1杯, up to the most the card says; then they come off */
+  /* range cards: another tap on someone chosen adds 1DON, up to the most the card says; then they come off */
   if (k >= 0 && decideRange(d) && decideBase(d, i) < d.hi) {
     d.per[i] = decideBase(d, i) + 1;
     renderDecide(); SE.play('pop');
@@ -6159,7 +6149,7 @@ function decideNone() {
   saveGame();
   renderGame();
   SE.play('ticket');
-  telop('セーフ！<small>誰も飲まなかった</small>', 'lime sm', 1300);
+  telop('セーフ！<small>誰もくらわなかった</small>', 'lime sm', 1300);
 }
 
 /* ---------- 「特殊ルールを使う？」: right after a drink is counted, the drinker chooses 倍倍FIGHT！ / 天国と地獄 / a ticket, or just drinks.
@@ -6201,15 +6191,15 @@ function renderAsk() {
     const btn = p => {
       const on = A.sel.includes(p);
       return '<button type="button" class="dc-p" data-a="sel" data-i="' + p + '" aria-pressed="' + on + '" style="--p:' + pc(p) + '"><span class="dot"></span><span class="dc-nm">' + esc(pname(p)) + '</span>' +
-        (usableTickets(p).length ? '<span class="dc-tk">券あり</span>' : '') + '<span class="dc-amt">' + fmtAmt(askAmt(p)) + '<small>杯</small></span>' +
+        (usableTickets(p).length ? '<span class="dc-tk">券あり</span>' : '') + '<span class="dc-amt">' + fmtAmt(askAmt(p)) + '<small>DON</small></span>' +
         (on ? '<span class="dc-stamp">使う！</span>' : '') + '</button>';
     };
     box.innerHTML = '<div class="dc-head"><h2 id="askTitle">特殊ルールを使う人はいる？</h2></div>' +
       '<p class="dc-sub">倍倍FIGHT！・天国と地獄・券を使う人をタップ<br>2人以上なら、使う順番はランダムで決めます</p>' +
       '<div class="dc-players">' + A.ps.map(btn).join('') + '</div>' +
       (A.sel.length
-        ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-a="none">いない！<span class="sub">全員素直に飲む</span></button><button type="button" class="pbtn main" data-a="use">' + A.sel.length + '人が使う！</button></div>'
-        : '<div class="dc-acts"><button type="button" class="pbtn main" data-a="none">いない！ 全員素直に飲む</button></div>');
+        ? '<div class="dc-acts"><button type="button" class="pbtn white small" data-a="none">いない！<span class="sub">全員そのままくらう</span></button><button type="button" class="pbtn main" data-a="use">' + A.sel.length + '人が使う！</button></div>'
+        : '<div class="dc-acts"><button type="button" class="pbtn main" data-a="none">いない！ 全員そのままくらう</button></div>');
     return;
   }
   if (A.step === 'order') {
@@ -6221,14 +6211,14 @@ function renderAsk() {
   const chained = askChained(A.k, p), plain = chained ? calc({}) : amt;
   const tks = usableTickets(p);
   box.innerHTML = '<div class="dc-head"><h2 id="askTitle">特殊ルールを使う？</h2>' + (A.order.length > 1 ? '<span class="ask-step">' + (A.k + 1) + ' / ' + A.order.length + '人目</span>' : '') + '</div>' +
-    '<p class="ask-who"><span class="sh-name" style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>は<b>' + fmtAmt(amt) + '<small>杯</small></b></p>' +
+    '<p class="ask-who"><span class="sh-name" style="--p:' + pc(p) + '">' + esc(pname(p)) + '</span>は<b>' + fmtAmt(amt) + '<small>DON</small></b></p>' +
     (chained ? '<p class="dc-note">' + esc(pname(G.pending.from)) + 'の倍倍FIGHT！で ×' + G.pending.mult + ' がかかります</p>' : '') +
     '<div class="specials ask-sp">' +
-      '<button type="button" class="sp sp-dbl" data-a="dbl"' + (used ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分は ' + fmtAmt(calc({ dbl: true })) + '杯、次に飲む人も×2</span></button>' +
+      '<button type="button" class="sp sp-dbl" data-a="dbl"' + (used ? ' disabled' : '') + '><span class="sp-t">倍倍FIGHT！</span><span class="sp-d">自分は ' + fmtAmt(calc({ dbl: true })) + 'DON、次にくらう人も×2</span></button>' +
       '<button type="button" class="sp sp-hh" data-a="hh"' + (used ? ' disabled' : '') + '><span class="sp-t">天国と地獄</span><span class="sp-d">回避か2倍か、ルーレットで勝負</span></button></div>' +
     (used ? '<p class="note-s">このターンは特殊ルールを使用済み（券は使えます）</p>' : '') +
     (tks.length ? '<div class="pick-players ask-tk">' + tks.map(h => '<button type="button" class="tk" data-a="tk" data-uid="' + h.uid + '">' + esc(h.text) + 'を使う</button>').join('') + '</div>' : '') +
-    '<button type="button" class="pbtn big main ask-none" data-a="none">使わない！ 素直に' + fmtAmt(plain) + '杯</button>';
+    '<button type="button" class="pbtn big main ask-none" data-a="none">使わない！ 素直に' + fmtAmt(plain) + 'DON</button>';
   const b = box.querySelector('.ask-none'); if (b) b.focus({ preventScroll: true });
 }
 function askShuffle() {
@@ -6335,7 +6325,7 @@ function ruleBadge(text, fx) {
   if (!m) return null;
   const ph = m[1].trim(), q = ph.match(/^(.*?)「([^」]+)」/);
   if (q) return (q[1].replace(/[にをがはで]$/, '').slice(-3)) + q[2];
-  if (fx === 'half') return '飲む量半分';
+  if (fx === 'half') return 'DON半分';
   if (fx === 'nodouble') return '倍倍なし';
   if (/ソフトドリンク/.test(ph)) return 'ソフドリ';
   return ph.length <= 8 ? ph : ph.slice(0, 7) + '…';
@@ -6388,7 +6378,7 @@ function renderRules() {
     const cups = ruleCups(h);
     return '<button type="button" class="' + cls.join(' ') + '" data-rule="' + h.uid + '" style="--c:' + colorVar(h.color) + ';--p:' + pc(i) + '" aria-label="' + esc(ruleLabel(i, h)) + '（' + ruleAge(h) + 'ターン目・いつ消えるかはランダム）' + (cups ? '。タップで違反を記録' : '') + '">' +
       '<span class="gr-mk">' + esc(h.mark || '継') + '</span><span class="gr-t">' + chipLabel(i, h) + '</span>' +
-      (cups > 1 ? '<span class="gr-cup">' + cups + '杯</span>' : '') +
+      (cups > 1 ? '<span class="gr-cup">' + cups + 'DON</span>' : '') +
       '<span class="gr-left">' + ruleAge(h) + 'ターン目</span></button>';
   }).join('') + '</div>';
 }
@@ -6402,14 +6392,14 @@ function ruleTap(uid) {
   else openRuleInfo(i, h);
 }
 function openRuleInfo(i, h) {
-  const extra = h.mate ? 'どちらかが飲むと、もう片方にも<b>同じ量が自動で記録</b>されます。'
-    : h.fx === 'half' ? '<b>' + esc(pname(i)) + '</b>の飲む量は、記録するとき自動で半分になります。'
+  const extra = h.mate ? 'どちらかがくらうと、もう片方にも<b>同じ量が自動で記録</b>されます。'
+    : h.fx === 'half' ? '<b>' + esc(pname(i)) + '</b>のDONは、記録するとき自動で半分になります。'
     : h.fx === 'nodouble' ? '<b>' + esc(pname(i)) + '</b>は、倍倍FIGHT！の「次の人×2」がかかりません（自動）。'
     : h.pick && h.who != null ? '「' + esc(h.title) + '」は <b>' + esc(pname(h.who)) + '</b>。' : '';
   $('infoBox').innerHTML = '<h2 id="infoTitle">継続中のルール</h2><p class="back-card">' + esc(h.text) + '</p>' +
     (extra ? '<p class="note-s">' + extra + '</p>' : '') + wordsNote(h.text) +
     '<p class="note-s"><span class="sh-mini" style="--p:' + pc(i) + '">' + esc(pname(i)) + '</span>が引いたカード ・ <b>' + ruleAge(h) + '</b>ターン目</p>' +
-    '<p class="note-s">4〜10ターンのどこかで<b>突然消えます</b>。消えた瞬間、次にカードを引く人が<b>1杯</b>！</p>' +
+    '<p class="note-s">4〜10ターンのどこかで<b>突然消えます</b>。消えた瞬間、次にカードを引く人が<b>1DON</b>！</p>' +
     '<div class="dialog-acts"><button type="button" class="pbtn small" data-if="close">閉じる</button></div>';
   openOv('infoOv');
   SE.play('pop');
@@ -6425,7 +6415,7 @@ function setDurPick(i, h, p) {
   SE.play('bigheaven');
   if (h.mate) telop('<small>' + esc(pname(i)) + ' ⇄ ' + esc(pname(p)) + '</small>' + esc(h.title) + '結成！', 'pink sm', 1600);
   else telop('<small>' + esc(pname(p)) + '</small>「' + esc(h.title) + '」に決定！', 'pink sm', 1500);
-  if (h.mate) setTimeout(() => { if (screen === 'game') telop('どちらかが飲むと<br><b>もう片方にも自動で記録</b>されます', 'hint', 2600); }, 1700);
+  if (h.mate) setTimeout(() => { if (screen === 'game') telop('どちらかがくらうと<br><b>もう片方にも自動で記録</b>されます', 'hint', 2600); }, 1700);
 }
 
 /* ---------- インシュメイト: whenever one of a linked pair drinks, the other gets the same amount (once per record; chains follow) ---------- */
@@ -6467,7 +6457,7 @@ function doSwap(i) {
   saveGame(); renderGame();
   SE.play('coin'); SE.play('double', 0.05);
   telop('記録チェンジ！', 'cyan', 1300);
-  floatAt(d, fmtAmt(G.players[d].total) + '杯'); floatAt(i, fmtAmt(G.players[i].total) + '杯');
+  floatAt(d, fmtAmt(G.players[d].total) + 'DON'); floatAt(i, fmtAmt(G.players[i].total) + 'DON');
 }
 function doGive(i) {
   const cur = G.cur, s = snap();
@@ -6501,7 +6491,7 @@ function openHand(i) {
   const pl = G.players[i];
   $('handBox').innerHTML = '<h2 id="handTitle"><span class="sh-name" style="--p:' + pc(i) + '">' + esc(pl.name) + '</span> の手札</h2>' +
     (pl.hand.length ? '<div class="hand-list">' + pl.hand.map(h => handRow(h)).join('') + '</div>' : '<p>手札はありません。</p>') +
-    '<p class="note-s">' + fmtAmt(pl.total) + '杯 ・ 倍倍FIGHT！' + pl.dbl + '回 ・ 天国と地獄' + pl.hh + '回 ・ コスパ' + pl.cospa + '回</p>' +
+    '<p class="note-s">' + fmtAmt(pl.total) + 'DON ・ 倍倍FIGHT！' + pl.dbl + '回 ・ 天国と地獄' + pl.hh + '回 ・ コスパ' + pl.cospa + '回</p>' +
     '<div class="dialog-acts"><button type="button" class="pbtn small" data-hand="close">閉じる</button></div>';
   openOv('handOv');
   SE.play('pop');
@@ -6879,7 +6869,7 @@ function openChallenge() {
   chal.q = CHAL[chal.kind].setup ? CHAL[chal.kind].setup() : {};
   useMini('chal');
   $('chalWho').innerHTML = '<span class="sh-name" style="--p:' + pc(chal.p) + '">' + esc(pname(chal.p)) + '</span> の挑戦！';
-  $('chalStake').innerHTML = '<span>クリア → <b class="ok">回避</b></span><span>失敗 → <b class="ng">' + chal.cups + '杯</b></span>';
+  $('chalStake').innerHTML = '<span>クリア → <b class="ok">回避</b></span><span>失敗 → <b class="ng">' + chal.cups + 'DON</b></span>';
   $('chalOv').className = 'ov chal-ov';
   $('chalActs').innerHTML = '';
   openOv('chalOv');
@@ -6934,10 +6924,10 @@ function chalEnd(ok, detail) {
   cur.drinks.push({ kind: 'chal', snap: s, p: c.p, ok, items: ok ? [{ p: c.p, amt: 0 }] : [] });
   saveGame();
   $('chalStage').insertAdjacentHTML('beforeend', '<div class="cg-result ' + (ok ? 'ok' : 'ng') + '"><p class="cg-stamp ol">' + (ok ? 'クリア！' : '失敗…') + '</p>' +
-    '<p class="cg-detail">' + esc(detail || '') + '</p><p class="cg-verdict">' + (ok ? '回避成功！ 飲まなくてOK' : esc(pname(c.p)) + 'は ' + c.cups + '杯！') + '</p></div>');
+    '<p class="cg-detail">' + esc(detail || '') + '</p><p class="cg-verdict">' + (ok ? '回避成功！ DONなしでOK' : esc(pname(c.p)) + 'は ' + c.cups + 'DON！') + '</p></div>');
   $('chalOv').classList.add(ok ? 'win' : 'lose');
   $('chalActs').innerHTML = ok ? '<button type="button" class="pbtn big main" data-c="close">OK！</button>'
-    : '<button type="button" class="pbtn big main" data-c="rec">OK！ ' + c.cups + '杯を記録</button>';
+    : '<button type="button" class="pbtn big main" data-c="rec">OK！ ' + c.cups + 'DONを記録</button>';
   BGM.level(0.15, 0.05);
   if (ok) {
     SE.play('bigheaven'); flash('#ffffff'); vibrate([60, 40, 60]);
@@ -7231,7 +7221,7 @@ function playHilo(st) {
 }
 
 /* ---------- 爆弾パス回し: topic draw, ignite, pass clockwise; a hidden 12–40 s fuse; whoever holds it at the blast drinks ---------- */
-const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', 'お酒の種類', '居酒屋のおつまみ',
+const BOMB_TOPICS = ['果物の名前', '野菜の名前', '動物の名前', '魚の名前', '鳥の名前', '国の名前', '都道府県', '山手線の駅', '飲み物の種類', 'お菓子の名前',
   'コンビニで買えるもの', '赤いもの', '白いもの', '丸いもの', '冷たいもの', '甘いもの', 'キッチンにあるもの', '学校にあるもの', '夏といえば', '冬といえば',
   'スポーツ', '楽器', '乗り物', 'お菓子', '寿司ネタ', 'ラーメンの具', '色の名前', '花の名前', '職業', '体の部位', '家電', '世界の首都',
   '「あ」から始まる言葉', '「か」から始まる言葉', 'カタカナ3文字の言葉', 'ゆるキャラ・マスコット'];
@@ -8004,7 +7994,7 @@ function toolBowl(T) {
 }
 
 /* ---------- 道具ゲーム: チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツ in the app. The loser is recorded automatically.
-   (Playing with real tools still works: close the card and choose in 「誰が飲む？」) ---------- */
+   (Playing with real tools still works: close the card and choose in 「誰がくらう？」) ---------- */
 const TOOL_INFO = {
   chinchiro: { title: 'チンチロ', act: 'アプリでチンチロ！', cls: 'chin', stake: 'いちばん弱い役の人が' },
   react: { title: '早押し', act: '早押しスタート！', cls: 'react', stake: 'いちばん遅い人が（フライングも負け）' },
@@ -8621,7 +8611,7 @@ function chinHand(d) {
 function chinSetup() {
   const T = tool;
   T.hands = [];
-  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + amtTxt(T.base) + '</b><small>ピンゾロ×5・ゾロ目×3・シゴロ×2・ヒフミ×2<br>出たら負けた人の' + (isMini() ? 'カウント' : '杯数') + 'にかかる（重なったら掛け算）</small></p>' +
+  $('toolStage').innerHTML = '<p class="tl-stake">いちばん弱い役の人が <b>' + amtTxt(T.base) + '</b><small>ピンゾロ×5・ゾロ目×3・シゴロ×2・ヒフミ×2<br>出たら負けた人の' + (isMini() ? 'カウント' : 'DON数') + 'にかかる（重なったら掛け算）</small></p>' +
     '<div class="cc-list' + (T.ps.length > 4 ? ' two' : '') + '">' + T.ps.map((p, j) =>
     '<div class="cc-row" id="ccR' + j + '" style="--p:' + pc(p) + '"><span class="cc-nm">' + esc(pname(p)) + '</span><b class="cc-hand" id="ccH' + j + '">—</b></div>').join('') + '</div>' +
     '<div class="dice3d" id="tlBowl"></div><p class="tm-sub" id="toolSub"></p>';
@@ -9040,12 +9030,12 @@ function mineBlast(T, i, el) {
   partyLose(950 + rest.length * 230);
 }
 
-/* ドクロめくり: 16 face-down cards — 1 skull, two "+1杯" (each makes the skull 1 cup heavier), the rest SAFE.
+/* ドクロめくり: 16 face-down cards — 1 skull, two "+1DON" (each makes the skull 1 cup heavier), the rest SAFE.
    On your turn flip as many as you dare (at least one), then hand it on */
 const SK_N = 16;
 const SK_FACE = {
   safe: '<div class="sk-face safe"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#2fbf71" stroke="#150733" stroke-width="2.5"/><path d="M12 20.5l5.5 5.5L29 14.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>SAFE</b></div>',
-  plus: '<div class="sk-face plus"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3c3 7 11 10 11 20a11 11 0 0 1-22 0c0-5 3-8 5-10 0 4 2 6 4 6-2-6 0-12 2-16z" fill="#ff5a1f" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><path d="M20 20c2 3 5 4 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#ffd23f"/></svg><b>+1杯</b></div>',
+  plus: '<div class="sk-face plus"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3c3 7 11 10 11 20a11 11 0 0 1-22 0c0-5 3-8 5-10 0 4 2 6 4 6-2-6 0-12 2-16z" fill="#ff5a1f" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><path d="M20 20c2 3 5 4 5 8a5 5 0 0 1-10 0c0-3 3-5 5-8z" fill="#ffd23f"/></svg><b>+1DON</b></div>',
   skull: '<div class="sk-face skull"><svg viewBox="0 0 40 40" aria-hidden="true"><g stroke-linecap="round"><path d="M6 33L34 9M6 9l28 24" stroke="#150733" stroke-width="7.5"/><path d="M6 33L34 9M6 9l28 24" stroke="#f1ece0" stroke-width="4.5"/></g>' +
     '<path d="M20 4.5c-8 0-13 5.5-13 12.5 0 4 2 6.6 4.6 8.2V30h16.8v-4.8C31 23.6 33 21 33 17 33 10 28 4.5 20 4.5z" fill="#f6f1e4" stroke="#150733" stroke-width="2.2"/>' +
     '<circle class="sk-eye" cx="15" cy="17" r="3.8" fill="#ff2a3a"/><circle class="sk-eye" cx="25" cy="17" r="3.8" fill="#ff2a3a"/><path d="M20 21l-2.2 4h4.4z" fill="#150733"/>' +
@@ -9053,7 +9043,7 @@ const SK_FACE = {
 };
 PARTY.skull = {
   init(T) { T.faces = shuffle(['skull', 'plus', 'plus'].concat(Array(SK_N - 3).fill('safe'))); T.open = []; },
-  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・' + (isMini() ? '+1' : '+1杯') + 'が2枚 ・ 何枚めくってもOK',
+  info: T => 'のこり <b>' + (SK_N - T.open.length) + '</b>枚 ・ ドクロ1枚・' + (isMini() ? '+1' : '+1DON') + 'が2枚 ・ 何枚めくってもOK',
   buttons: T => '<button type="button" class="pbtn big main pg-pass sk-pass" data-tl="pass"' + (T.acts ? '' : ' disabled') + '>' + (T.acts ? T.acts + '枚めくった！ 次の人へ ▶' : '1枚以上めくってね') + '</button>',
   art() {
     let h = '<div class="sk-grid">';
@@ -9065,7 +9055,7 @@ PARTY.skull = {
     T.busy = true; T.open.push(i); T.acts++; el.disabled = true;
     toolActs(TOOL_CLOSE, false);
     const f = T.faces[i], box = $('skC' + i);
-    box.querySelector('.flip-f').innerHTML = isMini() ? SK_FACE[f].replace('+1杯', '+1') : SK_FACE[f];
+    box.querySelector('.flip-f').innerHTML = isMini() ? SK_FACE[f].replace('+1DON', '+1') : SK_FACE[f];
     const unseen = SK_N - T.open.length + 1, risk = 1 / unseen;
     const lv = risk >= 0.25 ? 2 : risk >= 0.12 ? 1 : 0, hold = [560, 900, 1350][lv];
     el.classList.add('lift', 'risk' + lv); SE.play('skLift');
@@ -9095,7 +9085,7 @@ function skullResult(T, f, el) {
     T.cups++;
     partyStake(); tmPop($('pgCups'));
     SE.play('skPlus');
-    telop((isMini() ? '+1！' : '+1杯！') + '<small>ドクロが重くなった…</small>', 'sm', 1200);
+    telop((isMini() ? '+1！' : '+1DON！') + '<small>ドクロが重くなった…</small>', 'sm', 1200);
   } else SE.play('skSafe');
   /* still your turn: flip another, or hand it on */
   T.busy = false;
@@ -9332,7 +9322,7 @@ async function resultImage(hide) {
   const maxK = key(order[0]), minK = key(order[order.length - 1]), spread = maxK > minK;
   const names = order.map(p => (hide ? 'プレイヤー' + (p.i + 1) : String(p.name)));
   try {
-    await Promise.all([document.fonts.load('80px "Dela Gothic One"', APP_NAME + '結果発表0123456789杯'), document.fonts.load('800 44px "M PLUS Rounded 1c"', names.join('') + '不運王セーフ王無敗')]);
+    await Promise.all([document.fonts.load('80px "Dela Gothic One"', APP_NAME + '結果発表0123456789DON'), document.fonts.load('800 44px "M PLUS Rounded 1c"', names.join('') + '不運王セーフ王無敗')]);
   } catch (_) { /* the fallback fonts are fine */ }
   const ink = cssVar('--ink', '#150733'), paper = cssVar('--paper', '#fffaf0'), yellow = cssVar('--yellow', '#ffd83d'), pink = cssVar('--pink', '#ff4fa3'), cyan = cssVar('--cyan', '#35e0ff');
   /* background: deep purple with rays from the top, like the app */
@@ -9373,13 +9363,13 @@ async function resultImage(hide) {
     c.font = '800 34px ' + BODY; const bw = c.measureText('不運王').width + 40;
     c.fillStyle = pink; rrect(cardX + 40, c, y + 30, bw, 54, 27); c.fill(); c.lineWidth = 5; c.strokeStyle = ink; c.stroke();
     c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('不運王', cardX + 40 + bw / 2, y + 58);
-    c.font = '800 28px ' + BODY; c.fillStyle = ink; c.textAlign = 'left'; c.fillText(mini ? 'いちばん負けたのは…' : 'いちばん飲んだのは…', cardX + 60 + bw, y + 58);
+    c.font = '800 28px ' + BODY; c.fillStyle = ink; c.textAlign = 'left'; c.fillText(mini ? 'いちばん負けたのは…' : 'いちばんDONをくらったのは…', cardX + 60 + bw, y + 58);
     /* total on the right */
     const tt = totalOf(p), right = cardX + cardW - 44;
     c.textBaseline = 'alphabetic'; c.textAlign = 'right';
-    c.font = '800 46px ' + BODY; const cw = c.measureText('杯').width;
+    c.font = '800 46px ' + BODY; const cw = c.measureText('DON').width;
     const tBase = unitOf(G) !== 'cup' ? y + h - 64 : y + h - 40;
-    c.fillStyle = ink; c.fillText('杯', right, tBase);
+    c.fillStyle = ink; c.fillText('DON', right, tBase);
     c.font = '120px ' + DISP; const tw = c.measureText(tt).width; c.fillText(tt, right - cw - 6, tBase);
     if (unitOf(G) !== 'cup') { c.font = '800 28px ' + BODY; c.fillStyle = cssVar('--ink-muted', '#5d4f7c'); c.fillText(UNITS[unitOf(G)].long + '×' + tt, right, y + h - 26); }
     /* the name, as big as fits */
@@ -9404,12 +9394,12 @@ async function resultImage(hide) {
     c.font = Math.round(r * 1.05) + 'px ' + DISP; c.fillStyle = ink; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(String(rank), x + 22 + r, cy + 2);
     const total = totalOf(p), numSize = Math.min(64, h * 0.6);
     c.font = Math.round(numSize) + 'px ' + DISP; const numW = c.measureText(total).width;
-    c.font = '800 ' + Math.round(numSize * 0.5) + 'px ' + BODY; const cupW = c.measureText('杯').width;
+    c.font = '800 ' + Math.round(numSize * 0.5) + 'px ' + BODY; const cupW = c.measureText('DON').width;
     const right = x + w - 26;
     c.textBaseline = 'alphabetic'; c.textAlign = 'right'; c.fillStyle = ink;
     const unitLine = unitOf(G) !== 'cup' && h > 70;
     const base = unitLine ? cy + numSize * 0.22 : cy + numSize * 0.36;
-    c.fillText('杯', right, base);
+    c.fillText('DON', right, base);
     c.font = Math.round(numSize) + 'px ' + DISP; c.fillText(total, right - cupW - 4, base);
     if (unitLine) { c.font = '800 ' + Math.round(Math.min(24, h * 0.2)) + 'px ' + BODY; c.fillStyle = cssVar('--ink-muted', '#5d4f7c'); c.fillText(UNITS[unitOf(G)].long + '×' + total, right, base + Math.min(30, h * 0.26)); }
     /* name, shrunk to fit, then the title badge */
@@ -9430,7 +9420,7 @@ async function resultImage(hide) {
   });
   /* footer: what this is and where to get it */
   c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。飲み会が盛り上がるパーティーゲーム', W / 2, H - 92);
+  c.font = '800 32px ' + BODY; c.fillStyle = '#ffffff'; c.fillText('スマホ1台で2〜8人。みんなで盛り上がるパーティーゲーム', W / 2, H - 92);
   outlined(SHARE_URL.replace(/^https?:\/\//, '').replace(/\/$/, ''), W / 2, H - 40, '36px ' + DISP, yellow, ink, 10);
   return new Promise(ok => cv.toBlob(b => ok(b), 'image/png'));
 }
@@ -9488,8 +9478,8 @@ const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
   SE.play('tap');
   const text = from === 'result'
-    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
-    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料・広告なし！';
+    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、みんなで盛り上がるパーティーゲーム（無料）'
+    : 'みんなで盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料で遊べる！';
   useTrack('share', { from });
   if (navigator.share) {
     try { await navigator.share({ title: APP_NAME, text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
@@ -9515,7 +9505,7 @@ function useTrack(ev, p) {
 const cardKind = c => (c ? toolOf(c) || (/^ch_/.test(c.fx || '') ? 'chal' : c.fx === 'bomb' || c.fx === 'pick' || c.fx === 'tap' ? c.fx : timerOf(c) ? 'timer' : '') : '');
 
 /* ---------- 利用状況の集計: 1ゲームにつき「始まった」と「終わった（または途中でアプリをしまった）」の2通だけを、自前の受け口へ送る.
-   送るのは数だけ: 人数・ラウンド数・ターン数・杯数の合計・遊んだ時間、出た組み込みカードの番号と回数（自作・書きかえたカードは枚数だけ）、
+   送るのは数だけ: 人数・ラウンド数・ターン数・DON数の合計・遊んだ時間、出た組み込みカードの番号と回数（自作・書きかえたカードは枚数だけ）、
    ミニゲーム・特殊ルールの種類と回数、ホーム画面から開いたか、タブレットか、この端末で何回目のゲームか.
    名前・カードの文章・端末を見分けるIDは送らない（sid はゲーム1回ごとの使い捨ての乱数）. STAT_URL が空のあいだと、アプリ版以外では何も送らない ---------- */
 const STAT_URL = 'https://sakego.shugodensetsu.workers.dev/v1/p';   /* server/ の Worker（GitHub Actions がデプロイ。server/README.md）。空にすると何も送らない */
@@ -9633,7 +9623,7 @@ function statStart(p) {
   if (!G) return;
   const id = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
   const st = G.st = {
-    sid: id, seq: 0, mode: G.mode === 'mini' || isPM() ? G.mode : 'card', mix: G.mode === 'mini' ? null : isPM() ? G.lvl : G.mix, unit: unitOf(G), players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
+    sid: id, seq: 0, mode: G.mode === 'mini' || isPM() ? G.mode : 'card', mix: G.mode === 'mini' ? null : isPM() ? G.lvl : G.mix, players: clampInt(p.players, 2, 8), rounds: clampInt(p.rounds, 0, 99),
     form: Math.min(window.screen.width || 0, window.screen.height || 0) >= 700 ? 'tablet' : 'phone', inst: isStandalone() ? 1 : 0, nth: clampInt(useLoad().games, 1, 99999),
     turns: 0, ms: 0, last: Date.now(), cups: 0, own: 0, done: 0, dirty: false, cards: {}, fx: {}, mini: {}, sp: {}, q: {},
   };
@@ -9731,7 +9721,7 @@ function renderUsage() {
     '<section class="us-card"><h3>ミニゲーム<span class="us-sum">遊んだ回数 ・ カードが出たときに遊んだ割合</span></h3>' + minis + '</section>' +
     '<section class="us-card"><h3>よく出たカード<span class="us-sum">まだ出ていない ' + never + '枚 / ' + onCards.length + '枚</span></h3>' + cards + '</section>' +
     '<section class="us-card"><h3>モード・特殊ルール・人数</h3><div class="us-chips">' + modes + '</div><div class="us-chips">' + special + '</div><div class="us-chips">' + people + '</div>' +
-      (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録した杯数：合計 <b>' + fmtAmt(U.cups) + '</b>杯</p>' : '') + '</section>' +
+      (U.cups ? '<p class="us-note">最後まで遊んだゲームで記録したDON数：合計 <b>' + fmtAmt(U.cups) + '</b>DON</p>' : '') + '</section>' +
     (IS_APP && STAT_URL ? '<section class="us-card us-ga"><h3>利用状況の集計</h3><p>アプリをよくするため、遊んだ回数・人数・出たカードの番号・遊んだミニゲームの数を集計しています。名前・カードの文章・端末を見分けるIDは送りません。</p>' +
       '<button type="button" class="us-opt" data-us="stat" aria-pressed="' + !statOff() + '"><span class="us-sw"></span>' + (statOff() ? '集計に協力しない' : '集計に協力する') + '</button>' +
       (usageDevShow || statDev() ? '<button type="button" class="us-opt us-dev" data-us="dev" aria-pressed="' + statDev() + '"><span class="us-sw"></span>この端末は「自分の端末」</button>' +
@@ -9777,7 +9767,7 @@ function useMini(kind) {
    Each round starts from the next person round the table ---------- */
 const MINI_TOTAL = 8, MINI_LOSS = 2, MINI_PER_CUP = 3;
 const isMini = () => !!(G && G.mode === 'mini');
-const amtTxt = n => (isMini() ? '+' + n : n + '杯');
+const amtTxt = n => (isMini() ? '+' + n : n + 'DON');
 const MG = {
   taru: { short: '酒樽', text: '{引いた人}から順番に、樽の穴に剣を1本ずつ刺す。親父を飛ばした人の負け' },
   wani: { short: 'ワニ', text: '{引いた人}から順番に、ワニの歯を1本ずつ押す。パクッとされた人の負け' },
@@ -9815,7 +9805,7 @@ function beginMini() {
   saveGame();
   useTrack('game_start', { players: n, rounds: MINI_TOTAL, mode: 'mini' });
   coachEnd(false);
-  startIntro('mgStart', 'ミニゲームモード！<small>負けたら+2・3つで1杯</small>', () => { if (isMini() && G.turn === 0) miniRoundFx(); });
+  startIntro('mgStart', 'ミニゲームモード！<small>負けたら+2・3つで1DON</small>', () => { if (isMini() && G.turn === 0) miniRoundFx(); });
 }
 function normalizeMini(g) {
   const m = g.mini && typeof g.mini === 'object' ? g.mini : {};
@@ -10033,14 +10023,14 @@ function miniPour(cur, items) {
         show(MINI_PER_CUP, { brim: true }, Math.floor(pts / MINI_PER_CUP));
         c.classList.remove('cupfx'); void c.offsetWidth; c.classList.add('cupfx');
         const q = relPos(c); FXC.burst(q.x, q.y, 80, { colors: GOLD, star: true, speed: 13 });
-        floatAt(it.p, '1杯！');
+        floatAt(it.p, '1DON！');
         SE.play('cupIn'); vibrate([60, 40, 160]);
         if (first) {
           first = false;
           flash('#ffd83d'); shake(false);
           const who = cupped.map(x => '<span style="color:' + pc(x.p) + '">' + esc(pname(x.p)) + '</span>').join('・');
           const many = cupped.some(x => x.cups > 1);
-          telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(x => x.cups)) + '杯！' : 'グラスが満タン！ 1杯！') + '</small>', 'red', 1800);
+          telop(who + '<small>' + (many ? 'カウントがあふれた！ ' + Math.max(...cupped.map(x => x.cups)) + 'DON！' : 'ゲージが満タン！ 1DON！') + '</small>', 'red', 1800);
         }
         later(() => { show(0, null, Math.floor(pts / MINI_PER_CUP)); SE.play('glug'); later(step, 500); }, 1400);
       }, 750);
@@ -10052,9 +10042,9 @@ function miniBoard() {
   const cur = G.cur, res = cur.phase === 'done' ? cur.mres : null;
   return G.players.map((pl, i) => {
     const lost = !!res && res.losers.includes(i), st = !res && cur.phase !== 'before' && i === cur.drawer, left = pl.pts % MINI_PER_CUP;
-    return '<div class="mg-p' + (lost ? ' lose' : '') + (st ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + '杯・カウント' + left + '">' +
+    return '<div class="mg-p' + (lost ? ' lose' : '') + (st ? ' start' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + pl.total + 'DON・カウント' + left + '">' +
       (st ? '<span class="mg-tag">スタート</span>' : lost ? '<span class="mg-tag lose">+' + res.amt + '</span>' : '') +
-      '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + pl.total + '</b><small>杯</small></span>' + glassSVG(left) + '</span></div>';
+      '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + pl.total + '</b><small>DON</small></span>' + glassSVG(left) + '</span></div>';
   }).join('');
 }
 function miniStageHTML(anim) {
@@ -10068,12 +10058,12 @@ function miniStageHTML(anim) {
     }).join('') + '</ol>';
   }
   const k = cur.mkind, done = cur.phase === 'done';
-  const stamp = done ? '<div class="mg-stamp">' + cur.mres.items.map(it => '<span><i class="dot" style="--p:' + pc(it.p) + '"></i><b>' + esc(pname(it.p)) + '</b> +' + it.amt + (it.cups ? ' <em>' + it.cups + '杯！</em>' : '') + '</span>').join('') + '</div>' : '';
+  const stamp = done ? '<div class="mg-stamp">' + cur.mres.items.map(it => '<span><i class="dot" style="--p:' + pc(it.p) + '"></i><b>' + esc(pname(it.p)) + '</b> +' + it.amt + (it.cups ? ' <em>' + it.cups + 'DON！</em>' : '') + '</span>').join('') + '</div>' : '';
   return '<div class="mg-big' + (anim === 'draw' ? ' enter' : '') + (done ? ' done' : '') + '"' + (done ? '' : ' data-g="mstart" role="button" tabindex="0" aria-label="' + esc(mgTitle(k)) + 'をスタート"') + '>' +
     '<p class="mg-head ol">' + miniRound() + '</p>' +
     '<h2 class="mg-name ol" id="mgName">' + esc(mgTitle(k)) + '</h2>' +
     '<p class="mg-rule">' + fillGame(mgText(k)) + '</p>' +
-    (done ? stamp : '<p class="mg-stake">負けたら <b>+' + MINI_LOSS + '</b><small>メモリ3つで1杯</small></p>') + '</div>';
+    (done ? stamp : '<p class="mg-stake">負けたら <b>+' + MINI_LOSS + '</b><small>メモリ3つで1DON</small></p>') + '</div>';
 }
 function miniDock() {
   const cur = G.cur, last = G.turn + 1 >= G.mini.total;
@@ -10089,9 +10079,9 @@ function miniDock() {
 }
 function miniLog() {
   const log = G.mini.log;
-  if (!log.length) return '<span class="lg-hint">負けた人は <b>+2</b>。グラスのメモリが3つたまると <b>1杯</b>（あふれた分は次の1杯へ）</span>';
+  if (!log.length) return '<span class="lg-hint">負けた人は <b>+2</b>。ゲージのメモリが3つたまると <b>1DON</b>（あふれた分は次の1DONへ）</span>';
   return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + esc(MG[e.kind].short) + '</span>' +
-    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>+' + it.amt + (it.cups ? ' ' + it.cups + '杯' : '') + '</b></span>').join('')).join('');
+    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>+' + it.amt + (it.cups ? ' ' + it.cups + 'DON' : '') + '</b></span>').join('')).join('');
 }
 function renderMini(anim) {
   const n = G.players.length;
@@ -10142,9 +10132,9 @@ function renderMiniResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">負け ' + p.loss + '回 ・ カウント合計 ' + p.pts + (left ? ' ・ のこり' + glassSVG(left, { cls: 'sm' }) : '') + '</span></span>' +
-      '<span class="res-total">' + p.total + '<small>杯</small>' + unitX(p.total) + '</span></li>';
+      '<span class="res-total">' + p.total + '<small>DON</small>' + unitX(p.total) + '</span></li>';
   }).join('');
-  $('resStats').innerHTML = '<div class="stat"><b>' + cups + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.mini.log.length + '</b><span>ミニゲーム</span></div>' +
+  $('resStats').innerHTML = '<div class="stat"><b>' + cups + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.mini.log.length + '</b><span>ミニゲーム</span></div>' +
     '<div class="stat"><b>' + losses + '</b><span>負けの合計</span></div><div class="stat"><b>' + G.players.filter(p => !p.loss).length + '</b><span>無敗の人</span></div>';
 }
 
@@ -10229,68 +10219,68 @@ const GUIDE_SEEN_KEY = 'sakego-guide-seen', COACH_KEY = 'sakego-coach', RECS_KEY
 const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) { /* ignore */ } };
 const CAT_DESC = {
-  hit: '書かれた人が、そのまま飲む', duel: '2人で勝負して、負けた方が飲む', name: '引いた人が、飲む人を指名する',
-  all: '全員参加。当てはまった人が飲む', topic: 'お題で遊ぶ。答えられなかった人が飲む', rule: 'しばらく続くルールが増える（継続カード）',
-  app: 'アプリの集計・ルーレット・早押しを使う', chal: 'アプリのミニゲームに挑戦。クリアで回避', safe: '飲まなくていい・助かる効果',
+  hit: '書かれた人が、そのままくらう', duel: '2人で勝負して、負けた方がくらう', name: '引いた人が、くらう人を指名する',
+  all: '全員参加。当てはまった人がくらう', topic: 'お題で遊ぶ。答えられなかった人がくらう', rule: 'しばらく続くルールが増える（継続カード）',
+  app: 'アプリの集計・ルーレット・早押しを使う', chal: 'アプリのミニゲームに挑戦。クリアで回避', safe: 'DONなしでいい・助かる効果',
   c1: 'サイコロ・トランプ・ダーツなど、道具を使う遊び',
 };
 /* look-alikes of the app's own parts, so the guide shows exactly what to look for (they are pictures, not buttons) */
 const gBtn = (t, cls) => '<span class="gd-b pbtn ' + (cls || 'small') + '">' + t + '</span>';
-const gSeat = (name, total, i, role, tap) => '<span class="gd-seat' + (tap ? ' tap' : '') + '" style="--p:' + pc(i) + '">' + (role ? '<span class="gd-role">' + role + '</span>' : '') + name + '<small>' + total + '杯</small></span>';
+const gSeat = (name, total, i, role, tap) => '<span class="gd-seat' + (tap ? ' tap' : '') + '" style="--p:' + pc(i) + '">' + (role ? '<span class="gd-role">' + role + '</span>' : '') + name + '<small>' + total + 'DON</small></span>';
 const gTip = h => '<p class="gd-tip">' + h + '</p>';
 const gCard = (title, body, num) => '<section class="gd-card"><h3>' + (num ? '<span class="gd-num">' + num + '</span>' : '') + title + '</h3>' + body + '</section>';
 const GUIDE = [
   { k: 'start', tab: 'はじめに', html: () =>
-    '<p class="gd-lead">スマホ1台をみんなで回して遊ぶカードゲームです。アプリは<b>「カードを出す係」</b>と<b>「飲んだ量を記録する係」</b>。飲む人が決まっているカードは<b>アプリが自動で記録</b>、ジャンケンなどの勝ち負けはみんなで判定して、アプリに教えてあげます。</p>' +
-    gCard('メンバーを登録', '<p>人数・名前・何周あそぶか・カードの出かた・1杯の量を決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
+    '<p class="gd-lead">スマホ1台をみんなで回して遊ぶカードゲームです。アプリは<b>「カードを出す係」</b>と<b>「DON数を記録する係」</b>。くらう人が決まっているカードは<b>アプリが自動で記録</b>、ジャンケンなどの勝ち負けはみんなで判定して、アプリに教えてあげます。</p>' +
+    gCard('メンバーを登録', '<p>人数・名前・何周あそぶか・カードの出かたを決めて「スタート！」。名前は<b>座っている順</b>に入れると、画面の席の並びが実際と同じになります。</p>', 1) +
     gCard('カードを引く', '<div class="gd-mock">' + gBtn('カードを引く！', 'big') + '</div><p>自分の番の人がタップ。カードが大きく出るので<b>声に出して読み上げ</b>、書いてあるとおりに遊びます。</p>', 2) +
-    gCard('飲む人の記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + '<span class="gd-tok">+1<small>杯</small></span>' + gSeat('サキ', 1, 1, 'ランダム') + '</div>' +
-      '<p>「左隣は1杯」のように<b>飲む人が決まっているカードは、閉じると自動で記録</b>されます。</p>' +
-      '<p>ジャンケンや指名のカードは<b>「誰が飲む？」画面</b>が出るので、飲む人をタップして「飲む！」。</p>' +
-      '<p>記録されたら<b>「特殊ルールを使う？」</b>と聞かれるので、使うか「素直に飲む」かを選ぶだけ。</p>', 3) +
+    gCard('くらう人の記録', '<div class="gd-mock">' + gSeat('ユウキ', 0, 0, '引いた人') + '<span class="gd-tok">+1<small>DON</small></span>' + gSeat('サキ', 1, 1, 'ランダム') + '</div>' +
+      '<p>「左隣は1DON」のように<b>くらう人が決まっているカードは、閉じると自動で記録</b>されます。</p>' +
+      '<p>ジャンケンや指名のカードは<b>「誰がくらう？」画面</b>が出るので、くらう人をタップして「DON！」。</p>' +
+      '<p>記録されたら<b>「特殊ルールを使う？」</b>と聞かれるので、使うか「素直にくらう」かを選ぶだけ。</p>', 3) +
     gCard('次の人へ', '<div class="gd-mock">' + gBtn('次へ ▶ サキ', 'big') + '</div><p>「次へ」で、登録順に次の人の番になります。これをくり返すだけ！</p>', 4) +
-    gTip('誰も飲まないカード（セーフなど）は、そのまま「次へ」でOK。飲む人を選ばずに「次へ」を押すと、アプリが確認してくれます。')
+    gTip('誰もくらわないカード（セーフなど）は、そのまま「次へ」でOK。くらう人を選ばずに「次へ」を押すと、アプリが確認してくれます。')
   },
   { k: 'record', tab: '記録のしかた', html: () =>
-    '<p class="gd-lead">飲む人が分かるカードは<b>アプリが自動で記録</b>します。分からないときだけ、<b>飲む人を教えてあげて</b>ください。杯数はカードの数字が自動で入ります。</p>' +
-    gCard('決まっている人は自動', '<div class="gd-mock">' + gSeat('ケンタ', 2, 2, '左隣') + '<span class="gd-tok">+1<small>杯</small></span></div>' +
-      '<p>「{左隣}は1杯」「全員でグイ」などは、カードを閉じると<b>「+1杯」が席に飛んでいって</b>自動で記録されます。何もしなくてOK。</p>', 1) +
-    gCard('「誰が飲む？」画面', '<div class="gd-mock paper"><span class="gd-pick on" style="--p:var(--p2)">サキ<b>1杯</b></span><span class="gd-pick" style="--p:var(--p3)">ケンタ</span></div>' +
-      '<p>ジャンケン・指名・お題など、遊んでみないと分からないカードでは、この画面が出ます。<b>飲む人をタップ</b>して「飲む！」。</p>' +
-      '<ul class="gd-list"><li>指名のカードは<b>「誰を指名する？」</b>。指名する人に選んでもらおう</li><li>まだ遊んでいる途中なら「あとで」。画面下の「誰が飲む？」から開き直せます</li>' +
-      '<li>誰も飲まなかったら「誰も飲まなかった」</li><li>「1〜3杯」のようなカードは、選んだ人を<b>もう一度タップするたびに+1杯</b>（いちばん多い杯数の次は外れる）。「1人なら2杯、2人なら1杯ずつ」のように人で量が変わるカードは、アプリが杯数を入れます</li><li>ふつうのカードで杯数を変えたいときは −／＋</li></ul>', 2) +
-    gCard('特殊ルール・券を使うとき', '<p>飲む人が記録されると、すぐに<b>「特殊ルールを使う？」</b>と聞かれます。</p><ul class="gd-list">' +
-      '<li><b>1人のとき</b> → 「倍倍FIGHT！」「天国と地獄」（券を持っていれば「〇〇券を使う」）を押すか、「素直に飲む」</li>' +
+    '<p class="gd-lead">くらう人が分かるカードは<b>アプリが自動で記録</b>します。分からないときだけ、<b>くらう人を教えてあげて</b>ください。DON数はカードの数字が自動で入ります。</p>' +
+    gCard('決まっている人は自動', '<div class="gd-mock">' + gSeat('ケンタ', 2, 2, '左隣') + '<span class="gd-tok">+1<small>DON</small></span></div>' +
+      '<p>「{左隣}は1DON」「全員で1DON」などは、カードを閉じると<b>「+1DON」が席に飛んでいって</b>自動で記録されます。何もしなくてOK。</p>', 1) +
+    gCard('「誰がくらう？」画面', '<div class="gd-mock paper"><span class="gd-pick on" style="--p:var(--p2)">サキ<b>1DON</b></span><span class="gd-pick" style="--p:var(--p3)">ケンタ</span></div>' +
+      '<p>ジャンケン・指名・お題など、遊んでみないと分からないカードでは、この画面が出ます。<b>くらう人をタップ</b>して「DON！」。</p>' +
+      '<ul class="gd-list"><li>指名のカードは<b>「誰を指名する？」</b>。指名する人に選んでもらおう</li><li>まだ遊んでいる途中なら「あとで」。画面下の「誰がくらう？」から開き直せます</li>' +
+      '<li>誰もくらわなかったら「誰もくらわなかった」</li><li>「1〜3DON」のようなカードは、選んだ人を<b>もう一度タップするたびに+1DON</b>（いちばん多いDON数の次は外れる）。「1人なら2DON、2人なら1DONずつ」のように人で量が変わるカードは、アプリがDON数を入れます</li><li>ふつうのカードでDON数を変えたいときは −／＋</li></ul>', 2) +
+    gCard('特殊ルール・券を使うとき', '<p>くらう人が記録されると、すぐに<b>「特殊ルールを使う？」</b>と聞かれます。</p><ul class="gd-list">' +
+      '<li><b>1人のとき</b> → 「倍倍FIGHT！」「天国と地獄」（券を持っていれば「〇〇券を使う」）を押すか、「素直にくらう」</li>' +
       '<li><b>何人もいるとき</b> → まず使う人をタップ。2人以上なら<b>順番をランダムで決めて</b>、1人ずつ選びます。先の人の倍倍FIGHT！は、次の順番の人に×2がかかります</li>' +
       '<li><b>あとから使いたくなった</b> → その人の席をタップ（画面下の「特殊ルール」でもOK）</li></ul>' +
       '<p class="sub">倍倍FIGHT！は押した時点で2倍にして記録し直します。天国と地獄はそのままルーレットが回ります。</p>', 3) +
     gCard('こんなときは', '<ul class="gd-list">' +
-      '<li><b>ルール違反などで、カード以外で飲む</b> → その人の席をタップ（何人もいるなら画面下の「追加で記録」）</li>' +
+      '<li><b>ルール違反などで、カード以外でくらう</b> → その人の席をタップ（何人もいるなら画面下の「追加で記録」）</li>' +
       '<li><b>記録をまちがえた</b> → 記録欄の「取り消す」で、1つ前に戻せる</li>' +
       '<li><b>記録しないで「次へ」を押してしまった</b> → 記録欄の「◀ 前のターンに戻る」。カード・記録・特殊ルールがその時のまま戻る（8ターン前まで。結果発表の画面からも戻れる）</li>' +
-      '<li><b>0.5杯と出た</b> → 半分の効果。半分くらい飲めばOK</li></ul>') +
-    gTip('記録した杯数は、最後の結果発表のランキングになります。')
+      '<li><b>0.5DONと出た</b> → 半分の効果。罰も半分くらいでOK</li></ul>') +
+    gTip('記録したDON数は、最後の結果発表のランキングになります。')
   },
   { k: 'special', tab: '特殊ルール', html: () =>
-    '<p class="gd-lead">飲む量を変える切り札です。<b>使うかどうかは飲む人が決めます。</b>使わなくても遊べます。</p>' +
-    gTip('<b>1ターンに1人1つまで。</b>「倍倍FIGHT！」「天国と地獄」は、飲む人が決まったときにアプリが「使う？」と聞いてくれます。「コストパフォーマンス」だけは、カードを引く前に使います。') +
-    gCard('<span class="gd-sp dbl">倍倍FIGHT！</span>', '<p>自分の量が<b>2倍</b>になるかわりに、<b>次に飲む人も2倍</b>にできる勝負の一手。</p>' +
-      '<div class="gd-flow"><span>2杯</span>→<span class="hot">倍倍FIGHT！で4杯</span>→<span>次に飲む人 ×2</span></div>' +
+    '<p class="gd-lead">DONを変える切り札です。<b>使うかどうかはくらう人が決めます。</b>使わなくても遊べます。</p>' +
+    gTip('<b>1ターンに1人1つまで。</b>「倍倍FIGHT！」「天国と地獄」は、くらう人が決まったときにアプリが「使う？」と聞いてくれます。「コストパフォーマンス」だけは、カードを引く前に使います。') +
+    gCard('<span class="gd-sp dbl">倍倍FIGHT！</span>', '<p>自分の量が<b>2倍</b>になるかわりに、<b>次にくらう人も2倍</b>にできる勝負の一手。</p>' +
+      '<div class="gd-flow"><span>2DON</span>→<span class="hot">倍倍FIGHT！で4DON</span>→<span>次にくらう人 ×2</span></div>' +
       '<p class="sub">画面の上に「NEXT ×2」と出ている間に記録された人の量が2倍になります。その人も倍倍FIGHT！で受けて立てば、次は ×4、×8…と大きくなります。</p>') +
     gCard('<span class="gd-sp hh">天国と地獄</span>', '<p>ルーレットで運命が決まる。<b>回したら取り消せません。</b></p><div class="gd-rows">' +
-      '<span class="gd-chip heaven">天国</span><span>飲まなくてOK</span>' +
+      '<span class="gd-chip heaven">天国</span><span>DONなしでOK</span>' +
       '<span class="gd-chip hell">地獄</span><span>2倍</span>' +
-      '<span class="gd-chip bigheaven">大天国</span><span>自分は0杯。その量を好きな人に押し付け（記録画面で相手を選ぶ）</span>' +
+      '<span class="gd-chip bigheaven">大天国</span><span>自分は0DON。その量を好きな人に押し付け（記録画面で相手を選ぶ）</span>' +
       '<span class="gd-chip bighell">大地獄</span><span>3倍</span></div>' +
       '<p class="sub">ふつうは10秒で止まります。たまに<b>デビルモード</b>（地獄だらけ）や<b>大天使降臨</b>（ほぼ天国、でも大地獄が2マス）が起きます。</p>') +
-    gCard('<span class="gd-sp cospa">コストパフォーマンス</span>', '<div class="gd-mock">' + gBtn('コスパ<span class="sub">先に1杯で半分に</span>', 'pink small') + '</div>' +
-      '<p>自分の番で、カードを引く<b>前</b>に使います。先に<b>1杯飲んでおく</b>と、そのあと引いたカードで<b>自分が飲むことになったとき、その量が半分</b>になります。</p>' +
-      '<div class="gd-flow"><span>先に1杯飲む</span>→<span>カードで「4杯」</span>→<span class="hot">自分は2杯でOK</span></div>' +
+    gCard('<span class="gd-sp cospa">コストパフォーマンス</span>', '<div class="gd-mock">' + gBtn('コスパ<span class="sub">先に1DONで半分に</span>', 'pink small') + '</div>' +
+      '<p>自分の番で、カードを引く<b>前</b>に使います。先に<b>1DONくらっておく</b>と、そのあと引いたカードで<b>自分がくらうことになったとき、その量が半分</b>になります。</p>' +
+      '<div class="gd-flow"><span>先に1DONくらう</span>→<span>カードで「4DON」</span>→<span class="hot">自分は2DONでOK</span></div>' +
       '<ul class="gd-list">' +
       '<li>半分になるのは<b>コスパを使った本人だけ</b>。ほかの人の量はそのまま</li>' +
-      '<li>効くのは<b>そのターンの間だけ</b>（ジャンケンで負けた・指名されたなど、自分が飲むことになったとき全部）</li>' +
-      '<li>先払いの1杯は、押した時点で自動で記録されます</li>' +
-      '<li>飲まずに済むカードが出たら、先に飲んだ1杯はそのまま。<b>きついカードが来そうなときの保険</b>です</li></ul>')
+      '<li>効くのは<b>そのターンの間だけ</b>（ジャンケンで負けた・指名されたなど、自分がくらうことになったとき全部）</li>' +
+      '<li>先払いの1DONは、押した時点で自動で記録されます</li>' +
+      '<li>DONなしで済むカードが出たら、先にくらった1DONはそのまま。<b>きついカードが来そうなときの保険</b>です</li></ul>')
   },
   { k: 'cards', tab: 'カードと手札', html: () =>
     gCard('カードの種類', '<div class="gd-rows">' + deck.categories.map(c =>
@@ -10299,21 +10289,21 @@ const GUIDE = [
       '<li><b>引いた人</b>：カードを引いた人</li><li><b>ランダム</b>：引いた人以外から、アプリが選んだ人</li><li><b>左隣・右隣</b>：登録順で次の人・前の人</li></ul>') +
     gCard('継続カード（続くルール）', '<div class="gd-mock"><span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t">カタカナ語禁止</span><span class="gr-left">5ターン目</span></span>' +
       '<span class="gr-chip" style="--c:var(--c8)"><span class="gr-mk">則</span><span class="gr-t"><b class="gr-r">王様</b><small class="gr-w">ユウキ</small></span><span class="gr-left">2ターン目</span></span>' +
-      '<span class="gd-seat" style="--p:' + pc(0) + '"><span class="seat-badges"><span class="sb" style="--c:var(--c8)">王様</span></span>ユウキ<small>2杯</small></span></div>' +
+      '<span class="gd-seat" style="--p:' + pc(0) + '"><span class="seat-badges"><span class="sb" style="--c:var(--c8)">王様</span></span>ユウキ<small>2DON</small></span></div>' +
       '<p>「継続」と書かれたカードは、<b>画面の上の「継続中」</b>に並びます。増えても折り返して<b>全部が1画面に</b>収まります。出ているのは、始まってから何ターン目か。</p>' +
-      '<p>ルールは<b>4〜10ターンのどこかで突然消えます</b>（いつ消えるかは誰にも分かりません）。<b>消えた瞬間、次にカードを引く人が1杯</b>。自動で記録されます（2つ同時に消えたら2杯）。</p>' +
+      '<p>ルールは<b>4〜10ターンのどこかで突然消えます</b>（いつ消えるかは誰にも分かりません）。<b>消えた瞬間、次にカードを引く人が1DON</b>。自動で記録されます（2つ同時に消えたら2DON）。</p>' +
       '<p><b>王様・クエスチョンマスター・インシュメイト・執事</b>のように人につくルールは、<b>その人の席の上に★付きで</b>表示されます。</p>' +
-      '<ul class="gd-list"><li><b>違反した人がいたら</b> → 「継続中」のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。杯数は自動</li>' +
-      '<li><b>インシュメイト</b> → カードを閉じたら相手を指名。そのあとは、どちらかが飲むと<b>もう片方にも同じ量が自動で記録</b>されます</li>' +
+      '<ul class="gd-list"><li><b>違反した人がいたら</b> → 「継続中」のルールをタップ →「違反したのは？」で違反した人を選ぶだけ。DON数は自動</li>' +
+      '<li><b>インシュメイト</b> → カードを閉じたら相手を指名。そのあとは、どちらかがくらうと<b>もう片方にも同じ量が自動で記録</b>されます</li>' +
       '<li><b>執事</b>など人を指名するカード → 指名した人の席に「執事」と付きます</li></ul>' +
       '<p class="sub">カードを引く前に席をタップすると、その人の手札（継続カード・券）とここまでの記録が見られます。</p>') +
     gCard('券', '<div class="gd-rows">' +
-      '<span class="gd-chip plain">セーフ券・休憩券</span><span>飲む対象になったとき、1回だけ回避</span>' +
-      '<span class="gd-chip plain">押し付け券</span><span>飲む量を、好きな人に押し付け（使うときに相手を選ぶ）</span>' +
+      '<span class="gd-chip plain">セーフ券・休憩券</span><span>DONの対象になったとき、1回だけ回避</span>' +
+      '<span class="gd-chip plain">押し付け券</span><span>DONを、好きな人に押し付け（使うときに相手を選ぶ）</span>' +
       '<span class="gd-chip plain">天国パス</span><span>天国と地獄で、地獄を1回だけ天国に</span>' +
-      '<span class="gd-chip plain">コスパ無料券</span><span>次のコスパの、前払い1杯が不要</span></div>' +
+      '<span class="gd-chip plain">コスパ無料券</span><span>次のコスパの、前払い1DONが不要</span></div>' +
       '<p class="sub">券は、記録画面に「〇〇を使う」ボタンとして出てきます（天国パスはルーレットの結果画面、コスパ無料券は自動で使われます）。「特殊ルールを使う？」の画面にも出ます。</p>') +
-    gCard('次の人への効果', '<p>「次に飲む人は2倍」などのカードを引くと、画面の上に<b>NEXT ×2</b>と出ます。次に記録された人に自動でかかります。</p>')
+    gCard('次の人への効果', '<p>「次にくらう人は2倍」などのカードを引くと、画面の上に<b>NEXT ×2</b>と出ます。次に記録された人に自動でかかります。</p>')
   },
   { k: 'games', tab: 'ミニゲーム', html: () =>
     '<p class="gd-lead">カードによっては、アプリで遊べるボタンが出ます。カードの下のボタンをタップしてスタート。</p>' +
@@ -10323,26 +10313,26 @@ const GUIDE = [
         return '<button type="button" class="gd-try-b' + (PLUS_MG.includes(k) ? ' plus' : '') + '" data-try="' + k + '"' + (off ? ' disabled' : '') + '>' + mgTitle(k) + (off ? '<small>' + off + '</small>' : '') + '</button>';
       }).join('') + '</div>' +
       '<p class="sub">遊ぶメンバーは、ゲーム中ならそのメンバー、それ以外はメンバー登録の人数と名前（未登録なら4人）。終わると、この画面に戻ります。</p>') +
-    gCard('チャレンジ', '<p>アプリのミニゲームに挑戦。<b>クリアすれば飲まなくてOK</b>、失敗したらカードの杯数。</p><div class="gd-rows">' +
+    gCard('チャレンジ', '<p>アプリのミニゲームに挑戦。<b>クリアすればDONなしでOK</b>、失敗したらカードのDON数。</p><div class="gd-rows">' +
       [['ピタリストップ', '途中で見えなくなるタイマーを、目標の秒数で止める'], ['ジャストゲージ', '左右に動く針を、緑のゾーンで止める'], ['連打チャレンジ', '5秒で、指定の回数タップする'],
         ['まんまる', '指で一筆、きれいなまるを描く'], ['色当て', '書いてある言葉ではなく、文字の色を答える'], ['数字タッチ', '1〜9を順番にタッチ。お手つきはアウト'], ['ハイ&ロー', '次のトランプが上か下かを3回連続で当てる']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>') +
-    gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>が飲みます。爆発までの時間は毎回ちがいます。</p>') +
+    gCard('爆弾パス回し', '<p>お題が決まったら「点火！」。お題に合うものを1つ言えたら「パス」を押して、スマホを左隣へ。<b>爆発したときに持っていた人</b>がくらいます。爆発までの時間は毎回ちがいます。</p>') +
     gCard('タイマー・ストップ対決', '<p>「30秒」など時間が書いてあるカードは、ボタンひとつでタイマーが動きます。「10秒ストップ」のカードは、2人が画面を見ずにストップを押して、<b>10秒に近い方の勝ち</b>。</p>') +
     gCard('道具ゲーム', '<p>チンチロ・サイコロ・トランプ・インディアンポーカー・ダーツのカードは、<b>「アプリで〇〇！」</b>ボタンでアプリの中で遊べます。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['チンチロ', '全員が順番にお椀へサイコロ3個。目なしは3回まで振り直し、いちばん弱い役の人が負け。ピンゾロが出たら負けた人は×5、ゾロ目なら×3、シゴロ・ヒフミなら×2。いくつも出たら掛け算（シゴロとヒフミで×4）'], ['サイコロ', '2人がお椀にサイコロを1個ずつ。小さい目の方が負け（同じなら2人とも）'],
         ['トランプ', '2人が1枚ずつ。低い方が負け（A=1、同じなら2人とも）'], ['インディアン', 'インディアンポーカー。2人に伏せて配り、順番に相手のカードだけを見る（自分のは見えない）。そのあと1人1回まで引き直せて、勝負で低い方が負け。JOKERが出たら2人とも'], ['ダーツ', 'ダーツライブ風のボードに1本ずつ。動く狙いを見て、ボードか「投げる！」をタップ。トリプル3倍・ダブル2倍・ブル50点（インもアウトも）で、得点の低い方が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
-      '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰が飲む？」画面で負けた人を選べばOK。</p>' +
+      '<p class="sub">サイコロは本物そっくりにお椀の中を転がり、止まった目で勝負します（お椀の外に出たら<b>ションベン</b>）。本物の道具で遊ぶときは、カードを閉じて「誰がくらう？」画面で負けた人を選べばOK。</p>' +
       gTip('チンチロの役（強い順）：ピンゾロ（1・1・1）→ ゾロ目 → シゴロ（4・5・6）→ 目（2つそろって残りの1個の数）→ 目なし・ションベン → ヒフミ（1・2・3）')) +
     gCard('パーティーゲーム', '<p>引いた人から順番に<b>スマホを回して</b>遊ぶゲームです。カードの<b>「〇〇スタート！」</b>ボタンから始めて、ハズレを引いた人が負け。負けた人は自動で記録。</p><div class="gd-rows">' +
       [['酒樽危機一髪', '酒樽の穴に剣を1本ずつ刺す。親父を飛ばした人が負け（当たりの穴は1つ）'], ['パクッとワニ', 'ワニの歯を1本ずつ押す。押すとワニがじっと考えて…パクッとされた人が負け（パクッとする歯は1本）'],
-        ['マインスイーパー', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1杯」が出るたびにドクロが1杯重くなる'],
+        ['マインスイーパー', '5×5のマスを1つずつ掘る。数字はとなりにある地雷の数。地雷（6コ）を踏んだ人が負け'], ['ドクロめくり', '伏せた16枚から、好きな枚数めくって次の人へ（1枚以上）。ドクロを引いた人が負け。「+1DON」が出るたびにドクロが1DON重くなる'],
         ['風船パンク', '空気を1〜3回入れて「次の人へ」。割った人が負け。いつ割れるかは毎回ちがう'], ['シャンパン振り', 'ボトルを1〜5回振って「次の人へ」。栓を飛ばした人が負け']]
         .map(([a, b]) => '<span class="gd-chip plain">' + a + '</span><span>' + b + '</span>').join('') + '</div>' +
       '<p class="sub">風船とシャンパンは、何回進めるかを自分で決める度胸勝負。少なく刻むか、攻めて次の人を追い込むか。</p>') +
     gCard('ミニゲームモード', '<p>タイトルの<b>「ミニゲームモード」</b>から遊ぶ、ミニゲームだけのモードです。全8戦、毎回ちがうミニゲームが抽選で選ばれます。</p>' +
-      '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、グラスのメモリが<b>3つたまると1杯</b>。メモリが2つの人がまた負けたら、1杯飲んでメモリ1つから再スタート。</p>' +
+      '<p>どのゲームも<b>全員参加</b>（早押し・10秒ストップは1人ずつ）。負けた人は<b>+2</b>、ゲージのメモリが<b>3つたまると1DON</b>。メモリが2つの人がまた負けたら、1DONくらってメモリ1つから再スタート。</p>' +
       '<p class="sub">スタートする人は毎ラウンド1人ずつずれていきます。やりたくないゲームは「別のゲームにする」でルーレットし直し。<b>一覧のゲームをタップ</b>すれば、ルーレットなしで好きなゲームを選べます。</p>') +
     gCard('早押し・名前ルーレット', '<p><b>早押し対決</b>：スマホを2人の間に置き、「タップ！」が出たら自分の側をタップ。フライングは負け。</p><p><b>名前ルーレット</b>：アプリが1人を選んで、自動で記録します。</p>') +
     gTip('ミニゲームで負けた人は、結果画面の「OK！」で<b>そのまま自動で記録</b>。そのあと「特殊ルールを使う？」と聞かれます。')
@@ -10350,15 +10340,14 @@ const GUIDE = [
   { k: 'more', tab: 'その他', html: () =>
     gCard('何周あそぶ？', '<p><b>3周・5周・10周</b>：全員が決まった回数カードを引いたら結果発表。山札が一巡するまで同じカードは出ません。</p><p><b>∞</b>：「終了」を押すまで続きます。引いたカードも山札に戻り、毎回ランダムに出ます。</p>') +
     gCard('カードの出かた', '<p><b>バランス</b>：どのカードも同じくらい出ます。</p><p><b>にぎやか</b>：「アプリならでは」「ルール追加」「チャレンジ」「遊び系」のカードが、ほかの2倍以上出やすくなります。ミニゲームや特殊ルールで盛り上がりたいときに。</p>') +
-    gCard('1杯の量', '<p>カードの「1杯」をどれくらいにするかの目安です。<b>一口</b>・<b>半分</b>（グラス半分）・<b>1杯</b>（グラス1杯）・<b>お酒なし</b>（ソフトドリンク一口）から選べます。</p><p>ゲーム中は画面の上に「1杯＝一口」のように出て、結果発表にも「一口×8」のように出ます。飲めない人がいる日や、ゆっくり飲みたい日に。</p>') +
     gCard('途中でやめる・再開', '<p>ゲーム中の右上「終了」で結果発表へ。アプリを閉じてしまっても、タイトルの「続きから再開」で戻れます。</p>') +
-    gCard('結果発表', '<p>飲んだ杯数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
+    gCard('結果発表', '<p>DON数のランキング。いちばん多かった人は「不運王」、いちばん少ない人は「セーフ王」。</p>') +
     gCard('カード編集', '<p>タイトルの「カード編集」で、カードの追加・書きかえ・ON/OFF、系統ごとのON/OFFができます。「アプリ連動」を選ぶと、チャレンジやルーレットなどアプリの効果を付けられます。指示文に「30秒」と書けばタイマーも付きます。</p>' +
-      '<p class="sub">「飲む人の決め方」は、ふつうは「自動で判定」のままでOK。「{左隣}は1杯グイ」のような文章なら自動で記録、それ以外は「誰が飲む？」画面になります。</p>') +
+      '<p class="sub">「くらう人の決め方」は、ふつうは「自動で判定」のままでOK。「{左隣}は1DON」のような文章なら自動で記録、それ以外は「誰がくらう？」画面になります。</p>') +
     gCard('音と案内', '<p>画面右上の「BGM」「効果音」で、それぞれON/OFF。メンバー登録画面の「操作の案内を出す」にチェックを入れると、1ターン目に操作の案内がもう一度出ます。</p>') +
     (IS_APP && !(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) && !navigator.standalone
       ? gCard('ホーム画面に追加', '<p>iPhoneなら、Safariの「共有」→「ホーム画面に追加」で、アプリのように全画面で使えます。一度開けばオフラインでも遊べます。</p>') : '') +
-    gTip('20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。お水もこまめに。')
+    gTip('罰（DON）の中身は、みんなで決めてOK。一発芸・変顔・モノマネなど、全員が笑えるものにしよう。無理強いはなしで！')
   },
 ];
 let guidePage = 0;
@@ -10399,23 +10388,23 @@ const COACH = [
     '<p class="sub">ほかのボタンは慣れてからでOK（「？ 遊び方」でいつでも見られます）。</p>' },
   { k: 'zoom', when: () => onlyOv('zoomOv') && !!zoom, place: 'top', html: () =>
     '<span class="cb-step">2/4</span><p>カードを<b>声に出して読み上げよう！</b>書いてあるとおりに遊んだら「OK！ テーブルへ」。</p>' +
-    (zoomHint().auto ? '<p class="sub">下の黄色い文字は、閉じたあとアプリがすること。飲む人が決まっているカードは<b>自動で記録</b>されます。</p>' : '') +
+    (zoomHint().auto ? '<p class="sub">下の黄色い文字は、閉じたあとアプリがすること。くらう人が決まっているカードは<b>自動で記録</b>されます。</p>' : '') +
     (cardActs().length ? '<p class="sub">ボタンが付いているカードは、そこからミニゲームやルーレットを始められます。</p>' : '') },
   { k: 'ask', when: () => onlyOv('askOv') && !!ask && ask.step !== 'order', at: '#askBox', point: '#askBox .specials, #askBox .dc-players', html: () =>
-    '<span class="cb-step">はじめてガイド</span><p>飲む人が決まると、<b>特殊ルールを使うか</b>聞かれます。</p><p class="sub">倍倍FIGHT！か天国と地獄を押すと、その場で記録し直します。使わないなら「素直に飲む」。</p>',
+    '<span class="cb-step">はじめてガイド</span><p>くらう人が決まると、<b>特殊ルールを使うか</b>聞かれます。</p><p class="sub">倍倍FIGHT！か天国と地獄を押すと、その場で記録し直します。使わないなら「素直にくらう」。</p>',
     link: ['special', '特殊ルールって？'] },
   { k: 'decide', when: () => onlyOv('decideOv') && !!decide && decide.kind !== 'who' && !decide.step, at: '#decideBox', point: '#decideBox .dc-players', html: () =>
-    '<span class="cb-step">3/4</span><p>飲む人を<b>タップして選び</b>、「飲む！」で記録。</p><p class="sub">特殊ルールを使うかは、このあと聞かれます。まだ遊んでいる途中なら「あとで」。</p>',
+    '<span class="cb-step">3/4</span><p>くらう人を<b>タップして選び</b>、「DON！」で記録。</p><p class="sub">特殊ルールを使うかは、このあと聞かれます。まだ遊んでいる途中なら「あとで」。</p>',
     link: ['special', '特殊ルールって？'] },
   { k: 'later', when: () => noOv() && !picking && needsPick(), at: '#dock [data-g="decide"]', above: '#gLog', html: () =>
-    '<span class="cb-step">はじめてガイド</span><p>飲む人が決まったら<b>「誰が飲む？」</b>から選んで記録しよう。</p>' },
+    '<span class="cb-step">はじめてガイド</span><p>くらう人が決まったら<b>「誰がくらう？」</b>から選んで記録しよう。</p>' },
   { k: 'rules', when: () => noOv() && !picking && !G.cur.select && durRows().length > 0 && !durWaiting(false), at: '#gRules', html: () =>
-    '<span class="cb-step">はじめてガイド</span><p>続くルールは<b>ここに表示</b>されます。4〜10ターンのどこかで突然消えて、<b>消えた瞬間に次に引く人が1杯</b>！</p><p class="sub">違反した人がいたら、<b>ルールをタップ</b>して選ぶだけで記録できます。</p>' },
+    '<span class="cb-step">はじめてガイド</span><p>続くルールは<b>ここに表示</b>されます。4〜10ターンのどこかで突然消えて、<b>消えた瞬間に次に引く人が1DON</b>！</p><p class="sub">違反した人がいたら、<b>ルールをタップ</b>して選ぶだけで記録できます。</p>' },
   { k: 'nodrink', when: () => noOv() && G.cur.phase === 'drawn' && !G.cur.drinks.length && !G.cur.select && !picking && !!G.cur.card && drinkOf(G.cur.card) === 'none',
     at: '#dock [data-g="next"]', above: '#gLog', html: () =>
-    '<span class="cb-step">はじめてガイド</span><p>このカードは飲む人がいないので、そのまま<b>「次へ」</b>でOK。</p>' },
+    '<span class="cb-step">はじめてガイド</span><p>このカードはくらう人がいないので、そのまま<b>「次へ」</b>でOK。</p>' },
   { k: 'sheet', when: () => onlyOv('sheetOv') && !!sheet && !sheet.locked, at: '#sheetBox', point: '#sheetBox .specials', html: () =>
-    '<span class="cb-step">記録画面</span><p>特殊ルールは<b>使いたいときだけ</b>押す切り札。下の「飲む量」を確かめて「記録する！」。</p>' +
+    '<span class="cb-step">記録画面</span><p>特殊ルールは<b>使いたいときだけ</b>押す切り札。下の「DON数」を確かめて「記録する！」。</p>' +
     '<p class="sub">券を持っている人は「〇〇を使う」ボタンも出ます。</p>', link: ['special', '特殊ルールって？'] },
   { k: 'next', when: () => noOv() && G.cur.phase === 'drawn' && recordedThisTurn() && !picking && !ask && !askWait, at: '#dock [data-g="next"]', above: '#gLog', html: () =>
     '<span class="cb-step">4/4</span><p>終わったら<b>「次へ」</b>で次の人の番。</p><p class="sub">まちがえたら上の「取り消す」。記録し忘れて次へ進んでも、「◀ 前のターンに戻る」で戻れます。</p>' },
@@ -10511,7 +10500,7 @@ function coachShow(s) {
 /* ---------- rendering: game ---------- */
 function gameCups(c) {
   if (!c.cups.length) return c.cat === 'safe' ? '<span class="gc-cups safe">SAFE</span>' : '<span class="gc-cups fx">効果カード</span>';
-  return '<span class="gc-cups">' + (c.cups.length > 1 ? c.cups[0] + '–' + c.cups[1] : c.cups[0]) + '<small>杯</small></span>';
+  return '<span class="gc-cups">' + (c.cups.length > 1 ? c.cups[0] + '–' + c.cups[1] : c.cups[0]) + '<small>DON</small></span>';
 }
 function renderCenter(anim) {
   const cur = G.cur, d = cur.drawer;
@@ -10536,7 +10525,7 @@ function seatHTML(i) {
     const fx = cur.card.fx, vals = G.players.map(p => p.total);
     const ae = cur.drinks.find(e => e.kind === 'auto' && e.src === 'card');
     const hit = ae ? ae.items.some(it => it.p === i) : fx === 'least' ? pl.total === Math.min.apply(null, vals) : G.last === i;
-    if (hit) flag = fx === 'least' ? 'いちばん少ない' : '直前に飲んだ';
+    if (hit) flag = fx === 'least' ? 'いちばん少ない' : '直前にくらった';
   }
   const cls = ['seat'];
   if (i === d) cls.push('now');
@@ -10545,10 +10534,10 @@ function seatHTML(i) {
   const minis = shown.map((h, k) => '<span class="mini' + (h.kind === 'ticket' ? ' ticket' : '') + '" style="--c:' + colorVar(h.color) + ';--r:' + ((k - (shown.length - 1) / 2) * 12) + 'deg' + (h.fresh ? ';opacity:0' : '') + '">' + esc(h.mark) + '</span>').join('') +
     (hs.length > 3 ? '<span class="mini more">+' + (hs.length - 3) + '</span>' : '');
   const badges = seatBadges(i);
-  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯' + (hs.length ? '・手札' + hs.length + '枚' : '') + (badges.length ? '・' + badges.map(b => b[0]).join('・') : '') + '">' +
+  return '<button type="button" class="' + cls.join(' ') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + 'DON' + (hs.length ? '・手札' + hs.length + '枚' : '') + (badges.length ? '・' + badges.map(b => b[0]).join('・') : '') + '">' +
     (roleText ? '<span class="seat-role">' + roleText + '</span>' : '') +
     (badges.length ? '<span class="seat-badges">' + badges.map(([b, c]) => '<span class="sb" style="--c:' + colorVar(c) + '">' + esc(seatBadgeText(b)) + '</span>').join('') + '</span>' : '') +
-    '<span class="seat-name">' + esc(pl.name) + '</span><span class="seat-total">' + fmtAmt(pl.total) + '<small>杯</small></span>' +
+    '<span class="seat-name">' + esc(pl.name) + '</span><span class="seat-total">' + fmtAmt(pl.total) + '<small>DON</small></span>' +
     (hs.length ? '<span class="hand" aria-hidden="true">' + minis + '</span>' : '') +
     (flag ? '<span class="seat-flag">' + flag + '</span>' : '') + '</button>';
 }
@@ -10561,15 +10550,15 @@ function renderDock() {
   } else if (picking) {
     h = '<div class="dock-row"><div class="dock-note">ルーレット中…</div></div>';
   } else if (cur.phase === 'before') {
-    h = '<div class="dock-row">' + (cur.cospa ? '<div class="dock-note cospa"><span>コスパ中！<small>自分の飲む量は半分</small></span></div>'
-      : '<button type="button" class="pbtn pink small" data-g="cospa">コスパ<span class="sub">先に1杯で半分に</span></button>') +
+    h = '<div class="dock-row">' + (cur.cospa ? '<div class="dock-note cospa"><span>コスパ中！<small>自分のDONは半分</small></span></div>'
+      : '<button type="button" class="pbtn pink small" data-g="cospa">コスパ<span class="sub">先に1DONで半分に</span></button>') +
       '<button type="button" class="pbtn big main pulse" data-g="draw">カードを引く！</button></div>';
   } else {
     const acts = cardActs();
     if (acts.length) h += '<div class="dock-row">' + acts.map(a => '<button type="button" class="pbtn ' + a[2] + ' small" data-g="' + a[0] + '">' + a[1] + '</button>').join('') + '</div>';
     const last = G.rounds && G.turn + 1 >= G.rounds * n;
     const dw = durWaiting(false);
-    const left = needsPick() ? '<button type="button" class="pbtn pink small pulse" data-g="decide">誰が飲む？<span class="sub">タップして選ぶ</span></button>'
+    const left = needsPick() ? '<button type="button" class="pbtn pink small pulse" data-g="decide">誰がくらう？<span class="sub">タップして選ぶ</span></button>'
       : dw ? '<button type="button" class="pbtn pink small pulse" data-g="durpick">指名する<span class="sub">' + esc(dw[1].title || '') + '</span></button>'
       : replaceList().length ? '<button type="button" class="pbtn cyan small" data-g="special">特殊ルール<span class="sub">・券を使う</span></button>'
       : '<button type="button" class="pbtn white small" data-g="add">追加で記録<span class="sub">ルール違反など</span></button>';
@@ -10585,9 +10574,9 @@ function entryPills(e) {
   if (e.kind === 'end') return '<span class="lg">ルール<b>終了</b></span>';
   if (e.kind === 'chal') return pill(e.p, e.ok ? 'クリア' : '失敗');
   if (e.kind === 'bomb') return pill(e.p, 'ドカーン');
-  if (e.kind === 'safe') return '<span class="lg">誰も<b>飲まず</b></span>';
+  if (e.kind === 'safe') return '<span class="lg">誰も<b>くらわず</b></span>';
   if (e.kind === 'name') return pill(e.p, e.label);
-  return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : e.src === 'vanish' ? '<span class="lg vio">ルール消滅</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + '杯' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
+  return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : e.src === 'vanish' ? '<span class="lg vio">ルール消滅</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + 'DON' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
 }
 function renderLog() {
   const cur = G.cur, es = cur.drinks;
@@ -10595,8 +10584,8 @@ function renderLog() {
   const undoable = !!last && !(last.kind === 'cospa' && cur.phase === 'drawn');
   const back = !undoable && canBack() ? '<button type="button" class="lg-undo back" data-g="back">◀ 前のターンに戻る</button>' : '';
   let h = back;
-  const drawnHint = () => (needsPick() ? '飲む人が決まったら「誰が飲む？」から記録' : drinkOf(cur.card) === 'app' && cardActs().length ? 'ボタンからスタート！ 結果は自動で記録されます'
-    : drinkOf(cur.card) === 'none' ? '飲む人はいないので、そのまま次へ' : '席をタップすると、その人の記録画面が開きます');
+  const drawnHint = () => (needsPick() ? 'くらう人が決まったら「誰がくらう？」から記録' : drinkOf(cur.card) === 'app' && cardActs().length ? 'ボタンからスタート！ 結果は自動で記録されます'
+    : drinkOf(cur.card) === 'none' ? 'くらう人はいないので、そのまま次へ' : '席をタップすると、その人の記録画面が開きます');
   if (!es.length) h += '<span class="lg-hint">' + (cur.phase === 'drawn' ? drawnHint() : back ? '記録し忘れたら戻れます' : '席をタップするとその人の手札が見られます') + '</span>';
   else es.forEach((e, i) => {
     h += entryPills(e);
@@ -10712,9 +10701,9 @@ function renderResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">倍倍' + p.dbl + ' ・ 天国と地獄' + p.hh + ' ・ コスパ' + p.cospa + '</span></span>' +
-      '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small>' + unitX(p.total) + '</span></li>';
+      '<span class="res-total">' + fmtAmt(p.total) + '<small>DON</small>' + unitX(p.total) + '</span></li>';
   }).join('');
-  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.stats.cards + '</b><span>引いたカード</span></div>' +
+  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.stats.cards + '</b><span>引いたカード</span></div>' +
     '<div class="stat"><b>' + G.stats.devil + '</b><span>デビル</span></div><div class="stat"><b>' + G.stats.angel + '</b><span>大天使</span></div>';
 }
 function fitResults() {
@@ -10804,13 +10793,6 @@ function wireGame() {
   $('shotSend').addEventListener('click', sendShot);
   $('shotLink').addEventListener('click', () => shareApp('result'));
   $('shotHide').addEventListener('change', () => { SE.play('tap'); shotRender(); });
-  $('ageActs').addEventListener('click', e => {
-    const b = e.target.closest('[data-age]'); if (!b) return;
-    const a = b.dataset.age;
-    SE.play('tap');
-    if (a === 'yes') { try { localStorage.setItem(AGE_KEY, '1'); } catch (_) { /* ignore */ } $('ageOv').hidden = true; syncCover(); }
-    else ageAsk(a === 'no');
-  });
   $('resTell').addEventListener('click', openShot);
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
@@ -10831,10 +10813,6 @@ function wireGame() {
     const b = e.target.closest('button[data-rnd]'); if (!b) return;
     setup.rounds = Number(b.dataset.rnd); renderSetup(false); SE.play('pop');
     const again = $(b.id); if (again) again.focus({ preventScroll: true });
-  });
-  $('unitSel').addEventListener('change', e => {
-    if (!UNITS[e.target.value]) return;
-    setup.unit = e.target.value; renderSetup(false); SE.play('pop');
   });
   $('mixGrid').addEventListener('click', e => {
     const o = e.target.closest('button[data-opt]');
@@ -11136,7 +11114,7 @@ const MEDAL_SVG = '<svg class="ic-medal" viewBox="0 0 24 30" aria-hidden="true">
 const DICE_SVG = '<svg class="ic-dice" viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg>';
 
 /* ---------- 暴露トークの質問. g: koi（恋バナ）/ bare（暴露・本音）. t: ask（番の人が答える）/ point（全員で指さし）/ vote（こっそり投票）/ all（全員で答える）.
-   lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、飲む（tease）か.
+   lv: 深さ 1〜3（1周目は1、2周目は2まで、3周目から3も）. more: 「もうひと声！」の深掘り（ask だけ）. k: vote の1位が ♡ をもらう（praise）か、DONをくらう（tease）か.
    id は集計とダッシュボードが数えているので、変えない ---------- */
 const KO_QS = [
   { id: 1, g: 'koi', t: 'ask', lv: 1, q: '初恋はいつ？ どんな人だった？', more: ['その人と今も連絡とってる？', '当時、気持ちは伝えた？'] },
@@ -11247,7 +11225,7 @@ const KO_QS = [
   { id: 139, g: 'bare', t: 'ask', lv: 3, q: '人に言われて、いちばん刺さったひと言は？' },
   { id: 140, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんウソがうまそうな人は？' },
   { id: 141, g: 'bare', t: 'vote', k: 'tease', lv: 2, q: 'この中で、いちばん秘密が多そうな人は？' },
-  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん酒グセが悪そうな人は？' },
+  { id: 142, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝起きが悪そうな人は？' },
   { id: 143, g: 'bare', t: 'vote', k: 'praise', lv: 1, q: 'この中で、いちばんお金持ちになりそうな人は？' },
   { id: 144, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばん寝坊しそうな人は？' },
   { id: 145, g: 'bare', t: 'point', lv: 1, q: 'この中で、怒らせたらいちばんこわい人は？' },
@@ -11261,7 +11239,7 @@ const KO_QS = [
   { id: 153, g: 'bare', t: 'point', lv: 1, q: 'この中で、いちばんサブスクを解約し忘れていそうな人は？' },
   { id: 154, g: 'bare', t: 'vote', k: 'praise', lv: 2, q: 'この中で、いちばん秘密を守ってくれそうな人は？' },
   { id: 155, g: 'bare', t: 'point', lv: 2, q: 'この中で、いちばん有名人になりそうな人は？' },
-  { id: 160, g: 'bare', t: 'all', lv: 1, q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1杯' },
+  { id: 160, g: 'bare', t: 'all', lv: 1, q: 'スマホのスクリーンタイム（1日平均）を見せ合う。いちばん長い人も1DON' },
   { id: 161, g: 'bare', t: 'all', lv: 1, q: '今日いちばんのハイライトを、ひと言ずつ' },
   { id: 162, g: 'bare', t: 'all', lv: 1, q: '最近いちばん笑ったことを、1人ずつ' },
   { id: 163, g: 'bare', t: 'all', lv: 1, q: '「実は〇〇できない」を、1人1つずつ' },
@@ -11297,7 +11275,7 @@ function pmSetupInfo(mode) {
   info.innerHTML = '<span class="si-run">' + (few ? P.title + 'は' + P.min + '人から遊べます'
     : (PMX[mode].poolWord + ' <b>' + pool + '</b> ' + PMX[mode].poolUnit) + ' ・ ' +
       (!setup.rounds ? '「終了」を押すまで続く' : P.flat ? '<b>' + setup.rounds + '</b> ' + P.word + 'あそぶ' : setup.rounds + '周で <b>' + setup.rounds * n + '</b> ' + P.word) +
-      (setup.unit !== 'cup' ? ' ・ 1杯＝' + UNITS[setup.unit].long : '') +
+      (setup.unit !== 'cup' ? ' ・ 1DON＝' + UNITS[setup.unit].long : '') +
       (left !== Infinity ? ' ・ 今日のお試し あと <b>' + left + '</b>' + P.word : '')) + '</span>';
   $('startGame').disabled = few;
   fitInfo();
@@ -11369,16 +11347,16 @@ const pmUse = id => { G.pm.used.push(id); if (G.pm.used.length > 60) G.pm.used.s
 function pmBoard() {
   const cur = G.cur, X = PMX[G.mode], mark = X ? X.mark() : cur.drawer, mark2 = X && X.mark2 ? X.mark2() : null;
   const tag = X ? X.tag : '回答', icon = X && X.icon ? X.icon : MEDAL_SVG;
-  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + '杯">' +
+  return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + 'DON">' +
     (i === mark ? '<span class="mg-tag">' + tag + '</span>' : i === mark2 ? '<span class="mg-tag ask">' + X.tag2 + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + icon + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
-    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>杯</small></span></span></div>').join('');
+    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
 }
 function pmLog() {
   const log = G.pm.log;
   const X = PMX[G.mode];
-  if (!log.length) return '<span class="lg-hint">' + (X ? X.hint : '答えるか、飲むか。パスは <b>1杯</b>') + '</span>';
+  if (!log.length) return '<span class="lg-hint">' + (X ? X.hint : '答えるか、DONか。パスは <b>1DON</b>') + '</span>';
   return log.map(e => '<span class="lg mg-lg"><i class="lg-r">' + (e.r + 1) + '</i>' + (X && X.logPre ? X.logPre(e) : '') + (e.k != null && G.players[e.k] ? esc(pname(e.k)) : '') + (e.ok ? ' ○' : '') + '</span>' +
-    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>' + fmtAmt(it.amt) + '杯</b></span>').join('')).join('');
+    e.items.map(it => '<span class="lg"><span class="dot" style="--p:' + pc(it.p) + '"></span>' + esc(pname(it.p)) + '<b>' + fmtAmt(it.amt) + 'DON</b></span>').join('')).join('');
 }
 function renderPM(anim) {
   const n = G.players.length;
@@ -11417,7 +11395,7 @@ function pmNext(items, ok) {
   saveGame();
   if (end) { if (items.length) SE.play('gulp'); finishGame(); return; }
   renderPM();
-  items.forEach((it, k) => setTimeout(() => { if (G && screen === 'game') floatAt(it.p, '+' + fmtAmt(it.amt) + '杯'); }, k * 200));
+  items.forEach((it, k) => setTimeout(() => { if (G && screen === 'game') floatAt(it.p, '+' + fmtAmt(it.amt) + 'DON'); }, k * 200));
   if (items.length) SE.play('gulp');
   const last = pmLast();
   if (!(X && X.quiet)) { telop(last ? 'FINAL ROUND！' : 'ROUND ' + (G.turn + 1), last ? 'red' : 'white', 1000); SE.play('mgRound'); }
@@ -11448,11 +11426,11 @@ function renderPMResult() {
       '<span class="res-rank">' + rank + '</span>' +
       '<span class="res-mid"><span class="res-name"><span class="res-nm">' + esc(p.name) + '</span>' + (title ? '<span class="res-title">' + title + '</span>' : '') + '</span>' +
       '<span class="res-sub2">' + (X ? X.resLine(p) : '答えた ' + p.ans + '回 ・ パス ' + p.pass + '回') + '</span></span>' +
-      '<span class="res-total">' + fmtAmt(p.total) + '<small>杯</small>' + unitX(p.total) + '</span></li>';
+      '<span class="res-total">' + fmtAmt(p.total) + '<small>DON</small>' + unitX(p.total) + '</span></li>';
   }).join('');
   const most = k => { const m = Math.max(...G.players.map(p => p[k])); return m ? G.players.filter(p => p[k] === m).map(p => p.name).slice(0, 2).join('・') : '—'; };
-  if (X) { $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + X.resCount + '</span></div>' + X.resStats(most); return; }
-  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計杯数</span></div><div class="stat"><b>' + G.turn + '</b><span>質問</span></div>' +
+  if (X) { $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.turn + '</b><span>' + X.resCount + '</span></div>' + X.resStats(most); return; }
+  $('resStats').innerHTML = '<div class="stat"><b>' + fmtAmt(sum) + '</b><span>合計DON数</span></div><div class="stat"><b>' + G.turn + '</b><span>質問</span></div>' +
     '<div class="stat wide"><b>' + esc(most('ans')) + '</b><span>いちばん答えた' + '</span></div>' +
     '<div class="stat wide"><b>' + esc(most('pass')) + '</b><span>いちばんパス' + '</span></div>';
 }
@@ -11468,7 +11446,7 @@ function renderPlus(msg) {
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_SALE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b></p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、飲むか。こっそり投票・もうひと声も') +
+    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
@@ -11798,14 +11776,14 @@ function memoAct(a) { if (a === 'watch') memoShow(); }
 
 /* 遊び方ガイド: the new modes get a page of their own (after ミニゲーム) */
 if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 1), 0, { k: 'plus', tab: '暴露トーク', html: () =>
-  '<p class="gd-lead">タイトル画面の<b>「暴露トーク」</b>から遊べるモードです（2人から）。答えるか、飲むか。人数・名前・何周・1杯の量はふつうのゲームと同じように決めます。</p>' +
+  '<p class="gd-lead">タイトル画面の<b>「暴露トーク」</b>から遊べるモードです（2人から）。答えるか、DONか。人数・名前・何周はふつうのゲームと同じように決めます。</p>' +
   gCard('質問を選んで、読み上げる', '<p>番の人が<b>答える人</b>、その左隣が<b>聞き手</b>。聞き手が2枚の質問から1枚を選んで、声に出して読みます（2枚とも入れかえは1回まで）。</p>' +
-    '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1杯</b>。理由は聞かないのがルール。</p>', 1) +
-  gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>半分飲む</b>か。</p>' +
+    '<p>答えたら「答えた！」、答えたくなければ<b>「パス」で1DON</b>。理由は聞かないのがルール。</p>', 1) +
+  gCard('もうひと声・♡いい話！', '<p>答えたあと<b>「もうひと声！」</b>で深掘りの質問がもう1つ。答えるか、<b>0.5DON</b>か。</p>' +
     '<p>いい話には<b>「♡いい話！」</b>。もうひと声に答えても ♡ がもう1つ。♡ がいちばん多い人が、結果発表の<b>グランプリ</b>。</p>', 2) +
-  gCard('「この中で」の質問', '<p><b>全員で指さし</b>は、せーので指さして、いちばん指された人をタップ → 1杯。</p>' +
-    '<p><b>こっそり投票</b>は、スマホを回して1人ずつ投票。3位から順に発表します。だれがだれに入れたかは残りません。ほめる質問なら1位に ♡、いじる質問なら1位が1杯。全員1票ずつなら「意見が割れた！」でだれも飲みません。</p>' +
-    '<p><b>全員で答える</b>は、答えられなかった人をタップ → 1杯。</p>', 3) +
+  gCard('「この中で」の質問', '<p><b>全員で指さし</b>は、せーので指さして、いちばん指された人をタップ → 1DON。</p>' +
+    '<p><b>こっそり投票</b>は、スマホを回して1人ずつ投票。3位から順に発表します。だれがだれに入れたかは残りません。ほめる質問なら1位に ♡、いじる質問なら1位が1DON。全員1票ずつなら「意見が割れた！」でだれもくらいません。</p>' +
+    '<p><b>全員で答える</b>は、答えられなかった人をタップ → 1DON。</p>', 3) +
   gCard('だんだん深く', '<p>1周目はかるい質問だけ。2周目から少し深く、3周目からはいちばん深い質問も出ます。ジャンルで<b>「かるめ」</b>を選ぶと、いちばん深い質問は出ません。</p>', 4) +
   gTip('答えたくない質問は、パスしてOK。理由は聞かないのがルールです。')
 });
@@ -11900,8 +11878,8 @@ const GK_WORDS = [
   ['スポーツ・遊び', 1, 'サッカー ボウリング 野球 スキー けん玉 すべり台'],
   ['職業', 2, '美容師 消防士 漫画家 寿司職人 宇宙飛行士 警察官 マジシャン 歯医者さん'],
   ['世界の名所', 2, '自由の女神 ピラミッド モアイ 大仏 エッフェル塔 万里の長城'],
-  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 二日酔い 失恋 合格 迷子 満員電車'],
-  ['飲み会', 2, '乾杯 生ビール 焼き鳥 カラオケ 終電 割り勘 二次会 お通し'],
+  ['気持ち・できごと', 2, '寝坊 くしゃみ 筋トレ 寝不足 失恋 合格 迷子 満員電車'],
+  ['パーティー', 2, 'ハイタッチ ピザ 焼き鳥 カラオケ 終電 割り勘 二次会 クラッカー'],
   ['昔話・物語', 2, '桃太郎 浦島太郎 かぐや姫 シンデレラ 人魚姫 赤ずきん'],
   ['家電', 2, '洗濯機 冷蔵庫 掃除機 電子レンジ エアコン 扇風機'],
 ].flatMap(([g, lv, ws], gi) => ws.split(' ').map((w, j) => ({ id: (gi + 1) * 100 + j, g, lv, w })));
@@ -12044,7 +12022,7 @@ PMX.gaka = {
     const caught = cur.res === 'caught';
     return head + '<div class="gk-end"><p class="gk-res ' + (caught ? 'ok' : 'ng') + ' ol">' + (caught ? '見破った！' : cur.res === 'guess' ? 'お題を当てて逆転！' : 'ニセ画伯の逃げ切り！') + '</p>' +
       '<p class="gk-ans">お題は <b>' + esc(w.w) + '</b> ・ ニセ画伯は ' + pmName(cur.f) + '</p></div>' + canvas +
-      '<p class="pm-ask">' + (caught ? esc(pname(cur.f)) + ' が1杯' : 'ニセ画伯以外の全員が1杯') + '</p>';
+      '<p class="pm-ask">' + (caught ? esc(pname(cur.f)) + ' が1DON' : 'ニセ画伯以外の全員が1DON') + '</p>';
   },
   dock() {
     const cur = G.cur;
@@ -12105,16 +12083,16 @@ const RP_MSGS = [
   // 0 = だれでも, 1 = 恋愛
   ['上司', '明日の朝、ちょっと時間ある？', 0], ['上司', 'この前の件、どうなってる？', 0], ['母', '元気にしてる？ ちゃんとご飯食べてる？', 0],
   ['母', 'お父さんがスマホを買ったから、使い方を教えてあげて', 0], ['父', '今度の休み、帰ってくるのか？', 0], ['大家さん', '今月の家賃が、まだ入っていないようです', 0],
-  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ 飲み行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
+  ['知らない番号', '久しぶり！ 覚えてる？', 0], ['先輩', '今夜あいてる？ ご飯行こうぜ', 0], ['後輩', '先輩、ちょっと相談があるんですけど…', 0],
   ['友達', 'ごめん、今日ドタキャンしていい？', 0], ['友達', '結婚することになった！', 0], ['友達', 'お金、少し貸してくれない？', 0],
   ['美容師さん', '次回のご予約はいかがですか？', 0], ['推し', 'みんな、今日なにしてた？', 0], ['推し', '明日、大事なお知らせがあります', 0],
   ['同窓会の幹事', '10年ぶりに同窓会やります！ 出欠お願いします', 0], ['おばあちゃん', 'お年玉、今年もあげるからね', 0], ['取引先', '至急、お電話いただけますか', 0],
   ['弟', 'ゲームのアカウント、ちょっと貸して', 0], ['担任の先生', 'タイムカプセルを開けます。来られますか？', 0], ['10年後の自分', '今のうちに、あれだけはやっておけ', 0],
   ['実家の犬', 'おなかすいた', 0], ['バイトの店長', '明日シフト入れる？', 0], ['元同僚', '最近どう？ 実はおもしろい副業があって…', 0],
   ['社長', '👍', 0], ['となりの部屋の人', '夜、少し声が響いています…', 0], ['グループの全員', '（あなた以外、全員既読）', 0],
-  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日の飲み会の写真、送っといた', 0],
+  ['妹', 'お母さんの誕生日プレゼント、何にする？', 0], ['友達', '今日の服、どこで買ったの？', 0], ['先輩', '今日のパーティーの写真、送っといた', 0],
   ['元恋人', '元気？', 1], ['元恋人', '久しぶりに会えない？', 1], ['元恋人', 'ごめん、まちがえて送った', 1], ['好きな人', '今なにしてる？', 1],
-  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと飲んでたの？', 1],
+  ['好きな人', '今度ふたりでご飯いかない？', 1], ['好きな人', 'おやすみ', 1], ['恋人', '話があるんだけど', 1], ['恋人', '昨日、だれと遊んでたの？', 1],
   ['恋人', '今日なんの日か覚えてる？', 1], ['マッチングした人', 'プロフィールの写真と、だいぶ雰囲気ちがいますね', 1], ['マッチングした人', 'はじめまして！ 趣味が合いそうでうれしいです', 1],
   ['合コンで会った人', '昨日は楽しかったです！ また会えますか？', 1], ['片思いの相手', '好きな人いるの？', 1], ['幼なじみ', '実は昔、好きだったんだよね', 1],
   ['職場の気になる人', 'この前のお礼に、今度ごちそうさせて', 1], ['告白した相手', 'ごめん、返事おそくなった', 1], ['元恋人', '結婚しました', 1],
@@ -12146,7 +12124,7 @@ function rpOut(k, pick, named) {
 }
 const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick"><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
 PMX.reply = {
-  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1杯</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
+  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
   poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
   pool: o => rpPool(o).length,
   stats: () => ({ best: 0, worst: 0 }),
@@ -12258,11 +12236,11 @@ PMX.reply = {
 };
 
 /* =====================================================================
-   しれっとミッション: 全員が秘密のミッションを持って、ふつうに飲んで話す。達成したら名乗り出る、あやしい人は「見破った！」
+   しれっとミッション: 全員が秘密のミッションを持って、ふつうに話して楽しむ。達成したら名乗り出る、あやしい人は「見破った！」
    ===================================================================== */
 const MS_LIST = [
   // lv 1 = かんたん, 2 = むずかしい
-  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回乾杯する'], [1, 'だれかに「なんで？」と聞き返させる'],
+  [1, 'だれかに「それな」と言わせる'], [1, '会話の中で「パイナップル」と言う'], [1, 'だれかと2回ハイタッチする'], [1, 'だれかに「なんで？」と聞き返させる'],
   [1, 'だれかの持ち物をほめる'], [1, 'だれかに「ありがとう」と言わせる'], [1, '3回続けて「たしかに」と相づちを打つ'], [1, 'だれかに自分の名前を呼ばせる'],
   [1, '会話の中で、都道府県を3つ言う'], [1, 'だれかに「え？」と言わせる'], [1, '会話に「昭和」という言葉を入れる'], [1, 'だれかに好きな食べ物を言わせる'],
   [1, 'だれかに今何時か聞かれる'], [1, 'だれかに、最近見た動画の話をさせる'], [1, '話の途中で、一度だけ英語を混ぜる'], [1, 'だれかとハイタッチする'],
@@ -12294,7 +12272,7 @@ function msGive(ps) {
 }
 const msBack = () => pxBtn('back', 'もどる', 'white small');
 PMX.mission = {
-  tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1杯</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
+  tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1DON</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
   poolWord: 'ミッション', poolUnit: '個', resCount: '回の判定', quiet: true,
   pool: o => msPool(o).length,
   stats: () => ({ done: 0, caught: 0, spot: 0 }),
@@ -12320,7 +12298,7 @@ PMX.mission = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに話して楽しむだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'peek') {
       if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を渡すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
       const p = pxPeekWho(), m = msOf(p);
@@ -12328,10 +12306,10 @@ PMX.mission = {
         (cur.peek.check ? '' : '<button type="button" class="pm-link" data-g="x-reroll">ほかのミッションにする</button>') + '</div>';
     }
     const board = '<div class="ms-list">' + G.players.map((pl, i) => '<span class="ms-p" style="--p:' + pc(i) + '"><b>' + esc(pl.name) + '</b><small>達成 ' + pl.done + ' ・ 見破られ ' + pl.caught + '</small></span>').join('') + '</div>';
-    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
+    if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに話して楽しもう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
     if (cur.phase === 'checkWho') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを確認</p><p class="pm-ask">確認する人をタップ（本人だけ見てね）</p>' + pxChips(pxAll(), null, 'check') + '</div>';
     if (cur.phase === 'claimWho') return head + '<div class="pm-body"><p class="pm-lead ol">達成した人は？</p><p class="pm-ask">名乗り出た人をタップ</p>' + pxChips(pxAll(), null, 'claim') + '</div>';
-    if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1杯</p></div>';
+    if (cur.phase === 'claimShow') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.w) + ' のミッションは…</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">ちゃんと達成してた？</p><p class="pm-note">みんなで判定！ 認めたら、' + esc(pname(cur.w)) + ' 以外の全員が1DON</p></div>';
     if (cur.phase === 'accBy') return head + '<div class="pm-body"><p class="pm-lead ol">見破った人は？</p><p class="pm-ask">「見破った！」と言った人をタップ</p>' + pxChips(pxAll(), null, 'by') + '</div>';
     if (cur.phase === 'accWho') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.by) + ' が見破った！</p><p class="pm-lead ol">あやしいのはだれ？</p>' + pxChips(pxOthers(cur.by), null, 'who') + '</div>';
     if (cur.phase === 'accSay') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを予想して！</p><p class="pm-note">' + pmName(cur.by) + ' は、' + pmName(cur.w) + ' のミッションを<br>声に出して言ってね</p><p class="pm-note">言えたら、' + esc(pname(cur.w)) + ' だけが<br>答え合わせをする</p></div>';
@@ -12342,8 +12320,8 @@ PMX.mission = {
     if (cur.phase === 'accRes') {
       const hit = cur.ev === 'caught';
       return head + '<div class="pm-body"><p class="gk-res ' + (hit ? 'ok' : 'ng') + ' ol">' + (hit ? '見破った！' : 'ハズレ！') + '</p>' +
-        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1杯。新しいミッションを渡すよ</p>'
-          : '<p class="pm-note">' + pmName(cur.w) + ' のミッションはまだヒミツ</p><p class="pm-ask">まちがえた ' + esc(pname(cur.by)) + ' が1杯</p>') + '</div>';
+        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1DON。新しいミッションを渡すよ</p>'
+          : '<p class="pm-note">' + pmName(cur.w) + ' のミッションはまだヒミツ</p><p class="pm-ask">まちがえた ' + esc(pname(cur.by)) + ' が1DON</p>') + '</div>';
     }
     return head;
   },
@@ -12353,7 +12331,7 @@ PMX.mission = {
     if (cur.phase === 'peek') return pxRow(cur.peek.open ? pxPeekNextBtn('覚えた！ スタート ▶', cur.peek.check || cur.peek.newm ? '覚えた！ もどる ▶' : '') : pxPeekOpenBtn());
     if (cur.phase === 'live') return pxRow(pxBtn('checkWho', '自分の<span class="sub">ミッション確認</span>', 'white small') + pxBtn('accBy', '見破った！', 'big main pink grow') + pxBtn('claimWho', '達成<span class="sub">した！</span>', 'cyan small'));
     if (['checkWho', 'claimWho', 'accBy', 'accWho'].includes(cur.phase)) return pxRow(msBack());
-    if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1杯</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
+    if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1DON</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
     if (cur.phase === 'accSay') return pxRow(msBack() + pxBtn('say', '言った！ 答え合わせ', 'big main grow'));
     if (cur.phase === 'accCheck') return pxRow(!cur.open ? pxBtn('aopen', esc(pname(cur.w)) + 'です。見る！', 'big main pulse') : pxBtn('ang', 'ハズレ', 'white big') + pxBtn('aok', '当たってた', 'big main pink grow'));
     if (cur.phase === 'accRes') return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : 'つづける ▶', 'big main'));
@@ -12386,8 +12364,8 @@ PMX.mission = {
     if ((a === 'cyes' || a === 'cno') && cur.phase === 'claimShow') {
       const w = cur.w;
       G.pm.need = [w];
-      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1杯</small>', '', 1600); pmNext(pxCups(pxOthers(w)), true); }
-      else { cur.ev = 'no'; SE.play('bubuu'); telop('認められず…<small>' + esc(pname(w)) + ' が1杯</small>', 'red', 1500); pmNext(pxCups([w]), false); }
+      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1DON</small>', '', 1600); pmNext(pxCups(pxOthers(w)), true); }
+      else { cur.ev = 'no'; SE.play('bubuu'); telop('認められず…<small>' + esc(pname(w)) + ' が1DON</small>', 'red', 1500); pmNext(pxCups([w]), false); }
       return;
     }
     if (a === 'by' && cur.phase === 'accBy' && p != null) { cur.by = p; cur.phase = 'accWho'; SE.play('select'); pxSave(); return; }
@@ -12428,7 +12406,7 @@ const US_TOPICS = [
   ['l', '寝坊してやらかした話'], ['l', '夢で見たことが本当になった話'], ['l', '子どものころに集めていたもの'], ['l', '人生でいちばんの大当たり'], ['l', '人に言うと驚かれる経歴'],
   ['l', 'ちょっと自慢できる記録'], ['l', '地元の変わった名物'], ['l', '人生でいちばん寒かった（暑かった）日'], ['l', 'お店でのちょっとした事件'], ['l', '見知らぬ人に助けられた話'],
   ['d', '人生でいちばん恥ずかしかったこと'], ['d', '恋人とのケンカの話'], ['d', 'フラれた話'], ['d', '告白の話'], ['d', '人に言えない失敗'],
-  ['d', '酔っぱらってやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
+  ['d', '寝ぼけてやらかした話'], ['d', '親にバレたらまずい話'], ['d', '学生時代の黒歴史'], ['d', '最近ついたウソ'], ['d', '元恋人の話'],
   ['d', 'デートでの事件'], ['d', '職場や学校でのやらかし'], ['d', '人生でいちばん泣いた日'], ['d', 'ドキッとした瞬間'], ['d', 'モテた話'],
   ['d', '友達とケンカした話'], ['d', 'いちばん怒られた話'], ['d', 'お金の失敗談'], ['d', '人生の大ピンチ'], ['d', 'だれにも言っていない秘密'],
 ].map(([d, t], i) => ({ id: i + 1, d, t }));
@@ -12437,7 +12415,7 @@ const usPool = o => US_TOPICS.filter(q => o === 'mix' || q.d === (o === 'light' 
 const THUMB = up => '<svg class="us-th' + (up ? '' : ' down') + '" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="' + (up ? '#a8f03a' : '#ff4fa3') + '" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const usQ = () => US_BY_ID.get(G.cur.q) || US_TOPICS[0];
 PMX.uso = {
-  tag: '話す', hint: 'ホントかウソか、外した人は <b>1杯</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
+  tag: '話す', hint: 'ホントかウソか、外した人は <b>1DON</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
   poolWord: 'お題', poolUnit: '個', resCount: '話',
   pool: o => usPool(o).length,
   stats: () => ({ told: 0, fool: 0, miss: 0 }),
@@ -12463,7 +12441,7 @@ PMX.uso = {
     if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p></div>';
     const others = pxOthers(p), fool = cur.sel.length === others.length;
     return head + '<div class="pm-body"><p class="us-ans ' + (cur.truth ? 'true' : 'lie') + ' ol">' + (cur.truth ? 'ホント！' : 'ウソ！') + '</p><p class="us-topic open sm">' + esc(q.t) + '</p>' +
-      '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1杯</p>' + pxChips(others, cur.sel, 'sel', '1杯') +
+      '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1DON</p>' + pxChips(others, cur.sel, 'sel', '1DON') +
       (fool ? '<p class="pm-ask gold">全員だまされた！ ' + esc(pname(p)) + ' に勲章</p>' : '') + '</div>';
   },
   dock() {
@@ -12531,14 +12509,14 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
   '<p class="gd-lead">タイトル画面の下の段、<b>4つの新モード</b>です。どれもスマホ1台で遊べます。「こっそり見る」場面では、名前が出た人にスマホを渡してね。</p>' +
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
     '<p>1人1筆ずつ、2周で1枚の絵を描きます。<b>指を離したら次の人</b>。描き終わったら、せーので<b>ニセ画伯だと思う人を指さし</b>。</p>' +
-    '<p>見破られたらニセ画伯が1杯。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1杯</b>。描いた絵は保存できます。</p>', 1) +
+    '<p>見破られたらニセ画伯が1DON。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1DON</b>。描いた絵は保存できます。</p>', 1) +
   gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
-    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1杯。最後に名前がわかります。</p>', 2) +
-  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
-    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1杯。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1杯。</p>' +
+    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
+  gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに話して楽しむだけ。</p>' +
+    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
-    '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1杯</b>。全員だませたら、話した人に勲章。</p>', 4) +
+    '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
   gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')
 });
 
@@ -12592,7 +12570,7 @@ function koReveal() {
   step();
 }
 PMX.koi = {
-  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、飲むか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露トーク！<small>答えるか、飲むか</small>',
+  tag: '答える', tag2: '聞く', icon: HEART_SVG, hint: '答えるか、DONか。いい話には <b>♡</b>', intro: HEART_SVG + '暴露トーク！<small>答えるか、DONか</small>',
   poolWord: '質問', poolUnit: '問', resCount: '問',
   pool: o => koPool(o).length,
   stats: () => ({ more: 0, votes: 0 }),
@@ -12624,8 +12602,8 @@ PMX.koi = {
     if (cur.phase === 'pick') return head + '<div class="pm-body"><p class="pm-ask">' + esc(pname(a)) + '、' + esc(pname(p)) + ' に聞く質問をタップ</p><div class="ko-picks' + (anim === 'pick' ? ' enter' : '') + '">' +
       cur.opts.map((id, i) => { const q = koQ(id); return '<button type="button" class="ko-pick g-' + q.g + (cur.pk === i ? ' sel' : '') + '" data-g="x-pk" data-i="' + i + '" aria-pressed="' + (cur.pk === i) + '"><span class="ko-pt">' + KO_TYPE[q.t] + ' ' + koDepth(q.lv) + '</span><span class="ko-pq">' + esc(q.q) + '</span></button>'; }).join('') + '</div></div>';
     const q = koQ(cur.q);
-    if (cur.phase === 'q' && q.t === 'ask') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' が答える</p>' + koCard(q, '<p class="ko-rule">' + esc(pname(a)) + '、読み上げて！ 答えたくなければパス（1杯）</p>', anim === 'q' ? 'enter' : '') + '</div>';
-    if (cur.phase === 'more') return head + '<div class="pm-body"><p class="ko-who">もうひと声！</p>' + koCard(q, '', 'small') + '<div class="ko-card face more g-' + q.g + (anim === 'more' ? ' enter' : '') + '"><span class="ko-tag">もうひと声</span><p class="ko-q">' + esc(q.more[cur.mi]) + '</p><p class="ko-rule">答えるか、半分飲むか</p></div></div>';
+    if (cur.phase === 'q' && q.t === 'ask') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' が答える</p>' + koCard(q, '<p class="ko-rule">' + esc(pname(a)) + '、読み上げて！ 答えたくなければパス（1DON）</p>', anim === 'q' ? 'enter' : '') + '</div>';
+    if (cur.phase === 'more') return head + '<div class="pm-body"><p class="ko-who">もうひと声！</p>' + koCard(q, '', 'small') + '<div class="ko-card face more g-' + q.g + (anim === 'more' ? ' enter' : '') + '"><span class="ko-tag">もうひと声</span><p class="ko-q">' + esc(q.more[cur.mi]) + '</p><p class="ko-rule">答えるか、0.5DONか</p></div></div>';
     if (cur.phase === 'heart') {
       const canMore = q.more && q.more.length && !cur.md;
       return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<p class="pm-lead ol">いい話だった？</p><p class="pm-note">よかったら「♡いい話！」。' + (canMore ? 'もっと聞きたければ「もうひと声！」' : '') + '</p>' +
@@ -12633,8 +12611,8 @@ PMX.koi = {
     }
     if (cur.phase === 'q') {
       const pt = q.t === 'point';
-      return head + '<div class="pm-body">' + koCard(q, '<p class="ko-rule">' + (pt ? 'せーので一斉に指さし！ いちばん指された人が1杯。指した理由も1人ずつ' : esc(pname(p)) + ' から1人ずつ答える。答えられなかった人が1杯') + '</p>', anim === 'q' ? 'enter' : '') +
-        '<p class="pm-ask">' + (pt ? 'いちばん指された人をタップ' : '答えられなかった・パスした人をタップ') + '</p>' + pxChips(pxAll(), cur.sel, 'sel', '1杯') + '</div>';
+      return head + '<div class="pm-body">' + koCard(q, '<p class="ko-rule">' + (pt ? 'せーので一斉に指さし！ いちばん指された人が1DON。指した理由も1人ずつ' : esc(pname(p)) + ' から1人ずつ答える。答えられなかった人が1DON') + '</p>', anim === 'q' ? 'enter' : '') +
+        '<p class="pm-ask">' + (pt ? 'いちばん指された人をタップ' : '答えられなかった・パスした人をタップ') + '</p>' + pxChips(pxAll(), cur.sel, 'sel', '1DON') + '</div>';
     }
     if (cur.phase === 'vote') {
       if (!cur.peek.open) return head + pxPeekCover('だれに入れたかは、だれにも分からない');
@@ -12648,7 +12626,7 @@ PMX.koi = {
       const t = cur.tally[i], on = steps - 1 - i < cur.shown;
       rows += '<li class="ko-rank' + (on ? ' on' : '') + (done && top.includes(t.p) ? ' top' : '') + '"><b>' + (1 + cur.tally.filter(x => x.n > t.n).length) + '位</b>' + (on ? pmName(t.p) + '<i>' + t.n + '票</i>' : '<span class="ko-hide">？？？</span>') + '</li>';
     }
-    const res = !done ? '' : koSplit() ? '<p class="pm-ask gold">意見が割れた！ だれも飲まない</p>' : q.k === 'praise' ? '<p class="pm-ask gold">' + top.map(x => esc(pname(x))).join('・') + ' に ♡</p>' : '<p class="pm-ask">' + top.map(x => esc(pname(x))).join('・') + ' が1杯</p>';
+    const res = !done ? '' : koSplit() ? '<p class="pm-ask gold">意見が割れた！ だれもくらわない</p>' : q.k === 'praise' ? '<p class="pm-ask gold">' + top.map(x => esc(pname(x))).join('・') + ' に ♡</p>' : '<p class="pm-ask">' + top.map(x => esc(pname(x))).join('・') + ' が1DON</p>';
     return head + '<div class="pm-body">' + koCard(q, '', 'small') + '<ol class="ko-ranks">' + rows + '</ol>' + res + '</div>';
   },
   dock() {
@@ -12656,8 +12634,8 @@ PMX.koi = {
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('flip', '質問をめくる！', 'big main pulse pink'));
     if (cur.phase === 'pick') return pxRow(pxBtn('re', '2枚とも<span class="sub">入れかえ' + (cur.re ? '済み' : '（1回）') + '</span>', 'white small', cur.re ? ' disabled' : '') + pxBtn('go', cur.pk == null ? '質問をタップ' : 'これにする！', 'big main grow', cur.pk == null ? ' disabled' : ''));
     const q = koQ(cur.q), last = pmLast() ? '結果発表へ！' : '次へ ▶';
-    if (cur.phase === 'q' && q.t === 'ask') return pxRow(pxBtn('pass', 'パス<span class="sub">1杯飲む</span>', 'white small') + pxBtn('ok', '答えた！', 'big main grow'));
-    if (cur.phase === 'more') return pxRow(pxBtn('mhalf', '半分<span class="sub">飲む</span>', 'white small') + pxBtn('mok', '答えた！', 'big main grow'));
+    if (cur.phase === 'q' && q.t === 'ask') return pxRow(pxBtn('pass', 'パス<span class="sub">1DON</span>', 'white small') + pxBtn('ok', '答えた！', 'big main grow'));
+    if (cur.phase === 'more') return pxRow(pxBtn('mhalf', 'パス<span class="sub">0.5DON</span>', 'white small') + pxBtn('mok', '答えた！', 'big main grow'));
     if (cur.phase === 'heart') {
       const canMore = q.more && q.more.length && !cur.md;
       return pxRow((canMore ? pxBtn('more', 'もうひと声！', 'cyan small') : '') + pxBtn('heart', (cur.heart ? '♡ 送った' : '♡いい話！'), (cur.heart ? 'pink' : 'white') + ' small', cur.heart ? ' aria-pressed="true"' : '') + pxBtn('next', last, 'big main'));
@@ -13964,13 +13942,13 @@ if (PLUS_OPEN) {
 const WORDS_KEY = 'sakego-words-seen';
 const WORDS = [
   { k: 'insu', w: 'インシュメイト', re: /インシュメイト/,
-    d: '「飲み仲間」をつくるルール。指名した人とされた人はペアになって、<b>どちらかが飲むと、もう片方も同じ量を飲みます</b>。アプリが2人ぶん自動で記録します。ルールが消えるまで続きます。' },
+    d: '「道連れ仲間」をつくるルール。指名した人とされた人はペアになって、<b>どちらかがくらうと、もう片方も同じだけくらいます</b>。アプリが2人ぶん自動で記録します。ルールが消えるまで続きます。' },
   { k: 'shitsuji', w: '執事', re: /「執事」/,
-    d: '指名された人は、引いた人の<b>お世話係</b>。ご主人さま（引いた人）のグラスが空いたら、すぐに飲み物を注ぎます。気づかずに放っておいたら1杯。' },
+    d: '指名された人は、引いた人の<b>お世話係</b>。ご主人さま（引いた人）が手を挙げたら、すぐに「はい、ご主人さま」と返事します。気づかずに放っておいたら1DON。' },
   { k: 'qm', w: 'クエスチョンマスター', re: /クエスチョンマスター/,
-    d: '略して「QM」。QMに<b>質問されて、答えてしまったら1杯</b>。QMの質問には答えずに無視するか、質問で返せばセーフです。「今なんじ？」のような何気ない質問で引っかけるのがQMの腕の見せどころ。' },
+    d: '略して「QM」。QMに<b>質問されて、答えてしまったら1DON</b>。QMの質問には答えずに無視するか、質問で返せばセーフです。「今なんじ？」のような何気ない質問で引っかけるのがQMの腕の見せどころ。' },
   { k: 'oya', w: '親指マスター', re: /親指マスター/,
-    d: '親指マスターは、好きなタイミングで<b>こっそりテーブルに親指を置きます</b>。気づいた人から同じように親指を置いていき、<b>最後に置いた人が1杯</b>。ルールが消えるまで何回でもできます。' },
+    d: '親指マスターは、好きなタイミングで<b>こっそりテーブルに親指を置きます</b>。気づいた人から同じように親指を置いていき、<b>最後に置いた人が1DON</b>。ルールが消えるまで何回でもできます。' },
   { k: 'yubisuma', w: '指スマ', re: /指スマ/,
     d: '2人とも両手をにぎって、親指を立てられるようにかまえます。番の人が「いっせーので、〇！」と<b>0〜4の数</b>を言うのと同時に、2人とも好きな数だけ親指を上げます。上がった親指の数が言った数と同じなら、言った人は片手を引っこめられます。交代で言い合って、<b>先に両手がなくなった方の勝ち</b>。' },
   { k: 'yamanote', w: '山手線ゲーム', re: /山手線ゲーム/,
@@ -13982,11 +13960,11 @@ const WORDS = [
   { k: 'stop10', w: '10秒ストップ', re: /10秒ストップ/,
     d: 'ストップウォッチをスタートして、<b>画面を見ずに</b>「10秒ぴったり」だと思うところで止めます。10秒から遠い方の負け。アプリのタイマーを使えば、そのまま勝負できます。' },
   { k: 'hh', w: '天国と地獄', re: /天国と地獄/,
-    d: 'アプリのルーレット。止まったマスで飲む量が変わります。<b>天国</b>＝飲まなくてOK、<b>地獄</b>＝2倍、<b>大天国</b>＝自分は0杯でその量を好きな人に押し付け、<b>大地獄</b>＝3倍。たまに「デビルモード」（地獄だらけ）や「大天使降臨」（ほぼ天国、でも大地獄が2マス）が起きます。' },
+    d: 'アプリのルーレット。止まったマスでDONが変わります。<b>天国</b>＝DONなしでOK、<b>地獄</b>＝2倍、<b>大天国</b>＝自分は0DONでその量を好きな人に押し付け、<b>大地獄</b>＝3倍。たまに「デビルモード」（地獄だらけ）や「大天使降臨」（ほぼ天国、でも大地獄が2マス）が起きます。' },
   { k: 'dbl', w: '倍倍FIGHT！', re: /倍倍FIGHT/,
-    d: '特殊ルールのひとつ。自分の量を<b>2倍</b>にして飲むかわりに、<b>次に飲む人も2倍</b>にできます。次の人も倍倍FIGHT！で受けて立てば、×4、×8…とどんどん大きくなります。' },
+    d: '特殊ルールのひとつ。自分の量を<b>2倍</b>にしてくらうかわりに、<b>次にくらう人も2倍</b>にできます。次の人も倍倍FIGHT！で受けて立てば、×4、×8…とどんどん大きくなります。' },
   { k: 'cospa', w: 'コストパフォーマンス', re: /コストパフォーマンス|コスパ/,
-    d: '略して「コスパ」。自分の番で、カードを引く<b>前</b>に使う特殊ルール。先に1杯飲んでおくと、そのターンに自分が飲むことになったとき、量が<b>半分</b>になります。' },
+    d: '略して「コスパ」。自分の番で、カードを引く<b>前</b>に使う特殊ルール。先に1DONくらっておくと、そのターンに自分がくらうことになったとき、量が<b>半分</b>になります。' },
   { k: 'ken', w: '手札の券', re: /セーフ券|押し付け券|休憩券|天国パス|コスパ無料券/,
     d: '券は引いた人の<b>手札</b>に入り、席の右上に小さなカードで表示されます（席をタップすると中身が見られます）。使える場面になると、アプリが「使う？」と聞いてくれます。' },
 ];
@@ -14095,7 +14073,6 @@ function boot(data) {
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
   installSync();
-  if (!ageOk()) ageAsk(false);
   FXC.size();
 }
 const hot = window.claude && window.claude.hot;

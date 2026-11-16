@@ -39,7 +39,6 @@ function boot(data) {
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
   installSync();
-  if (!ageOk()) ageAsk(false);
   FXC.size();
 }
 const hot = window.claude && window.claude.hot;
