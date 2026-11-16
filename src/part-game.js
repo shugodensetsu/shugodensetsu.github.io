@@ -1026,7 +1026,40 @@ function showScreen(name) {
   else if (screen === 'editor') renderAll(true);
   if (coach.on) coachQueue();
   sceneBGM();
+  fitScreen();
 }
+/* The title and the setup are laid out to fit any screen without scrolling (sizes follow the screen height in the CSS).
+   As a last resort for odd shapes (a browser's toolbars eating the height, a very small phone) the screen is zoomed out just
+   enough that nothing scrolls. Not while a name is being typed: the on-screen keyboard shrinks the window, and the layout
+   should not jump under the user's fingers. */
+const FIT_SCREENS = ['title', 'setup'];
+let fitQueued = 0;
+function fitScreen() {
+  if (fitQueued) return;
+  fitQueued = requestAnimationFrame(() => {
+    fitQueued = 0;
+    if (!FIT_SCREENS.includes(screen)) return;
+    const el = $('scr-' + screen), a = document.activeElement;
+    if (!el || el.hidden || (a && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return;
+    const prev = el.style.zoom;
+    const over = z => { el.style.zoom = z === 1 ? '' : String(z); return el.scrollHeight > el.clientHeight + 1; };
+    let z = 1;
+    if (over(1)) {
+      let lo = .6, hi = 1;
+      for (let i = 0; i < 7; i++) { const m = (lo + hi) / 2; if (over(m)) hi = m; else lo = m; }
+      z = Math.floor(lo * 1000) / 1000;
+    }
+    el.style.zoom = z === 1 ? '' : String(z);
+    if (el.style.zoom !== prev && screen === 'setup') fitInfo();
+  });
+}
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => fitScreen());
+  FIT_SCREENS.forEach(k => { const el = $('scr-' + k); ro.observe(el); [...el.children].forEach(c => ro.observe(c)); });
+  ['nameList', 'setupInfo', 'roundGrid', 'mixGrid'].forEach(id => ro.observe($(id)));
+}
+document.addEventListener('focusout', () => setTimeout(fitScreen, 300));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitScreen());
 
 /* ---------- title & setup ---------- */
 function renderTitle() {
@@ -7063,7 +7096,7 @@ function wireGame() {
   });
   window.addEventListener('pagehide', statPause);
   window.addEventListener('online', () => setTimeout(statFlush, 1500));
-  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); if (screen === 'result') fitResults(); if (zoom) sizeZoom(); coachQueue(); };
+  const onResize = () => { FXC.size(); if (screen === 'game') { layoutTable(); miniFit(); } if (screen === 'setup') fitInfo(); fitScreen(); if (screen === 'result') fitResults(); if (zoom) sizeZoom(); coachQueue(); };
   window.addEventListener('resize', onResize);
   if (window.ResizeObserver) { const ro = new ResizeObserver(onResize); ro.observe($('tableWrap')); ro.observe($('mgWrap')); }
 }

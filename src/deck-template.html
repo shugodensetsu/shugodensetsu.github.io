@@ -103,11 +103,6 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .pbtn .sub{display:block; font-family:var(--f-body); font-weight:800; font-size:11px; letter-spacing:0; opacity:.85}
 
 /* ---------- title ---------- */
-.s-title{justify-content:flex-start; align-items:center; text-align:center; gap:min(16px, 2.2cqh); overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain}
-/* centred while it fits (auto margins); when the buttons need more room (続きから再開, ホーム画面に追加, a short screen) the cards shrink first,
-   and if it still doesn't fit the screen scrolls instead of cutting the top off */
-.s-title > :first-child{margin-top:auto}
-.s-title > :last-child{margin-bottom:auto}
 .t-cards{position:relative; width:100%; flex:0 1 min(190px, 24cqh); height:min(190px, 24cqh); min-height:0; container-type:size}
 .t-card{position:absolute; left:50%; bottom:0; width:min(104px, 54.7cqh); height:min(146px, 76.8cqh); margin-left:calc(min(104px, 54.7cqh) / -2); box-sizing:border-box;
   border:3px solid var(--ink); border-radius:14px; box-shadow:0 5px 0 var(--ink); background:var(--paper); display:grid; place-items:center}
@@ -2436,6 +2431,117 @@ button.rp-pick{cursor:pointer}
   .tool-ov.pour .pr-sub small{display:none}
   .pr-sub{min-height:1.55em}
 }
+
+/* ---------- title: one screen, never scrolls ----------
+   Three blocks: the hero (cards, logo, tagline), the actions (start, six modes, four small buttons, premium) and the footer (notes).
+   Every size is tied to the screen's own height (cqh) as well as its width, so the whole title shrinks to fit instead of scrolling;
+   the decorative cards go first when it gets tight. Wide and short screens (phones held sideways) put the hero and the actions side by side. */
+.s-title{display:grid; grid-template-rows:minmax(0,1fr) auto auto; grid-template-areas:"hero" "act" "foot"; justify-items:center; align-items:center; text-align:center;
+  gap:min(12px, 1.6cqh); overflow:hidden; padding-block:min(6px, 1cqh) min(10px, 1.4cqh)}
+.t-hero{grid-area:hero; align-self:stretch; width:100%; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:min(10px, 1.4cqh)}
+.t-hero .t-cards{flex:0 1 min(170px, 20cqh); height:auto; min-height:0}
+.t-hero .logo{font-size:min(74px, 15cqw, 8.4cqh); flex:none}
+.t-hero .t-tag{flex:none; font-size:min(16px, 2.2cqh, 4.2cqw); padding:min(4px, .6cqh) 14px}
+.s-title .t-actions{grid-area:act; width:min(100%, 380px); gap:min(10px, 1.4cqh)}
+.t-start{display:flex; gap:8px}
+.t-start #goSetup{flex:1; min-width:0; font-size:min(24px, 3.9cqh, 6.4cqw); padding:min(13px, 1.7cqh) 10px}
+.t-resume{flex:none; font-size:min(14px, 2.3cqh, 3.8cqw); line-height:1.1; padding:min(6px, .9cqh) 10px}
+.s-title .t-modes{gap:min(8px, 1.3cqh) 8px}
+.s-title .t-actions .t-mode{padding:min(7px, .9cqh) 2px min(8px, 1cqh); font-size:min(15px, 3.9cqw, 2.6cqh); gap:min(3px, .4cqh)}
+.s-title .t-actions .t-mode.long > span{font-size:min(13px, 3.3cqw, 2.3cqh)}
+.s-title .t-mode svg{width:min(26px, 3.3cqh); height:min(26px, 3.3cqh)}
+.t-sub{display:grid !important; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px}
+.s-title .t-actions .t-sub .pbtn{font-size:min(14px, 3.7cqw, 2.4cqh); padding:min(8px, 1.1cqh) 2px; border-radius:13px; box-shadow:0 4px 0 var(--ink)}
+.s-title .t-plus{padding:min(3px, .4cqh) 14px min(3px, .4cqh) 10px}
+.s-title .t-plus b{font-size:min(13px, 2.2cqh, 3.5cqw)}
+.s-title .t-plus small{font-size:min(11px, 1.9cqh, 3cqw)}
+.t-foot{grid-area:foot; width:100%; display:flex; flex-direction:column; align-items:center; gap:min(6px, .9cqh)}
+.s-title .fine{font-size:min(11px, 1.85cqh, 3.1cqw); line-height:1.45; max-width:40em}
+.s-title .fine a{padding:0 2px}
+.s-title .t-install{font-size:min(13px, 2.1cqh); padding:min(5px, .7cqh) 14px}
+/* sideways and short: hero on the left, actions on the right, the notes across the bottom */
+@media (orientation: landscape) and (max-height: 600px){
+  .screen.s-title{max-width:980px; grid-template-columns:minmax(0,1fr) minmax(0, min(420px, 54%)); grid-template-rows:minmax(0,1fr) auto; grid-template-areas:"hero act" "foot foot"; column-gap:min(24px, 3cqw); padding-inline:max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right))}
+  .t-hero .t-cards{flex-basis:min(150px, 30cqh)}
+  .t-hero .logo{font-size:min(74px, 7.4cqw, 15cqh)}
+  .t-hero .t-tag{font-size:min(16px, 4.2cqh, 2.2cqw)}
+  .s-title .t-actions{align-self:center; width:100%; gap:min(10px, 2.4cqh)}
+  .t-start #goSetup{font-size:min(22px, 6.6cqh); padding:min(10px, 2.4cqh) 10px}
+  .t-resume{font-size:min(13px, 3.8cqh)}
+  .s-title .t-modes{gap:min(8px, 2.2cqh) 6px}
+  .s-title .t-actions .t-mode{flex-direction:row; justify-content:center; gap:5px; padding:min(7px, 1.7cqh) 4px; font-size:min(14px, 4.6cqh, 2.3cqw)}
+  .s-title .t-actions .t-mode.long > span{font-size:min(12.5px, 4.2cqh, 2cqw)}
+  .s-title .t-mode svg{width:min(22px, 6cqh); height:min(22px, 6cqh)}
+  .s-title .t-actions .t-sub .pbtn{font-size:min(14px, 4.4cqh, 2.3cqw); padding:min(7px, 1.8cqh) 2px}
+  .s-title .t-plus b{font-size:min(13px, 3.8cqh)}
+  .s-title .t-plus small{font-size:min(11px, 3.3cqh)}
+  .t-foot{flex-direction:row; justify-content:center; gap:10px}
+  .s-title .fine{font-size:min(11px, 3.5cqh); max-width:none}
+  .s-title .t-install{font-size:min(12px, 3.4cqh); padding:2px 12px}
+}
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 700px){ .s-title .t-mode svg{display:none} }
+@media (orientation: landscape) and (max-height: 600px){ .s-title .t-new{top:-9px; right:-4px; font-size:8.5px; padding:0 4px} }
+
+/* ---------- setup: one screen, never scrolls ----------
+   Sizes follow the screen's height (cqh), so 8 names, the rounds, the card mix and the start button all fit on a small phone.
+   On short screens the screen title goes (the top bar already says where you are) and the option buttons drop their second line.
+   Sideways: players on the left (how many, names), the options and the start button on the right. */
+.s-setup{gap:min(8px, 1cqh); padding-block:min(6px, .8cqh) min(10px, 1.2cqh)}
+.s-setup .panel{padding:min(8px, .9cqh) 12px min(9px, 1.1cqh); gap:min(7px, .8cqh)}
+.s-setup .pn-names{flex:0 1 auto; min-height:0; overflow:hidden}
+.s-setup .names{gap:min(7px, .9cqh) 7px}
+.s-setup .nm-row{padding-block:min(3px, .35cqh)}
+.s-setup .nm-in{font-size:min(16px, 2.6cqh); padding-block:min(5px, .4cqh)}
+.s-setup .nm-idx{width:min(26px, 3.9cqh); height:min(26px, 3.9cqh); font-size:min(13px, 2.2cqh)}
+.s-setup .count-row button{max-height:min(50px, 6cqh); font-size:min(19px, 3cqh)}
+.s-setup .p-h{font-size:min(15px, 2.6cqh)}
+.s-setup .num-badge{width:min(26px, 4cqh); height:min(26px, 4cqh); font-size:min(14px, 2.3cqh)}
+.s-setup .round-row button{font-size:min(17px, 2.7cqh); padding-block:min(7px, .7cqh)}
+.s-setup .mix-row button{padding-block:min(4px, .4cqh)}
+.s-setup .mix-row b{font-size:min(17px, 2.7cqh)}
+.s-setup .mix-row small{font-size:min(11px, 1.9cqh)}
+.s-setup .row-btns{position:static; margin:auto 0 0; padding:0; background:none}
+.s-setup .row-btns .pbtn.big{font-size:min(24px, 3.8cqh); padding-block:min(12px, 1.4cqh)}
+.s-setup .row-btns .pbtn.small{font-size:min(15px, 2.6cqh); padding-block:min(8px, 1.1cqh)}
+.s-setup .coach-opt{font-size:min(13px, 2.1cqh, 3.7cqw); white-space:nowrap}
+/* the smallest phones (iPhone SE): the name rows and the gaps tighten a little more */
+@container (max-height: 560px){
+  .s-setup .nm-row{padding-block:0}
+  .s-setup .nm-in{padding-block:min(3px, .3cqh)}
+  .s-setup .names{gap:min(5px, .8cqh) 6px}
+  .s-setup{gap:min(6px, 1cqh)}
+  .s-setup .panel{gap:min(5px, .8cqh)}
+}
+@container (max-height: 700px){
+  .s-setup .scr-title{display:none}
+  .s-setup .p-hint{display:none}
+  .s-setup .mix-row small{display:none}
+}
+@media (orientation: landscape) and (max-height: 600px){
+  .screen.s-setup{max-width:980px; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"count round" "names round" "names mix" "names coach" "names info" "names btns"; column-gap:12px; row-gap:min(8px, 2cqh); align-content:start;
+    padding-inline:max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right))}
+  .s-setup .scr-title{display:none}
+  .s-setup .pn-count{grid-area:count} .s-setup .pn-names{grid-area:names; align-self:stretch} #roundPanel{grid-area:round} #mixPanel{grid-area:mix}
+  #coachRow{grid-area:coach} #setupInfo{grid-area:info; align-self:start} .s-setup .row-btns{grid-area:btns; align-self:end}
+  .s-setup .panel{padding:min(6px, 1.6cqh) 10px min(7px, 1.8cqh); gap:min(6px, 1.6cqh)}
+  .s-setup .p-hint, .s-setup .mix-row small{display:none}
+  .s-setup .p-h{font-size:min(14px, 4.4cqh)}
+  .s-setup .num-badge{width:min(22px, 6.6cqh); height:min(22px, 6.6cqh); font-size:min(12px, 3.8cqh)}
+  .s-setup .count-row button{max-height:min(40px, 11cqh); font-size:min(17px, 5.4cqh)}
+  .s-setup .names{gap:min(6px, 1.6cqh) 6px}
+  .s-setup .nm-in{font-size:min(15px, 4.8cqh); padding-block:min(4px, 1cqh)}
+  .s-setup .nm-idx{width:min(24px, 7cqh); height:min(24px, 7cqh); font-size:min(12px, 3.8cqh)}
+  .s-setup .round-row button{font-size:min(16px, 5cqh); padding-block:min(5px, 1.4cqh)}
+  .s-setup .mix-row b{font-size:min(16px, 5cqh)}
+  .s-setup .coach-opt{font-size:min(12px, 3.8cqh)}
+  .s-setup .setup-info:not(.one){font-size:min(12px, 3.8cqh); line-height:1.4}
+  .s-setup .row-btns .pbtn.big{font-size:min(22px, 6.6cqh); padding-block:min(10px, 2.6cqh)}
+  .s-setup .row-btns .pbtn.small{font-size:min(14px, 4.4cqh); padding-block:min(8px, 2.4cqh)}
+  .s-setup .nm-row{gap:4px; padding-right:4px}
+}
+/* the narrowest sideways phones: the 1杯の量 label gives its room to the select */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 740px){ .s-setup .unit-sel > span{display:none} }
 </style>
 
 <div class="app" id="shell" data-src>
@@ -2466,13 +2572,18 @@ button.rp-pick{cursor:pointer}
 
   <main class="stage-area">
     <section class="screen s-title" id="scr-title" aria-label="タイトル">
+      <div class="t-hero">
       <div class="t-cards" aria-hidden="true">
         <span class="t-card c-a"><b>撃</b></span><span class="t-card c-b"><b>安</b></span><span class="t-card c-back"><b>飲</b></span>
       </div>
       <h1 class="logo" aria-label="__APP_NAME__"><span class="go" style="--i:0">D</span><span class="go" style="--i:1">O</span><span class="go" style="--i:2">N</span><span class="go bang" style="--i:3">!</span><span class="go bang" style="--i:4">!</span><span style="--i:5">で</span><span style="--i:6">ん</span><i class="br"></i><span class="lg2 sub" style="--i:7">パ</span><span class="lg2 sub" style="--i:8">ー</span><span class="lg2 sub" style="--i:9">テ</span><span class="lg2 sub" style="--i:10">ィ</span><span class="lg2 sub" style="--i:11">ー</span></h1>
       <p class="t-tag">引いたが最後！ 天国か、地獄か。</p>
+      </div>
       <div class="t-actions">
-        <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
+        <div class="t-start">
+          <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>
+          <button type="button" class="pbtn cyan t-resume" id="resumeBtn" hidden>続きから<br>再開</button>
+        </div>
         <div class="t-modes" role="group" aria-label="ほかのモード">
           <button type="button" class="pbtn pink t-mode" id="goMini"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg><span>ミニゲーム</span></button>
           <button type="button" class="pbtn purple t-mode" id="goKoi" data-pm="koi"><i class="t-new" id="koiTag">NEW</i><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/></svg><span>暴露トーク</span></button>
@@ -2481,26 +2592,27 @@ button.rp-pick{cursor:pointer}
           <button type="button" class="pbtn mint t-mode" id="goMission" data-pm="mission"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 15c3.5-6 7.5-9 12-9s8.5 3 12 9c-3.5 6-7.5 9-12 9S6.5 21 3 15Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="15" r="5" fill="#35e0ff" stroke="#150733" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="#150733"/></svg><span>ミッション</span></button>
           <button type="button" class="pbtn t-mode" id="goUso" data-pm="uso"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="#ffd83d" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg><span>ウソホント</span></button>
         </div>
-        <button type="button" class="pbtn cyan small" id="resumeBtn" hidden>続きから再開</button>
-        <div class="t-row t-grid">
+        <div class="t-row t-sub">
           <button type="button" class="pbtn white small" id="goEditor">カード編集</button>
-          <button type="button" class="pbtn white small" id="howBtn">遊び方ガイド</button>
-          <button type="button" class="pbtn white small" id="statsBtn">あそびの記録</button>
-          <button type="button" class="pbtn cyan small" id="tellBtn">友達に教える</button>
+          <button type="button" class="pbtn white small" id="howBtn" aria-label="遊び方ガイド">遊び方</button>
+          <button type="button" class="pbtn white small" id="statsBtn" aria-label="あそびの記録">記録</button>
+          <button type="button" class="pbtn cyan small" id="tellBtn" aria-label="友達に教える">シェア</button>
         </div>
         <button type="button" class="t-plus" id="plusBtn"></button>
-        <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加して、アプリとして使う</button>
       </div>
-      <p class="fine"><span class="beta">試作版</span>のため、予告なくアップデートが入ることがあります。<br>20歳未満の飲酒は法律で禁止されています。飲めない人はソフトドリンクで参加OK。無理に飲ませるのはやめましょう。<br><a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></p>
+      <footer class="t-foot">
+        <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加</button>
+        <p class="fine"><span class="beta">試作版</span>予告なくアップデートすることがあります ・ <a href="https://shugodensetsu.github.io/terms.html" target="_blank" rel="noopener">利用規約</a> ・ <a href="https://shugodensetsu.github.io/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a><br>20歳未満の飲酒は法律で禁止。飲めない人はソフトドリンクでOK、無理に飲ませるのはやめましょう。</p>
+      </footer>
     </section>
 
     <section class="screen s-setup" id="scr-setup" aria-label="メンバー登録" hidden>
       <h2 class="scr-title ol" id="setupTitle">メンバー登録</h2>
-      <div class="panel">
+      <div class="panel pn-count">
         <div class="p-h"><span class="num-badge">1</span>何人であそぶ？</div>
         <div class="count-row" id="countGrid" role="group" aria-label="人数"></div>
       </div>
-      <div class="panel grow">
+      <div class="panel grow pn-names">
         <div class="p-h"><span class="num-badge">2</span>名前<span class="p-hint">座っている順に入れると、席の並びが実際と合います</span></div>
         <div class="names" id="nameList"></div>
       </div>
@@ -2513,7 +2625,7 @@ button.rp-pick{cursor:pointer}
           <label class="unit-sel"><span>1杯の量</span><select id="unitSel" aria-label="1杯の量"></select></label></div>
         <div class="mix-row" id="mixGrid" role="group" aria-label="カードの出かた"></div>
       </div>
-      <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>1ターン目に、操作の案内を出す（はじめての人向け）</span></label>
+      <label class="coach-opt" id="coachRow"><input type="checkbox" id="coachOpt"><span>はじめての人向けに、1ターン目に操作の案内を出す</span></label>
       <p class="setup-info" id="setupInfo"></p>
       <div class="row-btns">
         <button type="button" class="pbtn white small" id="setupBack">もどる</button>
