@@ -45,6 +45,9 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .app.covered .bg-burst{visibility:hidden; animation-play-state:paused}
 .app.covered .bg-dots, .app.covered .screen{visibility:hidden}
 .brand, .se-btn{white-space:nowrap}
+/* the top bar is only so wide: on phones the name is cut to DON!!でん, the full name comes back when there is room */
+.brand{min-width:0; overflow:hidden}
+@media (max-width: 479px){ .brand .brand-p{display:none} }
 /* narrow phones (360px Android and the like): everything in the top bar stays on one line */
 @media (max-width: 384px){
   .topbar{gap:6px; padding-inline:10px}
@@ -125,6 +128,10 @@ button:disabled{cursor:not-allowed; opacity:.5}
 .logo span.go{color:var(--pink); font-size:1.14em}
 .logo span.bang{margin-inline:-.06em}
 .logo span.lg2{color:var(--cyan)}
+/* two lines: DON!!でん, then a smaller パーティー */
+.logo{flex-wrap:wrap}
+.logo .br{flex-basis:100%; height:0}
+.logo span.sub{font-size:.6em; margin-top:.08em}
 @keyframes letterIn{from{transform:translateY(-80px) scale(.3); opacity:0} to{transform:none; opacity:1}}
 @keyframes wob{0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-6px) rotate(-3deg)}}
 .t-tag{margin:0; display:inline-block; background:var(--pink); color:var(--white); border:3px solid var(--ink); border-radius:12px; padding:4px 14px; font-weight:800; font-size:min(16px, 2.3cqh); transform:rotate(-3deg); box-shadow:0 4px 0 var(--ink)}
@@ -1875,7 +1882,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
   .bg-burst, .tbl-felt::after, .deck, .tap-bubble, .t-card, .logo span, .pbtn.pulse, .seat.now, .seat.sel, .g-pend, .seat-flag, .gr-chip, .gr-left{animation:none !important}
   .app.shake, .app.shake-big, .bomb-box.shk, .tm-box.shk, .timer-ov.hurry::after, .sw-p.measuring .sw-time, .coach-ring, .gd-seat.tap::after{animation:none}
 }
-/* ---------- 酒GO!!プレミアム: タイトルのモードボタン・プレミアム画面・王様ゲーム・恋バナ/暴露・新作ミニゲーム ---------- */
+/* ---------- DON!!でんプレミアム: タイトルのモードボタン・プレミアム画面・王様ゲーム・恋バナ/暴露・新作ミニゲーム ---------- */
 .ic-crown, .ic-heart, .ic-dice{width:1.15em; height:1.15em; vertical-align:-.18em; flex:none}
 .pbtn.purple{background:var(--purple)}
 .t-modes{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px}
@@ -2433,7 +2440,7 @@ button.rp-pick{cursor:pointer}
   <div class="bg-burst" aria-hidden="true"></div>
   <div class="bg-dots" aria-hidden="true"></div>
   <header class="topbar">
-    <button type="button" class="brand ol" id="brandBtn" aria-label="タイトルへ">__APP_NAME__</button>
+    <button type="button" class="brand ol" id="brandBtn" aria-label="タイトルへ"><span>DON!!でん</span><span class="brand-p">パーティー</span></button>
     <div class="top-r">
       <button type="button" class="se-btn" id="bgmBtn" aria-pressed="true">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path class="mute" d="M3 3l18 18"/></svg>
@@ -2460,7 +2467,7 @@ button.rp-pick{cursor:pointer}
       <div class="t-cards" aria-hidden="true">
         <span class="t-card c-a"><b>撃</b></span><span class="t-card c-b"><b>安</b></span><span class="t-card c-back"><b>飲</b></span>
       </div>
-      <h1 class="logo" aria-label="__APP_NAME__"><span style="--i:0">酒</span><span class="go" style="--i:1">G</span><span class="go" style="--i:2">O</span><span class="go bang" style="--i:3">!</span><span class="go bang" style="--i:4">!</span><span class="lg2" style="--i:5">伝</span><span class="lg2" style="--i:6">説</span></h1>
+      <h1 class="logo" aria-label="__APP_NAME__"><span class="go" style="--i:0">D</span><span class="go" style="--i:1">O</span><span class="go" style="--i:2">N</span><span class="go bang" style="--i:3">!</span><span class="go bang" style="--i:4">!</span><span style="--i:5">で</span><span style="--i:6">ん</span><i class="br"></i><span class="lg2 sub" style="--i:7">パ</span><span class="lg2 sub" style="--i:8">ー</span><span class="lg2 sub" style="--i:9">テ</span><span class="lg2 sub" style="--i:10">ィ</span><span class="lg2 sub" style="--i:11">ー</span></h1>
       <p class="t-tag">引いたが最後！ 天国か、地獄か。</p>
       <div class="t-actions">
         <button type="button" class="pbtn big pulse" id="goSetup">ゲームスタート！</button>

@@ -1,4 +1,4 @@
-/* 酒GO!!伝説 — the play-count collector, served at POST /v1/p by the Worker (src/index.js). D1 binding "DB".
+/* DON!!でんパーティー (formerly 酒GO!!伝説) — the play-count collector, served at POST /v1/p by the Worker (src/index.js). D1 binding "DB".
    The app sends two small reports per game: when it starts, and when it ends (or is put away mid-game).
    Only counts are accepted: no names, no card text, no device IDs. IP addresses are never stored — they are only
    held in memory for a minute to stop one sender flooding the counts.

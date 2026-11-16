@@ -12,7 +12,7 @@ function rays() {
   }
   return '<path d="' + d + '" fill="' + C.ray + '"/>';
 }
-/* the mark: two tilted cards behind a yellow 酒 medal, and a pink GO!! sticker */
+/* the mark: two tilted cards behind a yellow DON!! medal, and a pink でん sticker */
 function mark() {
   const font = 'font-family="Noto Sans CJK JP" font-weight="900"';
   return '' +
@@ -20,11 +20,11 @@ function mark() {
     '<g transform="rotate(14 694 470)"><rect x="564" y="250" width="260" height="360" rx="34" fill="' + C.cyan + '" stroke="' + C.ink + '" stroke-width="22"/></g>' +
     '<circle cx="512" cy="452" r="258" fill="' + C.ink + '"/>' +
     '<circle cx="512" cy="440" r="250" fill="' + C.yellow + '" stroke="' + C.ink + '" stroke-width="24"/>' +
-    '<text x="512" y="448" text-anchor="middle" dominant-baseline="central" ' + font + ' font-size="318" fill="' + C.ink + '">酒</text>' +
+    '<text x="512" y="448" text-anchor="middle" dominant-baseline="central" ' + font + ' font-size="150" fill="' + C.ink + '" letter-spacing="-4">DON!!</text>' +
     '<g transform="rotate(-6 512 800)">' +
       '<rect x="262" y="712" width="500" height="178" rx="40" fill="' + C.ink + '"/>' +
       '<rect x="262" y="700" width="500" height="172" rx="40" fill="' + C.pink + '" stroke="' + C.ink + '" stroke-width="20"/>' +
-      '<text x="512" y="790" text-anchor="middle" dominant-baseline="central" ' + font + ' font-size="150" fill="#ffffff" stroke="' + C.ink + '" stroke-width="16" paint-order="stroke" letter-spacing="4">GO!!</text>' +
+      '<text x="512" y="790" text-anchor="middle" dominant-baseline="central" ' + font + ' font-size="150" fill="#ffffff" stroke="' + C.ink + '" stroke-width="16" paint-order="stroke" letter-spacing="8">でん</text>' +
     '</g>';
 }
 function svg(maskable) {

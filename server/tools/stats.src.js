@@ -1,4 +1,4 @@
-/* 酒GO!!伝説 — the play-count dashboard, served by the Worker (src/index.js) at "/". D1 binding "DB".
+/* DON!!でんパーティー (formerly 酒GO!!伝説) — the play-count dashboard, served by the Worker (src/index.js) at "/". D1 binding "DB".
    It can be added to the phone's home screen and opens like an app (manifest + icons, served without a password).
    Who may look — any one of these is enough:
    - the login page: the password is the secret STATS_PASSWORD (16 characters or more, set by the GitHub Actions deploy).
@@ -22,9 +22,9 @@ const HEAD = { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-
 const COOKIE = 'sg', DAYS = 30;
 const APP_HEAD = '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">' +
   '<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="icon" href="/icon-192.png">' +
-  '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="酒GO集計">' +
+  '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="DON!!集計">' +
   '<meta name="theme-color" content="#f6f4fb" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#141020" media="(prefers-color-scheme: dark)">';
-const MANIFEST = JSON.stringify({ name: '酒GO!!伝説 集計', short_name: '酒GO集計', lang: 'ja', start_url: '/', scope: '/', display: 'standalone', background_color: '#f6f4fb', theme_color: '#7b4fe0',
+const MANIFEST = JSON.stringify({ name: 'DON!!でん 集計', short_name: 'DON!!集計', lang: 'ja', start_url: '/', scope: '/', display: 'standalone', background_color: '#f6f4fb', theme_color: '#7b4fe0',
   icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }] });
 
 const fails = new Map();   // sender -> [minute, wrong passwords], memory only
@@ -92,7 +92,7 @@ function page(title, body, status, extra) {
     '</style></head><body>' + body + '</body></html>', { status, headers: Object.assign({}, HEAD, extra || {}) });
 }
 function loginPage(msg, status) {
-  return page('酒GO集計 ログイン', '<form method="post" action="/login"><img src="/icon-192.png" alt=""><h1>酒GO!!伝説 の集計</h1>' +
+  return page('DON!!でん集計 ログイン', '<form method="post" action="/login"><img src="/icon-192.png" alt=""><h1>DON!!でんパーティー の集計</h1>' +
     '<input class="hide" type="text" name="username" value="sakego" autocomplete="username" tabindex="-1" aria-hidden="true">' +
     '<label for="pw">パスワード</label><input id="pw" type="password" name="password" autocomplete="current-password" required autofocus>' +
     (msg ? '<p class="err">' + msg + '</p>' : '') + '<button type="submit">開く</button></form>', status);
@@ -236,7 +236,7 @@ export default {
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
     const ownN = (draws && draws.own) || 0, allDraws = ownN + ((draws && draws.built) || 0);
     const tile = (v, l, s) => '<div class="tile"><b>' + v + '</b><span>' + l + '</span>' + (s ? '<small>' + s + '</small>' : '') + '</div>';
-    const html = `<!doctype html><html lang="ja"><head><meta charset="utf-8">${APP_HEAD}<title>酒GO!!伝説 集計</title><style>
+    const html = `<!doctype html><html lang="ja"><head><meta charset="utf-8">${APP_HEAD}<title>DON!!でん 集計</title><style>
 :root{--bg:#f6f4fb; --card:#fff; --ink:#1d1630; --muted:#6b6385; --line:#e4dff0; --bar:#7b4fe0; --bar2:#d9cdf8}
 @media (prefers-color-scheme: dark){:root{--bg:#141020; --card:#1f1932; --ink:#f1edfa; --muted:#a79fc2; --line:#332a4d; --bar:#a688ff; --bar2:#3a2f5c}}
 *{box-sizing:border-box} body{margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
@@ -271,7 +271,7 @@ h2 small{font-weight:400; color:var(--muted); font-size:12px; margin-left:8px} .
 .rhint{margin:0 0 8px; font-size:12.5px; color:var(--muted)}
 .none{color:var(--muted); margin:0} footer{color:var(--muted); font-size:12px; margin-top:18px} footer a{color:var(--muted)}
 </style></head><body><main>
-<header><h1>酒GO!!伝説 の集計${me ? '<small class="me">自分の端末</small>' : ''}</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + qs + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}${qs}" aria-label="最新にする">↻</a></nav></header>
+<header><h1>DON!!でんパーティー の集計${me ? '<small class="me">自分の端末</small>' : ''}</h1><nav>${[7, 30, 90].map(d => '<a href="/?d=' + d + qs + '"' + (d === days ? ' class="on"' : '') + '>' + d + '日</a>').join('')}<a href="/?d=${days}${qs}" aria-label="最新にする">↻</a></nav></header>
 <p class="sub">${esc(from)} 〜 今日（日本時間）・${new Date(Date.now() + 9 * 3600e3).toISOString().slice(11, 16)} 時点${g.who ? '・' + esc(g.who) : ''}</p>
 <p class="scope">${me ? '「自分の端末」をオンにした端末で遊んだ分だけを表示中（ふつうの集計には入っていません）。<a href="/?d=' + days + '&me=0">ふつうの集計に戻る</a>'
   : '自分の端末で遊んだ分（別枠）は入っていません：' + ((other && other.n) || 0) + 'ゲーム。<a href="/?d=' + days + '&me=1">自分の端末の分を見る</a>'}</p>

@@ -1,8 +1,8 @@
-/* 酒GO!!伝説 service worker — plays offline after the first visit.
+/* DON!!でんパーティー service worker — plays offline after the first visit.
    The page itself is fetched fresh when online (so updates arrive), falling back to the saved copy offline;
    icons and fonts come from the cache. Bump VERSION on every release.
    The 3D dice libraries (vendor/) live in their own cache, kept across releases (rename VENDOR when they change). */
-const VERSION = 'sakego-202611130638';
+const VERSION = 'sakego-202611161205';
 const FONTS = 'sakego-fonts';
 const VENDOR = 'sakego-vendor-three160-cannon020';
 const VENDOR_FILES = ['./vendor/three.module.min.js', './vendor/cannon-es.min.js'];

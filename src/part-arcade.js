@@ -506,7 +506,7 @@ function slotResult(res) {
   slotCount(res.pay, 500);
   slotScore(res.pay, 1400);
 }
-/* 酒GO!!フリーズ: everything goes dark and still, the reels run backwards, and 酒・酒・酒 lands by itself */
+/* DON!!フリーズ: everything goes dark and still, the reels run backwards, and 酒・酒・酒 lands by itself */
 function slotFreeze(res) {
   const T = tool, S = T.sl, m = $('cabM');
   [0, 1, 2].forEach(i => toolLater(() => slotSpinUp(i), 60 + i * 90));
@@ -531,9 +531,9 @@ function slotFreeze(res) {
   toolLater(() => {
     $('toolOv').classList.remove('sl-dark');
     const q = relPos($('slWin'));
-    slotLcd('酒GO!!フリーズ！ +1000枚', 'bonus');
+    slotLcd('DON!!フリーズ！ +1000枚', 'bonus');
     SE.play('slGod'); SE.play('fanfare');
-    telop('酒GO!!フリーズ!!<small>' + esc(pname(T.ps[T.k])) + ' 以外の全員が負け</small>', '', 2600);
+    telop('DON!!フリーズ!!<small>' + esc(pname(T.ps[T.k])) + ' 以外の全員が負け</small>', '', 2600);
     FXC.burst(q.x, q.y, 160, { star: true, speed: 18 }); FXC.rain(140);
     vibrate([100, 50, 100, 50, 300]);
     slotCount(1000, 2200);
@@ -576,7 +576,7 @@ function slotFinish(tied, min) {
     const w = T.ps[T.k];
     losers = T.ps.filter(p => p !== w);
     if (losers.length > 1) T.stamp = { names: [w], word: '以外 全員の負け！！' };
-    msg = '<b>' + esc(pname(w)) + '</b> の酒GO!!フリーズ！ ほかの全員が ' + amtTxt(T.cups);
+    msg = '<b>' + esc(pname(w)) + '</b> のDON!!フリーズ！ ほかの全員が ' + amtTxt(T.cups);
   } else {
     losers = tied.map(j => T.ps[j]);
     msg = loseLine(T, losers, (S.sd ? 'サドンデスでも ' : '') + '同じ ' + min + '枚！');

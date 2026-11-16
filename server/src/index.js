@@ -1,4 +1,4 @@
-/* 酒GO!!伝説 — the play-count Worker "sakego" (Cloudflare Workers + D1, binding "DB").
+/* DON!!でんパーティー (formerly 酒GO!!伝説) — the play-count Worker "sakego" (Cloudflare Workers + D1, binding "DB").
    POST /v1/p  the app's reports (src/collector.js): open to the app's own site only
    GET  /      the dashboard (src/stats.js): behind the STATS_PASSWORD secret or Cloudflare Access */
 import collector from './collector.js';
