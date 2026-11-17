@@ -981,9 +981,28 @@ function syncCover() {
   if (on) coverTimer = setTimeout(() => { if (FULL_OV.some(id => !$(id).hidden)) $('shell').classList.add('covered'); }, 260);
   else $('shell').classList.remove('covered');
 }
+/* a dialog or sheet never scrolls: when its contents are taller than the screen (many players, a long card), they are
+   zoomed out a little (not below 70%) until they fit. Watched on every change of the dialog and on resize */
+function fitBox(d) {
+  if (!d || !d.offsetParent) return;
+  d.style.removeProperty('--fz');
+  const over = () => d.scrollHeight > d.clientHeight + 1;
+  if (!over()) return;
+  let lo = 0.7, hi = 1;
+  for (let k = 0; k < 7; k++) { const m = (lo + hi) / 2; d.style.setProperty('--fz', m); if (!over()) lo = m; else hi = m; }
+  d.style.setProperty('--fz', lo);
+}
+const fitBoxQ = new Set();
+let fitBoxRaf = 0;
+function fitBoxSoon(d) { fitBoxQ.add(d); if (!fitBoxRaf) fitBoxRaf = requestAnimationFrame(() => { fitBoxRaf = 0; fitBoxQ.forEach(fitBox); fitBoxQ.clear(); }); }
+document.querySelectorAll('.ov .dialog, .ov .sheet').forEach(d => {
+  if (window.MutationObserver) new MutationObserver(() => fitBoxSoon(d)).observe(d, { childList: true, subtree: true, characterData: true });
+});
+window.addEventListener('resize', () => document.querySelectorAll('.ov:not([hidden]) .dialog, .ov:not([hidden]) .sheet').forEach(fitBoxSoon));
 function openOv(id) {
   if (!document.querySelector('.ov:not([hidden])')) lastFocus = document.activeElement;
   $(id).hidden = false;
+  $(id).querySelectorAll('.dialog, .sheet').forEach(fitBoxSoon);
   syncCover();
   coachQueue();
 }
@@ -5697,9 +5716,16 @@ let usageReset = false, usageDay = null, usageDevShow = false, usageDevTaps = []
 function openUsage() {
   USE = null;   /* read it fresh: another tab may have written to it */
   usageReset = false; usageDay = null;
+  if (PAGERS.get('statsBody')) PAGERS.get('statsBody').i = 0;
   renderUsage();
   if ($('statsOv').hidden) { openOv('statsOv'); SE.play('pop'); }
   $('statsClose').focus({ preventScroll: true });
+}
+function usageNav(i, n) {
+  $('statsNav').hidden = n < 2;
+  $('statsPg').textContent = (i + 1) + ' / ' + n;
+  $('statsPrev').disabled = i === 0;
+  $('statsNext').disabled = i === n - 1;
 }
 function renderUsage() {
   const U = useLoad(), now = Date.now();
@@ -5741,7 +5767,7 @@ function renderUsage() {
   const modes = [['card', 'カード'], ['mini', 'ミニゲーム']].concat(PM_MODES.map(m => [m, PM[m].title])).map(([k, l]) => '<span class="us-chip' + (U.modes[k] ? '' : ' zero') + '">' + l + '<b>' + (U.modes[k] || 0) + '</b></span>').join('');
   const people = [2, 3, 4, 5, 6, 7, 8].map(n => '<span class="us-chip' + (U.players[n] ? '' : ' zero') + '">' + n + '人<b>' + (U.players[n] || 0) + '</b></span>').join('');
   const since = new Date(U.first);
-  $('statsBody').innerHTML =
+  pagerSet('statsBody',
     '<p class="us-lead">この端末で遊んだ記録です（' + (since.getMonth() + 1) + '月' + since.getDate() + '日から）。</p>' +
     '<div class="us-tiles">' + tile(U.games, '遊んだ回数', U.done < U.games ? '最後まで ' + U.done + '回' : '') + tile(days, '遊んだ日数') + tile(fmtDur(U.ms), 'プレイ時間') +
       tile(U.games ? fmtDur(U.ms / U.games) : '—', '1回の平均') + tile(avgP ? avgP.toFixed(1) + '人' : '—', '平均人数') + tile(U.draws, '引いたカード', U.games ? '1回 ' + Math.round(U.draws / U.games) + '枚' : '') + '</div>' +
@@ -5760,7 +5786,7 @@ function renderUsage() {
         (statDev() ? '<p class="us-note">' + esc(statClaimInfo()) + (statOff() ? '<br><b>「集計に協力する」がオフなので、送っていません。</b>' : '') + '</p><button type="button" class="pbtn white small" data-us="claim">これまでの分をもう一度送る</button>' : '') : '') +
       '</section>' : '') +
     '<p class="us-fine">名前は保存していません。この記録はこの端末だけのもので、ほかの人には見えません。<br><a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a> ・ <a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>' +
-    '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>';
+    '<button type="button" class="pbtn white small us-reset" data-us="reset">' + (usageReset ? 'もう一度押すと消します' : '記録をリセット') + '</button>', { keep: true, onNav: usageNav });
 }
 function usageAct(a, el) {
   if (a === 'day') { usageDay = Number(el.dataset.i); renderUsage(); SE.play('tick'); return; }
@@ -5933,7 +5959,7 @@ function practiceStart(kind) {
   const real = G && !G.done && validGame(G) ? G : null;
   const n = real ? real.players.length : Math.max(2, Math.min(8, setup.count || 4));
   const names = real ? real.players.map(p => p.name) : Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
-  practice = { G, page: guidePage };
+  practice = { G, page: guidePage, sub: pagerAt('gdBody')[0] };
   closeOv('howOv');
   G = {
     v: 2, mode: 'mini', practice: true, gid: 0, rounds: 1, unit: real ? real.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
@@ -5960,7 +5986,7 @@ function practiceEnd() {
   const tag = $('practiceTag'); if (tag) tag.remove();
   sceneBGM();
   if (screen === 'game' && validGame(G)) renderGame();
-  setTimeout(() => { if (!practice && noOv()) { openGuide('games'); if (GUIDE[P.page]) { guidePage = P.page; renderGuide(); } } }, 220);
+  setTimeout(() => { if (!practice && noOv()) { openGuide('games'); if (GUIDE[P.page]) { guidePage = P.page; renderGuide(); const st = PAGERS.get('gdBody'); if (st && P.sub < st.pages.length) { st.i = P.sub; pagerShow('gdBody'); } } } }, 220);
 }
 const recLabel = amt => (G && G.practice ? 'OK！（記録しません）' : 'OK！ ' + amt + 'を記録');
 /* the result of a round: +2 counts each, turned into cups at 3 */
@@ -6131,7 +6157,7 @@ function renderMini(anim) {
   $('dock').innerHTML = miniDock();
   const box = $('gLog');
   box.innerHTML = miniLog();
-  box.scrollLeft = G.mini.log.length ? box.scrollWidth : 0;
+  fitLog(box);
   miniFit();
 }
 /* the list goes into two columns when one column of 14 would be too cramped; the game's name is as big as fits */
@@ -6381,7 +6407,132 @@ const GUIDE = [
   },
 ];
 let guidePage = 0;
+/* the game stage (mini / party games): its contents are made to fit — they are zoomed out a little (never below 70%)
+   when a long question or many players need more room than the stage has. Watched on every change */
+function fitStage() {
+  const st = $('mgStage');
+  if (!st || !st.offsetParent) return;
+  st.style.removeProperty('--fz');
+  if (st.querySelector('#rpList')) return;   /* the chat splits itself into pages: it never needs zooming */
+  const over = () => st.scrollHeight > st.clientHeight + 1;
+  if (!over()) return;
+  let lo = 0.7, hi = 1;
+  for (let k = 0; k < 7; k++) { const m = (lo + hi) / 2; st.style.setProperty('--fz', m); if (!over()) lo = m; else hi = m; }
+  st.style.setProperty('--fz', lo);
+}
+let fitStageQ = 0;
+const fitStageSoon = () => { if (!fitStageQ) fitStageQ = requestAnimationFrame(() => { fitStageQ = 0; fitStage(); }); };
+if (window.MutationObserver) new MutationObserver(fitStageSoon).observe(document.getElementById('mgStage'), { childList: true, subtree: true, characterData: true });
+if (window.ResizeObserver) new ResizeObserver(fitStageSoon).observe(document.getElementById('mgStage'));
+
+/* ---------- ページ分け: nothing in the app scrolls. Content taller than its box is split into pages that each fit, and the
+   player moves through them with ◀ ▶. The box keeps a fixed height (flex) and overflow hidden; its children are placed one
+   by one, and a child too tall for a page is itself split by its children (each piece keeps a copy of its parent, so a
+   card or list continues on the next page). A single piece that still does not fit is zoomed out a little ---------- */
+const PAGERS = new Map();   /* box id -> { html, pages, i, onNav } */
+function pageSplit(box) {
+  const fits = () => box.scrollHeight <= box.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1;
+  const all = document.createElement('div');
+  all.className = 'pg-page';
+  all.append(...box.childNodes);
+  /* an element is split by its child elements only when it has no text of its own (a paragraph stays whole) */
+  const splittable = n => n.children.length > 0 && [...n.childNodes].every(c => c.nodeType === 1 || (c.nodeType === 3 && !c.textContent.trim()));
+  /* put as much of n as fits into host (after what host holds already); returns a copy of n holding the rest, or null */
+  const fill = (host, n) => {
+    const shell = n.cloneNode(false); host.appendChild(shell);
+    const kids = [...n.children];
+    n.replaceChildren();
+    for (let i = 0; i < kids.length; i++) {
+      shell.appendChild(kids[i]);
+      if (fits()) continue;
+      kids[i].remove();
+      const rest = splittable(kids[i]) ? fill(shell, kids[i]) : kids[i];
+      if (!shell.children.length) shell.remove();
+      const left = n.cloneNode(false); left.classList.add('pg-cont');
+      if (rest) left.appendChild(rest);
+      left.append(...kids.slice(i + 1));
+      return left.children.length ? left : null;
+    }
+    return null;
+  };
+  box.replaceChildren();
+  const pages = [];
+  if (box.clientHeight <= 20) return [all];
+  let left = all, guard = 0;
+  while (left && guard++ < 500) {
+    left = fill(box, left);
+    let page = box.firstElementChild;
+    if (!page) {
+      /* not even the first piece fits on an empty page: that piece alone (as small as it splits) gets a page, zoomed out when shown */
+      const takeFirst = n => {
+        const c = n.firstElementChild, shell = n.cloneNode(false);
+        if (splittable(c)) { shell.appendChild(takeFirst(c)); if (!c.children.length) c.remove(); } else shell.appendChild(c);
+        return shell;
+      };
+      page = takeFirst(left);
+      if (!left.children.length) left = null;
+    }
+    page.classList.add('pg-page');
+    pages.push(page);
+    box.replaceChildren();
+  }
+  box.replaceChildren();
+  return pages;
+}
+function pagerSet(id, html, o) {
+  o = o || {};
+  const box = $(id), st = PAGERS.get(id) || { i: 0 };
+  st.html = html; st.onNav = o.onNav || st.onNav;
+  box.style.zoom = '';
+  box.innerHTML = html;
+  /* a box sized by its content (a dialog's list): it keeps the height it has while too full, so the pages are cut to it */
+  if (o.freeze) { box.style.height = ''; if (box.scrollHeight > box.clientHeight + 1) box.style.height = box.clientHeight + 'px'; }
+  /* not laid out yet (its overlay is still hidden): split once it is on screen */
+  if (box.clientHeight <= 20) { st.pages = [document.createElement('div')]; st.pages[0].className = 'pg-page'; st.pages[0].append(...box.childNodes); st.i = 0; PAGERS.set(id, st); requestAnimationFrame(() => { if (box.clientHeight > 20) pagerSet(id, html, o); }); return; }
+  st.pages = pageSplit(box);
+  st.i = o.keep ? Math.max(0, Math.min(st.i, st.pages.length - 1)) : o.last ? st.pages.length - 1 : 0;
+  PAGERS.set(id, st);
+  pagerShow(id);
+}
+function pagerShow(id) {
+  const st = PAGERS.get(id), box = $(id);
+  if (!st) return;
+  box.style.zoom = '';
+  box.replaceChildren(st.pages[st.i]);
+  const over = () => box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1;
+  if (over()) {
+    /* one piece that cannot be split further: zoom it out until it fits */
+    let lo = 0.6, hi = 1;
+    for (let k = 0; k < 7; k++) { const m = (lo + hi) / 2; box.style.zoom = m; if (!over()) lo = m; else hi = m; }
+    box.style.zoom = lo;
+  }
+  if (st.onNav) st.onNav(st.i, st.pages.length);
+}
+/* one page on: true if it moved (false at the first / last page) */
+function pagerGo(id, d) {
+  const st = PAGERS.get(id);
+  if (!st || st.i + d < 0 || st.i + d >= st.pages.length) return false;
+  st.i += d; pagerShow(id); return true;
+}
+/* an element by id, also on the pages not shown now */
+function pagerFind(boxId, id) {
+  const el = document.getElementById(id);
+  if (el) return el;
+  const st = PAGERS.get(boxId);
+  if (!st) return null;
+  for (const pg of st.pages) { const x = pg.querySelector('#' + CSS.escape(id)); if (x) return x; }
+  return null;
+}
+const pagerAt = id => { const st = PAGERS.get(id); return st ? [st.i, st.pages.length] : [0, 1]; };
+/* the screen changed size: split again where the box is on screen, keeping roughly the same place */
+let pagerResizeQ = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(pagerResizeQ);
+  pagerResizeQ = setTimeout(() => PAGERS.forEach((st, id) => { const b = $(id); if (b && b.offsetParent) { const f = st.i / Math.max(1, st.pages.length); pagerSet(id, st.html, { keep: true }); const s2 = PAGERS.get(id); s2.i = Math.min(s2.pages.length - 1, Math.round(f * s2.pages.length)); pagerShow(id); } }), 150);
+});
+
 function openGuide(k) {
+  guideToc = false;
   const i = GUIDE.findIndex(p => p.k === k);
   guidePage = i >= 0 ? i : 0;
   lsSet(GUIDE_SEEN_KEY, '1');
@@ -6390,22 +6541,30 @@ function openGuide(k) {
   if ($('howOv').hidden) { openOv('howOv'); SE.play('pop'); }
   $('howClose').focus({ preventScroll: true });
 }
-function renderGuide() {
+/* the guide: a section is split into pages (◀ ▶ go through pages, then on to the next section). The sections are chosen
+   from a 目次 page instead of a tab strip that would scroll sideways */
+let guideToc = false;
+function renderGuide(atEnd) {
   const tabs = $('gdTabs');
-  tabs.innerHTML = GUIDE.map((p, i) => '<button type="button" role="tab" data-gd="' + i + '" aria-selected="' + (i === guidePage) + '">' + p.tab + '</button>').join('');
-  $('gdBody').innerHTML = GUIDE[guidePage].html();
-  $('gdBody').scrollTop = 0;
-  $('gdDots').innerHTML = GUIDE.map((_, i) => '<i' + (i === guidePage ? ' class="on"' : '') + '></i>').join('');
-  $('gdPrev').disabled = guidePage === 0;
-  $('gdNext').textContent = guidePage === GUIDE.length - 1 ? 'とじる' : '次へ →';
-  const t = tabs.children[guidePage];
-  if (t) tabs.scrollLeft = t.offsetLeft - (tabs.clientWidth - t.offsetWidth) / 2;
+  tabs.innerHTML = '<button type="button" class="gd-toc-b" data-gtoc="1" aria-pressed="' + guideToc + '">≡ 目次</button><span class="gd-now">' + (guideToc ? '項目を選んでください' : GUIDE[guidePage].tab) + '</span>';
+  if (guideToc) {
+    pagerSet('gdBody', '<div class="gd-toc">' + GUIDE.map((p, i) => '<button type="button" data-gd="' + i + '"' + (i === guidePage ? ' class="on"' : '') + '>' + p.tab + '</button>').join('') + '</div>', { onNav: guideNav });
+    return;
+  }
+  pagerSet('gdBody', GUIDE[guidePage].html(), { onNav: guideNav, last: !!atEnd });
+}
+function guideNav(i, n) {
+  $('gdDots').innerHTML = guideToc ? '' : GUIDE.map((_, k) => '<i' + (k === guidePage ? ' class="on"' : '') + '></i>').join('') + (n > 1 ? '<span class="gd-pg">' + (i + 1) + '/' + n + '</span>' : '');
+  $('gdPrev').disabled = guideToc || (guidePage === 0 && i === 0);
+  $('gdNext').textContent = guideToc ? 'とじる' : guidePage === GUIDE.length - 1 && i === n - 1 ? 'とじる' : '次へ →';
 }
 function guideGo(d) {
+  if (guideToc) { if (d > 0) closeOv('howOv'); return; }
+  if (pagerGo('gdBody', d)) { SE.play('tap'); return; }
   const n = guidePage + d;
   if (n < 0) return;
   if (n >= GUIDE.length) { closeOv('howOv'); return; }
-  guidePage = n; renderGuide(); SE.play('tap');
+  guidePage = n; renderGuide(d < 0); SE.play('tap');
 }
 
 /* ---------- はじめてガイド: step bubbles during the first game. They point at the next thing to press and never block a tap ---------- */
@@ -6651,6 +6810,19 @@ function entryPills(e) {
   if (e.kind === 'name') return pill(e.p, e.label);
   return (e.src === 'rule' ? '<span class="lg vio">違反</span>' : e.src === 'vanish' ? '<span class="lg vio">ルール消滅</span>' : '') + (e.items || []).map(it => pill(it.p, it.amt ? fmtAmt(it.amt) + 'DON' + (it.mf != null ? '♡' : '') : 'SAFE')).join('');
 }
+/* the log line under the table never scrolls sideways: when it is too long, the oldest entries give way to 「…」 (the
+   buttons — 取り消す, 前のターンに戻る — always stay) */
+function fitLog(box) {
+  box.scrollLeft = 0;
+  const over = () => box.scrollWidth > box.clientWidth + 1;
+  let more = box.querySelector('.lg-more');
+  for (let k = 0; k < 60 && over(); k++) {
+    const x = [...box.children].find(e => !e.matches('button, .lg-more, .lg-hint'));
+    if (!x) break;
+    x.remove();
+    if (!more) { more = document.createElement('span'); more.className = 'lg-more'; more.textContent = '…'; const b = box.querySelector('.lg-undo.back'); if (b) b.after(more); else box.prepend(more); }
+  }
+}
 function renderLog() {
   const cur = G.cur, es = cur.drinks;
   const last = es[es.length - 1];
@@ -6666,7 +6838,7 @@ function renderLog() {
   });
   const box = $('gLog');
   box.innerHTML = h;
-  box.scrollLeft = back ? 0 : box.scrollWidth;
+  fitLog(box);
 }
 function renderGame(anim) {
   if (!validGame(G)) { showScreen('title'); return; }
@@ -6837,19 +7009,23 @@ function wireGame() {
   $('goEditor').addEventListener('click', () => { SE.play('tap'); showScreen('editor'); });
   $('howBtn').addEventListener('click', () => openGuide('start'));
   $('helpBtn').addEventListener('click', () => openGuide(G && G.cur && G.cur.phase === 'drawn' ? 'record' : 'start'));
-  $('gdTabs').addEventListener('click', e => { const b = e.target.closest('[data-gd]'); if (!b) return; guidePage = Number(b.dataset.gd); renderGuide(); SE.play('tap'); });
-  $('gdBody').addEventListener('click', e => { const b = e.target.closest('[data-try]'); if (!b || b.disabled) return; SE.play('tap'); practiceStart(b.dataset.try); });
+  $('gdTabs').addEventListener('click', e => { if (!e.target.closest('[data-gtoc]')) return; guideToc = !guideToc; renderGuide(); SE.play('tap'); });
+  $('gdBody').addEventListener('click', e => {
+    const g = e.target.closest('[data-gd]');
+    if (g) { guideToc = false; guidePage = Number(g.dataset.gd); renderGuide(); SE.play('tap'); return; }
+    const b = e.target.closest('[data-try]'); if (!b || b.disabled) return; SE.play('tap'); practiceStart(b.dataset.try);
+  });
   $('gdPrev').addEventListener('click', () => guideGo(-1));
   $('gdNext').addEventListener('click', () => guideGo(1));
   {
-    /* swipe left / right between pages (vertical scrolling stays normal) */
+    /* swipe left / right between pages */
     let sx = 0, sy = 0, on = false;
     const body = $('gdBody');
     body.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; on = e.touches.length === 1; }, { passive: true });
     body.addEventListener('touchend', e => {
       if (!on) return; on = false;
       const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
-      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { if (dx < 0 && guidePage < GUIDE.length - 1) guideGo(1); else if (dx > 0) guideGo(-1); }
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.8) { const [pi, pn] = pagerAt('gdBody'); if (dx < 0 && (guidePage < GUIDE.length - 1 || pi < pn - 1)) guideGo(1); else if (dx > 0) guideGo(-1); }
     }, { passive: true });
   }
   $('coach').addEventListener('click', e => {
@@ -6872,11 +7048,13 @@ function wireGame() {
   $('resTell').addEventListener('click', openShot);
   $('statsClose').addEventListener('click', () => closeOv('statsOv'));
   $('statsBody').addEventListener('click', e => { const b = e.target.closest('[data-us]'); if (b) usageAct(b.dataset.us, b); });
+  $('statsPrev').addEventListener('click', () => { if (pagerGo('statsBody', -1)) SE.play('tap'); });
+  $('statsNext').addEventListener('click', () => { if (pagerGo('statsBody', 1)) SE.play('tap'); });
   /* the hidden 「自分の端末」 switch: 5 taps on the title within 3 seconds */
   $('statsTitle').addEventListener('click', () => {
     const now = Date.now();
     usageDevTaps = usageDevTaps.filter(t => now - t < 3000).concat(now);
-    if (usageDevTaps.length >= 5 && !usageDevShow) { usageDevShow = true; usageDevTaps = []; renderUsage(); SE.play('pop'); const b = $('statsBody').querySelector('.us-dev'); if (b) b.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    if (usageDevTaps.length >= 5 && !usageDevShow) { usageDevShow = true; usageDevTaps = []; renderUsage(); SE.play('pop'); const st = PAGERS.get('statsBody'); const at = st ? st.pages.findIndex(pg => pg.querySelector('.us-dev')) : -1; if (at >= 0) { st.i = at; pagerShow('statsBody'); } }
   });
   $('editorBack').addEventListener('click', () => showScreen('title'));
 
@@ -7060,6 +7238,7 @@ function wireGame() {
   backdrop('howOv', () => closeOv('howOv'));
   backdrop('statsOv', () => closeOv('statsOv'));
   backdrop('catOv', () => closeOv('catOv'));
+  backdrop('edToolsOv', () => closeOv('edToolsOv'));
   backdrop('confirmOv', () => closeOv('confirmOv'));
   backdrop('backOv', () => closeOv('backOv'));
   backdrop('plusOv', () => plusAct('close'));
@@ -7122,7 +7301,7 @@ function wireGame() {
     if (ask && !$('askOv').hidden) { if (ask.step !== 'order') askAct('none'); return; }
     if (!$('shotOv').hidden) { closeShot(); return; }
     if (!$('plusOv').hidden) { plusAct('close'); return; }
-    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'installOv', 'howOv', 'statsOv', 'catOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
+    for (const id of ['infoOv', 'nextOv', 'backOv', 'confirmOv', 'installOv', 'howOv', 'statsOv', 'catOv', 'edToolsOv', 'handOv', 'endOv']) if (!$(id).hidden) { closeOv(id); return; }
     if (!$('decideOv').hidden) { decideLater(); return; }
     if (!$('sheetOv').hidden) { closeSheet(); return; }
     if (G && G.cur && G.cur.select && screen === 'game') { G.cur.select = null; renderGame(); }

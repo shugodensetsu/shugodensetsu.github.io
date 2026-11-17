@@ -329,7 +329,7 @@ function renderPM(anim) {
   $('dock').innerHTML = X.dock();
   const box = $('gLog');
   box.innerHTML = pmLog();
-  box.scrollLeft = G.pm.log.length ? box.scrollWidth : 0;
+  fitLog(box);
   if (X && X.mounted) X.mounted(anim);
 }
 /* the round's drinks go on the board, then the next round */
@@ -526,43 +526,51 @@ async function plusPortal() {
 }
 
 /* ---------- プレミアムの画面 ---------- */
+/* The premium screen never scrolls: it is three pages that each fit — the plans (not bought yet), this phone's plan
+   (bought), and 引き継ぎ (entering a restore code). In landscape the plans page sits in two columns */
 function renderPlus(msg) {
   const st = plusState(), on = plusOn(), has = plusPaid() && !!st.code;   /* has: bought, maybe waiting for a check (offline over a day) */
-  const left = m => tryLeft(m);
+  const page = has ? 'mine' : PLUS_LIVE && plusRestore ? 'restore' : 'top';
   const feat = (ic, b, s) => '<li>' + ic + '<span><b>' + b + '</b><small>' + s + '</small></span></li>';
   const day = t => { const d = new Date(t); return (d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日' + (st && st.plan === 'pass' ? ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') : ''); };
-  const mine = has ? '<div class="pl-mine"><p class="pl-mine-h">' + (PLAN_NAME[st.plan] || 'プレミアム') + (st.test ? ' <i class="pl-test">テスト決済</i>' : '') + '</p>' +
+  const message = '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>';
+  const warn = plusStale() ? '<p class="pl-warn">最後の確認から24時間以上たちました。<b>電波のある場所で開く</b>と使えます</p>'
+    : !on && plusLost ? '<p class="pl-warn">' + (plusLost === 'moved' ? '別の端末に引き継がれたため、' : 'コードが使えなくなったため、') + 'この端末のプレミアムは終了しました。<b>この端末では再購入まで使えません</b></p>' : '';
+  const lead = has && !on ? '<b>確認が必要です</b>' : on ? '<b>プレミアム利用中</b>' + (st.code ? '' : '（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）')
+    : !PLUS_OPEN ? '<b>Coming soon！</b> もうすぐ遊べます' : page === 'restore' ? '<b>復元コードで引き継ぐ</b>'
+    : PLUS_LIVE ? '新モードとミニゲームが<b>遊び放題</b>' + (PAY_TEST ? ' <i class="pl-test">テスト中</i>' : '') : '<b>先行体験中！</b> いまは全部<b>無料</b>';
+  let body = '';
+  if (page === 'mine') {
+    body = '<div class="pl-mine"><p class="pl-mine-h">' + (PLAN_NAME[st.plan] || 'プレミアム') + (st.test ? ' <i class="pl-test">テスト決済</i>' : '') + '</p>' +
       '<p class="pl-mine-d">' + day(st.until) + (st.plan === 'pass' ? ' まで' : st.cancel ? ' で終了（更新されません）' : ' に自動で更新') + '</p>' +
-      '<p class="pl-code-h">復元コード<small>機種変更・別の端末で使います</small></p><button type="button" class="pl-code" data-pl="copy" aria-label="復元コードをコピー">' + esc(st.code) + '<small>コピー</small></button>' +
-      '<p class="pl-note">プレミアムを使えるのは1台だけ。このコードで別の端末に引き継ぐと、<b>この端末では新しく購入するまでプレミアムを使えなくなります</b>（あとから引き継ぎ直すこともできません）。コードはほかの人に教えないでください</p>' +
-      (st.plan !== 'pass' ? '<button type="button" class="pbtn white small pl-portal" data-pl="portal">解約・お支払い方法の変更</button>' : '') + '</div>' : '';
-  const stale = plusStale() ? '<p class="pl-warn">最後の確認から24時間以上たちました。<b>電波のある場所でアプリを開く</b>と、プレミアムを使えます</p>' : '';
-  const lost = !on && plusLost ? '<p class="pl-warn">' + (plusLost === 'moved' ? 'プレミアムが別の端末に引き継がれたため、この端末のプレミアムは終了しました。' : 'この復元コードは使えなくなったため、この端末のプレミアムは終了しました。') +
-    '<br>この端末では、新しく購入するまでプレミアムは使えません</p>' : '';
-  const restore = PLUS_LIVE && !has ? (plusRestore
-    ? '<div class="pl-restore"><label for="plCode">復元コード</label><input id="plCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DON-XXXX-XXXX-XXXX" maxlength="24" value="' + esc(plusTyped) + '"' + (plusRestoreAsk ? ' readonly' : '') + '>' +
-      (plusRestoreAsk ? '<p class="pl-note"><b>引き継ぐと、元の端末では新しく購入するまでプレミアムを使えなくなります。</b>あとから元の端末に戻すこともできません。プレミアムを使えるのは1台だけです</p>' +
-        '<div class="pl-ask-b"><button type="button" class="pbtn white small" data-pl="restoreNo">やめる</button><button type="button" class="pbtn main small" data-pl="restoreYes">この端末に引き継ぐ</button></div>'
-        : '<button type="button" class="pbtn main small" data-pl="restoreGo">引き継ぐ</button>') + '</div>'
-    : '<button type="button" class="pl-link" data-pl="restore">購入済みの方：復元コードで引き継ぐ</button>') : '';
+      '<p class="pl-code-h">復元コード<small>機種変更のときに使います</small></p><button type="button" class="pl-code" data-pl="copy" aria-label="復元コードをコピー">' + esc(st.code) + '<small>コピー</small></button>' +
+      '<p class="pl-note">プレミアムは1台だけ。別の端末に引き継ぐと、<b>この端末では再購入まで使えません</b>。コードは人に教えないでください</p>' +
+      (st.plan !== 'pass' ? '<button type="button" class="pbtn white small pl-portal" data-pl="portal">解約・お支払い方法の変更</button>' : '') + '</div>' + warn + message;
+  } else if (page === 'restore') {
+    body = '<p class="pl-note">購入したときに表示された「DON-」で始まるコードを入れてください</p>' +
+      '<div class="pl-restore"><input id="plCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="復元コード" placeholder="DON-XXXX-XXXX-XXXX" maxlength="24" value="' + esc(plusTyped) + '"' + (plusRestoreAsk ? ' readonly' : '') + '>' +
+      (plusRestoreAsk ? '' : '<button type="button" class="pbtn main small" data-pl="restoreGo">引き継ぐ</button>') + '</div>' +
+      (plusRestoreAsk ? '<p class="pl-warn"><b>引き継ぐと、元の端末では再購入までプレミアムを使えません。</b>元に戻すこともできません</p>' +
+        '<div class="pl-ask-b"><button type="button" class="pbtn white small" data-pl="restoreNo">やめる</button><button type="button" class="pbtn main small" data-pl="restoreYes">この端末に引き継ぐ</button></div>' : '') +
+      message + '<button type="button" class="pl-link" data-pl="restoreBack">◀ プランの画面にもどる</button>';
+  } else {
+    const mgs = MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title);
+    body = '<div class="pl-col">' + warn + '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか') +
+        (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権ほか') : '') +
+        feat(DICE_SVG, '新作ミニゲーム' + mgs.length + '種', mgs.slice(0, 2).join('・') + 'ほか') + '</ul>' +
+        '<p class="pl-free">カード104枚・ミニゲーム14種は、ずっと無料</p></div>' +
+      '<div class="pl-col">' + (PLUS_LIVE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + tryLeft('koi') + '</b>問</p>' : '') +
+        '<div class="pl-plans" aria-label="' + (PLUS_LIVE ? '料金（税込）' : '料金（予定）') + '">' + PLUS_PLANS.map(p =>
+          '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '"' + (plusBusy ? ' disabled' : '') + '>' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +
+          '<b class="pl-nm">' + p.name + '</b><span class="pl-pr">' + p.price + '<small>' + p.per + '</small></span><small class="pl-nt">' + p.note + '</small></button>').join('') + '</div>' +
+        '<p class="pl-ph">' + (PLUS_LIVE ? '税込。月額・年額は自動更新で、いつでも解約できます' : '料金は予定です。お支払いの受付は準備中') + '</p>' +
+        message + (PLUS_LIVE ? '<button type="button" class="pl-link" data-pl="restore">購入済みの方：復元コードで引き継ぐ</button>' : '') + '</div>';
+  }
+  $('plusBox').className = 'dialog plus-box pg-' + page;
   $('plusBox').innerHTML = '<button type="button" class="gd-x pl-x" data-pl="close" aria-label="閉じる">×</button>' +
-    '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">' + PLUS_NAME + '</h2>' +
-    (has && !on ? '<p class="pl-lead"><b>確認が必要です</b></p>' : on ? '<p class="pl-lead"><b>プレミアム利用中</b>' + (st.code ? '' : '（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）') + '</p>'
-      : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
-      : PLUS_LIVE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b>' + (PAY_TEST ? '<br><i class="pl-test">テスト中（この端末だけ）</i>' : '') + '</p>'
-        : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    mine + stale + lost + (has ? '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>' : '') +
-    '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか。こっそり投票・もうひと声も') +
-      (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
-      feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
-    '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
-    (PLUS_LIVE && !on && !has ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
-    (on || has ? '' : '<p class="pl-ph">' + (PLUS_LIVE ? '料金（税込）' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
-      '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '"' + (plusBusy ? ' disabled' : '') + '>' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +
-      '<b class="pl-nm">' + p.name + '</b><span class="pl-pr">' + p.price + '<small>' + p.per + '</small></span><small class="pl-nt">' + p.note + '</small></button>').join('') + '</div>') +
-    (has ? '' : '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>') + restore +
-    '<p class="pl-fine">' + (PLUS_LIVE ? (has ? '' : 'お支払いは Stripe の画面で行います（カード・Apple Pay・Google Pay）。月額・年額は自動で更新され、いつでも解約できます。<br>')
-      : 'お支払いの受付は準備中です。始まったら、ここから申し込めます。<br>') +
+    '<div class="pl-head"><div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">' + PLUS_NAME + '</h2><p class="pl-lead">' + lead + '</p></div>' +
+    '<div class="pl-body">' + body + '</div>' +
+    '<p class="pl-fine">' + (PLUS_LIVE && page === 'top' ? 'お支払いは Stripe（カード・Apple Pay・Google Pay） ・ ' : '') +
       '<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>' + (PLUS_LIVE ? ' ・ <a href="' + TOKUSHO_URL + '" target="_blank" rel="noopener">特定商取引法に基づく表記</a>' : '') + '</p>';
 }
 function openPlus(from) {
@@ -579,6 +587,7 @@ function plusAct(a) {
   if (a === 'restore') { plusRestore = true; plusRestoreAsk = false; plusTyped = ''; renderPlus(); SE.play('tap'); const i = $('plCode'); if (i) i.focus(); return; }
   if (a === 'restoreGo' || a === 'restoreYes') { plusRestoreGo(); return; }
   if (a === 'restoreNo') { plusRestoreAsk = false; renderPlus(); SE.play('tap'); return; }
+  if (a === 'restoreBack') { plusRestore = false; plusRestoreAsk = false; renderPlus(); SE.play('tap'); return; }
   if (a === 'portal') { SE.play('tap'); plusPortal(); return; }
   if (a === 'copy') {
     const st = plusState(); if (!st || !st.code) return;

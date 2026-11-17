@@ -323,7 +323,7 @@ function rpChat(body, foot, cls) {
   return '<div class="rp-chat' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(q.s) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
     '<div class="rp-list" id="rpList"><p class="rp-day"><span>今日</span></p>' +
     '<div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[q.id % RP_ICON.length] + '">' + esc([...q.s][0]) + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(q.s) + '</span><span class="rp-row"><span class="rp-bub">' + esc(q.m) + '</span><span class="rp-meta">' + rpTime(0) + '</span></span></div></div>' +
-    (body || '') + '</div>' + (foot || '') + '</div>';
+    (body || '') + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の返信">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の返信">次 ▼</button></div>' + (foot || '') + '</div>';
 }
 function rpOut(k, pick, named) {
   const cur = G.cur, p = cur.ord[k], txt = cur.rep[p], cls = (cur.best === k ? ' best' : '') + (cur.worst === k ? ' worst' : '') + (pick === k ? ' sel' : '');
@@ -334,6 +334,18 @@ function rpOut(k, pick, named) {
   return '<div class="rp-out' + cls + '">' + (pickable ? '<button type="button" class="rp-pick" data-g="x-pick" data-i="' + k + '" aria-pressed="' + (pick === k) + '" aria-label="返信' + RP_LETTERS[k] + '">' + inner + '</button>' : '<div class="rp-pick">' + inner + '</div>') + tagged + '</div>';
 }
 const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick"><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
+/* the chat never scrolls: it is cut into pages (▲ ▼ under it); new replies show on the last page */
+function rpPages(anim) {
+  const list = $('rpList');
+  if (!list) return;
+  pagerSet('rpList', list.innerHTML, { keep: anim === 'keep', last: anim !== 'top' && anim !== 'keep', onNav: (i, n) => {
+    const nav = $('rpPg'); if (!nav) return;
+    nav.hidden = n < 2; $('rpPgN').textContent = (i + 1) + ' / ' + n; $('rpPrev').disabled = i === 0; $('rpNext').disabled = i === n - 1;
+  } });
+  const pv = $('rpPrev'), nx = $('rpNext');
+  if (pv) pv.onclick = () => { if (pagerGo('rpList', -1)) SE.play('tap'); };
+  if (nx) nx.onclick = () => { if (pagerGo('rpList', 1)) SE.play('tap'); };
+}
 PMX.reply = {
   tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
   poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
@@ -355,7 +367,7 @@ PMX.reply = {
     if (cur.phase === 'msg') return head + '<p class="gk-top">このメッセージに、<b>あなたならなんて返す？</b></p>' + rpChat('', '', 'grow');
     if (cur.phase === 'write') {
       if (!cur.peek.open) return head + pxPeekCover('返信はこっそり書く。だれの返信かは最後までヒミツ');
-      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="80" rows="2" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
+      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
     }
     const shown = cur.phase === 'show' ? cur.shown : cur.ord.length;
     let body = '';
@@ -375,10 +387,13 @@ PMX.reply = {
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
   },
   mounted(anim) {
-    const cur = G.cur, list = $('rpList');
-    if (list) list.scrollTop = anim === 'top' ? 0 : anim === 'keep' && rpKeep != null ? rpKeep : list.scrollHeight;
+    const cur = G.cur;
+    rpPages(anim);
     const inp = $('rpIn');
     if (inp) {
+      /* the box grows with the text (up to 60 characters it never needs scrolling); the chat above gives way */
+      const grow = () => { const h0 = inp.offsetHeight; inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; if (inp.offsetHeight !== h0) rpPages('last'); };
+      inp.addEventListener('input', grow);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); PMX.reply.act('send'); } });
       if (cur.phase === 'write' && !matchMedia('(pointer:coarse)').matches) inp.focus({ preventScroll: true });
     }

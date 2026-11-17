@@ -86,6 +86,8 @@ function renderChips() {
       esc(catName(cat)) + '</span>' + (cat.on ? '' : '<span class="offtag">OFF</span>') + ' <span class="n">' + n + '</span></button>';
   }).join('');
   $('chips').innerHTML = h;
+  const fc = ui.filter === ANY_CAT ? null : catOf(ui.filter);
+  $('edFilterNow').textContent = (fc ? catName(fc) : 'すべて') + ' ' + deck.cards.filter(c => !fc || c.cat === fc.key).length + '枚';
 }
 function renderPlayers() {
   let h = '';
@@ -142,7 +144,8 @@ function formCard(card, isNew) {
     ? '<span class="del-q">' + fmtNo(card.id) + 'を削除しますか？</span><button type="button" class="danger solid" data-act="del-yes">削除する</button><button type="button" class="plain" data-act="del-no" id="ed-del-no">やめる</button>'
     : '<button type="button" class="danger" data-act="del" id="ed-del">このカードを削除</button>');
   return '<article class="card editing" id="card-edit" style="--c:' + colorVar(cat ? cat.color : 6) + '">' +
-    '<div class="idx"><span class="k" id="ed-mark">' + esc(catMark(cat)) + '</span><span class="no">' + fmtNo(card.id) + '</span><span class="cat">' + (isNew ? '新しいカード' : '編集中') + '</span></div>' +
+    '<div class="idx"><span class="k" id="ed-mark">' + esc(catMark(cat)) + '</span><span class="no">' + fmtNo(card.id) + '</span><span class="cat">' + (isNew ? '新しいカード' : '編集中') + '</span>' +
+      '<span class="ed-tabs" role="group" aria-label="編集する項目"><button type="button" data-act="edtab" data-t="main" aria-pressed="true">基本</button><button type="button" data-act="edtab" data-t="side" aria-pressed="false">くわしく</button></span></div>' +
     '<form class="ed" id="ed-form" novalidate>' +
       '<div class="ed-main">' +
         '<div class="fld"><label class="lbl" for="ed-text">指示文</label>' +
@@ -224,9 +227,69 @@ function renderGrid() {
   let h = editing && editing.isNew ? formCard(editing.card, true) : '';
   h += list.map(c => (c.id === editId ? formCard(c, false) : viewCard(c))).join('');
   $('grid').innerHTML = h || '<p class="empty">この系統のカードはまだありません。「＋ カードを追加」から作れます。</p>';
+  gridPages(true);
+}
+/* The card list never scrolls: it is shown a page at a time (◀ ▶ under it). A page holds as many cards as fit; the
+   cards stay in the one #grid (its listeners stay), the others are hidden. The card being edited gets its page shown */
+let edPage = 0, edPages = [[0, 0]];
+function gridPages(keep) {
+  const box = $('edScroll'), grid = $('grid'), items = [...grid.children].filter(e => !e.classList.contains('editing'));
+  grid.style.zoom = '';
+  box.classList.remove('pg-later');
+  if (!box.clientHeight || !items.length) { items.forEach(e => e.classList.remove('pg-off')); edPages = [[0, items.length]]; edPage = 0; gridNav(); return; }
+  const over = () => box.scrollHeight > box.clientHeight + 1;
+  edPages = [];
+  let s = 0;
+  while (s < items.length) {
+    box.classList.toggle('pg-later', edPages.length > 0);
+    items.forEach(e => e.classList.add('pg-off'));
+    let i = s;
+    for (; i < items.length; i++) { items[i].classList.remove('pg-off'); if (over() && i > s) { items[i].classList.add('pg-off'); break; } }
+    edPages.push([s, i]);
+    s = i;
+  }
+  edPage = keep ? Math.min(edPage, edPages.length - 1) : 0;
+  gridShow();
+}
+function gridShow() {
+  const box = $('edScroll'), grid = $('grid'), items = [...grid.children].filter(e => !e.classList.contains('editing')), [a, b] = edPages[edPage] || [0, items.length];
+  edFit();
+  items.forEach((e, i) => e.classList.toggle('pg-off', i < a || i >= b));
+  box.classList.toggle('pg-later', edPage > 0);
+  grid.style.zoom = '';
+  if (box.scrollHeight > box.clientHeight + 1) {
+    /* one card (the edit form) taller than the page: zoomed out to fit */
+    let lo = 0.6, hi = 1;
+    for (let k = 0; k < 7; k++) { const m = (lo + hi) / 2; grid.style.zoom = m; if (box.scrollHeight <= box.clientHeight + 1) lo = m; else hi = m; }
+    grid.style.zoom = lo;
+  }
+  gridNav();
+}
+/* the edit form (a page of its own) fits the screen: zoomed out a little if it must */
+function edFit() {
+  const f = $('card-edit');
+  if (!f) return;
+  f.style.zoom = '';
+  const over = () => f.scrollHeight > f.clientHeight + 1;
+  if (!over()) return;
+  let lo = 0.6, hi = 1;
+  for (let k = 0; k < 7; k++) { const m = (lo + hi) / 2; f.style.zoom = m; if (!over()) lo = m; else hi = m; }
+  f.style.zoom = lo;
+}
+function gridNav() {
+  const n = edPages.length;
+  $('edPager').hidden = n < 2;
+  $('edPg').textContent = (edPage + 1) + ' / ' + n;
+  $('edPrev').disabled = edPage === 0;
+  $('edNext').disabled = edPage >= n - 1;
+}
+function gridGo(d) {
+  const n = edPage + d;
+  if (n < 0 || n >= edPages.length) return;
+  edPage = n; gridShow(); SE.play('tap');
 }
 function renderCatPanel() {
-  $('catRows').innerHTML = deck.categories.map(cat => {
+  pagerSet('catRows', deck.categories.map(cat => {
     const k = esc(cat.key);
     return '<div class="catrow" style="--c:' + colorVar(cat.color) + '">' +
       '<button type="button" class="swatch" id="cs-' + k + '" data-act="catcolor" data-key="' + k + '" title="色を変える" aria-label="' + esc(catName(cat)) + 'の色を変える"></button>' +
@@ -237,14 +300,14 @@ function renderCatPanel() {
         '<span class="sw-track" aria-hidden="true"></span><span class="sw-text">使う</span></label>' +
       '<button type="button" class="plain-dark" id="cd-' + k + '" data-act="catdel" data-key="' + k + '">削除</button>' +
     '</div>';
-  }).join('');
+  }).join(''), { keep: true, freeze: true, onNav: (i, n) => { $('catNav').hidden = n < 2; $('catPg').textContent = (i + 1) + ' / ' + n; $('catPrev').disabled = i === 0; $('catNext').disabled = i === n - 1; } });
   refreshCatCounts();
 }
 function refreshCatCounts() {
   for (const cat of deck.categories) {
     const n = deck.cards.filter(c => c.cat === cat.key).length;
-    const cc = $('cc-' + cat.key); if (cc) cc.textContent = n + '枚';
-    const cd = $('cd-' + cat.key);
+    const cc = pagerFind('catRows', 'cc-' + cat.key); if (cc) cc.textContent = n + '枚';
+    const cd = pagerFind('catRows', 'cd-' + cat.key);
     if (cd) {
       const can = n === 0 && deck.categories.length > 1;
       cd.disabled = !can;
@@ -302,8 +365,16 @@ function validate(f) {
   if ((fx === 'half' || fx === 'nodouble' || fx === 'mate') && !f.dur.trim()) return { err: '「' + fxName(fx) + '」は継続しているあいだだけ働く効果です。「継続」を「する」にしてください。', field: 'ed-dur' };
   return { card: { cat: f.cat, text, cups, min: Math.min(8, Math.max(2, Number(f.min) || 2)), dur: f.dur.trim() || null, note: f.note.replace(/\s+/g, ' ').trim() || null, fx, drink: DRINK_INFO[f.drink] ? f.drink : null } };
 }
+/* on a phone the edit form is two pages (基本 / くわしく), so each fits the screen at full size */
+function edTab(t) {
+  const f = $('card-edit'); if (!f) return;
+  f.dataset.tab = t;
+  f.querySelectorAll('[data-act="edtab"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
+  edFit();
+}
 function showFormError(msg, field) {
   editing.err = msg;
+  const fe = $(field); if (fe && fe.closest('.ed-side')) edTab('side'); else if (fe) edTab('main');
   const p = $('ed-err');
   if (p) { p.textContent = msg; p.hidden = false; }
   const el = $(field); if (el) el.focus({ preventScroll: true });
@@ -524,6 +595,11 @@ function wireEditor() {
     ui.mode = b.dataset.mode; renderAll();
   });
   $('addCard').addEventListener('click', addCard);
+  $('edPrev').addEventListener('click', () => gridGo(-1));
+  $('edToolsBtn').addEventListener('click', () => { openOv('edToolsOv'); SE.play('tap'); });
+  $('edToolsClose').addEventListener('click', () => closeOv('edToolsOv'));
+  $('edNext').addEventListener('click', () => gridGo(1));
+  window.addEventListener('resize', () => { if (screen === 'editor') gridPages(true); });
   $('copyJson').addEventListener('click', copyJson);
   $('resetDeck').hidden = !(IS_APP && appDeck());
   $('resetDeck').addEventListener('click', resetDeck);
@@ -536,6 +612,7 @@ function wireEditor() {
     if (ins) { insertTag(ins.dataset.ins); return; }
     const t = e.target.closest('button[data-act]'); if (!t) return;
     const act = t.dataset.act;
+    if (act === 'edtab') { edTab(t.dataset.t); SE.play('tap'); return; }
     if (act === 'edit') openEdit(Number(t.dataset.id));
     else if (act === 'cancel') cancelEdit();
     else if (act === 'del') { editing.confirmDelete = true; renderGrid(); const b = $('ed-del-no'); if (b) b.focus({ preventScroll: true }); }
@@ -610,6 +687,8 @@ function wireEditor() {
   $('addCat').addEventListener('click', addCategory);
   $('catBtn').addEventListener('click', () => { renderCatPanel(); openOv('catOv'); const f = $('catRows').querySelector('input'); if (f) f.focus({ preventScroll: true }); });
   $('catClose').addEventListener('click', () => closeOv('catOv'));
+  $('catPrev').addEventListener('click', () => { if (pagerGo('catRows', -1)) SE.play('tap'); });
+  $('catNext').addEventListener('click', () => { if (pagerGo('catRows', 1)) SE.play('tap'); });
 
   $('restoreYes').addEventListener('click', () => {
     if (pendingRestore) {
