@@ -4,14 +4,14 @@
    - the device that paid, or the latest device that entered the code (引き継ぎ), holds a device key (a random number made
      here, kept only on that device; the database keeps its SHA-256 hash). Every other device that used the code is off
      the next time it asks.
-   - the device that holds the key can make a new code (作り直し): the old code stops working everywhere at once.
+   - there is no limit on 引き継ぎ: one purchase is one device at a time, so a code cannot give premium to several phones
+     at once. Keeping the code private is the buyer's part (the terms say so).
    - cancelling or changing the card (Stripe's page) needs the device key too, so a leaked code cannot cancel anyone.
    - the owner can issue a new code from the dashboard after checking the buyer in Stripe (stats.js, /plus-reset).
-   Codes are kept as SHA-256 hashes too ('h:' + hex; rows made before that keep the plain code until it is remade).
+   Codes are kept as SHA-256 hashes too ('h:' + hex; rows made before that keep the plain code until the owner reissues it).
 
    POST /v1/plus/checkout {plan}                          -> {url, code}
    POST /v1/plus/check    {code, dev?, claim?, restore?}  -> {paid, plan, until, cancel, test, dev?, took?} | 409 {error:'moved'}
-   POST /v1/plus/regen    {code, dev}                     -> {code}
    POST /v1/plus/portal   {code, dev}                     -> {url}
 
    Prices are made in Stripe by this Worker the first time they are needed (looked up by lookup_key). No card details ever
@@ -212,11 +212,6 @@ export default {
         return json(200, answer(row, env, code, { dev, took }), origin);
       }
       if (!mine) return json(409, { error: 'moved' }, origin);   // what follows needs the device that holds premium
-      if (what === 'regen') {
-        const next = newCode();
-        await env.DB.prepare('UPDATE plus SET code = ? WHERE code = ?').bind(await codeKey(next), row.code).run();
-        return json(200, { code: next }, origin);
-      }
       if (what === 'portal') {
         row = await refresh(env, row);
         if (!row.customer || !row.sub) return json(400, { error: 'no_sub' }, origin);
