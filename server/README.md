@@ -8,6 +8,7 @@
 
 - 最初に一度だけ、リポジトリの Secrets に `CLOUDFLARE_API_TOKEN` を登録する（Cloudflare の API トークン。「Cloudflare Workers を編集」テンプレートに「D1 編集」を足したもの）
 - `STATS_PASSWORD`（16文字以上）も Secrets に入れておくと、集計ページのパスワードとして入る
+- `STRIPE_SECRET_KEY` も Secrets に入れておくと、プレミアムの支払い（`/v1/plus/*`、src/plus.js）が動く。Stripe の「制限付きキー」（`rk_test_…` / `rk_live_…`）を使う。権限は Checkout Sessions・Prices・Products・Customer portal を書き込み、Subscriptions・PaymentIntents・Customers を読み取りの7つだけ。入れていないあいだ、支払いの API は 503 を返す
 - データベース（D1「sakego」）がなければ作り、表を作り（migrations）、Worker「sakego」をデプロイする
 - 結果は `deploy-status` ブランチの `status.md` に書かれる（メールアドレスやアカウントIDは伏せ字）
 
@@ -32,6 +33,7 @@
 - 集計ページ：パスワード（Secret `STATS_PASSWORD`、16文字以上）か Cloudflare Access のどちらかが通らないと何も見せない。パスワードの間違いは1分10回/送信元まで。Cookie はパスワードから作る鍵で署名していて、書きかえると通らない
 - 無料枠を超えたときは記録されないだけで、料金はかからない。ゲームにも影響しない
 
+- 支払い：カードの情報はここを通らない（Stripe の画面が受け取る）。保存するのは復元コードと Stripe の番号だけ。復元コードは 31 文字×12桁で、送信元ごとに1分20回までしか試せない。Stripe のキーは必要な権限だけの制限付きキーにする
 ## 設定のあと
 
 受け口の URL（`https://sakego.〈サブドメイン〉.workers.dev/v1/p`）を `src/part-game.js` の `STAT_URL` に入れて `node src/build-app.js` を実行する。ページの CSP（connect-src）には、その URL のオリジンだけが自動で入る。

@@ -13,6 +13,8 @@ checks() {
   r=$(code -X POST -H 'Origin: https://evil.example' -H 'Content-Type: text/plain' --data '{}' "$url/v1/p"); add "よそのサイトからの報告: $r（403 なら正しい）"; [ "$r" = 403 ] || ok=0
   r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data 'not json' "$url/v1/p"); add "壊れた報告: $r（400 なら正しい）"; [ "$r" = 400 ] || ok=0
   r=$(code "$url/manifest.webmanifest"); add "ホーム画面用の設定: $r（200 なら正しい）"; [ "$r" = 200 ] || ok=0
+  # the payments API: 404 for a code that does not exist means the Stripe key is in; 503 means it is not (yet). Nothing is written
+  r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data '{"code":"DON-2222-2222-2222"}' "$url/v1/plus/check"); add "支払いの API: $r（404 ならキーあり・503 ならキー未設定）"; [ "$r" = 404 ] || [ "$r" = 503 ] || ok=0
   if [ -n "$STATS_PASSWORD" ]; then
     jar=$(mktemp)
     r=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -c "$jar" --data-urlencode "password=$STATS_PASSWORD" "$url/login")
