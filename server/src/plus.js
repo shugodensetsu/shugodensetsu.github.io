@@ -23,7 +23,7 @@
 const ORIGINS = ['https://shugodensetsu.github.io'];
 const APP = 'https://shugodensetsu.github.io/';
 const PLANS = {
-  year: { key: 'don_plus_year', amount: 2980, name: 'DON!!でんプレミアム 年額プラン', interval: 'year' },
+  year: { key: 'don_plus_year', amount: 2400, name: 'DON!!でんプレミアム 年額プラン', interval: 'year' },
   month: { key: 'don_plus_month', amount: 480, name: 'DON!!でんプレミアム 月額プラン', interval: 'month' },
   pass: { key: 'don_plus_pass', amount: 240, name: 'DON!!でんプレミアム 24時間パス' },
 };
@@ -87,10 +87,13 @@ async function priceOf(env, plan) {
   const p = PLANS[plan], ck = (isLive(env) ? 'live' : 'test') + ':' + p.key;
   if (prices.has(ck)) return prices.get(ck);
   const found = await stripe(env, 'GET', 'prices', { 'lookup_keys[]': p.key, active: 'true', limit: 1 });
-  let id = found.data && found.data[0] && found.data[0].id;
+  const old = found.data && found.data[0];
+  // a price whose amount no longer matches PLANS (the price was changed here) is replaced: the new one takes the lookup_key.
+  // People already subscribed keep paying what they signed up for.
+  let id = old && old.unit_amount === p.amount ? old.id : null;
   if (!id) {
     const made = await stripe(env, 'POST', 'prices', {
-      currency: 'jpy', unit_amount: p.amount, lookup_key: p.key, nickname: p.name,
+      currency: 'jpy', unit_amount: p.amount, lookup_key: p.key, nickname: p.name, transfer_lookup_key: old ? 'true' : undefined,
       product_data: { name: p.name },
       recurring: p.interval ? { interval: p.interval } : undefined,
     });

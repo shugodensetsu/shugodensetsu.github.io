@@ -16,7 +16,7 @@ const PLUS_LIVE = PLUS_SALE || PAY_TEST;   /* buying is on: free players get the
 const PLUS_OPEN = !IS_APP || PLUS_LIVE;
 const PLUS_KEY = 'sakego-plus', TRY_KEY = 'sakego-try', PLUS_TRY = 5;
 const PLUS_PLANS = [
-  { k: 'year', name: '年額プラン', price: '2,980円', per: '/年', note: '月あたり約248円', best: true },
+  { k: 'year', name: '年額プラン', price: '2,400円', per: '/年', note: '月200円相当', best: true },
   { k: 'month', name: '月額プラン', price: '480円', per: '/月', note: 'いつでも解約できる' },
   { k: 'pass', name: '24時間パス', price: '240円', per: '', note: '今夜だけ。自動で更新されない' },
 ];
