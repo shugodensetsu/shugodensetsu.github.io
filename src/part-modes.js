@@ -391,9 +391,13 @@ function renderPMResult() {
 /* ---------- お支払い（Stripe）: server/src/plus.js と話す ---------- */
 const PLUS_API = 'https://sakego.shugodensetsu.workers.dev/v1/plus/';
 const PLUS_PEND_KEY = 'sakego-plus-pend';
+/* the device keys this phone held and handed on (kept even after premium ends here): shown when entering a code, so a phone
+   cannot take back a purchase it handed to another phone */
+const PLUS_GONE_KEY = 'sakego-plus-gone';
+const plusGone = () => { try { const a = JSON.parse(localStorage.getItem(PLUS_GONE_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(-10) : []; } catch (_) { return []; } };
 const TOKUSHO_URL = 'https://shugodensetsu.github.io/tokushoho.html';
 const PLAN_NAME = { year: '年額プラン', month: '月額プラン', pass: '24時間パス' };
-let plusBusy = false, plusRestore = false, plusTyped = '', plusAway = 0, plusLost = '';
+let plusBusy = false, plusRestore = false, plusRestoreAsk = false, plusTyped = '', plusAway = 0, plusLost = '';
 async function plusCall(what, body) {
   try {
     const r = await fetch(PLUS_API + what, { method: 'POST', body: JSON.stringify(body), mode: 'cors', credentials: 'omit', headers: { 'content-type': 'text/plain' } });
@@ -406,11 +410,13 @@ function plusSave(j) {
   lsSet(PLUS_KEY, JSON.stringify({ plan: j.plan, until: j.until, code: j.code, cancel: !!j.cancel, test: !!j.test, at: Date.now(), dev: j.dev || old.dev }));
 }
 function plusDrop(why) {
+  const st = plusState();
+  if (st && st.dev) lsSet(PLUS_GONE_KEY, JSON.stringify(plusGone().concat(st.dev).slice(-10)));
   try { localStorage.removeItem(PLUS_KEY); } catch (_) { /* ignore */ }
   plusLost = why;
   titleModes();
   if (!$('plusOv').hidden && !plusBusy) renderPlus();
-  telop(why === 'moved' ? 'この端末のプレミアムは終了しました<small>復元コードが別の端末で使われました</small>' : 'この端末のプレミアムは終了しました<small>復元コードが使えなくなりました</small>', 'white sm', 3200);
+  telop(why === 'moved' ? 'この端末のプレミアムは終了しました<small>別の端末に引き継がれました</small>' : 'この端末のプレミアムは終了しました<small>復元コードが使えなくなりました</small>', 'white sm', 3200);
 }
 /* ask the server what a code is worth now. o.claim: this phone just paid; o.restore: 引き継ぎ (this phone takes premium over).
    'on' | 'off' (paid once, now over) | 'wait' (not paid yet) | 'moved' (another phone has it) | 'none' (no such code) | 'net' */
@@ -418,7 +424,7 @@ let plusTook = false;
 async function plusCheck(code, o) {
   o = o || {};
   const st = plusState(), dev = st && st.code === code ? st.dev : undefined;
-  const { status, j } = await plusCall('check', { code, dev, claim: o.claim ? 1 : undefined, restore: o.restore ? 1 : undefined });
+  const { status, j } = await plusCall('check', { code, dev, claim: o.claim ? 1 : undefined, restore: o.restore ? 1 : undefined, gone: o.restore ? plusGone() : undefined });
   if (status === 200 && j) {
     if (!j.paid) return 'wait';
     plusTook = !!j.took;
@@ -426,6 +432,7 @@ async function plusCheck(code, o) {
     return j.until > Date.now() ? 'on' : 'off';
   }
   if (status === 409) return 'moved';
+  if (status === 403 && j && j.error === 'gone') return 'gone';
   if (status === 404 || status === 400) return 'none';
   return 'net';
 }
@@ -498,11 +505,14 @@ async function plusRestoreGo() {
   if (code.length !== 12) { renderPlus('復元コードは「DON-」のあとに英数字12文字です'); return; }
   const full = 'DON-' + code.slice(0, 4) + '-' + code.slice(4, 8) + '-' + code.slice(8);
   if (plusBusy) return;
+  /* first press: say what 引き継ぎ means for the other phone, and ask again */
+  if (!plusRestoreAsk) { plusTyped = full; plusRestoreAsk = true; renderPlus(); SE.play('tap'); return; }
+  plusRestoreAsk = false;
   plusBusy = true; renderPlus('確認しています…');
   const r = await plusCheck(full, { restore: true });
   plusBusy = false;
   if (r === 'on') { plusRestore = false; plusLost = ''; titleModes(); SE.play('coin'); renderPlus('<b>プレミアムを引き継ぎました！</b>' + (plusTook ? '前に使っていた端末のプレミアムは終了しました' : '')); return; }
-  renderPlus(r === 'off' ? 'このコードのプレミアムは期限が切れています' : r === 'wait' ? 'このコードのお支払いはまだ終わっていません' : r === 'none' ? 'このコードは見つかりませんでした。入力をもう一度確かめてください' : 'いま確認できませんでした。電波を確かめて、もう一度押してください');
+  renderPlus(r === 'gone' ? 'この端末は、このプレミアムを一度ほかの端末に引き継いでいるため、引き継ぎ直せません。使うには新しく購入してください' : r === 'off' ? 'このコードのプレミアムは期限が切れています' : r === 'wait' ? 'このコードのお支払いはまだ終わっていません' : r === 'none' ? 'このコードは見つかりませんでした。入力をもう一度確かめてください' : 'いま確認できませんでした。電波を確かめて、もう一度押してください');
 }
 async function plusPortal() {
   const st = plusState();
@@ -524,13 +534,16 @@ function renderPlus(msg) {
   const mine = has ? '<div class="pl-mine"><p class="pl-mine-h">' + (PLAN_NAME[st.plan] || 'プレミアム') + (st.test ? ' <i class="pl-test">テスト決済</i>' : '') + '</p>' +
       '<p class="pl-mine-d">' + day(st.until) + (st.plan === 'pass' ? ' まで' : st.cancel ? ' で終了（更新されません）' : ' に自動で更新') + '</p>' +
       '<p class="pl-code-h">復元コード<small>機種変更・別の端末で使います</small></p><button type="button" class="pl-code" data-pl="copy" aria-label="復元コードをコピー">' + esc(st.code) + '<small>コピー</small></button>' +
-      '<p class="pl-note">プレミアムを使えるのは1台だけ。このコードで引き継ぐと、この端末のプレミアムは終了します。コードはほかの人に教えないでください</p>' +
+      '<p class="pl-note">プレミアムを使えるのは1台だけ。このコードで別の端末に引き継ぐと、<b>この端末では新しく購入するまでプレミアムを使えなくなります</b>（あとから引き継ぎ直すこともできません）。コードはほかの人に教えないでください</p>' +
       (st.plan !== 'pass' ? '<button type="button" class="pbtn white small pl-portal" data-pl="portal">解約・お支払い方法の変更</button>' : '') + '</div>' : '';
   const stale = plusStale() ? '<p class="pl-warn">最後の確認から24時間以上たちました。<b>電波のある場所でアプリを開く</b>と、プレミアムを使えます</p>' : '';
-  const lost = !on && plusLost ? '<p class="pl-warn">' + (plusLost === 'moved' ? '復元コードが別の端末で使われたため、この端末のプレミアムは終了しました。' : 'この復元コードは使えなくなったため、この端末のプレミアムは終了しました。') +
-    '<br>この端末で使うときは、もう一度「復元コードで引き継ぐ」から入れてください</p>' : '';
+  const lost = !on && plusLost ? '<p class="pl-warn">' + (plusLost === 'moved' ? 'プレミアムが別の端末に引き継がれたため、この端末のプレミアムは終了しました。' : 'この復元コードは使えなくなったため、この端末のプレミアムは終了しました。') +
+    '<br>この端末では、新しく購入するまでプレミアムは使えません</p>' : '';
   const restore = PLUS_LIVE && !has ? (plusRestore
-    ? '<div class="pl-restore"><label for="plCode">復元コード</label><input id="plCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DON-XXXX-XXXX-XXXX" maxlength="24" value="' + esc(plusTyped) + '"><button type="button" class="pbtn main small" data-pl="restoreGo">引き継ぐ</button></div>'
+    ? '<div class="pl-restore"><label for="plCode">復元コード</label><input id="plCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DON-XXXX-XXXX-XXXX" maxlength="24" value="' + esc(plusTyped) + '"' + (plusRestoreAsk ? ' readonly' : '') + '>' +
+      (plusRestoreAsk ? '<p class="pl-note"><b>引き継ぐと、元の端末では新しく購入するまでプレミアムを使えなくなります。</b>あとから元の端末に戻すこともできません。プレミアムを使えるのは1台だけです</p>' +
+        '<div class="pl-ask-b"><button type="button" class="pbtn white small" data-pl="restoreNo">やめる</button><button type="button" class="pbtn main small" data-pl="restoreYes">この端末に引き継ぐ</button></div>'
+        : '<button type="button" class="pbtn main small" data-pl="restoreGo">引き継ぐ</button>') + '</div>'
     : '<button type="button" class="pl-link" data-pl="restore">購入済みの方：復元コードで引き継ぐ</button>') : '';
   $('plusBox').innerHTML = '<button type="button" class="gd-x pl-x" data-pl="close" aria-label="閉じる">×</button>' +
     '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">' + PLUS_NAME + '</h2>' +
@@ -553,7 +566,7 @@ function renderPlus(msg) {
       '<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>' + (PLUS_LIVE ? ' ・ <a href="' + TOKUSHO_URL + '" target="_blank" rel="noopener">特定商取引法に基づく表記</a>' : '') + '</p>';
 }
 function openPlus(from) {
-  plusRestore = false;
+  plusRestore = false; plusRestoreAsk = false;
   renderPlus();
   if ($('plusOv').hidden) { openOv('plusOv'); SE.play('pop'); }
   const x = $('plusBox').querySelector('.pl-plan.best') || $('plusBox').querySelector('[data-pl="close"]');
@@ -563,8 +576,9 @@ function openPlus(from) {
 }
 function plusAct(a) {
   if (a === 'close') { closeOv('plusOv'); SE.play('tap'); if (screen === 'title') renderTitle(); else if (screen === 'setup') renderSetup(false); return; }
-  if (a === 'restore') { plusRestore = true; plusTyped = ''; renderPlus(); SE.play('tap'); const i = $('plCode'); if (i) i.focus(); return; }
-  if (a === 'restoreGo') { plusRestoreGo(); return; }
+  if (a === 'restore') { plusRestore = true; plusRestoreAsk = false; plusTyped = ''; renderPlus(); SE.play('tap'); const i = $('plCode'); if (i) i.focus(); return; }
+  if (a === 'restoreGo' || a === 'restoreYes') { plusRestoreGo(); return; }
+  if (a === 'restoreNo') { plusRestoreAsk = false; renderPlus(); SE.play('tap'); return; }
   if (a === 'portal') { SE.play('tap'); plusPortal(); return; }
   if (a === 'copy') {
     const st = plusState(); if (!st || !st.code) return;

@@ -6,12 +6,15 @@
      the next time it asks.
    - there is no limit on 引き継ぎ: one purchase is one device at a time, so a code cannot give premium to several phones
      at once. Keeping the code private is the buyer's part (the terms say so).
+   - a device that handed premium on cannot take it back (no lending it out and taking it back): the app keeps the keys it
+     held, and the server keeps their hashes (goneh) and refuses a device that shows one of them. Clearing the app's data
+     or using another browser gets around this; nothing here tries to recognise a device beyond its keys.
    - cancelling or changing the card (Stripe's page) needs the device key too, so a leaked code cannot cancel anyone.
    - the owner can issue a new code from the dashboard after checking the buyer in Stripe (stats.js, /plus-reset).
    Codes are kept as SHA-256 hashes too ('h:' + hex; rows made before that keep the plain code until the owner reissues it).
 
    POST /v1/plus/checkout {plan}                          -> {url, code}
-   POST /v1/plus/check    {code, dev?, claim?, restore?}  -> {paid, plan, until, cancel, test, dev?, took?} | 409 {error:'moved'}
+   POST /v1/plus/check    {code, dev?, claim?, restore?, gone?}  -> {paid, plan, until, cancel, test, dev?, took?} | 409 {error:'moved'} | 403 {error:'gone'}
    POST /v1/plus/portal   {code, dev}                     -> {url}
 
    Prices are made in Stripe by this Worker the first time they are needed (looked up by lookup_key). No card details ever
@@ -31,7 +34,8 @@ const RECHECK_MS = 10 * 60e3;          // Stripe is asked about a subscription a
 const CODE_ABC = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // no 0/O, 1/I/L
 const CODE = /^DON-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/;
 const DEV = /^[A-Za-z0-9_-]{43}$/;     // 32 random bytes, base64url
-const MAX_BODY = 512;
+const MAX_BODY = 2048;              // a code, a key and up to 10 old keys
+const GONE_MAX = 50;
 const PER_MINUTE = 20;                 // per sender: enough for a person, far too few to guess codes (31^12 of them)
 
 const seen = new Map();
@@ -149,7 +153,7 @@ async function refresh(env, row) {
 }
 const answer = (row, env, code, extra) => Object.assign({ code, plan: row.plan, until: row.until || 0, cancel: !!row.cancel, paid: !!row.until, test: !isLive(env) }, extra || {});
 async function findRow(env, code) {
-  return env.DB.prepare('SELECT code, plan, session, customer, sub, until, cancel, checked, devh FROM plus WHERE code = ? OR code = ?')
+  return env.DB.prepare('SELECT code, plan, session, customer, sub, until, cancel, checked, devh, goneh FROM plus WHERE code = ? OR code = ?')
     .bind(await codeKey(code), code).first();
 }
 /* this device holds the key? */
@@ -203,12 +207,22 @@ export default {
       if (what === 'check') {
         /* a device without the key may only take premium on purpose: paying (claim, when no device has it yet) or 引き継ぎ (restore) */
         if (!mine && !r.restore && (row.devh || !r.claim)) return json(409, { error: 'moved' }, origin);
+        /* a device that held this purchase before and handed it on does not get it back */
+        if (!mine) {
+          let gone = [];
+          try { gone = JSON.parse(row.goneh || '[]'); } catch (_) { gone = []; }
+          const old = Array.isArray(r.gone) ? r.gone.filter(x => typeof x === 'string' && DEV.test(x)).slice(-10) : [];
+          for (const k of old) if (gone.includes(await devKey(k))) return json(403, { error: 'gone' }, origin);
+        }
         row = await refresh(env, row);
         if (!row.until) return json(200, answer(row, env, code), origin);   // not paid (yet)
         if (mine) return json(200, answer(row, env, code), origin);
-        /* this device takes premium over: a new device key; whichever device had it is off from now on */
+        /* this device takes premium over: a new device key; whichever device had it is off from now on, for good */
         const dev = newDev(), took = !!row.devh;
-        await env.DB.prepare('UPDATE plus SET devh = ?, dev_at = ? WHERE code = ?').bind(await devKey(dev), Date.now(), row.code).run();
+        let gone = [];
+        try { gone = JSON.parse(row.goneh || '[]'); } catch (_) { gone = []; }
+        if (row.devh) gone = gone.concat(row.devh).slice(-GONE_MAX);
+        await env.DB.prepare('UPDATE plus SET devh = ?, dev_at = ?, goneh = ? WHERE code = ?').bind(await devKey(dev), Date.now(), JSON.stringify(gone), row.code).run();
         return json(200, answer(row, env, code, { dev, took }), origin);
       }
       if (!mine) return json(409, { error: 'moved' }, origin);   // what follows needs the device that holds premium
