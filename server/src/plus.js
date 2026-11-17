@@ -17,6 +17,8 @@ const PLANS = {
   month: { key: 'don_plus_month', amount: 480, name: 'DON!!でんプレミアム 月額プラン', interval: 'month' },
   pass: { key: 'don_plus_pass', amount: 240, name: 'DON!!でんプレミアム 24時間パス' },
 };
+/* a restricted key (rk_…, only the permissions this file needs) is recommended over the full secret key (sk_…) */
+const isLive = env => /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY || '');
 const PASS_MS = 24 * 3600e3;
 const GRACE_MS = 3 * 86400e3;          // a renewal that failed: Stripe tries the card again for a few days, premium stays meanwhile
 const RECHECK_MS = 10 * 60e3;          // a subscription is asked about again at most every 10 minutes
@@ -66,7 +68,7 @@ async function stripe(env, method, path, params) {
 }
 const prices = new Map();   // lookup_key -> price id, for as long as this instance lives
 async function priceOf(env, plan) {
-  const p = PLANS[plan], mode = env.STRIPE_SECRET_KEY.startsWith('sk_live') ? 'live' : 'test', ck = mode + ':' + p.key;
+  const p = PLANS[plan], mode = isLive(env) ? 'live' : 'test', ck = mode + ':' + p.key;
   if (prices.has(ck)) return prices.get(ck);
   const found = await stripe(env, 'GET', 'prices', { 'lookup_keys[]': p.key, active: 'true', limit: 1 });
   let id = found.data && found.data[0] && found.data[0].id;
@@ -131,7 +133,7 @@ async function refresh(env, row) {
     .bind(row.customer, row.sub, row.until, row.cancel || 0, row.checked, row.code).run();
   return row;
 }
-const answer = (row, env) => ({ code: row.code, plan: row.plan, until: row.until || 0, cancel: !!row.cancel, paid: !!row.until, test: !env.STRIPE_SECRET_KEY.startsWith('sk_live') });
+const answer = (row, env) => ({ code: row.code, plan: row.plan, until: row.until || 0, cancel: !!row.cancel, paid: !!row.until, test: !isLive(env) });
 
 export default {
   async fetch(request, env) {
