@@ -105,7 +105,8 @@ async function portalConfig(env) {
 const sec = t => (Number.isFinite(t) ? t * 1000 : 0);
 function subUntil(sub) {
   const item = sub.items && sub.items.data && sub.items.data[0];
-  const end = sec((item && item.current_period_end) || sub.current_period_end);
+  let end = sec((item && item.current_period_end) || sub.current_period_end);
+  if (sub.cancel_at) end = Math.min(end || Infinity, sec(sub.cancel_at));   // a cancel already booked ends it then
   if (['active', 'trialing'].includes(sub.status)) return end;
   if (sub.status === 'past_due') return end + GRACE_MS;
   return Math.min(end || Infinity, sec(sub.ended_at) || Infinity) || 0;   // canceled, unpaid, incomplete…
@@ -125,7 +126,8 @@ async function refresh(env, row) {
   if (row.sub) {
     const sub = await stripe(env, 'GET', 'subscriptions/' + row.sub);
     row.until = subUntil(sub);
-    row.cancel = sub.cancel_at_period_end || sub.status === 'canceled' ? 1 : 0;
+    /* newer Stripe API versions book a cancel as cancel_at (the end of the period) rather than cancel_at_period_end */
+    row.cancel = sub.cancel_at_period_end || sub.cancel_at || sub.status === 'canceled' ? 1 : 0;
     row.customer = row.customer || sub.customer || null;
   }
   row.checked = now;
