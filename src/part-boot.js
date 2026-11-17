@@ -40,6 +40,7 @@ function boot(data) {
   else showScreen('title');
   installSync();
   FXC.size();
+  plusBoot();   /* back from paying (Stripe), or a premium that may have renewed / ended */
 }
 const hot = window.claude && window.claude.hot;
 try {

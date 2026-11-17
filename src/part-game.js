@@ -6832,6 +6832,7 @@ function wireGame() {
   }));
   $('plusBtn').addEventListener('click', () => openPlus('title'));
   $('plusBox').addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b) plusAct(b.dataset.pl); });
+  $('plusBox').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'plCode') { e.preventDefault(); plusAct('restoreGo'); } });
   $('resumeBtn').addEventListener('click', () => { if (validGame(G) && !G.done) { SE.play('tap'); showScreen('game'); requestWake(); } });
   $('goEditor').addEventListener('click', () => { SE.play('tap'); showScreen('editor'); });
   $('howBtn').addEventListener('click', () => openGuide('start'));

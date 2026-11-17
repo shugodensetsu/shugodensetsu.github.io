@@ -1,6 +1,7 @@
 # 集計サーバー（server/）を Cloudflare Workers にデプロイする。
 # 必要なもの：リポジトリの Secrets に CLOUDFLARE_API_TOKEN（「Cloudflare Workers を編集」テンプレート + D1 編集）。
 # STATS_PASSWORD も登録してあれば、集計ページのパスワードとして入れる。
+# STRIPE_SECRET_KEY も登録してあれば、プレミアムの支払い（Stripe）に使うキーとして入れる。
 # 結果は deploy-status ブランチの status.md に書く（メールアドレスやアカウントIDは伏せる）。
 # このリポジトリは公開なので、wrangler の出力は伏せ字にしてからログに出す。
 name: 集計サーバーをデプロイ
@@ -25,6 +26,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       STATS_PASSWORD: ${{ secrets.STATS_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       WRANGLER_SEND_METRICS: 'false'
     defaults:
       run:
@@ -47,6 +49,7 @@ jobs:
           cat > "$RUNNER_TEMP/mask.sh" <<'SH'
           #!/bin/sh
           sed -E -e 's/[0-9a-f]{32}/<id>/g' \
+                 -e 's/(sk|rk|whsec)_[A-Za-z0-9_]+/<key>/g' \
                  -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<email>/g'
           SH
           chmod +x "$RUNNER_TEMP/mask.sh"
@@ -78,6 +81,12 @@ jobs:
         if: steps.chk.outputs.ok == 'true' && env.STATS_PASSWORD != ''
         continue-on-error: true
         run: printf '%s' "$STATS_PASSWORD" | npx wrangler secret put STATS_PASSWORD 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4-secret.txt"
+
+      - name: Stripe のキーを入れる
+        id: stripe
+        if: steps.chk.outputs.ok == 'true' && env.STRIPE_SECRET_KEY != ''
+        continue-on-error: true
+        run: printf '%s' "$STRIPE_SECRET_KEY" | npx wrangler secret put STRIPE_SECRET_KEY 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4b-stripe.txt"
 
       - name: Worker をデプロイ
         id: deploy
@@ -118,6 +127,7 @@ jobs:
             echo "- 表: ${{ steps.migrate.outcome }}"
             echo "- デプロイ: ${{ steps.deploy.outcome }}"
             echo "- パスワード: ${{ steps.secret.outcome }} ${{ steps.secret2.outcome }}"
+            echo "- Stripe のキー: ${{ steps.stripe.outcome }}"
             echo "- 動作確認: ${{ steps.check.outcome }}"
             echo
             echo "## URL"

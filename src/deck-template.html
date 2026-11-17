@@ -1965,6 +1965,21 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .pl-msg b{color:var(--pink)}
 .dialog .pl-fine{font-size:11px; font-weight:700; color:var(--ink-muted); line-height:1.5}
 .pl-fine a{color:inherit}
+/* what this phone bought: plan, until when, the restore code, the way to cancel */
+.pl-mine{display:flex; flex-direction:column; align-items:center; gap:4px; background:#f3edff; border:2px solid var(--ink); border-radius:14px; padding:9px 10px 10px}
+.dialog .pl-mine-h{font-weight:800; font-size:14px; color:var(--ink)}
+.dialog .pl-mine-d{font-size:12px; font-weight:700; color:var(--ink-muted); margin-top:-3px}
+.pl-test{font-style:normal; font-size:10px; font-weight:800; background:var(--yellow); color:var(--ink); border:1.5px solid var(--ink); border-radius:999px; padding:0 6px; vertical-align:2px}
+.dialog .pl-code-h{font-size:11px; font-weight:800; color:var(--ink); margin-top:2px}
+.pl-code-h small{margin-left:5px; font-weight:700; color:var(--ink-muted)}
+.pl-code{display:flex; align-items:center; gap:8px; background:var(--white); color:var(--ink); border:2px dashed var(--ink); border-radius:10px; padding:5px 10px; font-family:ui-monospace, Menlo, monospace; font-weight:800; font-size:min(17px, 4.6vw); letter-spacing:.06em}
+.pl-code small{font-family:var(--f-body); letter-spacing:0; font-size:10px; background:var(--cyan); border:1.5px solid var(--ink); border-radius:999px; padding:0 6px}
+.pl-portal{margin-top:3px}
+.pl-link{background:none; border:0; color:var(--ink-muted); font-weight:800; font-size:12px; text-decoration:underline; padding:2px; font-family:inherit}
+.pl-restore{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px}
+.pl-restore label{width:100%; text-align:center; font-size:11.5px; font-weight:800; color:var(--ink)}
+.pl-restore input{flex:1; min-width:0; max-width:230px; height:40px; box-sizing:border-box; border:2px solid var(--ink); border-radius:10px; padding:0 10px; font-family:ui-monospace, Menlo, monospace; font-size:16px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; background:var(--white); color:var(--ink)}
+.pl-restore input::placeholder{color:#b9b2cc}
 
 /* 恋バナ・パーティーモード（ミニゲームモードの画面を使う） */
 .pm-stage{align-items:center; text-align:center; overflow-y:auto; gap:7px; container-type:size}
