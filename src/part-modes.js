@@ -384,7 +384,7 @@ const PLUS_API = 'https://sakego.shugodensetsu.workers.dev/v1/plus/';
 const PLUS_PEND_KEY = 'sakego-plus-pend';
 const TOKUSHO_URL = 'https://shugodensetsu.github.io/tokushoho.html';
 const PLAN_NAME = { year: '年額プラン', month: '月額プラン', pass: '24時間パス' };
-let plusBusy = false, plusRestore = false, plusTyped = '';
+let plusBusy = false, plusRestore = false, plusTyped = '', plusAway = 0;
 async function plusCall(what, body) {
   try {
     const r = await fetch(PLUS_API + what, { method: 'POST', body: JSON.stringify(body), mode: 'cors', credentials: 'omit', headers: { 'content-type': 'text/plain' } });
@@ -410,9 +410,10 @@ async function plusSync(force) {
   if (!st || !st.code) return;
   const near = st.until - Date.now() < 3 * 86400e3, stale = Date.now() - (st.at || 0) > 12 * 3600e3;
   if (!force && !near && !stale) return;
-  const was = plusOn(), r = await plusCheck(st.code);
+  const before = localStorage.getItem(PLUS_KEY), r = await plusCheck(st.code);
   if (r === 'none') { try { localStorage.removeItem(PLUS_KEY); } catch (_) { /* ignore */ } }
-  if (was !== plusOn()) { titleModes(); if (!$('plusOv').hidden) renderPlus(); }
+  const now = plusState(), changed = !now || !before || ['plan', 'until', 'cancel'].some(k => now[k] !== JSON.parse(before)[k]);
+  if (changed) { titleModes(); if (!$('plusOv').hidden && !plusBusy) renderPlus(); }
 }
 /* back from Stripe's page (?plus=<code> after paying, ?plus=cancel, ?plus=back from the cancel/card page),
    or a payment started earlier whose way back was lost (the page was closed on the way) */
@@ -440,6 +441,13 @@ async function plusBoot() {
   }
   plusSync(q === 'back');
 }
+/* back from Stripe's cancel / card page: on a phone it opens over the app and is closed with ×, so the app is not reloaded.
+   When the app shows again, ask what the subscription is now */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !plusAway || Date.now() - plusAway > 3600e3) return;
+  plusAway = 0;
+  plusSync(true);
+});
 async function plusBuy(plan) {
   if (plusBusy) return;
   plusBusy = true;
@@ -472,7 +480,7 @@ async function plusPortal() {
   plusBusy = true; renderPlus('解約・お支払い方法の画面を開いています…');
   const { status, j } = await plusCall('portal', { code: st.code });
   plusBusy = false;
-  if (status === 200 && j && j.url) { location.href = j.url; return; }
+  if (status === 200 && j && j.url) { plusAway = Date.now(); location.href = j.url; return; }
   renderPlus('いま開けませんでした。電波を確かめて、もう一度押してください');
 }
 
@@ -516,7 +524,7 @@ function openPlus(from) {
   const x = $('plusBox').querySelector('.pl-plan.best') || $('plusBox').querySelector('[data-pl="close"]');
   if (x) x.focus({ preventScroll: true });
   if (from !== 'paid') statTrack('plus', { d: 'open_' + (['title', 'limit', 'mode', 'mg'].includes(from) ? from : 'title') });
-  if (PLUS_LIVE) plusSync(false);
+  if (PLUS_LIVE) { const st = plusState(); plusSync(!!(st && st.code && Date.now() - (st.at || 0) > 5 * 60e3)); }
 }
 function plusAct(a) {
   if (a === 'close') { closeOv('plusOv'); SE.play('tap'); if (screen === 'title') renderTitle(); else if (screen === 'setup') renderSetup(false); return; }

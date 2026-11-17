@@ -187,6 +187,8 @@ export default {
         row = await refresh(env, row);
         if (!row.customer || !row.sub) return json(400, { error: 'no_sub' }, origin);
         const p = await stripe(env, 'POST', 'billing_portal/sessions', { customer: row.customer, return_url: APP + '?plus=back', locale: 'ja', configuration: await portalConfig(env) });
+        /* the subscription may change on that page (cancel, card): the next check asks Stripe instead of using the saved answer */
+        await env.DB.prepare('UPDATE plus SET checked = 0 WHERE code = ?').bind(row.code).run();
         return json(200, { url: p.url }, origin);
       }
       return json(404, null, origin);
