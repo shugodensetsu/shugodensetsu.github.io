@@ -30,8 +30,17 @@ function plusState() {
   try { const s = JSON.parse(localStorage.getItem(PLUS_KEY) || 'null'); return s && typeof s === 'object' && Number.isFinite(s.until) ? s : null; } catch (_) { return null; }
 }
 /* a subscription that renews is still on for 2 days past its date while the phone can't ask the server (no signal at the party) */
-const plusOn = () => { const s = plusState(); return !!s && s.until + (s.plan !== 'pass' && !s.cancel ? 2 * 86400e3 : 0) > Date.now(); };
-const plusFree = () => !PLUS_LIVE || plusOn();   /* premium content plays without limits */
+/* Premium is on while it is paid for AND this phone asked the server within the last day: premium is on one device at a
+   time (the latest to pay or enter the code), and a phone learns it was replaced when it asks. Without signal, a day.
+   A subscription that renews stays on for 2 days past its date while the renewal is confirmed */
+const PLUS_OFFLINE = 24 * 3600e3;
+const plusPaid = () => { const s = plusState(); return !!s && s.until + (s.plan !== 'pass' && !s.cancel ? 2 * 86400e3 : 0) > Date.now(); };
+const plusStale = () => { const s = plusState(); return plusPaid() && !!s.dev && Date.now() - (s.at || 0) > PLUS_OFFLINE; };
+const plusOn = () => plusPaid() && !plusStale();
+/* a game started with premium plays to its end even if premium moves to another phone meanwhile (the players at the table
+   are not cut off mid-game); the next game starts without it */
+const plusRun = () => !!(G && G.plusRun && !G.done && Date.now() - (G.gid || 0) < 12 * 3600e3);
+const plusFree = () => !PLUS_LIVE || plusOn() || plusRun();   /* premium content plays without limits */
 function tryLoad() {
   const day = dayKey(Date.now());
   let s = null;
@@ -234,7 +243,7 @@ function beginPM(mode) {
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
   saveNames();
   G = {
-    v: 2, mode, gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', lvl: pmOpt(mode), turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, plusRun: plusOn(), mode, gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', lvl: pmOpt(mode), turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => Object.assign({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], ans: 0, pass: 0, medal: 0 }, PMX[mode] ? PMX[mode].stats() : {})),
     pm: { log: [], used: [] },
@@ -384,7 +393,7 @@ const PLUS_API = 'https://sakego.shugodensetsu.workers.dev/v1/plus/';
 const PLUS_PEND_KEY = 'sakego-plus-pend';
 const TOKUSHO_URL = 'https://shugodensetsu.github.io/tokushoho.html';
 const PLAN_NAME = { year: '年額プラン', month: '月額プラン', pass: '24時間パス' };
-let plusBusy = false, plusRestore = false, plusTyped = '', plusAway = 0;
+let plusBusy = false, plusRestore = false, plusTyped = '', plusAway = 0, plusRegenAsk = false, plusLost = '';
 async function plusCall(what, body) {
   try {
     const r = await fetch(PLUS_API + what, { method: 'POST', body: JSON.stringify(body), mode: 'cors', credentials: 'omit', headers: { 'content-type': 'text/plain' } });
@@ -392,31 +401,48 @@ async function plusCall(what, body) {
     return { status: r.status, j };
   } catch (_) { return { status: 0, j: null }; }
 }
-const plusSave = j => lsSet(PLUS_KEY, JSON.stringify({ plan: j.plan, until: j.until, code: j.code, cancel: !!j.cancel, test: !!j.test, at: Date.now() }));
-/* ask the server what a code is worth now. 'on' | 'off' (paid once, now over) | 'wait' (not paid yet) | 'none' (no such code) | 'net' */
-async function plusCheck(code) {
-  const { status, j } = await plusCall('check', { code });
+function plusSave(j) {
+  const old = plusState() || {};
+  lsSet(PLUS_KEY, JSON.stringify({ plan: j.plan, until: j.until, code: j.code, cancel: !!j.cancel, test: !!j.test, at: Date.now(), dev: j.dev || old.dev }));
+}
+function plusDrop(why) {
+  try { localStorage.removeItem(PLUS_KEY); } catch (_) { /* ignore */ }
+  plusLost = why;
+  titleModes();
+  if (!$('plusOv').hidden && !plusBusy) renderPlus();
+  telop(why === 'moved' ? 'この端末のプレミアムは終了しました<small>復元コードが別の端末で使われました</small>' : 'この端末のプレミアムは終了しました<small>復元コードが作り直されました</small>', 'white sm', 3200);
+}
+/* ask the server what a code is worth now. o.claim: this phone just paid; o.restore: 引き継ぎ (this phone takes premium over).
+   'on' | 'off' (paid once, now over) | 'wait' (not paid yet) | 'moved' (another phone has it) | 'none' (no such code) | 'net' */
+let plusTook = false;
+async function plusCheck(code, o) {
+  o = o || {};
+  const st = plusState(), dev = st && st.code === code ? st.dev : undefined;
+  const { status, j } = await plusCall('check', { code, dev, claim: o.claim ? 1 : undefined, restore: o.restore ? 1 : undefined });
   if (status === 200 && j) {
     if (!j.paid) return 'wait';
+    plusTook = !!j.took;
     plusSave(j);
     return j.until > Date.now() ? 'on' : 'off';
   }
+  if (status === 409) return 'moved';
   if (status === 404 || status === 400) return 'none';
   return 'net';
 }
-/* now and then (a renewal, a cancel, a lapsed pass): quietly ask again */
+/* every time the app opens or comes back (at most every 10 seconds): still this phone's premium? renewed? cancelled? */
+let plusAsked = 0;
 async function plusSync(force) {
   const st = plusState();
-  if (!st || !st.code) return;
-  const near = st.until - Date.now() < 3 * 86400e3, stale = Date.now() - (st.at || 0) > 12 * 3600e3;
-  if (!force && !near && !stale) return;
-  const before = localStorage.getItem(PLUS_KEY), r = await plusCheck(st.code);
-  if (r === 'none') { try { localStorage.removeItem(PLUS_KEY); } catch (_) { /* ignore */ } }
-  const now = plusState(), changed = !now || !before || ['plan', 'until', 'cancel'].some(k => now[k] !== JSON.parse(before)[k]);
-  if (changed) { titleModes(); if (!$('plusOv').hidden && !plusBusy) renderPlus(); }
+  if (!st || !st.code || !st.dev) return;
+  if (!force && Date.now() - plusAsked < 10e3) return;
+  const before = JSON.stringify(st), r = await plusCheck(st.code);
+  if (r !== 'net') plusAsked = Date.now();   /* no signal: the next chance (back online, back to the app) asks again */
+  if (r === 'moved' || r === 'none') { plusDrop(r); return; }
+  const now = plusState(), was = JSON.parse(before);
+  if (!now || ['plan', 'until', 'cancel'].some(k => now[k] !== was[k]) || (Date.now() - (was.at || 0) > PLUS_OFFLINE)) { titleModes(); if (!$('plusOv').hidden && !plusBusy) renderPlus(); }
 }
-/* back from Stripe's page (?plus=<code> after paying, ?plus=cancel, ?plus=back from the cancel/card page),
-   or a payment started earlier whose way back was lost (the page was closed on the way) */
+/* back from Stripe's page (?plus=paid, ?plus=cancel, ?plus=back from the cancel/card page), or a payment started earlier whose
+   way back was lost (the page was closed on the way). The restore code is never in the address: it waits on this phone */
 async function plusBoot() {
   if (!IS_APP) return;
   let q = null;
@@ -424,29 +450,33 @@ async function plusBoot() {
   if (q) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) { /* ignore */ } }
   let pend = null;
   try { pend = JSON.parse(localStorage.getItem(PLUS_PEND_KEY) || 'null'); } catch (_) { pend = null; }
-  if (q === 'cancel') { try { localStorage.removeItem(PLUS_PEND_KEY); } catch (_) { /* ignore */ } setTimeout(() => telop('お支払いをやめました<small>料金はかかっていません</small>', 'white sm', 2200), 600); return; }
-  const code = q && q !== 'back' ? q.toUpperCase() : pend && pend.code;
-  if (code && !(plusOn() && plusState().code === code)) {
-    let r = await plusCheck(code);
+  const dropPend = () => { try { localStorage.removeItem(PLUS_PEND_KEY); } catch (_) { /* ignore */ } };
+  if (q === 'cancel') { dropPend(); setTimeout(() => telop('お支払いをやめました<small>料金はかかっていません</small>', 'white sm', 2200), 600); return; }
+  if (pend && pend.code && !(plusState() && plusState().code === pend.code)) {
+    let r = await plusCheck(pend.code, { claim: true });
     /* the payment can take a moment to be marked paid after coming back */
-    for (let i = 0; q && r === 'wait' && i < 4; i++) { await new Promise(res => setTimeout(res, 1500)); r = await plusCheck(code); }
+    for (let i = 0; q === 'paid' && r === 'wait' && i < 4; i++) { await new Promise(res => setTimeout(res, 1500)); r = await plusCheck(pend.code, { claim: true }); }
     if (r === 'on') {
-      try { localStorage.removeItem(PLUS_PEND_KEY); } catch (_) { /* ignore */ }
+      dropPend();
       titleModes(); SE.play('coin');
-      openPlus('paid'); renderPlus('ありがとう！ <b>プレミアムになりました</b>。下の<b>復元コード</b>は、機種変更のときに使うので控えておいてください');
+      openPlus('paid'); renderPlus('ありがとう！ <b>プレミアムになりました</b>。上の<b>復元コード</b>は、機種変更のときに使うので控えておいてください');
       return;
     }
-    if (r === 'none' || (pend && Date.now() - (pend.at || 0) > 86400e3)) { try { localStorage.removeItem(PLUS_PEND_KEY); } catch (_) { /* ignore */ } }
-    if (q && r !== 'none') setTimeout(() => telop('お支払いを確認中です<small>しばらくしてからアプリを開き直してください</small>', 'white sm', 2600), 600);
+    if (r === 'none' || r === 'moved' || Date.now() - (pend.at || 0) > 86400e3) dropPend();
+    if (q === 'paid' && r !== 'none') setTimeout(() => telop('お支払いを確認中です<small>しばらくしてからアプリを開き直してください</small>', 'white sm', 2600), 600);
+  } else if (q === 'paid') {
+    setTimeout(() => telop('お支払いを始めた端末でアプリを開いてください<small>プレミアムはその端末に付きます</small>', 'white sm', 3200), 600);
   }
-  plusSync(q === 'back');
-}
-/* back from Stripe's cancel / card page: on a phone it opens over the app and is closed with ×, so the app is not reloaded.
-   When the app shows again, ask what the subscription is now */
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState !== 'visible' || !plusAway || Date.now() - plusAway > 3600e3) return;
-  plusAway = 0;
   plusSync(true);
+}
+/* the app comes back to the front: ask again (another phone may have taken premium, or a cancel was made on Stripe's page,
+   which opens over the app and is closed with ×, so the app is not reloaded) */
+window.addEventListener('online', () => plusSync(true));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const away = plusAway && Date.now() - plusAway < 3600e3;
+  plusAway = 0;
+  plusSync(away);
 });
 async function plusBuy(plan) {
   if (plusBusy) return;
@@ -469,68 +499,93 @@ async function plusRestoreGo() {
   const full = 'DON-' + code.slice(0, 4) + '-' + code.slice(4, 8) + '-' + code.slice(8);
   if (plusBusy) return;
   plusBusy = true; renderPlus('確認しています…');
-  const r = await plusCheck(full);
+  const r = await plusCheck(full, { restore: true });
   plusBusy = false;
-  if (r === 'on') { plusRestore = false; titleModes(); SE.play('coin'); renderPlus('<b>プレミアムを引き継ぎました！</b>'); return; }
+  if (r === 'on') { plusRestore = false; plusLost = ''; titleModes(); SE.play('coin'); renderPlus('<b>プレミアムを引き継ぎました！</b>' + (plusTook ? '前に使っていた端末のプレミアムは終了しました' : '')); return; }
   renderPlus(r === 'off' ? 'このコードのプレミアムは期限が切れています' : r === 'wait' ? 'このコードのお支払いはまだ終わっていません' : r === 'none' ? 'このコードは見つかりませんでした。入力をもう一度確かめてください' : 'いま確認できませんでした。電波を確かめて、もう一度押してください');
+}
+/* 復元コードの作り直し: the old code stops working everywhere; only the phone that has premium can do it */
+async function plusRegen() {
+  const st = plusState();
+  if (!st || !st.code || plusBusy) return;
+  plusBusy = true; plusRegenAsk = false; renderPlus('作り直しています…');
+  const { status, j } = await plusCall('regen', { code: st.code, dev: st.dev });
+  plusBusy = false;
+  if (status === 200 && j && j.code) {
+    const s2 = plusState(); s2.code = j.code; lsSet(PLUS_KEY, JSON.stringify(s2));
+    SE.play('coin'); renderPlus('<b>新しい復元コードにしました</b>。古いコードは使えなくなり、それで引き継いだほかの端末のプレミアムも終了します。新しいコードを控えてください');
+    return;
+  }
+  if (status === 409 || status === 404) { plusDrop(status === 409 ? 'moved' : 'none'); return; }
+  renderPlus('いま作り直せませんでした。電波を確かめて、もう一度押してください');
 }
 async function plusPortal() {
   const st = plusState();
   if (!st || !st.code || plusBusy) return;
   plusBusy = true; renderPlus('解約・お支払い方法の画面を開いています…');
-  const { status, j } = await plusCall('portal', { code: st.code });
+  const { status, j } = await plusCall('portal', { code: st.code, dev: st.dev });
   plusBusy = false;
   if (status === 200 && j && j.url) { plusAway = Date.now(); location.href = j.url; return; }
+  if (status === 409 || status === 404) { plusDrop(status === 409 ? 'moved' : 'none'); return; }
   renderPlus('いま開けませんでした。電波を確かめて、もう一度押してください');
 }
 
 /* ---------- プレミアムの画面 ---------- */
 function renderPlus(msg) {
-  const st = plusState(), on = plusOn();
+  const st = plusState(), on = plusOn(), has = plusPaid() && !!st.code;   /* has: bought, maybe waiting for a check (offline over a day) */
   const left = m => tryLeft(m);
   const feat = (ic, b, s) => '<li>' + ic + '<span><b>' + b + '</b><small>' + s + '</small></span></li>';
   const day = t => { const d = new Date(t); return (d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日' + (st && st.plan === 'pass' ? ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0') : ''); };
-  const mine = on && st.code ? '<div class="pl-mine"><p class="pl-mine-h">' + (PLAN_NAME[st.plan] || 'プレミアム') + (st.test ? ' <i class="pl-test">テスト決済</i>' : '') + '</p>' +
+  const mine = has ? '<div class="pl-mine"><p class="pl-mine-h">' + (PLAN_NAME[st.plan] || 'プレミアム') + (st.test ? ' <i class="pl-test">テスト決済</i>' : '') + '</p>' +
       '<p class="pl-mine-d">' + day(st.until) + (st.plan === 'pass' ? ' まで' : st.cancel ? ' で終了（更新されません）' : ' に自動で更新') + '</p>' +
       '<p class="pl-code-h">復元コード<small>機種変更・別の端末で使います</small></p><button type="button" class="pl-code" data-pl="copy" aria-label="復元コードをコピー">' + esc(st.code) + '<small>コピー</small></button>' +
+      (plusRegenAsk ? '<div class="pl-ask"><p>作り直すと、今のコードは使えなくなります。今のコードで引き継いだほかの端末のプレミアムも、すぐに終了します。</p>' +
+        '<div class="pl-ask-b"><button type="button" class="pbtn white small" data-pl="regenNo">やめる</button><button type="button" class="pbtn pink small" data-pl="regenGo">作り直す</button></div></div>'
+        : '<button type="button" class="pl-link" data-pl="regen">コードが知られたかも？ 復元コードを作り直す</button>') +
       (st.plan !== 'pass' ? '<button type="button" class="pbtn white small pl-portal" data-pl="portal">解約・お支払い方法の変更</button>' : '') + '</div>' : '';
-  const restore = PLUS_LIVE && !on ? (plusRestore
+  const stale = plusStale() ? '<p class="pl-warn">最後の確認から24時間以上たちました。<b>電波のある場所でアプリを開く</b>と、プレミアムを使えます</p>' : '';
+  const lost = !on && plusLost ? '<p class="pl-warn">' + (plusLost === 'moved' ? '復元コードが別の端末で使われたため、この端末のプレミアムは終了しました。' : '復元コードが作り直されたため、この端末のプレミアムは終了しました。') +
+    '<br>自分以外の人が使った心当たりがあれば、コードで引き継ぎ直してから、すぐに作り直してください</p>' : '';
+  const restore = PLUS_LIVE && !has ? (plusRestore
     ? '<div class="pl-restore"><label for="plCode">復元コード</label><input id="plCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DON-XXXX-XXXX-XXXX" maxlength="24" value="' + esc(plusTyped) + '"><button type="button" class="pbtn main small" data-pl="restoreGo">引き継ぐ</button></div>'
     : '<button type="button" class="pl-link" data-pl="restore">購入済みの方：復元コードで引き継ぐ</button>') : '';
   $('plusBox').innerHTML = '<button type="button" class="gd-x pl-x" data-pl="close" aria-label="閉じる">×</button>' +
     '<div class="pl-crown" aria-hidden="true">' + CROWN_SVG + '</div><h2 class="pl-title ol" id="plusTitle">' + PLUS_NAME + '</h2>' +
-    (on ? '<p class="pl-lead"><b>プレミアム利用中</b>' + (st.code ? '' : '（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）') + '</p>'
+    (has && !on ? '<p class="pl-lead"><b>確認が必要です</b></p>' : on ? '<p class="pl-lead"><b>プレミアム利用中</b>' + (st.code ? '' : '（' + new Date(st.until).toLocaleDateString('ja-JP') + ' まで）') + '</p>'
       : !PLUS_OPEN ? '<p class="pl-lead"><b>Coming soon！</b> もうすぐ遊べるようになります</p>'
       : PLUS_LIVE ? '<p class="pl-lead">新しいモードとミニゲームが<b>遊び放題</b>' + (PAY_TEST ? '<br><i class="pl-test">テスト中（この端末だけ）</i>' : '') + '</p>'
         : '<p class="pl-lead"><b>先行体験中！</b> いまは全部<b>無料</b>で遊べます</p>') +
-    mine + (on ? '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>' : '') +
+    mine + stale + lost + (has ? '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>' : '') +
     '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか。こっそり投票・もうひと声も') +
       (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権・しれっとミッション・ウソかホントか') : '') +
       feat(DICE_SVG, '新作ミニゲーム', MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title).join('・') + '。これからも追加') + '</ul>' +
     '<p class="pl-free">カード104枚・カード編集・ミニゲーム14種は、ずっと無料</p>' +
-    (PLUS_LIVE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
-    (on ? '' : '<p class="pl-ph">' + (PLUS_LIVE ? '料金（税込）' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
+    (PLUS_LIVE && !on && !has ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + left('koi') + '</b>問</p>' : '') +
+    (on || has ? '' : '<p class="pl-ph">' + (PLUS_LIVE ? '料金（税込）' : '料金（予定）') + '</p><div class="pl-plans">' + PLUS_PLANS.map(p =>
       '<button type="button" class="pl-plan' + (p.best ? ' best' : '') + '" data-pl="' + p.k + '"' + (plusBusy ? ' disabled' : '') + '>' + (p.best ? '<i class="pl-rib">おすすめ</i>' : '') +
       '<b class="pl-nm">' + p.name + '</b><span class="pl-pr">' + p.price + '<small>' + p.per + '</small></span><small class="pl-nt">' + p.note + '</small></button>').join('') + '</div>') +
-    (on ? '' : '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>') + restore +
-    '<p class="pl-fine">' + (PLUS_LIVE ? (on ? '' : 'お支払いは Stripe の画面で行います（カード・Apple Pay・Google Pay）。月額・年額は自動で更新され、いつでも解約できます。<br>')
+    (has ? '' : '<p class="pl-msg" aria-live="polite">' + (msg || '') + '</p>') + restore +
+    '<p class="pl-fine">' + (PLUS_LIVE ? (has ? '' : 'お支払いは Stripe の画面で行います（カード・Apple Pay・Google Pay）。月額・年額は自動で更新され、いつでも解約できます。<br>')
       : 'お支払いの受付は準備中です。始まったら、ここから申し込めます。<br>') +
       '<a href="' + TERMS_URL + '" target="_blank" rel="noopener">利用規約</a>' + (PLUS_LIVE ? ' ・ <a href="' + TOKUSHO_URL + '" target="_blank" rel="noopener">特定商取引法に基づく表記</a>' : '') + '</p>';
 }
 function openPlus(from) {
-  plusRestore = false;
+  plusRestore = false; plusRegenAsk = false;
   renderPlus();
   if ($('plusOv').hidden) { openOv('plusOv'); SE.play('pop'); }
   const x = $('plusBox').querySelector('.pl-plan.best') || $('plusBox').querySelector('[data-pl="close"]');
   if (x) x.focus({ preventScroll: true });
   if (from !== 'paid') statTrack('plus', { d: 'open_' + (['title', 'limit', 'mode', 'mg'].includes(from) ? from : 'title') });
-  if (PLUS_LIVE) { const st = plusState(); plusSync(!!(st && st.code && Date.now() - (st.at || 0) > 5 * 60e3)); }
+  if (PLUS_LIVE) plusSync(false);
 }
 function plusAct(a) {
   if (a === 'close') { closeOv('plusOv'); SE.play('tap'); if (screen === 'title') renderTitle(); else if (screen === 'setup') renderSetup(false); return; }
   if (a === 'restore') { plusRestore = true; plusTyped = ''; renderPlus(); SE.play('tap'); const i = $('plCode'); if (i) i.focus(); return; }
   if (a === 'restoreGo') { plusRestoreGo(); return; }
   if (a === 'portal') { SE.play('tap'); plusPortal(); return; }
+  if (a === 'regen') { plusRegenAsk = true; renderPlus(); SE.play('tap'); return; }
+  if (a === 'regenNo') { plusRegenAsk = false; renderPlus(); SE.play('tap'); return; }
+  if (a === 'regenGo') { plusRegen(); return; }
   if (a === 'copy') {
     const st = plusState(); if (!st || !st.code) return;
     SE.play('tap');
@@ -554,7 +609,7 @@ function titleModes() {
     const t = el.querySelector('.t-new'); if (t) { t.textContent = tag; t.hidden = !tag; }
   });
   const b = $('plusBtn');
-  if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>' + PLUS_NAME + '</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : PLUS_LIVE ? '<b>' + PLUS_NAME + '</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
+  if (b) b.innerHTML = CROWN_SVG + (!PLUS_OPEN ? '<b>' + PLUS_NAME + '</b><small>Coming soon ▶</small>' : plusOn() ? '<b>プレミアム利用中</b>' : plusStale() ? '<b>プレミアム</b><small>電波のある場所で確認が必要 ▶</small>' : PLUS_LIVE ? '<b>' + PLUS_NAME + '</b><small>新モードが遊び放題</small>' : '<b>プレミアム先行体験中</b><small>新モードが今だけ無料 ▶</small>');
 }
 
 /* =====================================================================

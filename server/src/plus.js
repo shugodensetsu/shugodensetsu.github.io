@@ -1,14 +1,21 @@
 /* DON!!でんプレミアム — payments through Stripe, served by the Worker at /v1/plus/* (D1 binding "DB", secret STRIPE_SECRET_KEY).
-   The app has no accounts. A purchase is tied to a restore code (復元コード, e.g. DON-7KQ4-M2XP-9HTA) made before checkout:
-   the phone keeps it, the checkout page shows it, and Stripe keeps it in the purchase's metadata (so the owner can find a
-   customer's code from their email in the Stripe dashboard if they lose it). Entering the code on another phone restores premium.
+   The app has no accounts. A purchase is reached with its restore code (復元コード, e.g. DON-7KQ4-M2XP-9HTA), made before
+   checkout and kept on the phone that pays. Premium is on for ONE device at a time:
+   - the device that paid, or the latest device that entered the code (引き継ぎ), holds a device key (a random number made
+     here, kept only on that device; the database keeps its SHA-256 hash). Every other device that used the code is off
+     the next time it asks.
+   - the device that holds the key can make a new code (作り直し): the old code stops working everywhere at once.
+   - cancelling or changing the card (Stripe's page) needs the device key too, so a leaked code cannot cancel anyone.
+   - the owner can issue a new code from the dashboard after checking the buyer in Stripe (stats.js, /plus-reset).
+   Codes are kept as SHA-256 hashes too ('h:' + hex; rows made before that keep the plain code until it is remade).
 
-   POST /v1/plus/checkout {plan}   -> {url, code}     a Stripe Checkout page for 年額 / 月額 (subscriptions) or 24時間パス (one payment)
-   POST /v1/plus/check    {code}   -> {plan, until, cancel, test}   what the code is worth now (asks Stripe when it may have changed)
-   POST /v1/plus/portal   {code}   -> {url}           Stripe's own page to cancel a subscription or change the card
+   POST /v1/plus/checkout {plan}                          -> {url, code}
+   POST /v1/plus/check    {code, dev?, claim?, restore?}  -> {paid, plan, until, cancel, test, dev?, took?} | 409 {error:'moved'}
+   POST /v1/plus/regen    {code, dev}                     -> {code}
+   POST /v1/plus/portal   {code, dev}                     -> {url}
 
-   Prices are made in Stripe by this Worker the first time they are needed (looked up by lookup_key), so nothing has to be set
-   up by hand in the Stripe dashboard. No card details ever pass through here: Stripe's pages take them. */
+   Prices are made in Stripe by this Worker the first time they are needed (looked up by lookup_key). No card details ever
+   pass through here: Stripe's pages take them. A restricted key with only the permissions used here is recommended. */
 
 const ORIGINS = ['https://shugodensetsu.github.io'];
 const APP = 'https://shugodensetsu.github.io/';
@@ -17,13 +24,13 @@ const PLANS = {
   month: { key: 'don_plus_month', amount: 480, name: 'DON!!でんプレミアム 月額プラン', interval: 'month' },
   pass: { key: 'don_plus_pass', amount: 240, name: 'DON!!でんプレミアム 24時間パス' },
 };
-/* a restricted key (rk_…, only the permissions this file needs) is recommended over the full secret key (sk_…) */
 const isLive = env => /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY || '');
 const PASS_MS = 24 * 3600e3;
 const GRACE_MS = 3 * 86400e3;          // a renewal that failed: Stripe tries the card again for a few days, premium stays meanwhile
-const RECHECK_MS = 10 * 60e3;          // a subscription is asked about again at most every 10 minutes
+const RECHECK_MS = 10 * 60e3;          // Stripe is asked about a subscription again at most every 10 minutes
 const CODE_ABC = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // no 0/O, 1/I/L
 const CODE = /^DON-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/;
+const DEV = /^[A-Za-z0-9_-]{43}$/;     // 32 random bytes, base64url
 const MAX_BODY = 512;
 const PER_MINUTE = 20;                 // per sender: enough for a person, far too few to guess codes (31^12 of them)
 
@@ -33,12 +40,17 @@ function flooded(ip) {
   if (!s || s[0] !== m) { seen.set(ip, [m, 1]); if (seen.size > 5000) seen.clear(); return false; }
   return ++s[1] > PER_MINUTE;
 }
-function newCode() {
+export function newCode() {
   const b = crypto.getRandomValues(new Uint8Array(12));
   let s = '';
   for (let i = 0; i < 12; i++) { s += CODE_ABC[b[i] % CODE_ABC.length]; if (i === 3 || i === 7) s += '-'; }
   return 'DON-' + s;
 }
+const b64url = u8 => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const newDev = () => b64url(crypto.getRandomValues(new Uint8Array(32)));
+const hex = async t => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, '0')).join('');
+export const codeKey = async code => 'h:' + await hex('don-plus-code:' + code);
+const devKey = dev => hex('don-plus-device:' + dev);
 const json = (status, body, origin) => new Response(body == null ? null : JSON.stringify(body), {
   status,
   headers: Object.assign({ 'cache-control': 'no-store', 'content-type': 'application/json; charset=utf-8' }, origin ? { 'access-control-allow-origin': origin, 'vary': 'Origin' } : {}),
@@ -68,7 +80,7 @@ async function stripe(env, method, path, params) {
 }
 const prices = new Map();   // lookup_key -> price id, for as long as this instance lives
 async function priceOf(env, plan) {
-  const p = PLANS[plan], mode = isLive(env) ? 'live' : 'test', ck = mode + ':' + p.key;
+  const p = PLANS[plan], ck = (isLive(env) ? 'live' : 'test') + ':' + p.key;
   if (prices.has(ck)) return prices.get(ck);
   const found = await stripe(env, 'GET', 'prices', { 'lookup_keys[]': p.key, active: 'true', limit: 1 });
   let id = found.data && found.data[0] && found.data[0].id;
@@ -101,7 +113,7 @@ async function portalConfig(env) {
   return (portalConf = made.id);
 }
 
-/* ---------- what a code is worth now ---------- */
+/* ---------- what a purchase is worth now ---------- */
 const sec = t => (Number.isFinite(t) ? t * 1000 : 0);
 function subUntil(sub) {
   const item = sub.items && sub.items.data && sub.items.data[0];
@@ -135,7 +147,13 @@ async function refresh(env, row) {
     .bind(row.customer, row.sub, row.until, row.cancel || 0, row.checked, row.code).run();
   return row;
 }
-const answer = (row, env) => ({ code: row.code, plan: row.plan, until: row.until || 0, cancel: !!row.cancel, paid: !!row.until, test: !isLive(env) });
+const answer = (row, env, code, extra) => Object.assign({ code, plan: row.plan, until: row.until || 0, cancel: !!row.cancel, paid: !!row.until, test: !isLive(env) }, extra || {});
+async function findRow(env, code) {
+  return env.DB.prepare('SELECT code, plan, session, customer, sub, until, cancel, checked, devh FROM plus WHERE code = ? OR code = ?')
+    .bind(await codeKey(code), code).first();
+}
+/* this device holds the key? */
+const holds = async (row, dev) => !!(row.devh && typeof dev === 'string' && DEV.test(dev) && await devKey(dev) === row.devh);
 
 export default {
   async fetch(request, env) {
@@ -159,31 +177,45 @@ export default {
         const plan = Object.prototype.hasOwnProperty.call(PLANS, r.plan) ? r.plan : null;
         if (!plan) return json(400, null, origin);
         const price = await priceOf(env, plan), code = newCode(), sub = !!PLANS[plan].interval;
-        const meta = { code, plan };
+        /* the code itself goes nowhere but back to this phone: not to Stripe, not into the return address */
         const s = await stripe(env, 'POST', 'checkout/sessions', {
           mode: sub ? 'subscription' : 'payment',
           line_items: { 0: { price, quantity: 1 } },
-          success_url: APP + '?plus=' + code,
+          success_url: APP + '?plus=paid',
           cancel_url: APP + '?plus=cancel',
-          client_reference_id: code,
           locale: 'ja',
-          metadata: meta,
-          subscription_data: sub ? { metadata: meta } : undefined,
-          payment_intent_data: sub ? undefined : { metadata: meta, description: PLANS[plan].name },
+          metadata: { plan },
+          subscription_data: sub ? { metadata: { plan } } : undefined,
+          payment_intent_data: sub ? undefined : { metadata: { plan }, description: PLANS[plan].name },
           customer_creation: sub ? undefined : 'always',
-          custom_text: { submit: { message: (sub ? (plan === 'year' ? '1年' : '1か月') + 'ごとに自動で更新され、同じ金額をお支払いいただきます。解約はアプリのプレミアム画面からいつでもでき、次の更新日まで使えます。\n'
-            : '購入から24時間使えます。自動で更新されません。\n') + '復元コード：' + code + '（機種変更のときなどに、この番号でプレミアムを引き継げます。購入後もアプリの中で見られます）' } },
+          custom_text: { submit: { message: sub ? (plan === 'year' ? '1年' : '1か月') + 'ごとに自動で更新され、同じ金額をお支払いいただきます。解約はアプリのプレミアム画面からいつでもでき、次の更新日まで使えます。'
+            : '購入から24時間使えます。自動で更新されません。' } },
         });
-        await env.DB.prepare('INSERT INTO plus (code, plan, session, created) VALUES (?, ?, ?, ?)').bind(code, plan, s.id, Date.now()).run();
+        await env.DB.prepare('INSERT INTO plus (code, plan, session, created) VALUES (?, ?, ?, ?)').bind(await codeKey(code), plan, s.id, Date.now()).run();
         return json(200, { url: s.url, code }, origin);
       }
       const code = typeof r.code === 'string' ? r.code.trim().toUpperCase() : '';
       if (!CODE.test(code)) return json(400, { error: 'bad_code' }, origin);
-      let row = await env.DB.prepare('SELECT code, plan, session, customer, sub, until, cancel, checked FROM plus WHERE code = ?').bind(code).first();
+      let row = await findRow(env, code);
       if (!row) return json(404, { error: 'no_code' }, origin);
+      const mine = await holds(row, r.dev);
+
       if (what === 'check') {
+        /* a device without the key may only take premium on purpose: paying (claim, when no device has it yet) or 引き継ぎ (restore) */
+        if (!mine && !r.restore && (row.devh || !r.claim)) return json(409, { error: 'moved' }, origin);
         row = await refresh(env, row);
-        return json(200, answer(row, env), origin);
+        if (!row.until) return json(200, answer(row, env, code), origin);   // not paid (yet)
+        if (mine) return json(200, answer(row, env, code), origin);
+        /* this device takes premium over: a new device key; whichever device had it is off from now on */
+        const dev = newDev(), took = !!row.devh;
+        await env.DB.prepare('UPDATE plus SET devh = ?, dev_at = ? WHERE code = ?').bind(await devKey(dev), Date.now(), row.code).run();
+        return json(200, answer(row, env, code, { dev, took }), origin);
+      }
+      if (!mine) return json(409, { error: 'moved' }, origin);   // what follows needs the device that holds premium
+      if (what === 'regen') {
+        const next = newCode();
+        await env.DB.prepare('UPDATE plus SET code = ? WHERE code = ?').bind(await codeKey(next), row.code).run();
+        return json(200, { code: next }, origin);
       }
       if (what === 'portal') {
         row = await refresh(env, row);

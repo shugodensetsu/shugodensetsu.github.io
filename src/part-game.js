@@ -1139,7 +1139,7 @@ function beginGame() {
   const names = Array.from({ length: n }, (_, i) => String(setup.names[i] || '').trim() || 'プレイヤー' + (i + 1));
   saveNames();
   G = {
-    v: 2, gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, plusRun: plusOn(), gid: Date.now(), rounds: setup.rounds, mix: setup.mix === 'lively' ? 'lively' : 'even', unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [] })),
   };
@@ -5826,7 +5826,7 @@ function beginMini() {
   saveNames();
   mSpin = null;
   G = {
-    v: 2, mode: 'mini', gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    v: 2, plusRun: plusOn(), mode: 'mini', gid: Date.now(), rounds: setup.rounds, unit: UNITS[setup.unit] ? setup.unit : 'cup', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
     stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
     players: names.map(name => ({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], pts: 0, loss: 0 })),
     mini: { total: MINI_TOTAL, used: [], skip: [], log: [] },
