@@ -16,7 +16,7 @@ checks() {
   # the payments API: 404 for a code that does not exist means the Stripe key is in; 503 means it is not (yet). Nothing is written
   r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data '{"code":"DON-2222-2222-2222"}' "$url/v1/plus/check"); add "支払いの API: $r（404 ならキーあり・503 ならキー未設定）"; [ "$r" = 404 ] || [ "$r" = 503 ] || ok=0
   # rooms (みんなのスマホで参加): an unknown room answers 404 from the room itself, so the Durable Object is in place
-  r=$(code -H 'Origin: https://shugodensetsu.github.io' -H 'Upgrade: websocket' -H 'Connection: Upgrade' "$url/v1/room/ws?r=2345"); add "部屋の API: $r（404 なら正しい）"; [ "$r" = 404 ] || ok=0
+  r=$(code --http1.1 -H 'Origin: https://shugodensetsu.github.io' -H 'Upgrade: websocket' -H 'Connection: Upgrade' "$url/v1/room/ws?r=2345"); add "部屋の API: $r（404 なら正しい）"; [ "$r" = 404 ] || ok=0
   r=$(code -X POST -H 'Origin: https://shugodensetsu.github.io' -H 'Content-Type: text/plain' --data '{"code":"DON-2222-2222-2222","dev":"x"}' "$url/v1/room/new"); add "プレミアムなしで部屋を作る: $r（403 なら正しい）"; [ "$r" = 403 ] || ok=0
   if [ -n "$STATS_PASSWORD" ]; then
     jar=$(mktemp)
