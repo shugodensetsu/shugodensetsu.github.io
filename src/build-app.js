@@ -32,7 +32,7 @@ const cabData = () => {
     img: Object.fromEntries(['machine', 'lamp', 'reels'].map(k => [k, 'data:image/webp;base64,' + b64(k + '.webp')])),
     snd: Object.fromEntries(['reba', 'botan', 'gako', 'replay'].map(k => [k, b64(k + '.mp3')])) };
 };
-let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-arcade.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
+let js = ['part-head.js', 'part-editor.js', 'part-game.js', 'part-modes.js', 'part-party.js', 'part-room.js', 'part-arcade.js', 'part-words.js', 'part-boot.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('').trimEnd()
   .replace('__SMP_DATA__', () => JSON.stringify(smpData))
   .replace('__DECK_BEFORE_DON__', () => fs.readFileSync(path.join(dir, 'deck-before-don.json'), 'utf8').trim().replace(/</g, '\\u003c')).replace('__CAB_DATA__', () => JSON.stringify(cabData()));
 if (VERSION !== 'test' && js.includes('data:image/webp;base64')) throw new Error('the app build must not carry the private pictures');
@@ -48,7 +48,7 @@ if (statUrl === undefined) throw new Error('STAT_URL not found');
 const statOrigin = statUrl ? new URL(statUrl).origin : '';
 if (statOrigin && !/^https:\/\/[a-z0-9.-]+$/.test(statOrigin) && VERSION !== 'test') throw new Error('STAT_URL must be https: ' + statUrl);
 /* test builds only (node src/build-app.js test): a handle on the game's state for the automated phone-size tests */
-const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, miniChoose, TOOLX, FXC, PARTY, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; }, TRACKS, BGM, get dockHold() { return dockHold; }, PAGERS, GUIDE, renderGuide, setGuidePage(v) { guidePage = v; }, practiceStart, showScreen, get MG_ORDER() { return MG_ORDER; } };' : '';
+const TEST_HOOK = VERSION === 'test' ? '\nwindow.__T = { get G() { return G; }, PMX, renderPM, get room() { return room; }, get guest() { return guest; }, renderGuest, guestStart, get tool() { return tool; }, get bomb() { return bomb; }, get tap() { return tap; }, get timer() { return timer; }, SE, SOUNDS, REAL, SMP, snd, get sheet() { return sheet; }, openSheet, renderSheet, closeTool, closeBomb, closeTap, miniRecord, miniPick, miniStart, miniNext, miniUndo, miniReroll, MG, miniLand, miniChoose, TOOLX, FXC, PARTY, openPlus, renderGame, tryLoad, drawCard, openDecide, get decide() { return decide; }, closeTimer, closeChallenge, get wheel() { return wheel; }, confirmWheel, get ask() { return ask; }, TRACKS, BGM, get dockHold() { return dockHold; }, PAGERS, GUIDE, renderGuide, setGuidePage(v) { guidePage = v; }, practiceStart, showScreen, get MG_ORDER() { return MG_ORDER; } };' : '';
 if (/<\/script/i.test(js)) throw new Error('page.js contains a closing script tag');
 const page = tpl.replace('__DECK_JSON__', () => serialize(deck).replace(/</g, '\\u003c')).replace('__PAGE_JS__', () => (TEST_HOOK ? js.replace(/\}\)\(\);\s*$/, TEST_HOOK + '\n})();') : js));
 const cut = page.indexOf('<div class="app"');
@@ -62,7 +62,7 @@ const html = `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'${statOrigin ? ' ' + statOrigin : ''}; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'${statOrigin ? ' ' + statOrigin + ' ' + statOrigin.replace(/^https:/, 'wss:') : ''}; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">

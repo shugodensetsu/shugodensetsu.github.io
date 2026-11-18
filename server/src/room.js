@@ -20,7 +20,7 @@ const KEY = /^[A-Za-z0-9_-]{43}$/;
 const LIFE = 6 * 3600e3;
 const GUESTS = 8;
 const HOST_MAX = 64 * 1024, GUEST_MAX = 16 * 1024;
-const BURST = 60;                    // messages per socket per 10 seconds
+const BURST = 60, HOST_BURST = 600;  // messages per socket per 10 seconds (the host sends one to each phone on every change)
 const NEW_PER_MIN = 6, JOIN_PER_MIN = 30;
 
 const seen = new Map();   // sender -> {minute, new, join}, memory only
@@ -143,7 +143,7 @@ export class Room {
   calm(ws, g) {   // a socket sending far too much is cut off
     const id = g, now = Math.floor(Date.now() / 10000), b = this.burst.get(id);
     if (!b || b[0] !== now) { this.burst.set(id, [now, 1]); return true; }
-    return ++b[1] <= BURST;
+    return ++b[1] <= (id === 'h' ? HOST_BURST : BURST);
   }
 
   async webSocketMessage(ws, data) {

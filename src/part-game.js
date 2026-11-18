@@ -865,7 +865,7 @@ function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } cat
 const GAME_KEY = 'nomige-game', NAMES_KEY = 'nomige-names', RETURN_KEY = 'nomige-return';
 const ROLE_ORDER = ['引いた人', 'ランダム', '左隣', '右隣'];
 const ROUND_OPTS = [3, 5, 10, 0];
-const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
+const SCREENS = ['title', 'setup', 'game', 'result', 'editor', 'guest'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
@@ -1032,6 +1032,9 @@ function showScreen(name) {
   else if (screen === 'game') { renderGame(); resumeDraw(); }
   else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
+  else if (screen === 'guest') renderGuest();
+  if (screen !== 'guest' && guest) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
+  roomBadge(); roomSync();
   if (coach.on) coachQueue();
   sceneBGM();
   fitScreen();
@@ -1040,7 +1043,7 @@ function showScreen(name) {
    As a last resort for odd shapes (a browser's toolbars eating the height, a very small phone) the screen is zoomed out just
    enough that nothing scrolls. Not while a name is being typed: the on-screen keyboard shrinks the window, and the layout
    should not jump under the user's fingers. */
-const FIT_SCREENS = ['title', 'setup'];
+const FIT_SCREENS = ['title', 'setup', 'guest'];
 let fitQueued = 0;
 function fitScreen() {
   if (fitQueued) return;

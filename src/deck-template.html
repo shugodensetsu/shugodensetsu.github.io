@@ -2716,6 +2716,98 @@ button.rp-pick{cursor:pointer}
   .s-setup .row-btns .pbtn.small{font-size:min(14px, 4.4cqh); padding-block:min(8px, 2.4cqh)}
   .s-setup .nm-row{gap:4px; padding-right:4px}
 }
+
+/* ---------- みんなのスマホで参加（部屋） ---------- */
+.rm-ph{width:.95em; height:1.3em; vertical-align:-.25em; flex:none}
+.t-plusrow{align-self:stretch; display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:6px 8px; min-width:0}
+.t-plusrow .t-plus{min-width:0}
+.t-join{flex:none; display:inline-flex; align-items:center; gap:4px; background:var(--lime); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink); padding:2px 12px 2px 9px; font:inherit}
+.t-join b{font-weight:800; font-size:min(13px, 2.2cqh, 3.5cqw)}
+.t-join:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink)}
+.rm-btn{display:inline-flex; align-items:center; gap:3px}
+.rm-btn b{font-family:var(--f-display); font-weight:400; font-size:14px; line-height:1}
+.rm-box h2{display:flex; align-items:center; gap:6px; font-size:min(20px, 5.4vw)}
+.rm-box .rm-lead{font-size:13px; color:var(--ink-muted)}
+.rm-join{display:flex; gap:12px; align-items:center}
+.rm-qr{flex:none; width:min(40vw, 30vh, 170px); aspect-ratio:1; border:3px solid var(--ink); border-radius:12px; overflow:hidden; background:#fff}
+.rm-qr svg{display:block; width:100%; height:100%}
+.rm-code{display:flex; flex-direction:column; gap:2px; min-width:0}
+.rm-code b{font-family:var(--f-display); font-weight:400; font-size:min(40px, 11vw); letter-spacing:.12em; line-height:1.1; color:var(--ink)}
+.rm-code small{font-size:11.5px; font-weight:700; color:var(--ink-muted); line-height:1.45}
+.rm-list{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr; gap:4px}
+.rm-list.two{grid-template-columns:1fr 1fr}
+.rm-list li{display:flex; align-items:center; gap:6px; min-width:0; background:var(--p); border:2.5px solid var(--ink); border-radius:10px; padding:3px 4px 3px 8px}
+.rm-list li b{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px}
+.rm-st{flex:none; font-size:10.5px; font-weight:800; background:#fff; border-radius:999px; padding:1px 6px; color:var(--ink-muted)}
+.rm-st.on{background:var(--ink); color:var(--lime)}
+.rm-st.off{background:#ffd9d9; color:#b3261e}
+.rm-x{flex:none; width:24px; height:24px; border-radius:50%; border:2px solid var(--ink); background:#fff; color:var(--ink); font-weight:800; font-size:13px; line-height:1; padding:0}
+.rm-box .rm-loose{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px}
+.rm-box .rm-err{font-size:12.5px; color:#b3261e}
+.rm-box .rm-err:empty{display:none}
+.rm-in{font-family:var(--f-display); font-size:30px; letter-spacing:.3em; text-align:center; text-transform:uppercase; padding:8px; border:3px solid var(--ink); border-radius:14px; background:#fff; color:var(--ink); width:100%; box-sizing:border-box}
+.mg-ph{position:absolute; top:-9px; left:-6px; display:flex; background:var(--ink); border-radius:999px; padding:2px 4px; line-height:1}
+.mg-ph .rm-ph{width:10px; height:14px}
+.mg-ph.off{background:#b3261e}
+.s-guest{gap:6px; padding-top:max(6px, env(safe-area-inset-top))}
+.gs-box{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px}
+.gs-top{flex:none; display:flex; align-items:center; gap:8px}
+.gs-room{display:flex; align-items:center; gap:4px; font-weight:800; font-size:13px; color:var(--muted)}
+.gs-room b{color:var(--white); letter-spacing:.08em}
+.gs-me{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; background:var(--p); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; padding:2px 10px; font-weight:800; font-size:14px}
+.gs-top .pbtn{margin-left:auto}
+.gs-head{flex:none; display:flex; align-items:baseline; justify-content:center; gap:8px; font-family:var(--f-display); font-size:min(20px, 5vw); color:var(--white)}
+.gs-head small{font-family:var(--f-body); font-weight:800; font-size:12px; color:var(--muted)}
+.gs-body{flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:safe center; gap:10px; text-align:center}
+.gs-body .pm-chips{max-width:440px}
+.gs-body .dock-row{width:100%; max-width:440px}
+.gs-body .gk-word.sm{font-size:min(30px, 8vw); padding:6px 18px}
+.gs-body .gk-fake{font-size:min(24px, 6.4vw)}
+.gs-cv{min-height:100px}
+.gs-say{margin:0; flex:none; font-weight:800; font-size:14px; color:var(--white)}
+.gs-say b{color:var(--yellow)}
+.gs-msg{display:flex; gap:8px; align-items:flex-start; max-width:440px; width:100%; text-align:left}
+.gs-msg > span:last-child{display:flex; flex-direction:column; gap:3px; min-width:0}
+.gs-msg b{font-size:12px; color:var(--muted)}
+.rp-gs .rp-input{width:100%; max-width:440px; box-sizing:border-box; border-radius:14px; border:0}
+.gs-mine{margin:0; max-width:440px; background:#86e05a; color:#111; border-radius:18px; padding:8px 12px; font-size:15px; line-height:1.45; word-break:break-word}
+.gs-vote button{display:flex; flex-direction:column; align-items:center; gap:4px; font-family:var(--f-display); font-size:16px; color:var(--white); background:none; border:3px solid transparent; border-radius:18px; padding:6px 10px}
+.gs-vote button.sel{border-color:var(--yellow); background:rgba(255,216,61,.14)}
+.us-clock.sm{font-size:min(40px, 9cqh)}
+.pm-chip.rm-w{display:flex; flex-direction:column; align-items:center; gap:1px}
+.pm-chip.rm-w small{font-size:10px; font-weight:800; opacity:.8}
+.pm-chip.rm-w:not(.done){opacity:.55}
+/* a short screen (a phone on its side): the guest's pieces get smaller, the panel puts the list beside the QR code */
+@container (max-height:430px){
+  .gs-box{gap:4px}
+  .gs-body{gap:5px}
+  .gs-head{font-size:15px}
+  .gs-body .pm-lead{font-size:17px}
+  .gs-body .pm-note{font-size:12px}
+  .gs-body .us-topic{padding:6px 12px; font-size:15px}
+  .gs-body .us-ans{font-size:26px}
+  .gs-body .us-order{font-size:22px}
+  .gs-body .us-clock{font-size:30px}
+  .gs-body .us-thumbs.big .us-th{width:44px; height:44px}
+  .gs-vote button{flex-direction:row; padding:3px 12px; gap:8px}
+  .gs-body .ms-card{padding:8px 12px}
+  .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
+  .gs-body .gk-fake{font-size:18px}
+  .gs-body .pm-chips{max-width:600px}
+}
+@media (orientation:landscape) and (max-height:500px){
+  .rm-box{max-width:min(720px, 96vw); display:grid; grid-template-columns:auto 1fr; grid-template-areas:'h h' 'j l' 'j o' 'j e' 'j a'; column-gap:16px; row-gap:8px; align-content:start}
+  .rm-box > h2{grid-area:h}
+  .rm-box > .rm-join{grid-area:j; flex-direction:column; align-items:center; text-align:center; align-self:start}
+  .rm-box > .rm-list, .rm-box > .rm-lead{grid-area:l; align-self:start}
+  .rm-box > .rm-loose{grid-area:o}
+  .rm-box > .rm-err{grid-area:e}
+  .rm-box > .dialog-acts{grid-area:a; align-self:end}
+  .rm-qr{width:min(30vw, 46vh, 160px)}
+  .rm-code{align-items:center; max-width:190px}
+  .rm-code b{font-size:30px}
+  #joinBox{display:flex}
+}
 </style>
 
 <div class="app" id="shell" data-src>
@@ -2772,7 +2864,7 @@ button.rp-pick{cursor:pointer}
           <button type="button" class="pbtn white small" id="statsBtn" aria-label="あそびの記録">記録</button>
           <button type="button" class="pbtn cyan small" id="tellBtn" aria-label="友達に教える">シェア</button>
         </div>
-        <button type="button" class="t-plus" id="plusBtn"></button>
+        <div class="t-plusrow"><button type="button" class="t-plus" id="plusBtn"></button><button type="button" class="t-join" id="joinBtn" aria-label="友だちの部屋に参加" hidden><svg class="rm-ph" viewBox="0 0 20 28" aria-hidden="true"><rect x="2" y="1.5" width="16" height="25" rx="3.5" fill="#fff" stroke="#150733" stroke-width="2.2"/><rect x="5" y="5" width="10" height="15" rx="1.5" fill="#35e0ff"/><circle cx="10" cy="23" r="1.4" fill="#150733"/></svg><b>参加</b></button></div>
       </div>
       <footer class="t-foot">
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加</button>
@@ -2807,11 +2899,13 @@ button.rp-pick{cursor:pointer}
       </div>
     </section>
 
+    <section class="screen s-guest" id="scr-guest" aria-label="友だちの部屋に参加中" hidden><div class="gs-box" id="gsBox"></div></section>
+
     <section class="screen s-game" id="scr-game" aria-label="ゲーム" hidden>
       <div class="g-top">
         <div class="g-round ol" id="gRound"></div>
         <div class="g-pend" id="gPending" hidden></div>
-        <div class="g-top-r"><button type="button" class="pbtn cyan tiny" id="helpBtn" aria-label="遊び方ガイドを開く">？ 遊び方</button><button type="button" class="pbtn white tiny" id="endBtn">終了</button></div>
+        <div class="g-top-r"><button type="button" class="pbtn white tiny rm-btn" id="roomBtn" hidden></button><button type="button" class="pbtn cyan tiny" id="helpBtn" aria-label="遊び方ガイドを開く">？ 遊び方</button><button type="button" class="pbtn white tiny" id="endBtn">終了</button></div>
       </div>
       <div class="g-rules" id="gRules" hidden></div>
       <div class="tbl" id="tableWrap">
@@ -3064,6 +3158,8 @@ button.rp-pick{cursor:pointer}
   </div>
 
   <div class="ov center gloss-ov" id="glossOv" hidden><div class="dialog gloss-box" id="glossBox" role="dialog" aria-modal="true" aria-labelledby="glossTitle"></div></div>
+  <div class="ov center" id="roomOv" hidden><div class="dialog rm-box" id="roomBox" role="dialog" aria-modal="true" aria-labelledby="roomTitle"></div></div>
+  <div class="ov center" id="joinOv" hidden><div class="dialog rm-box" id="joinBox" role="dialog" aria-modal="true" aria-labelledby="joinTitle"></div></div>
   <div class="ov center plus-ov" id="plusOv" hidden><div class="dialog plus-box" id="plusBox" role="dialog" aria-modal="true" aria-labelledby="plusTitle"></div></div>
 
   </div>

@@ -302,7 +302,7 @@ function pmBoard() {
   const tag = X ? X.tag : '回答', icon = X && X.icon ? X.icon : MEDAL_SVG;
   return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + 'DON">' +
     (i === mark ? '<span class="mg-tag">' + tag + '</span>' : i === mark2 ? '<span class="mg-tag ask">' + X.tag2 + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + icon + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
-    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
+    (roomHas(i) ? '<span class="mg-ph' + (roomOnline(i) ? '' : ' off') + '" aria-label="自分のスマホで参加">' + PHONE_SVG + '</span>' : '') + '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
 }
 function pmLog() {
   const log = G.pm.log;
@@ -331,6 +331,7 @@ function renderPM(anim) {
   box.innerHTML = pmLog();
   fitLog(box);
   if (X && X.mounted) X.mounted(anim);
+  roomBadge(); roomSync();
 }
 /* the round's drinks go on the board, then the next round */
 function pmNext(items, ok) {

@@ -34,7 +34,8 @@ function boot(data) {
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';
-  if (want === 'game' && G && !G.done) showScreen('game');
+  if (roomBoot()) { /* joined a friend's room (a link from the QR code, or back to it) */ }
+  else if (want === 'game' && G && !G.done) showScreen('game');
   else if (want === 'result' && G && G.done) showScreen('result');
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');

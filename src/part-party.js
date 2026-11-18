@@ -127,6 +127,7 @@ function gkMount() {
   const at = e => { const r = cv.getBoundingClientRect(); return [Math.round(Math.max(0, Math.min(1000, (e.clientX - r.left) / r.width * 1000))), Math.round(Math.max(0, Math.min(1000, (e.clientY - r.top) / r.height * 1000)))]; };
   cv.addEventListener('pointerdown', e => {
     if (live || pxBusy || G.cur !== cur || cur.phase !== 'draw' || gkDone()) return;
+    if (roomOnline(gkDrawer())) { telop(esc(pname(gkDrawer())) + 'は自分のスマホで描く番', 'white sm', 1100); return; }
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     live = { p: gkDrawer(), d: at(e), id: e.pointerId };
@@ -147,24 +148,31 @@ function gkMount() {
     const st = { p: live.p, d: d.slice() };
     live = null;
     if (len < 14) { gkPaint(cv, cur.strokes); telop('もう少し長く描いてね', 'white sm', 900); return; }
-    cur.strokes.push(st);
-    saveGame();
-    SE.play('pop'); vibrate(12);
-    gkPaint(cv, cur.strokes);
-    if (gkDone()) {
-      pxLater(() => { cur.phase = 'vote'; cur.acc = null; pxSave('vote'); SE.play('fanfare'); telop('完成！<small>ニセ画伯はだれだ？</small>', '', 1400); }, 700);
-      $('gkWho').innerHTML = '完成！';
-      $('dock').innerHTML = pxRow('<div class="dock-note">完成…！</div>');
-      return;
-    }
-    $('gkWho').innerHTML = gkWhoLine();
-    $('dock').innerHTML = PMX.gaka.dock();
-    $('mgBoard').innerHTML = pmBoard();
+    gkCommit(st);
   };
   cv.addEventListener('pointerup', end);
   cv.addEventListener('pointercancel', end);
 }
-const gkWhoLine = () => pmName(gkDrawer()) + ' の番 <small>' + gkLap() + '周目 ・ ' + (G.cur.strokes.length + 1) + '/' + G.cur.order.length * GK_LAPS + '筆</small>';
+/* one stroke more (from this phone, or from the drawer's own phone) */
+function gkCommit(st) {
+  const cur = G.cur, cv = $('gkCv');
+  cur.strokes.push(st);
+  saveGame();
+  SE.play('pop'); vibrate(12);
+  if (cv) gkPaint(cv, cur.strokes);
+  if (gkDone()) {
+    pxLater(() => { cur.phase = 'vote'; cur.acc = null; pxSave('vote'); SE.play('fanfare'); telop('完成！<small>ニセ画伯はだれだ？</small>', '', 1400); }, 700);
+    if ($('gkWho')) $('gkWho').innerHTML = '完成！';
+    $('dock').innerHTML = pxRow('<div class="dock-note">完成…！</div>');
+    roomSync();
+    return;
+  }
+  if ($('gkWho')) $('gkWho').innerHTML = gkWhoLine();
+  $('dock').innerHTML = PMX.gaka.dock();
+  $('mgBoard').innerHTML = pmBoard();
+  roomSync();
+}
+const gkWhoLine = () => pmName(gkDrawer()) + (roomOnline(gkDrawer()) ? ' が自分のスマホで描く番' : ' の番') + ' <small>' + gkLap() + '周目 ・ ' + (G.cur.strokes.length + 1) + '/' + G.cur.order.length * GK_LAPS + '筆</small>';
 function gkSaveImage() {
   const cur = G.cur, w = gkWord(), W = 1080, H = 1350, c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -245,6 +253,25 @@ PMX.gaka = {
     return pxRow(pxBtn('save', '絵を保存', 'cyan small') + pxBtn('next', pmLast() ? '結果発表へ！' : '次の絵へ ▶', 'big main grow'));
   },
   mounted() { if (['draw', 'vote', 'end'].includes(G.cur.phase)) requestAnimationFrame(gkMount); },
+  remote(p) {
+    const cur = G.cur;
+    if (cur.phase === 'before') return { v: 'watch', say: 'お題が配られるのを待っています' };
+    const w = gkWord(), fake = p === cur.f, end = cur.phase === 'end';
+    const local = cur.phase === 'peek' && cur.peek && cur.peek.ps.includes(p);
+    if (local) return { v: 'local' };
+    return { v: 'gk', ph: cur.phase, g: w.g, f: fake && !end, w: fake && !end ? '' : w.w, s: cur.phase === 'peek' ? [] : roomStrokes(cur.strokes),
+      turn: cur.phase === 'draw' && !gkDone() && gkDrawer() === p && !pxBusy, who: cur.phase === 'draw' ? pname(gkDrawer()) : '' };
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a !== 'stroke' || cur.phase !== 'draw' || gkDone() || gkDrawer() !== p) return;
+    const d = m.d;
+    if (!Array.isArray(d) || d.length < 4 || d.length > 1000 || d.length % 2 || !d.every(n => Number.isInteger(n) && n >= 0 && n <= 1000)) return;
+    let len = 0;
+    for (let i = 2; i < d.length; i += 2) len += Math.hypot(d[i] - d[i - 2], d[i + 1] - d[i - 1]);
+    if (len < 14) return;
+    gkCommit({ p, d: d.slice() });
+  },
   act(a, el) {
     const cur = G.cur;
     if (pxBusy) return;
@@ -258,7 +285,9 @@ PMX.gaka = {
       cur.order = Array.from({ length: n }, (_, i) => (s + i) % n);
       G.players[cur.f].fake++;
       tryUse('gaka');
-      pxPeekStart(pxAll());
+      const local = roomLocal(pxAll());
+      if (!local.length) { cur.phase = 'draw'; SE.play('deal'); pxSave('draw'); telop('お題を配った！<small>' + esc(pname(gkDrawer())) + ' から描こう</small>', '', 1500); return; }
+      pxPeekStart(local);
       cur.phase = 'peek';
       SE.play('deal');
       pxSave('pass');
@@ -346,6 +375,19 @@ function rpPages(anim) {
   if (pv) pv.onclick = () => { if (pagerGo('rpList', -1)) SE.play('tap'); };
   if (nx) nx.onclick = () => { if (pagerGo('rpList', 1)) SE.play('tap'); };
 }
+/* everyone's reply is in (this phone's and the phones'): the show starts */
+function rpAllIn() {
+  const cur = G.cur;
+  if (cur.phase !== 'write' || cur.peek || !pxAll().every(p => p in cur.rep)) return false;
+  cur.wait = false;
+  cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
+  pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
+  return true;
+}
+const rpWaitList = () => '<div class="pm-chips' + (G.players.length > 4 ? ' two' : '') + '">' + pxAll().map(p => {
+  const done = p in G.cur.rep, off = !done && roomHas(p) && !roomOnline(p);
+  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 送信ずみ' : off ? '電波なし' : '入力中…') + '</small></span>';
+}).join('') + '</div>';
 PMX.reply = {
   tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
   poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
@@ -358,13 +400,14 @@ PMX.reply = {
     const c = g.cur, n = g.players.length, okP = p => Number.isInteger(p) && p >= 0 && p < n;
     if (!RP_BY_ID.has(c.q) || !['msg', 'write', 'show', 'best', 'worst', 'names'].includes(c.phase)) { c.phase = 'before'; delete c.peek; return; }
     c.rep = c.rep && typeof c.rep === 'object' ? c.rep : {};
-    if (c.phase === 'write' && !(c.peek && Array.isArray(c.peek.ps))) c.phase = 'msg';
+    if (c.phase === 'write' && !(c.peek && Array.isArray(c.peek.ps)) && !c.wait) c.phase = 'msg';
     if (c.phase !== 'msg' && c.phase !== 'write' && !(Array.isArray(c.ord) && c.ord.length === n && c.ord.every(okP))) { c.phase = 'msg'; c.rep = {}; }
   },
   stage() {
     const cur = G.cur, head = pxHead();
     if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="rp-notice"><span class="rp-av sm" style="--c:#ffc94d">?</span><span><b>新着メッセージ</b><small>タップして開いてね</small></span><i>1</i></div><p class="pm-lead ol">メッセージが届いた！</p><p class="pm-note">全員が1人ずつこっそり返信を書いて、<br>最後にトーク画面で発表。いちばんの返信はどれ？</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'msg') return head + '<p class="gk-top">このメッセージに、<b>あなたならなんて返す？</b></p>' + rpChat('', '', 'grow');
+    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの返信を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
     if (cur.phase === 'write') {
       if (!cur.peek.open) return head + pxPeekCover('返信はこっそり書く。だれの返信かは最後までヒミツ');
       return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
@@ -380,11 +423,32 @@ PMX.reply = {
     const cur = G.cur;
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'メッセージを開く', 'big main pulse'));
     if (cur.phase === 'msg') return pxRow(pxBtn('write', '返信を書く ▶', 'big main'));
+    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人は既読スルー</span>', 'white big grow'));
     if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', '既読<span class="sub">スルーする</span>', 'white small') + pxBtn('send', '送信', 'big main grow') : pxPeekOpenBtn());
     if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">入力中…</div>' : pxBtn('more', cur.shown ? '次の返信を見る<span class="sub">あと ' + (cur.ord.length - cur.shown) + '件</span>' : '返信を見る！', 'big main pulse'));
     if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'いちばんの返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定！', 'big main', cur.pick == null ? ' disabled' : ''));
     if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">返信なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
+  },
+  remote(p) {
+    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m } : { v: 'rp' };
+    if (cur.phase === 'before' || cur.phase === 'msg') return Object.assign(base, { st: 'read' });
+    if (cur.phase === 'write') {
+      if (p in cur.rep) return Object.assign(base, { st: 'sent', mine: cur.rep[p] });
+      if (cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p)) return Object.assign(base, { st: 'local' });
+      return Object.assign(base, { st: 'write' });
+    }
+    return Object.assign(base, { st: 'show' }, p in cur.rep ? { mine: cur.rep[p] } : {});
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a !== 'reply' || cur.phase !== 'write' || p in cur.rep || (cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p))) return;
+    if (m.txt !== null && typeof m.txt !== 'string') return;
+    const txt = m.txt === null ? null : m.txt.replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (txt === '') return;
+    cur.rep[p] = txt;
+    SE.play('swoosh');
+    if (!rpAllIn()) pxSave('keep');
   },
   mounted(anim) {
     const cur = G.cur;
@@ -412,17 +476,21 @@ PMX.reply = {
       pxSave('top');
       return;
     }
-    if (a === 'write' && cur.phase === 'msg') { pxPeekStart(Array.from({ length: n }, (_, i) => (G.turn + i) % n)); cur.phase = 'write'; SE.play('tap'); pxSave(); return; }
+    if (a === 'write' && cur.phase === 'msg') {
+      const local = roomLocal(Array.from({ length: n }, (_, i) => (G.turn + i) % n));
+      cur.phase = 'write'; cur.wait = false;
+      if (local.length) pxPeekStart(local); else { delete cur.peek; cur.wait = true; }
+      SE.play('tap'); pxSave();
+      return;
+    }
+    if (a === 'nowait' && cur.phase === 'write' && !cur.peek) { pxAll().forEach(p => { if (!(p in cur.rep)) cur.rep[p] = null; }); rpAllIn(); return; }
     if (cur.phase === 'write' && (a === 'peekopen')) { pxPeekAct(a, () => {}); return; }
     if (cur.phase === 'write' && (a === 'send' || a === 'skip') && cur.peek && cur.peek.open) {
       const inp = $('rpIn'), txt = inp ? inp.value.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
       if (a === 'send' && !txt) { if (inp) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); } SE.play('boing'); return; }
       cur.rep[pxPeekWho()] = a === 'skip' ? null : txt;
       SE.play(a === 'skip' ? 'tap' : 'swoosh');
-      pxPeekAct('peeknext', () => {
-        cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
-        pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
-      });
+      pxPeekAct('peeknext', () => { cur.wait = true; if (!rpAllIn()) pxSave(); });
       return;
     }
     if (a === 'more' && cur.phase === 'show' && !rpTyping) {
@@ -494,10 +562,28 @@ function msGive(ps) {
     const pool = msPool(G.lvl).filter(m => !have.includes(m.id) && m.id !== ms[p]);
     const m = pmDraw(pool.length ? pool : msPool(G.lvl), 1)[0];
     pmUse(m.id); ms[p] = m.id; have.push(m.id);
+    (G.pm.fr || (G.pm.fr = {}))[p] = Date.now();   /* on a player's own phone, a fresh mission can be swapped for 2 minutes */
   });
 }
 const msBack = () => pxBtn('back', 'もどる', 'white small');
+const MS_SWAP = 120e3;
 PMX.mission = {
+  remote(p) {
+    const cur = G.cur, m = G.pm.ms ? msOf(p) : null;
+    if (!m) return { v: 'watch', say: 'ミッションが配られるのを待っています' };
+    if (cur.phase === 'peek' && cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p)) return { v: 'local' };
+    const ask = cur.phase === 'accCheck' && cur.w === p && !cur.open ? pname(cur.by) : '';
+    const left = Math.ceil((MS_SWAP - (Date.now() - ((G.pm.fr || {})[p] || 0))) / 1000);
+    return { v: 'ms', t: m.t, ask, ph: cur.phase === 'claimShow' && cur.w === p ? 'claim' : '', re: !ask && ['peek', 'live'].includes(cur.phase) && left > 0 ? left : 0 };
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a === 'reroll' && G.pm.ms && msOf(p) && ['peek', 'live'].includes(cur.phase) && Date.now() - ((G.pm.fr || {})[p] || 0) < MS_SWAP) {
+      const t = G.pm.fr[p]; msGive([p]); G.pm.fr[p] = t;   /* swapping does not restart the 2 minutes */
+      SE.play('cdShuffle'); pxSave('keep'); return;
+    }
+    if (m.a === 'ans' && typeof m.ok === 'boolean' && cur.phase === 'accCheck' && cur.w === p && !cur.open) { cur.open = true; this.act(m.ok ? 'aok' : 'ang'); }
+  },
   tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1DON</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
   poolWord: 'ミッション', poolUnit: '個', resCount: '回の判定', quiet: true,
   pool: o => msPool(o).length,
@@ -519,7 +605,9 @@ PMX.mission = {
     delete G.pm.need;
     cur.w = null; cur.by = null; cur.ev = null; cur.sel = [];
     if (!G.pm.ms) { cur.phase = 'before'; return; }
-    if (need.length) { msGive(need); pxPeekStart(need); cur.peek.newm = true; cur.phase = 'peek'; }
+    const local = roomLocal(need);
+    if (need.length) msGive(need);
+    if (local.length) { pxPeekStart(local); cur.peek.newm = true; cur.phase = 'peek'; }
     else cur.phase = 'live';
   },
   stage() {
@@ -539,6 +627,7 @@ PMX.mission = {
     if (cur.phase === 'accBy') return head + '<div class="pm-body"><p class="pm-lead ol">見破った人は？</p><p class="pm-ask">「見破った！」と言った人をタップ</p>' + pxChips(pxAll(), null, 'by') + '</div>';
     if (cur.phase === 'accWho') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.by) + ' が見破った！</p><p class="pm-lead ol">あやしいのはだれ？</p>' + pxChips(pxOthers(cur.by), null, 'who') + '</div>';
     if (cur.phase === 'accSay') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを予想して！</p><p class="pm-note">' + pmName(cur.by) + ' は、' + pmName(cur.w) + ' のミッションを<br>声に出して言ってね</p><p class="pm-note">言えたら、' + esc(pname(cur.w)) + ' だけが<br>答え合わせをする</p></div>';
+    if (cur.phase === 'accCheck' && !cur.open && roomOnline(cur.w)) return head + '<div class="pm-big"><p class="px-for">' + pmName(cur.w) + ' が自分のスマホで答え合わせ中…</p><p class="pm-note">' + pmName(cur.by) + ' の予想は当たってた？</p></div>';
     if (cur.phase === 'accCheck') {
       if (!cur.open) return head + '<div class="pm-big px-pass"><p class="px-step">本人だけ見る</p><p class="px-to"><span class="px-phone" aria-hidden="true"></span>' + pmName(cur.w) + ' に<br>スマホを渡して</p><p class="pm-note">ほかの人は画面を見ないでね</p></div>';
       return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(cur.w) + ' のミッション</p><p class="ms-card">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p></div>';
@@ -559,6 +648,7 @@ PMX.mission = {
     if (['checkWho', 'claimWho', 'accBy', 'accWho'].includes(cur.phase)) return pxRow(msBack());
     if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1DON</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
     if (cur.phase === 'accSay') return pxRow(msBack() + pxBtn('say', '言った！ 答え合わせ', 'big main grow'));
+    if (cur.phase === 'accCheck' && !cur.open && roomOnline(cur.w)) return pxRow(msBack() + pxBtn('aopen', '親のスマホで<span class="sub">確かめる</span>', 'white small'));
     if (cur.phase === 'accCheck') return pxRow(!cur.open ? pxBtn('aopen', esc(pname(cur.w)) + 'です。見る！', 'big main pulse') : pxBtn('ang', 'ハズレ', 'white big') + pxBtn('aok', '当たってた', 'big main pink grow'));
     if (cur.phase === 'accRes') return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : 'つづける ▶', 'big main'));
     return pxRow(msBack());
@@ -578,13 +668,16 @@ PMX.mission = {
       return;
     }
     if (a === 'deal' && cur.phase === 'before' && !pmLocked()) {
-      G.pm.ms = {}; msGive(pxAll()); tryUse('mission');
-      pxPeekStart(pxAll()); cur.phase = 'peek';
+      G.pm.ms = {}; G.pm.fr = {}; msGive(pxAll()); tryUse('mission');
+      const local = roomLocal(pxAll());
+      if (!local.length) { G.pm.started = true; cur.phase = 'live'; SE.play('go'); pxSave(); telop('ミッション開始！<small>自分のスマホでミッションを見てね</small>', '', 1600); return; }
+      pxPeekStart(local); cur.phase = 'peek';
       SE.play('deal'); pxSave('pass');
       return;
     }
     if (cur.phase === 'live' && ['checkWho', 'claimWho', 'accBy'].includes(a)) { cur.phase = a; SE.play('tap'); pxSave(); return; }
     const p = pxP(el);
+    if (a === 'check' && cur.phase === 'checkWho' && p != null && roomHas(p)) { telop(esc(pname(p)) + 'は自分のスマホで見られます', 'white sm', 1300); SE.play('tap'); return; }
     if (a === 'check' && cur.phase === 'checkWho' && p != null) { pxPeekStart([p]); cur.peek.check = true; cur.phase = 'peek'; SE.play('tap'); pxSave(); return; }
     if (a === 'claim' && cur.phase === 'claimWho' && p != null) { cur.w = p; cur.phase = 'claimShow'; SE.play('swShow'); pxSave(); return; }
     if ((a === 'cyes' || a === 'cno') && cur.phase === 'claimShow') {
@@ -640,7 +733,32 @@ const US_BY_ID = new Map(US_TOPICS.map(q => [q.id, q]));
 const usPool = o => US_TOPICS.filter(q => o === 'mix' || q.d === (o === 'light' ? 'l' : 'd'));
 const THUMB = up => '<svg class="us-th' + (up ? '' : ' down') + '" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="' + (up ? '#a8f03a' : '#ff4fa3') + '" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const usQ = () => US_BY_ID.get(G.cur.q) || US_TOPICS[0];
+function usPick() { const cur = G.cur, skip = cur.q ? [cur.q] : [], pool = usPool(G.lvl).filter(q => !skip.includes(q.id)), q = pmDraw(pool, 1)[0]; pmUse(q.id); cur.q = q.id; }
+/* votes from the players' own phones: { player: true (ホント) / false (ウソ) } */
+const usVotes = () => (G.cur.rv && typeof G.cur.rv === 'object' ? G.cur.rv : (G.cur.rv = {}));
+const usVoteLine = () => { const ps = pxOthers(G.cur.drawer).filter(roomHas); if (!ps.length) return ''; const n = ps.filter(p => p in usVotes()).length; return '<p class="pm-note">手元で投票：<b>' + n + ' / ' + ps.length + '人</b></p>'; };
 PMX.uso = {
+  remote(p) {
+    const cur = G.cur;
+    if (cur.phase === 'before' || !cur.q) return { v: 'watch', say: cur.drawer === p ? 'あなたの番！ 親のスマホで「お題を引く！」' : pname(cur.drawer) + ' の番' };
+    const t = usQ().t, left = cur.phase === 'talk' && cur.t0 ? Math.max(0, Math.ceil(US_TALK - (Date.now() - cur.t0) / 1000)) : null;
+    if (cur.drawer === p) {
+      if (cur.phase === 'secret' && cur.open) return { v: 'local' };
+      return { v: 'us', role: 'talk', ph: cur.phase, t, tr: !!cur.truth, left };
+    }
+    const rv = usVotes(), vote = p in rv ? rv[p] : null;
+    if (cur.phase === 'secret') return { v: 'us', role: 'vote', ph: 'secret', t: '？？？', who: pname(cur.drawer) };
+    return Object.assign({ v: 'us', role: 'vote', ph: cur.phase, t, who: pname(cur.drawer), vote, left }, cur.phase === 'ans' ? { tr: !!cur.truth, hit: vote === cur.truth } : {});
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (cur.drawer === p && cur.phase === 'secret' && !cur.open) {
+      if (m.a === 're' && cur.truth) { usPick(); SE.play('cdShuffle'); pxSave(); return; }
+      if (m.a === 'talk') { cur.phase = 'talk'; cur.t0 = Date.now(); G.players[cur.drawer].told++; SE.play('go'); pxSave(); }
+      return;
+    }
+    if (m.a === 'vote' && typeof m.up === 'boolean' && cur.drawer !== p && (cur.phase === 'talk' || cur.phase === 'vote')) { usVotes()[p] = m.up; SE.play('tap'); pxSave('keep'); }
+  },
   tag: '話す', hint: 'ホントかウソか、外した人は <b>1DON</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
   poolWord: 'お題', poolUnit: '個', resCount: '話',
   pool: o => usPool(o).length,
@@ -656,6 +774,7 @@ PMX.uso = {
   stage() {
     const cur = G.cur, head = pxHead(), p = cur.drawer, q = cur.q ? usQ() : null;
     if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><p class="ko-who">' + pmName(p) + ' の番！</p><div class="us-thumbs">' + THUMB(true) + THUMB(false) + '</div><p class="pm-note">お題と「ホントの話」か「ウソの話」かの指示は、<br><b>話す人だけ</b>が見る。30秒で話して、みんなはせーので親指！</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'secret' && !cur.open && roomOnline(p)) return head + '<div class="pm-big"><p class="ko-who">' + pmName(p) + ' の番！</p><p class="pm-lead ol">自分のスマホで<br>お題を見ています</p><p class="pm-note">「話す！」を押したら、30秒で話してね</p></div>';
     if (cur.phase === 'secret') {
       if (!cur.open) return head + '<div class="pm-big px-pass"><p class="px-step">話す人だけ見る</p><p class="px-to"><span class="px-phone" aria-hidden="true"></span>' + pmName(p) + ' に<br>スマホを渡して</p><p class="pm-note">ほかの人は画面を見ないでね</p></div>';
       return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(p) + ' だけに見せる</p><p class="us-topic">' + esc(q.t) + '</p>' +
@@ -663,8 +782,8 @@ PMX.uso = {
         '<p class="pm-note">' + (cur.truth ? '本当にあったことを、そのまま話そう' : '本当っぽい作り話で、みんなをだまそう') + '</p>' +
         (cur.truth ? '<p class="pm-note sm">ホントの話が思いつかなければ「別のお題」</p>' : '') + '</div>';
     }
-    if (cur.phase === 'talk') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' のお話</p><p class="us-topic open">' + esc(q.t) + '</p><p class="us-clock" id="usClock">' + US_TALK + '</p><p class="pm-note">ホントの話？ ウソの話？ よーく聞いて</p></div>';
-    if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p></div>';
+    if (cur.phase === 'talk') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' のお話</p><p class="us-topic open">' + esc(q.t) + '</p><p class="us-clock" id="usClock">' + US_TALK + '</p>' + usVoteLine() + '<p class="pm-note">ホントの話？ ウソの話？ よーく聞いて</p></div>';
+    if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p>' + usVoteLine() + '</div>';
     const others = pxOthers(p), fool = cur.sel.length === others.length;
     return head + '<div class="pm-body"><p class="us-ans ' + (cur.truth ? 'true' : 'lie') + ' ol">' + (cur.truth ? 'ホント！' : 'ウソ！') + '</p><p class="us-topic open sm">' + esc(q.t) + '</p>' +
       '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1DON</p>' + pxChips(others, cur.sel, 'sel', '1DON') +
@@ -673,6 +792,7 @@ PMX.uso = {
   dock() {
     const cur = G.cur;
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('draw', 'お題を引く！', 'big main pulse'));
+    if (cur.phase === 'secret' && !cur.open && roomOnline(cur.drawer)) return pxRow(pxBtn('open', '親のスマホで<span class="sub">見る</span>', 'white small') + '<div class="dock-note grow">' + esc(pname(cur.drawer)) + 'のスマホを待っています</div>');
     if (cur.phase === 'secret') return pxRow(!cur.open ? pxBtn('open', esc(pname(cur.drawer)) + 'です。見る！', 'big main pulse') : (cur.truth ? pxBtn('re', '別の<span class="sub">お題</span>', 'white small') : '') + pxBtn('talk', '話す！<span class="sub">' + US_TALK + '秒</span>', 'big main grow'));
     if (cur.phase === 'talk') return pxRow(pxBtn('done', '話し終わった！', 'big main'));
     if (cur.phase === 'vote') return pxRow(pxBtn('ans', '答え合わせ！', 'big main pink pulse'));
@@ -696,8 +816,8 @@ PMX.uso = {
     const cur = G.cur;
     if (pxBusy) return;
     if (a === 'end') { finishGame(); return; }
-    const pick = () => { const skip = cur.q ? [cur.q] : []; const pool = usPool(G.lvl).filter(q => !skip.includes(q.id)); const q = pmDraw(pool, 1)[0]; pmUse(q.id); cur.q = q.id; };
-    if (a === 'draw' && cur.phase === 'before' && !pmLocked()) { pick(); cur.truth = Math.random() < 0.5; cur.open = false; cur.phase = 'secret'; tryUse('uso'); SE.play('deal'); pxSave(); return; }
+    const pick = usPick;
+    if (a === 'draw' && cur.phase === 'before' && !pmLocked()) { pick(); cur.rv = {}; cur.truth = Math.random() < 0.5; cur.open = false; cur.phase = 'secret'; tryUse('uso'); SE.play('deal'); pxSave(); return; }
     if (a === 'open' && cur.phase === 'secret') { cur.open = true; SE.play('flip'); vibrate(15); pxSave(); return; }
     if (a === 're' && cur.phase === 'secret' && cur.open) { pick(); SE.play('cdShuffle'); pxSave(); return; }
     if (a === 'talk' && cur.phase === 'secret' && cur.open) { cur.phase = 'talk'; cur.t0 = Date.now(); G.players[cur.drawer].told++; SE.play('go'); pxSave(); return; }
@@ -705,7 +825,12 @@ PMX.uso = {
     if (a === 'ans' && cur.phase === 'vote') {
       SE.play('swDrum');
       $('dock').innerHTML = pxRow('<div class="dock-note">答えは…</div>');
-      pxLater(() => { cur.phase = 'ans'; cur.sel = []; pxSave(); SE.play(cur.truth ? 'fanfare' : 'swShow'); vibrate(40); }, 1300);
+      pxLater(() => {
+        cur.phase = 'ans';
+        const rv = usVotes();
+        cur.sel = pxOthers(cur.drawer).filter(p => p in rv && rv[p] !== cur.truth);   /* who voted wrong on their own phone; the rest by the thumbs at the table */
+        pxSave(); SE.play(cur.truth ? 'fanfare' : 'swShow'); vibrate(40);
+      }, 1300);
       return;
     }
     if (a === 'sel' && cur.phase === 'ans') {
@@ -743,7 +868,9 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
-  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')
+  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
+  (ROOM_ON ? gCard('みんなのスマホで参加（プレミアム）', '<p>この4つのモードは、<b>友だちが自分のスマホで参加</b>できます。ゲーム画面の右上の「参加」を押すと、QRコードと4文字の合言葉が出ます。友だちはカメラで読むか、タイトル画面の「参加」で合言葉を入れて、自分の名前を選ぶだけ。<b>参加は無料</b>です。</p>' +
+    '<p>お題・ミッション・返信の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
 });
 
 /* =====================================================================

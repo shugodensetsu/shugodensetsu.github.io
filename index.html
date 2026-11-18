@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://sakego.shugodensetsu.workers.dev; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://sakego.shugodensetsu.workers.dev wss://sakego.shugodensetsu.workers.dev; media-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="description" content="飲み会・宅飲みを盛り上げるパーティーカードゲーム。スマホ1台で2〜8人、無料・広告なし・オフラインOK。カード104枚＋ミニゲーム14種。引いたが最後！ 天国か、地獄か。">
@@ -2780,6 +2780,98 @@ button.rp-pick{cursor:pointer}
   .s-setup .row-btns .pbtn.small{font-size:min(14px, 4.4cqh); padding-block:min(8px, 2.4cqh)}
   .s-setup .nm-row{gap:4px; padding-right:4px}
 }
+
+/* ---------- みんなのスマホで参加（部屋） ---------- */
+.rm-ph{width:.95em; height:1.3em; vertical-align:-.25em; flex:none}
+.t-plusrow{align-self:stretch; display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:6px 8px; min-width:0}
+.t-plusrow .t-plus{min-width:0}
+.t-join{flex:none; display:inline-flex; align-items:center; gap:4px; background:var(--lime); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; box-shadow:0 3px 0 var(--ink); padding:2px 12px 2px 9px; font:inherit}
+.t-join b{font-weight:800; font-size:min(13px, 2.2cqh, 3.5cqw)}
+.t-join:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink)}
+.rm-btn{display:inline-flex; align-items:center; gap:3px}
+.rm-btn b{font-family:var(--f-display); font-weight:400; font-size:14px; line-height:1}
+.rm-box h2{display:flex; align-items:center; gap:6px; font-size:min(20px, 5.4vw)}
+.rm-box .rm-lead{font-size:13px; color:var(--ink-muted)}
+.rm-join{display:flex; gap:12px; align-items:center}
+.rm-qr{flex:none; width:min(40vw, 30vh, 170px); aspect-ratio:1; border:3px solid var(--ink); border-radius:12px; overflow:hidden; background:#fff}
+.rm-qr svg{display:block; width:100%; height:100%}
+.rm-code{display:flex; flex-direction:column; gap:2px; min-width:0}
+.rm-code b{font-family:var(--f-display); font-weight:400; font-size:min(40px, 11vw); letter-spacing:.12em; line-height:1.1; color:var(--ink)}
+.rm-code small{font-size:11.5px; font-weight:700; color:var(--ink-muted); line-height:1.45}
+.rm-list{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr; gap:4px}
+.rm-list.two{grid-template-columns:1fr 1fr}
+.rm-list li{display:flex; align-items:center; gap:6px; min-width:0; background:var(--p); border:2.5px solid var(--ink); border-radius:10px; padding:3px 4px 3px 8px}
+.rm-list li b{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:13px}
+.rm-st{flex:none; font-size:10.5px; font-weight:800; background:#fff; border-radius:999px; padding:1px 6px; color:var(--ink-muted)}
+.rm-st.on{background:var(--ink); color:var(--lime)}
+.rm-st.off{background:#ffd9d9; color:#b3261e}
+.rm-x{flex:none; width:24px; height:24px; border-radius:50%; border:2px solid var(--ink); background:#fff; color:var(--ink); font-weight:800; font-size:13px; line-height:1; padding:0}
+.rm-box .rm-loose{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:12px}
+.rm-box .rm-err{font-size:12.5px; color:#b3261e}
+.rm-box .rm-err:empty{display:none}
+.rm-in{font-family:var(--f-display); font-size:30px; letter-spacing:.3em; text-align:center; text-transform:uppercase; padding:8px; border:3px solid var(--ink); border-radius:14px; background:#fff; color:var(--ink); width:100%; box-sizing:border-box}
+.mg-ph{position:absolute; top:-9px; left:-6px; display:flex; background:var(--ink); border-radius:999px; padding:2px 4px; line-height:1}
+.mg-ph .rm-ph{width:10px; height:14px}
+.mg-ph.off{background:#b3261e}
+.s-guest{gap:6px; padding-top:max(6px, env(safe-area-inset-top))}
+.gs-box{flex:1; min-height:0; display:flex; flex-direction:column; gap:8px}
+.gs-top{flex:none; display:flex; align-items:center; gap:8px}
+.gs-room{display:flex; align-items:center; gap:4px; font-weight:800; font-size:13px; color:var(--muted)}
+.gs-room b{color:var(--white); letter-spacing:.08em}
+.gs-me{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; background:var(--p); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; padding:2px 10px; font-weight:800; font-size:14px}
+.gs-top .pbtn{margin-left:auto}
+.gs-head{flex:none; display:flex; align-items:baseline; justify-content:center; gap:8px; font-family:var(--f-display); font-size:min(20px, 5vw); color:var(--white)}
+.gs-head small{font-family:var(--f-body); font-weight:800; font-size:12px; color:var(--muted)}
+.gs-body{flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:safe center; gap:10px; text-align:center}
+.gs-body .pm-chips{max-width:440px}
+.gs-body .dock-row{width:100%; max-width:440px}
+.gs-body .gk-word.sm{font-size:min(30px, 8vw); padding:6px 18px}
+.gs-body .gk-fake{font-size:min(24px, 6.4vw)}
+.gs-cv{min-height:100px}
+.gs-say{margin:0; flex:none; font-weight:800; font-size:14px; color:var(--white)}
+.gs-say b{color:var(--yellow)}
+.gs-msg{display:flex; gap:8px; align-items:flex-start; max-width:440px; width:100%; text-align:left}
+.gs-msg > span:last-child{display:flex; flex-direction:column; gap:3px; min-width:0}
+.gs-msg b{font-size:12px; color:var(--muted)}
+.rp-gs .rp-input{width:100%; max-width:440px; box-sizing:border-box; border-radius:14px; border:0}
+.gs-mine{margin:0; max-width:440px; background:#86e05a; color:#111; border-radius:18px; padding:8px 12px; font-size:15px; line-height:1.45; word-break:break-word}
+.gs-vote button{display:flex; flex-direction:column; align-items:center; gap:4px; font-family:var(--f-display); font-size:16px; color:var(--white); background:none; border:3px solid transparent; border-radius:18px; padding:6px 10px}
+.gs-vote button.sel{border-color:var(--yellow); background:rgba(255,216,61,.14)}
+.us-clock.sm{font-size:min(40px, 9cqh)}
+.pm-chip.rm-w{display:flex; flex-direction:column; align-items:center; gap:1px}
+.pm-chip.rm-w small{font-size:10px; font-weight:800; opacity:.8}
+.pm-chip.rm-w:not(.done){opacity:.55}
+/* a short screen (a phone on its side): the guest's pieces get smaller, the panel puts the list beside the QR code */
+@container (max-height:430px){
+  .gs-box{gap:4px}
+  .gs-body{gap:5px}
+  .gs-head{font-size:15px}
+  .gs-body .pm-lead{font-size:17px}
+  .gs-body .pm-note{font-size:12px}
+  .gs-body .us-topic{padding:6px 12px; font-size:15px}
+  .gs-body .us-ans{font-size:26px}
+  .gs-body .us-order{font-size:22px}
+  .gs-body .us-clock{font-size:30px}
+  .gs-body .us-thumbs.big .us-th{width:44px; height:44px}
+  .gs-vote button{flex-direction:row; padding:3px 12px; gap:8px}
+  .gs-body .ms-card{padding:8px 12px}
+  .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
+  .gs-body .gk-fake{font-size:18px}
+  .gs-body .pm-chips{max-width:600px}
+}
+@media (orientation:landscape) and (max-height:500px){
+  .rm-box{max-width:min(720px, 96vw); display:grid; grid-template-columns:auto 1fr; grid-template-areas:'h h' 'j l' 'j o' 'j e' 'j a'; column-gap:16px; row-gap:8px; align-content:start}
+  .rm-box > h2{grid-area:h}
+  .rm-box > .rm-join{grid-area:j; flex-direction:column; align-items:center; text-align:center; align-self:start}
+  .rm-box > .rm-list, .rm-box > .rm-lead{grid-area:l; align-self:start}
+  .rm-box > .rm-loose{grid-area:o}
+  .rm-box > .rm-err{grid-area:e}
+  .rm-box > .dialog-acts{grid-area:a; align-self:end}
+  .rm-qr{width:min(30vw, 46vh, 160px)}
+  .rm-code{align-items:center; max-width:190px}
+  .rm-code b{font-size:30px}
+  #joinBox{display:flex}
+}
 </style>
 <script>window.SAKEGO_APP = true;</script>
 </head>
@@ -2838,7 +2930,7 @@ button.rp-pick{cursor:pointer}
           <button type="button" class="pbtn white small" id="statsBtn" aria-label="あそびの記録">記録</button>
           <button type="button" class="pbtn cyan small" id="tellBtn" aria-label="友達に教える">シェア</button>
         </div>
-        <button type="button" class="t-plus" id="plusBtn"></button>
+        <div class="t-plusrow"><button type="button" class="t-plus" id="plusBtn"></button><button type="button" class="t-join" id="joinBtn" aria-label="友だちの部屋に参加" hidden><svg class="rm-ph" viewBox="0 0 20 28" aria-hidden="true"><rect x="2" y="1.5" width="16" height="25" rx="3.5" fill="#fff" stroke="#150733" stroke-width="2.2"/><rect x="5" y="5" width="10" height="15" rx="1.5" fill="#35e0ff"/><circle cx="10" cy="23" r="1.4" fill="#150733"/></svg><b>参加</b></button></div>
       </div>
       <footer class="t-foot">
         <button type="button" class="t-install" id="installBtn" hidden>＋ ホーム画面に追加</button>
@@ -2873,11 +2965,13 @@ button.rp-pick{cursor:pointer}
       </div>
     </section>
 
+    <section class="screen s-guest" id="scr-guest" aria-label="友だちの部屋に参加中" hidden><div class="gs-box" id="gsBox"></div></section>
+
     <section class="screen s-game" id="scr-game" aria-label="ゲーム" hidden>
       <div class="g-top">
         <div class="g-round ol" id="gRound"></div>
         <div class="g-pend" id="gPending" hidden></div>
-        <div class="g-top-r"><button type="button" class="pbtn cyan tiny" id="helpBtn" aria-label="遊び方ガイドを開く">？ 遊び方</button><button type="button" class="pbtn white tiny" id="endBtn">終了</button></div>
+        <div class="g-top-r"><button type="button" class="pbtn white tiny rm-btn" id="roomBtn" hidden></button><button type="button" class="pbtn cyan tiny" id="helpBtn" aria-label="遊び方ガイドを開く">？ 遊び方</button><button type="button" class="pbtn white tiny" id="endBtn">終了</button></div>
       </div>
       <div class="g-rules" id="gRules" hidden></div>
       <div class="tbl" id="tableWrap">
@@ -3130,6 +3224,8 @@ button.rp-pick{cursor:pointer}
   </div>
 
   <div class="ov center gloss-ov" id="glossOv" hidden><div class="dialog gloss-box" id="glossBox" role="dialog" aria-modal="true" aria-labelledby="glossTitle"></div></div>
+  <div class="ov center" id="roomOv" hidden><div class="dialog rm-box" id="roomBox" role="dialog" aria-modal="true" aria-labelledby="roomTitle"></div></div>
+  <div class="ov center" id="joinOv" hidden><div class="dialog rm-box" id="joinBox" role="dialog" aria-modal="true" aria-labelledby="joinTitle"></div></div>
   <div class="ov center plus-ov" id="plusOv" hidden><div class="dialog plus-box" id="plusBox" role="dialog" aria-modal="true" aria-labelledby="plusTitle"></div></div>
 
   </div>
@@ -5136,7 +5232,7 @@ function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } cat
 const GAME_KEY = 'nomige-game', NAMES_KEY = 'nomige-names', RETURN_KEY = 'nomige-return';
 const ROLE_ORDER = ['引いた人', 'ランダム', '左隣', '右隣'];
 const ROUND_OPTS = [3, 5, 10, 0];
-const SCREENS = ['title', 'setup', 'game', 'result', 'editor'];
+const SCREENS = ['title', 'setup', 'game', 'result', 'editor', 'guest'];
 const CAT_SOUND = { hit: 'cat_hit', duel: 'cat_duel', name: 'cat_name', all: 'cat_all', topic: 'cat_topic', rule: 'cat_rule', app: 'cat_app', safe: 'cat_safe', chal: 'cat_chal' };
 let screen = 'title';
 let G = null;
@@ -5303,6 +5399,9 @@ function showScreen(name) {
   else if (screen === 'game') { renderGame(); resumeDraw(); }
   else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
+  else if (screen === 'guest') renderGuest();
+  if (screen !== 'guest' && guest) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
+  roomBadge(); roomSync();
   if (coach.on) coachQueue();
   sceneBGM();
   fitScreen();
@@ -5311,7 +5410,7 @@ function showScreen(name) {
    As a last resort for odd shapes (a browser's toolbars eating the height, a very small phone) the screen is zoomed out just
    enough that nothing scrolls. Not while a name is being typed: the on-screen keyboard shrinks the window, and the layout
    should not jump under the user's fingers. */
-const FIT_SCREENS = ['title', 'setup'];
+const FIT_SCREENS = ['title', 'setup', 'guest'];
 let fitQueued = 0;
 function fitScreen() {
   if (fitQueued) return;
@@ -11893,7 +11992,7 @@ function pmBoard() {
   const tag = X ? X.tag : '回答', icon = X && X.icon ? X.icon : MEDAL_SVG;
   return G.players.map((pl, i) => '<div class="mg-p' + (i === mark ? ' start' : '') + (i === mark2 ? ' ask' : '') + '" data-seat="' + i + '" style="--p:' + pc(i) + '" aria-label="' + esc(pl.name) + ' ' + fmtAmt(pl.total) + 'DON">' +
     (i === mark ? '<span class="mg-tag">' + tag + '</span>' : i === mark2 ? '<span class="mg-tag ask">' + X.tag2 + '</span>' : '') + (pl.medal ? '<span class="mg-medal" aria-label="勲章' + pl.medal + '個">' + icon + (pl.medal > 1 ? '<b>' + pl.medal + '</b>' : '') + '</span>' : '') +
-    '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
+    (roomHas(i) ? '<span class="mg-ph' + (roomOnline(i) ? '' : ' off') + '" aria-label="自分のスマホで参加">' + PHONE_SVG + '</span>' : '') + '<span class="mg-pn">' + esc(pl.name) + '</span><span class="mg-row"><span class="mg-pc"><b>' + fmtAmt(pl.total) + '</b><small>DON</small></span></span></div>').join('');
 }
 function pmLog() {
   const log = G.pm.log;
@@ -11922,6 +12021,7 @@ function renderPM(anim) {
   box.innerHTML = pmLog();
   fitLog(box);
   if (X && X.mounted) X.mounted(anim);
+  roomBadge(); roomSync();
 }
 /* the round's drinks go on the board, then the next round */
 function pmNext(items, ok) {
@@ -12637,6 +12737,7 @@ function gkMount() {
   const at = e => { const r = cv.getBoundingClientRect(); return [Math.round(Math.max(0, Math.min(1000, (e.clientX - r.left) / r.width * 1000))), Math.round(Math.max(0, Math.min(1000, (e.clientY - r.top) / r.height * 1000)))]; };
   cv.addEventListener('pointerdown', e => {
     if (live || pxBusy || G.cur !== cur || cur.phase !== 'draw' || gkDone()) return;
+    if (roomOnline(gkDrawer())) { telop(esc(pname(gkDrawer())) + 'は自分のスマホで描く番', 'white sm', 1100); return; }
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     live = { p: gkDrawer(), d: at(e), id: e.pointerId };
@@ -12657,24 +12758,31 @@ function gkMount() {
     const st = { p: live.p, d: d.slice() };
     live = null;
     if (len < 14) { gkPaint(cv, cur.strokes); telop('もう少し長く描いてね', 'white sm', 900); return; }
-    cur.strokes.push(st);
-    saveGame();
-    SE.play('pop'); vibrate(12);
-    gkPaint(cv, cur.strokes);
-    if (gkDone()) {
-      pxLater(() => { cur.phase = 'vote'; cur.acc = null; pxSave('vote'); SE.play('fanfare'); telop('完成！<small>ニセ画伯はだれだ？</small>', '', 1400); }, 700);
-      $('gkWho').innerHTML = '完成！';
-      $('dock').innerHTML = pxRow('<div class="dock-note">完成…！</div>');
-      return;
-    }
-    $('gkWho').innerHTML = gkWhoLine();
-    $('dock').innerHTML = PMX.gaka.dock();
-    $('mgBoard').innerHTML = pmBoard();
+    gkCommit(st);
   };
   cv.addEventListener('pointerup', end);
   cv.addEventListener('pointercancel', end);
 }
-const gkWhoLine = () => pmName(gkDrawer()) + ' の番 <small>' + gkLap() + '周目 ・ ' + (G.cur.strokes.length + 1) + '/' + G.cur.order.length * GK_LAPS + '筆</small>';
+/* one stroke more (from this phone, or from the drawer's own phone) */
+function gkCommit(st) {
+  const cur = G.cur, cv = $('gkCv');
+  cur.strokes.push(st);
+  saveGame();
+  SE.play('pop'); vibrate(12);
+  if (cv) gkPaint(cv, cur.strokes);
+  if (gkDone()) {
+    pxLater(() => { cur.phase = 'vote'; cur.acc = null; pxSave('vote'); SE.play('fanfare'); telop('完成！<small>ニセ画伯はだれだ？</small>', '', 1400); }, 700);
+    if ($('gkWho')) $('gkWho').innerHTML = '完成！';
+    $('dock').innerHTML = pxRow('<div class="dock-note">完成…！</div>');
+    roomSync();
+    return;
+  }
+  if ($('gkWho')) $('gkWho').innerHTML = gkWhoLine();
+  $('dock').innerHTML = PMX.gaka.dock();
+  $('mgBoard').innerHTML = pmBoard();
+  roomSync();
+}
+const gkWhoLine = () => pmName(gkDrawer()) + (roomOnline(gkDrawer()) ? ' が自分のスマホで描く番' : ' の番') + ' <small>' + gkLap() + '周目 ・ ' + (G.cur.strokes.length + 1) + '/' + G.cur.order.length * GK_LAPS + '筆</small>';
 function gkSaveImage() {
   const cur = G.cur, w = gkWord(), W = 1080, H = 1350, c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -12755,6 +12863,25 @@ PMX.gaka = {
     return pxRow(pxBtn('save', '絵を保存', 'cyan small') + pxBtn('next', pmLast() ? '結果発表へ！' : '次の絵へ ▶', 'big main grow'));
   },
   mounted() { if (['draw', 'vote', 'end'].includes(G.cur.phase)) requestAnimationFrame(gkMount); },
+  remote(p) {
+    const cur = G.cur;
+    if (cur.phase === 'before') return { v: 'watch', say: 'お題が配られるのを待っています' };
+    const w = gkWord(), fake = p === cur.f, end = cur.phase === 'end';
+    const local = cur.phase === 'peek' && cur.peek && cur.peek.ps.includes(p);
+    if (local) return { v: 'local' };
+    return { v: 'gk', ph: cur.phase, g: w.g, f: fake && !end, w: fake && !end ? '' : w.w, s: cur.phase === 'peek' ? [] : roomStrokes(cur.strokes),
+      turn: cur.phase === 'draw' && !gkDone() && gkDrawer() === p && !pxBusy, who: cur.phase === 'draw' ? pname(gkDrawer()) : '' };
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a !== 'stroke' || cur.phase !== 'draw' || gkDone() || gkDrawer() !== p) return;
+    const d = m.d;
+    if (!Array.isArray(d) || d.length < 4 || d.length > 1000 || d.length % 2 || !d.every(n => Number.isInteger(n) && n >= 0 && n <= 1000)) return;
+    let len = 0;
+    for (let i = 2; i < d.length; i += 2) len += Math.hypot(d[i] - d[i - 2], d[i + 1] - d[i - 1]);
+    if (len < 14) return;
+    gkCommit({ p, d: d.slice() });
+  },
   act(a, el) {
     const cur = G.cur;
     if (pxBusy) return;
@@ -12768,7 +12895,9 @@ PMX.gaka = {
       cur.order = Array.from({ length: n }, (_, i) => (s + i) % n);
       G.players[cur.f].fake++;
       tryUse('gaka');
-      pxPeekStart(pxAll());
+      const local = roomLocal(pxAll());
+      if (!local.length) { cur.phase = 'draw'; SE.play('deal'); pxSave('draw'); telop('お題を配った！<small>' + esc(pname(gkDrawer())) + ' から描こう</small>', '', 1500); return; }
+      pxPeekStart(local);
       cur.phase = 'peek';
       SE.play('deal');
       pxSave('pass');
@@ -12856,6 +12985,19 @@ function rpPages(anim) {
   if (pv) pv.onclick = () => { if (pagerGo('rpList', -1)) SE.play('tap'); };
   if (nx) nx.onclick = () => { if (pagerGo('rpList', 1)) SE.play('tap'); };
 }
+/* everyone's reply is in (this phone's and the phones'): the show starts */
+function rpAllIn() {
+  const cur = G.cur;
+  if (cur.phase !== 'write' || cur.peek || !pxAll().every(p => p in cur.rep)) return false;
+  cur.wait = false;
+  cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
+  pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
+  return true;
+}
+const rpWaitList = () => '<div class="pm-chips' + (G.players.length > 4 ? ' two' : '') + '">' + pxAll().map(p => {
+  const done = p in G.cur.rep, off = !done && roomHas(p) && !roomOnline(p);
+  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 送信ずみ' : off ? '電波なし' : '入力中…') + '</small></span>';
+}).join('') + '</div>';
 PMX.reply = {
   tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
   poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
@@ -12868,13 +13010,14 @@ PMX.reply = {
     const c = g.cur, n = g.players.length, okP = p => Number.isInteger(p) && p >= 0 && p < n;
     if (!RP_BY_ID.has(c.q) || !['msg', 'write', 'show', 'best', 'worst', 'names'].includes(c.phase)) { c.phase = 'before'; delete c.peek; return; }
     c.rep = c.rep && typeof c.rep === 'object' ? c.rep : {};
-    if (c.phase === 'write' && !(c.peek && Array.isArray(c.peek.ps))) c.phase = 'msg';
+    if (c.phase === 'write' && !(c.peek && Array.isArray(c.peek.ps)) && !c.wait) c.phase = 'msg';
     if (c.phase !== 'msg' && c.phase !== 'write' && !(Array.isArray(c.ord) && c.ord.length === n && c.ord.every(okP))) { c.phase = 'msg'; c.rep = {}; }
   },
   stage() {
     const cur = G.cur, head = pxHead();
     if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="rp-notice"><span class="rp-av sm" style="--c:#ffc94d">?</span><span><b>新着メッセージ</b><small>タップして開いてね</small></span><i>1</i></div><p class="pm-lead ol">メッセージが届いた！</p><p class="pm-note">全員が1人ずつこっそり返信を書いて、<br>最後にトーク画面で発表。いちばんの返信はどれ？</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'msg') return head + '<p class="gk-top">このメッセージに、<b>あなたならなんて返す？</b></p>' + rpChat('', '', 'grow');
+    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの返信を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
     if (cur.phase === 'write') {
       if (!cur.peek.open) return head + pxPeekCover('返信はこっそり書く。だれの返信かは最後までヒミツ');
       return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
@@ -12890,11 +13033,32 @@ PMX.reply = {
     const cur = G.cur;
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'メッセージを開く', 'big main pulse'));
     if (cur.phase === 'msg') return pxRow(pxBtn('write', '返信を書く ▶', 'big main'));
+    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人は既読スルー</span>', 'white big grow'));
     if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', '既読<span class="sub">スルーする</span>', 'white small') + pxBtn('send', '送信', 'big main grow') : pxPeekOpenBtn());
     if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">入力中…</div>' : pxBtn('more', cur.shown ? '次の返信を見る<span class="sub">あと ' + (cur.ord.length - cur.shown) + '件</span>' : '返信を見る！', 'big main pulse'));
     if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'いちばんの返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定！', 'big main', cur.pick == null ? ' disabled' : ''));
     if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">返信なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
+  },
+  remote(p) {
+    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m } : { v: 'rp' };
+    if (cur.phase === 'before' || cur.phase === 'msg') return Object.assign(base, { st: 'read' });
+    if (cur.phase === 'write') {
+      if (p in cur.rep) return Object.assign(base, { st: 'sent', mine: cur.rep[p] });
+      if (cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p)) return Object.assign(base, { st: 'local' });
+      return Object.assign(base, { st: 'write' });
+    }
+    return Object.assign(base, { st: 'show' }, p in cur.rep ? { mine: cur.rep[p] } : {});
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a !== 'reply' || cur.phase !== 'write' || p in cur.rep || (cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p))) return;
+    if (m.txt !== null && typeof m.txt !== 'string') return;
+    const txt = m.txt === null ? null : m.txt.replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (txt === '') return;
+    cur.rep[p] = txt;
+    SE.play('swoosh');
+    if (!rpAllIn()) pxSave('keep');
   },
   mounted(anim) {
     const cur = G.cur;
@@ -12922,17 +13086,21 @@ PMX.reply = {
       pxSave('top');
       return;
     }
-    if (a === 'write' && cur.phase === 'msg') { pxPeekStart(Array.from({ length: n }, (_, i) => (G.turn + i) % n)); cur.phase = 'write'; SE.play('tap'); pxSave(); return; }
+    if (a === 'write' && cur.phase === 'msg') {
+      const local = roomLocal(Array.from({ length: n }, (_, i) => (G.turn + i) % n));
+      cur.phase = 'write'; cur.wait = false;
+      if (local.length) pxPeekStart(local); else { delete cur.peek; cur.wait = true; }
+      SE.play('tap'); pxSave();
+      return;
+    }
+    if (a === 'nowait' && cur.phase === 'write' && !cur.peek) { pxAll().forEach(p => { if (!(p in cur.rep)) cur.rep[p] = null; }); rpAllIn(); return; }
     if (cur.phase === 'write' && (a === 'peekopen')) { pxPeekAct(a, () => {}); return; }
     if (cur.phase === 'write' && (a === 'send' || a === 'skip') && cur.peek && cur.peek.open) {
       const inp = $('rpIn'), txt = inp ? inp.value.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
       if (a === 'send' && !txt) { if (inp) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); } SE.play('boing'); return; }
       cur.rep[pxPeekWho()] = a === 'skip' ? null : txt;
       SE.play(a === 'skip' ? 'tap' : 'swoosh');
-      pxPeekAct('peeknext', () => {
-        cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
-        pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
-      });
+      pxPeekAct('peeknext', () => { cur.wait = true; if (!rpAllIn()) pxSave(); });
       return;
     }
     if (a === 'more' && cur.phase === 'show' && !rpTyping) {
@@ -13004,10 +13172,28 @@ function msGive(ps) {
     const pool = msPool(G.lvl).filter(m => !have.includes(m.id) && m.id !== ms[p]);
     const m = pmDraw(pool.length ? pool : msPool(G.lvl), 1)[0];
     pmUse(m.id); ms[p] = m.id; have.push(m.id);
+    (G.pm.fr || (G.pm.fr = {}))[p] = Date.now();   /* on a player's own phone, a fresh mission can be swapped for 2 minutes */
   });
 }
 const msBack = () => pxBtn('back', 'もどる', 'white small');
+const MS_SWAP = 120e3;
 PMX.mission = {
+  remote(p) {
+    const cur = G.cur, m = G.pm.ms ? msOf(p) : null;
+    if (!m) return { v: 'watch', say: 'ミッションが配られるのを待っています' };
+    if (cur.phase === 'peek' && cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p)) return { v: 'local' };
+    const ask = cur.phase === 'accCheck' && cur.w === p && !cur.open ? pname(cur.by) : '';
+    const left = Math.ceil((MS_SWAP - (Date.now() - ((G.pm.fr || {})[p] || 0))) / 1000);
+    return { v: 'ms', t: m.t, ask, ph: cur.phase === 'claimShow' && cur.w === p ? 'claim' : '', re: !ask && ['peek', 'live'].includes(cur.phase) && left > 0 ? left : 0 };
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (m.a === 'reroll' && G.pm.ms && msOf(p) && ['peek', 'live'].includes(cur.phase) && Date.now() - ((G.pm.fr || {})[p] || 0) < MS_SWAP) {
+      const t = G.pm.fr[p]; msGive([p]); G.pm.fr[p] = t;   /* swapping does not restart the 2 minutes */
+      SE.play('cdShuffle'); pxSave('keep'); return;
+    }
+    if (m.a === 'ans' && typeof m.ok === 'boolean' && cur.phase === 'accCheck' && cur.w === p && !cur.open) { cur.open = true; this.act(m.ok ? 'aok' : 'ang'); }
+  },
   tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1DON</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
   poolWord: 'ミッション', poolUnit: '個', resCount: '回の判定', quiet: true,
   pool: o => msPool(o).length,
@@ -13029,7 +13215,9 @@ PMX.mission = {
     delete G.pm.need;
     cur.w = null; cur.by = null; cur.ev = null; cur.sel = [];
     if (!G.pm.ms) { cur.phase = 'before'; return; }
-    if (need.length) { msGive(need); pxPeekStart(need); cur.peek.newm = true; cur.phase = 'peek'; }
+    const local = roomLocal(need);
+    if (need.length) msGive(need);
+    if (local.length) { pxPeekStart(local); cur.peek.newm = true; cur.phase = 'peek'; }
     else cur.phase = 'live';
   },
   stage() {
@@ -13049,6 +13237,7 @@ PMX.mission = {
     if (cur.phase === 'accBy') return head + '<div class="pm-body"><p class="pm-lead ol">見破った人は？</p><p class="pm-ask">「見破った！」と言った人をタップ</p>' + pxChips(pxAll(), null, 'by') + '</div>';
     if (cur.phase === 'accWho') return head + '<div class="pm-body"><p class="px-for">' + pmName(cur.by) + ' が見破った！</p><p class="pm-lead ol">あやしいのはだれ？</p>' + pxChips(pxOthers(cur.by), null, 'who') + '</div>';
     if (cur.phase === 'accSay') return head + '<div class="pm-body"><p class="pm-lead ol">ミッションを予想して！</p><p class="pm-note">' + pmName(cur.by) + ' は、' + pmName(cur.w) + ' のミッションを<br>声に出して言ってね</p><p class="pm-note">言えたら、' + esc(pname(cur.w)) + ' だけが<br>答え合わせをする</p></div>';
+    if (cur.phase === 'accCheck' && !cur.open && roomOnline(cur.w)) return head + '<div class="pm-big"><p class="px-for">' + pmName(cur.w) + ' が自分のスマホで答え合わせ中…</p><p class="pm-note">' + pmName(cur.by) + ' の予想は当たってた？</p></div>';
     if (cur.phase === 'accCheck') {
       if (!cur.open) return head + '<div class="pm-big px-pass"><p class="px-step">本人だけ見る</p><p class="px-to"><span class="px-phone" aria-hidden="true"></span>' + pmName(cur.w) + ' に<br>スマホを渡して</p><p class="pm-note">ほかの人は画面を見ないでね</p></div>';
       return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(cur.w) + ' のミッション</p><p class="ms-card">' + esc(msOf(cur.w).t) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p></div>';
@@ -13069,6 +13258,7 @@ PMX.mission = {
     if (['checkWho', 'claimWho', 'accBy', 'accWho'].includes(cur.phase)) return pxRow(msBack());
     if (cur.phase === 'claimShow') return pxRow(pxBtn('cno', 'できてない<span class="sub">本人が1DON</span>', 'white small') + pxBtn('cyes', '認める！', 'big main grow'));
     if (cur.phase === 'accSay') return pxRow(msBack() + pxBtn('say', '言った！ 答え合わせ', 'big main grow'));
+    if (cur.phase === 'accCheck' && !cur.open && roomOnline(cur.w)) return pxRow(msBack() + pxBtn('aopen', '親のスマホで<span class="sub">確かめる</span>', 'white small'));
     if (cur.phase === 'accCheck') return pxRow(!cur.open ? pxBtn('aopen', esc(pname(cur.w)) + 'です。見る！', 'big main pulse') : pxBtn('ang', 'ハズレ', 'white big') + pxBtn('aok', '当たってた', 'big main pink grow'));
     if (cur.phase === 'accRes') return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : 'つづける ▶', 'big main'));
     return pxRow(msBack());
@@ -13088,13 +13278,16 @@ PMX.mission = {
       return;
     }
     if (a === 'deal' && cur.phase === 'before' && !pmLocked()) {
-      G.pm.ms = {}; msGive(pxAll()); tryUse('mission');
-      pxPeekStart(pxAll()); cur.phase = 'peek';
+      G.pm.ms = {}; G.pm.fr = {}; msGive(pxAll()); tryUse('mission');
+      const local = roomLocal(pxAll());
+      if (!local.length) { G.pm.started = true; cur.phase = 'live'; SE.play('go'); pxSave(); telop('ミッション開始！<small>自分のスマホでミッションを見てね</small>', '', 1600); return; }
+      pxPeekStart(local); cur.phase = 'peek';
       SE.play('deal'); pxSave('pass');
       return;
     }
     if (cur.phase === 'live' && ['checkWho', 'claimWho', 'accBy'].includes(a)) { cur.phase = a; SE.play('tap'); pxSave(); return; }
     const p = pxP(el);
+    if (a === 'check' && cur.phase === 'checkWho' && p != null && roomHas(p)) { telop(esc(pname(p)) + 'は自分のスマホで見られます', 'white sm', 1300); SE.play('tap'); return; }
     if (a === 'check' && cur.phase === 'checkWho' && p != null) { pxPeekStart([p]); cur.peek.check = true; cur.phase = 'peek'; SE.play('tap'); pxSave(); return; }
     if (a === 'claim' && cur.phase === 'claimWho' && p != null) { cur.w = p; cur.phase = 'claimShow'; SE.play('swShow'); pxSave(); return; }
     if ((a === 'cyes' || a === 'cno') && cur.phase === 'claimShow') {
@@ -13150,7 +13343,32 @@ const US_BY_ID = new Map(US_TOPICS.map(q => [q.id, q]));
 const usPool = o => US_TOPICS.filter(q => o === 'mix' || q.d === (o === 'light' ? 'l' : 'd'));
 const THUMB = up => '<svg class="us-th' + (up ? '' : ' down') + '" viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="' + (up ? '#a8f03a' : '#ff4fa3') + '" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg>';
 const usQ = () => US_BY_ID.get(G.cur.q) || US_TOPICS[0];
+function usPick() { const cur = G.cur, skip = cur.q ? [cur.q] : [], pool = usPool(G.lvl).filter(q => !skip.includes(q.id)), q = pmDraw(pool, 1)[0]; pmUse(q.id); cur.q = q.id; }
+/* votes from the players' own phones: { player: true (ホント) / false (ウソ) } */
+const usVotes = () => (G.cur.rv && typeof G.cur.rv === 'object' ? G.cur.rv : (G.cur.rv = {}));
+const usVoteLine = () => { const ps = pxOthers(G.cur.drawer).filter(roomHas); if (!ps.length) return ''; const n = ps.filter(p => p in usVotes()).length; return '<p class="pm-note">手元で投票：<b>' + n + ' / ' + ps.length + '人</b></p>'; };
 PMX.uso = {
+  remote(p) {
+    const cur = G.cur;
+    if (cur.phase === 'before' || !cur.q) return { v: 'watch', say: cur.drawer === p ? 'あなたの番！ 親のスマホで「お題を引く！」' : pname(cur.drawer) + ' の番' };
+    const t = usQ().t, left = cur.phase === 'talk' && cur.t0 ? Math.max(0, Math.ceil(US_TALK - (Date.now() - cur.t0) / 1000)) : null;
+    if (cur.drawer === p) {
+      if (cur.phase === 'secret' && cur.open) return { v: 'local' };
+      return { v: 'us', role: 'talk', ph: cur.phase, t, tr: !!cur.truth, left };
+    }
+    const rv = usVotes(), vote = p in rv ? rv[p] : null;
+    if (cur.phase === 'secret') return { v: 'us', role: 'vote', ph: 'secret', t: '？？？', who: pname(cur.drawer) };
+    return Object.assign({ v: 'us', role: 'vote', ph: cur.phase, t, who: pname(cur.drawer), vote, left }, cur.phase === 'ans' ? { tr: !!cur.truth, hit: vote === cur.truth } : {});
+  },
+  ract(p, m) {
+    const cur = G.cur;
+    if (cur.drawer === p && cur.phase === 'secret' && !cur.open) {
+      if (m.a === 're' && cur.truth) { usPick(); SE.play('cdShuffle'); pxSave(); return; }
+      if (m.a === 'talk') { cur.phase = 'talk'; cur.t0 = Date.now(); G.players[cur.drawer].told++; SE.play('go'); pxSave(); }
+      return;
+    }
+    if (m.a === 'vote' && typeof m.up === 'boolean' && cur.drawer !== p && (cur.phase === 'talk' || cur.phase === 'vote')) { usVotes()[p] = m.up; SE.play('tap'); pxSave('keep'); }
+  },
   tag: '話す', hint: 'ホントかウソか、外した人は <b>1DON</b>', intro: '<span class="tl-ic">' + THUMB(true) + '</span>ウソかホントか！<small>その話、信じる？</small>',
   poolWord: 'お題', poolUnit: '個', resCount: '話',
   pool: o => usPool(o).length,
@@ -13166,6 +13384,7 @@ PMX.uso = {
   stage() {
     const cur = G.cur, head = pxHead(), p = cur.drawer, q = cur.q ? usQ() : null;
     if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><p class="ko-who">' + pmName(p) + ' の番！</p><div class="us-thumbs">' + THUMB(true) + THUMB(false) + '</div><p class="pm-note">お題と「ホントの話」か「ウソの話」かの指示は、<br><b>話す人だけ</b>が見る。30秒で話して、みんなはせーので親指！</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'secret' && !cur.open && roomOnline(p)) return head + '<div class="pm-big"><p class="ko-who">' + pmName(p) + ' の番！</p><p class="pm-lead ol">自分のスマホで<br>お題を見ています</p><p class="pm-note">「話す！」を押したら、30秒で話してね</p></div>';
     if (cur.phase === 'secret') {
       if (!cur.open) return head + '<div class="pm-big px-pass"><p class="px-step">話す人だけ見る</p><p class="px-to"><span class="px-phone" aria-hidden="true"></span>' + pmName(p) + ' に<br>スマホを渡して</p><p class="pm-note">ほかの人は画面を見ないでね</p></div>';
       return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(p) + ' だけに見せる</p><p class="us-topic">' + esc(q.t) + '</p>' +
@@ -13173,8 +13392,8 @@ PMX.uso = {
         '<p class="pm-note">' + (cur.truth ? '本当にあったことを、そのまま話そう' : '本当っぽい作り話で、みんなをだまそう') + '</p>' +
         (cur.truth ? '<p class="pm-note sm">ホントの話が思いつかなければ「別のお題」</p>' : '') + '</div>';
     }
-    if (cur.phase === 'talk') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' のお話</p><p class="us-topic open">' + esc(q.t) + '</p><p class="us-clock" id="usClock">' + US_TALK + '</p><p class="pm-note">ホントの話？ ウソの話？ よーく聞いて</p></div>';
-    if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p></div>';
+    if (cur.phase === 'talk') return head + '<div class="pm-body"><p class="ko-who">' + pmName(p) + ' のお話</p><p class="us-topic open">' + esc(q.t) + '</p><p class="us-clock" id="usClock">' + US_TALK + '</p>' + usVoteLine() + '<p class="pm-note">ホントの話？ ウソの話？ よーく聞いて</p></div>';
+    if (cur.phase === 'vote') return head + '<div class="pm-big"><p class="us-topic open">' + esc(q.t) + '</p><p class="pm-lead ol">せーので親指！</p><div class="us-thumbs big"><span>' + THUMB(true) + '<b>ホント</b></span><span>' + THUMB(false) + '<b>ウソ</b></span></div><p class="pm-note">全員そろえて出したら、答え合わせ</p>' + usVoteLine() + '</div>';
     const others = pxOthers(p), fool = cur.sel.length === others.length;
     return head + '<div class="pm-body"><p class="us-ans ' + (cur.truth ? 'true' : 'lie') + ' ol">' + (cur.truth ? 'ホント！' : 'ウソ！') + '</p><p class="us-topic open sm">' + esc(q.t) + '</p>' +
       '<p class="pm-ask">' + (cur.truth ? '「ウソ」' : '「ホント」') + 'に親指を出した人（外した人）をタップ → 1DON</p>' + pxChips(others, cur.sel, 'sel', '1DON') +
@@ -13183,6 +13402,7 @@ PMX.uso = {
   dock() {
     const cur = G.cur;
     if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('draw', 'お題を引く！', 'big main pulse'));
+    if (cur.phase === 'secret' && !cur.open && roomOnline(cur.drawer)) return pxRow(pxBtn('open', '親のスマホで<span class="sub">見る</span>', 'white small') + '<div class="dock-note grow">' + esc(pname(cur.drawer)) + 'のスマホを待っています</div>');
     if (cur.phase === 'secret') return pxRow(!cur.open ? pxBtn('open', esc(pname(cur.drawer)) + 'です。見る！', 'big main pulse') : (cur.truth ? pxBtn('re', '別の<span class="sub">お題</span>', 'white small') : '') + pxBtn('talk', '話す！<span class="sub">' + US_TALK + '秒</span>', 'big main grow'));
     if (cur.phase === 'talk') return pxRow(pxBtn('done', '話し終わった！', 'big main'));
     if (cur.phase === 'vote') return pxRow(pxBtn('ans', '答え合わせ！', 'big main pink pulse'));
@@ -13206,8 +13426,8 @@ PMX.uso = {
     const cur = G.cur;
     if (pxBusy) return;
     if (a === 'end') { finishGame(); return; }
-    const pick = () => { const skip = cur.q ? [cur.q] : []; const pool = usPool(G.lvl).filter(q => !skip.includes(q.id)); const q = pmDraw(pool, 1)[0]; pmUse(q.id); cur.q = q.id; };
-    if (a === 'draw' && cur.phase === 'before' && !pmLocked()) { pick(); cur.truth = Math.random() < 0.5; cur.open = false; cur.phase = 'secret'; tryUse('uso'); SE.play('deal'); pxSave(); return; }
+    const pick = usPick;
+    if (a === 'draw' && cur.phase === 'before' && !pmLocked()) { pick(); cur.rv = {}; cur.truth = Math.random() < 0.5; cur.open = false; cur.phase = 'secret'; tryUse('uso'); SE.play('deal'); pxSave(); return; }
     if (a === 'open' && cur.phase === 'secret') { cur.open = true; SE.play('flip'); vibrate(15); pxSave(); return; }
     if (a === 're' && cur.phase === 'secret' && cur.open) { pick(); SE.play('cdShuffle'); pxSave(); return; }
     if (a === 'talk' && cur.phase === 'secret' && cur.open) { cur.phase = 'talk'; cur.t0 = Date.now(); G.players[cur.drawer].told++; SE.play('go'); pxSave(); return; }
@@ -13215,7 +13435,12 @@ PMX.uso = {
     if (a === 'ans' && cur.phase === 'vote') {
       SE.play('swDrum');
       $('dock').innerHTML = pxRow('<div class="dock-note">答えは…</div>');
-      pxLater(() => { cur.phase = 'ans'; cur.sel = []; pxSave(); SE.play(cur.truth ? 'fanfare' : 'swShow'); vibrate(40); }, 1300);
+      pxLater(() => {
+        cur.phase = 'ans';
+        const rv = usVotes();
+        cur.sel = pxOthers(cur.drawer).filter(p => p in rv && rv[p] !== cur.truth);   /* who voted wrong on their own phone; the rest by the thumbs at the table */
+        pxSave(); SE.play(cur.truth ? 'fanfare' : 'swShow'); vibrate(40);
+      }, 1300);
       return;
     }
     if (a === 'sel' && cur.phase === 'ans') {
@@ -13253,7 +13478,9 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
-  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。')
+  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
+  (ROOM_ON ? gCard('みんなのスマホで参加（プレミアム）', '<p>この4つのモードは、<b>友だちが自分のスマホで参加</b>できます。ゲーム画面の右上の「参加」を押すと、QRコードと4文字の合言葉が出ます。友だちはカメラで読むか、タイトル画面の「参加」で合言葉を入れて、自分の名前を選ぶだけ。<b>参加は無料</b>です。</p>' +
+    '<p>お題・ミッション・返信の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
 });
 
 /* =====================================================================
@@ -13453,6 +13680,641 @@ PMX.koi = {
     return pxStat('グランプリ（♡いちばん）', most('medal')) + pxStat('もうひと声に答えた', most('more')) + (list ? '<div class="ko-log"><h3>今夜の質問</h3><ol>' + list + '</ol></div>' : '');
   },
 };
+
+/* =====================================================================
+   みんなのスマホで参加（部屋）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
+   - 親（プレミアムの人）のスマホがゲームを進める。参加した人のスマホには、その人だけの画面（お題・ミッション・返信の入力・投票）が出る
+   - 部屋はサーバー（server/src/room.js）が中継するだけ。作れるのはプレミアムが有効な端末だけ（サーバーで確認）。参加は無料
+   - 親が送るのは決まった形のデータだけ。参加した側はそれを自分の画面の部品で描く（文字は全部 esc）。届いたものは全部たしかめてから使う
+   - スマホを持っていない人は、今までどおり親のスマホを回して遊ぶ（roomLocal に残る）
+   ===================================================================== */
+const ROOM_ON = IS_APP;
+const ROOM_API = 'https://sakego.shugodensetsu.workers.dev/v1/room/';
+const ROOM_WS = 'wss://sakego.shugodensetsu.workers.dev/v1/room/ws';
+const ROOM_KEY = 'sakego-room', GUEST_KEY = 'sakego-guest';
+const ROOM_MODES = ['gaka', 'reply', 'mission', 'uso'];
+const ROOM_RE = /^[2-9ACDEFGHJKMNPQRTUVWXY]{4}$/;
+const ROOM_URL = r => 'https://shugodensetsu.github.io/?r=' + r;
+const PHONE_SVG = '<svg class="rm-ph" viewBox="0 0 20 28" aria-hidden="true"><rect x="2" y="1.5" width="16" height="25" rx="3.5" fill="#fff" stroke="#150733" stroke-width="2.2"/><rect x="5" y="5" width="10" height="15" rx="1.5" fill="#35e0ff"/><circle cx="10" cy="23" r="1.4" fill="#150733"/></svg>';
+const roomMode = () => !!(G && !G.done && ROOM_MODES.includes(G.mode));
+const okInt = (x, lo, hi) => Number.isInteger(x) && x >= lo && x <= hi;
+
+/* ---------- 親（部屋を作った人） ---------- */
+/* room = { code, t, exp, gs: { g: { on, p, nm } }, gid, open, ws, sent: { g: json }, fails, busy, err } */
+let room = null;
+function roomLoad() {
+  if (!ROOM_ON) return;
+  try {
+    const s = JSON.parse(localStorage.getItem(ROOM_KEY) || 'null');
+    if (s && ROOM_RE.test(s.code) && typeof s.t === 'string' && s.exp > Date.now()) {
+      const gs = {};
+      Object.keys(s.gs || {}).forEach(g => { const x = s.gs[g]; if (okInt(Number(g), 1, 99) && x) gs[g] = { on: false, p: okInt(x.p, 0, 7) ? x.p : null, nm: typeof x.nm === 'string' ? x.nm : '' }; });
+      room = { code: s.code, t: s.t, exp: s.exp, gs, gid: s.gid || 0, open: false, ws: null, sent: {}, fails: 0 };
+    }
+  } catch (_) { room = null; }
+}
+function roomSave() {
+  if (!room) { try { localStorage.removeItem(ROOM_KEY); } catch (_) { /* ignore */ } return; }
+  const gs = {};
+  Object.keys(room.gs).forEach(g => { gs[g] = { p: room.gs[g].p, nm: room.gs[g].nm }; });
+  lsSet(ROOM_KEY, JSON.stringify({ code: room.code, t: room.t, exp: room.exp, gid: room.gid, gs }));
+}
+const roomLive = () => !!room && room.exp > Date.now();
+/* the seats belong to one game: a new game keeps the guests whose names are still among the players */
+function roomSeats() {
+  if (!roomLive() || !G || room.gid === G.gid) return;
+  room.gid = G.gid;
+  Object.values(room.gs).forEach(x => { const p = G.players.findIndex(pl => pl.name === x.nm); x.p = p >= 0 ? p : null; });
+  Object.values(room.gs).forEach((x, i, all) => { if (x.p != null && all.findIndex(y => y.p === x.p) !== i) x.p = null; });
+  roomSave();
+}
+function roomGuestOf(p) {
+  if (!roomLive() || !roomMode()) return null;
+  roomSeats();
+  const g = Object.keys(room.gs).find(k => room.gs[k].p === p);
+  return g == null ? null : Number(g);
+}
+/* this player plays on their own phone (online or for a moment out of signal) */
+const roomHas = p => roomGuestOf(p) != null;
+const roomOnline = p => { const g = roomGuestOf(p); return g != null && !!room.gs[g].on; };
+const roomLocal = ps => ps.filter(p => !roomHas(p));
+
+function roomSend(o) { if (room && room.ws && room.ws.readyState === 1) { try { room.ws.send(JSON.stringify(o)); return true; } catch (_) { /* ignore */ } } return false; }
+function roomConnect() {
+  if (!roomLive() || room.ws) return;
+  let ws;
+  try { ws = new WebSocket(ROOM_WS + '?r=' + room.code + '&t=' + encodeURIComponent(room.t)); } catch (_) { return; }
+  room.ws = ws; room.err = '';
+  ws.onmessage = e => { let o; try { o = JSON.parse(e.data); } catch (_) { return; } if (room && room.ws === ws && o && typeof o === 'object') roomHostMsg(o); };
+  ws.onclose = () => {
+    if (!room || room.ws !== ws) return;
+    room.ws = null;
+    Object.values(room.gs).forEach(x => { x.on = false; });
+    roomPanel(); roomBadge();
+    if (!roomLive()) { roomEnd(); return; }
+    room.fails++;
+    if (room.fails > 6 && navigator.onLine !== false) { room.err = 'つながりません。電波を確かめて「つなぎ直す」を押してね'; roomPanel(); return; }
+    setTimeout(() => { if (room && !room.ws) roomConnect(); }, Math.min(15000, 800 * 2 ** Math.min(room.fails, 5)));
+  };
+}
+function roomHostMsg(o) {
+  if (o.t === 'hi') {
+    room.fails = 0; room.err = '';
+    const live = new Set();
+    (Array.isArray(o.guests) ? o.guests : []).forEach(x => {
+      if (!x || !okInt(x.g, 1, 99)) return;
+      live.add(String(x.g));
+      if (!room.gs[x.g]) room.gs[x.g] = { on: false, p: null, nm: '' };
+      room.gs[x.g].on = !!x.on;
+    });
+    Object.keys(room.gs).forEach(g => { if (!live.has(g)) delete room.gs[g]; });
+    room.sent = {};
+    if (!$('roomOv').hidden) roomSend({ t: 'open', v: true });
+    roomSave(); roomPanel(); roomBadge(); roomSync();
+    return;
+  }
+  if (o.t === 'join' || o.t === 'on') {
+    if (!okInt(o.g, 1, 99)) return;
+    if (!room.gs[o.g]) room.gs[o.g] = { on: true, p: null, nm: '' };
+    room.gs[o.g].on = true;
+    delete room.sent[o.g];
+    if (o.t === 'join') SE.play('pop');
+    roomSave(); roomPanel(); roomBadge(); roomSync();
+    if (screen === 'game' && isPM()) renderPM('keep');
+    return;
+  }
+  if (o.t === 'off') {
+    if (!okInt(o.g, 1, 99) || !room.gs[o.g]) return;
+    if (o.gone) delete room.gs[o.g]; else room.gs[o.g].on = false;
+    delete room.sent[o.g];
+    roomSave(); roomPanel(); roomBadge();
+    if (screen === 'game' && isPM()) renderPM('keep');
+    return;
+  }
+  if (o.t === 'm' && okInt(o.g, 1, 99) && room.gs[o.g]) { roomFromGuest(o.g, o.m); return; }
+  if (o.t === 'bye') roomEnd(o.why === 'closed' ? '' : '部屋の時間が終わりました');
+}
+function roomFromGuest(g, m) {
+  if (!m || typeof m !== 'object') return;
+  const x = room.gs[g];
+  if (m.k === 'pick') {
+    if (!roomMode() || !okInt(m.p, 0, G.players.length - 1)) return;
+    roomSeats();
+    const other = Object.keys(room.gs).find(k => Number(k) !== g && room.gs[k].p === m.p);
+    if (other != null) { delete room.sent[g]; roomSync(); return; }
+    x.p = m.p; x.nm = pname(m.p);
+    delete room.sent[g];
+    SE.play('select');
+    roomSave(); roomPanel(); roomSync();
+    if (screen === 'game') renderPM('keep');
+    return;
+  }
+  if (m.k === 'unpick') { x.p = null; x.nm = ''; delete room.sent[g]; roomSave(); roomPanel(); roomSync(); if (screen === 'game' && isPM()) renderPM('keep'); return; }
+  if (m.k === 'act' && typeof m.a === 'string' && m.a.length <= 12 && roomMode() && screen === 'game' && x.p != null) {
+    roomSeats();
+    if (x.p == null || x.p >= G.players.length) return;
+    const X = PMX[G.mode];
+    if (X && X.ract && !pxBusy) X.ract(x.p, m);
+  }
+}
+/* what each guest's phone shows: sent when it changes (cheap to call after every render) */
+function roomViewFor(g) {
+  const x = room.gs[g];
+  if (!roomMode() || screen !== 'game') return { k: 'idle', done: !!(G && G.done && G.mode && ROOM_MODES.includes(G.mode)) };
+  roomSeats();
+  if (x.p == null || x.p >= G.players.length) {
+    const taken = Object.keys(room.gs).filter(k => Number(k) !== g && room.gs[k].p != null).map(k => room.gs[k].p);
+    return { k: 'who', ps: G.players.map(pl => pl.name), taken };
+  }
+  const X = PMX[G.mode];
+  return { k: 'view', p: x.p, nm: pname(x.p), mode: G.mode, title: PM[G.mode].title, r: G.turn + 1, b: X && X.remote ? X.remote(x.p) : { v: 'watch' } };
+}
+function roomSync() {
+  if (!roomLive() || !room.ws || room.ws.readyState !== 1) return;
+  Object.keys(room.gs).forEach(g => {
+    if (!room.gs[g].on) return;
+    const v = roomViewFor(Number(g)), j = JSON.stringify(v);
+    if (room.sent[g] === j) return;
+    if (roomSend({ t: 'to', g: [Number(g)], m: v })) room.sent[g] = j;
+  });
+}
+function roomEnd(msg) {
+  if (room && room.ws) { const ws = room.ws; room.ws = null; try { ws.close(); } catch (_) { /* ignore */ } }
+  room = null; roomSave();
+  if (!$('roomOv').hidden) closeOv('roomOv');
+  roomBadge();
+  if (msg) telop(msg, 'white sm', 1600);
+  if (screen === 'game' && isPM()) renderPM('keep');
+}
+async function roomMake() {
+  const st = plusState();
+  if (!st || !st.code || !st.dev || !plusOn()) { room = null; roomPanelErr('部屋を作れるのは、プレミアムが有効なスマホだけです'); return; }
+  roomPanelErr('', true);
+  let res, j = null;
+  try {
+    res = await fetch(ROOM_API + 'new', { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ code: st.code, dev: st.dev }) });
+    j = await res.json().catch(() => null);
+  } catch (_) { roomPanelErr('つながりません。電波を確かめてね'); return; }
+  if (!res.ok || !j || !ROOM_RE.test(j.room) || typeof j.t !== 'string') {
+    roomPanelErr(res.status === 403 ? 'プレミアムを確認できませんでした。プレミアム画面を開いて確かめてね' : res.status === 429 ? '少し待ってから、もう一度ためしてね' : '部屋を作れませんでした。少し待ってから、もう一度ためしてね');
+    return;
+  }
+  room = { code: j.room, t: j.t, exp: Date.now() + (Number(j.life) || 6 * 3600e3) - 60e3, gs: {}, gid: G ? G.gid : 0, open: true, ws: null, sent: {}, fails: 0 };
+  roomSave(); roomConnect(); roomPanel(); roomBadge();
+  SE.play('ticket');
+}
+/* the panel: QR + 合言葉, who joined as whom */
+let roomMsg = '', roomWait = false;
+function roomPanelErr(msg, wait) { roomMsg = msg; roomWait = !!wait; roomPanel(); }
+function openRoom() {
+  if (!ROOM_ON) return;
+  roomMsg = ''; roomWait = false;
+  openOv('roomOv'); SE.play('pop');
+  if (!roomLive()) roomMake(); else { roomConnect(); roomSend({ t: 'open', v: true }); }
+  roomPanel();
+}
+function closeRoom() {
+  roomSend({ t: 'open', v: false });
+  closeOv('roomOv'); SE.play('tap');
+  if (screen === 'game' && isPM()) renderPM('keep');
+}
+function roomPanel() {
+  const box = $('roomBox');
+  if (!box || $('roomOv').hidden) return;
+  if (!roomLive()) {
+    box.innerHTML = '<h2 id="roomTitle">' + PHONE_SVG + 'みんなのスマホで参加</h2>' +
+      '<p class="rm-lead">' + (roomWait ? '部屋を作っています…' : esc(roomMsg || '')) + '</p>' +
+      '<div class="dialog-acts">' + (roomWait ? '' : '<button type="button" class="pbtn cyan" data-rm="make">もう一度ためす</button>') + '<button type="button" class="pbtn white" data-rm="close">閉じる</button></div>';
+    return;
+  }
+  const n = G && roomMode() ? G.players.length : 0;
+  const rows = [];
+  for (let p = 0; p < n; p++) {
+    const g = roomGuestOf(p), x = g != null ? room.gs[g] : null;
+    rows.push('<li style="--p:' + pc(p) + '"><b>' + esc(pname(p)) + '</b><span class="rm-st' + (x ? (x.on ? ' on' : ' off') : '') + '">' + (x ? (x.on ? '自分のスマホ' : '電波なし') : '親のスマホ') + '</span>' +
+      (x ? '<button type="button" class="rm-x" data-rm="unseat" data-g="' + g + '" aria-label="' + esc(pname(p)) + 'を親のスマホにもどす">×</button>' : '') + '</li>');
+  }
+  const loose = Object.keys(room.gs).filter(g => room.gs[g].p == null || (G && room.gs[g].p >= n));
+  const lose = loose.length ? '<p class="rm-loose">名前を選んでいる人：' + loose.length + '人' + loose.map(g => '<button type="button" class="rm-x" data-rm="kick" data-g="' + g + '" aria-label="この人を部屋から外す">×</button>').join('') + '</p>' : '';
+  box.innerHTML = '<h2 id="roomTitle">' + PHONE_SVG + 'みんなのスマホで参加</h2>' +
+    '<div class="rm-join"><div class="rm-qr">' + qrSVG(ROOM_URL(room.code)) + '</div><div class="rm-code"><small>合言葉</small><b>' + esc(room.code) + '</b>' +
+    '<small>カメラでQRを読むか、タイトル画面の「参加」で合言葉を入れてね。参加は無料</small></div></div>' +
+    (room.err ? '<p class="rm-err">' + esc(room.err) + '</p>' : !room.ws || room.ws.readyState !== 1 ? '<p class="rm-err">つないでいます…</p>' : '') +
+    (n ? '<ul class="rm-list' + (n > 4 ? ' two' : '') + '">' + rows.join('') + '</ul>' : '<p class="rm-lead">ゲーム中に、参加した人が自分の名前を選びます</p>') + lose +
+    '<div class="dialog-acts">' + (room.err ? '<button type="button" class="pbtn cyan small" data-rm="retry">つなぎ直す</button>' : '<button type="button" class="pbtn white small" data-rm="end">部屋を終わる</button>') +
+    '<button type="button" class="pbtn grow" data-rm="close">OK</button></div>';
+}
+function roomAct(a, el) {
+  if (a === 'close') { closeRoom(); return; }
+  if (a === 'make') { roomMake(); return; }
+  if (a === 'retry') { if (room) { room.fails = 0; room.err = ''; roomConnect(); roomPanel(); } return; }
+  if (a === 'end') { roomSend({ t: 'close' }); SE.play('tap'); roomEnd(); return; }
+  const g = Number(el && el.dataset.g);
+  if (!room || !room.gs[g]) return;
+  if (a === 'unseat') { room.gs[g].p = null; room.gs[g].nm = ''; delete room.sent[g]; roomSave(); roomPanel(); roomSync(); SE.play('tap'); return; }
+  if (a === 'kick') { roomSend({ t: 'kick', g }); delete room.gs[g]; roomSave(); roomPanel(); SE.play('tap'); }
+}
+/* the button in the game's top bar: only in the four modes, for a phone with premium (or a room already made) */
+function roomBadge() {
+  const b = $('roomBtn');
+  if (!b) return;
+  const show = ROOM_ON && screen === 'game' && roomMode() && (plusOn() || roomLive());
+  b.hidden = !show;
+  if (!show) return;
+  const on = roomLive() ? Object.values(room.gs).filter(x => x.on && x.p != null).length : 0;
+  b.innerHTML = PHONE_SVG + (on ? '<b>' + on + '</b>' : '参加');
+  b.setAttribute('aria-label', 'みんなのスマホで参加' + (on ? '（' + on + '人）' : ''));
+}
+
+/* ---------- 参加した人のスマホ ---------- */
+/* guest = { r, k, g, ws, st: 'conn'|'on'|'end'|'no', host, msg, v (the last thing the host sent), tries, was } */
+let guest = null;
+function guestSave() {
+  if (!guest || !guest.k) { try { localStorage.removeItem(GUEST_KEY); } catch (_) { /* ignore */ } return; }
+  lsSet(GUEST_KEY, JSON.stringify({ r: guest.r, k: guest.k, exp: guest.exp || Date.now() + 6 * 3600e3 }));
+}
+function guestSaved() {
+  try { const s = JSON.parse(localStorage.getItem(GUEST_KEY) || 'null'); return s && ROOM_RE.test(s.r) && typeof s.k === 'string' && s.exp > Date.now() ? s : null; } catch (_) { return null; }
+}
+function guestStart(r) {
+  if (!ROOM_ON || !ROOM_RE.test(r)) return;
+  const s = guestSaved();
+  guest = { r, k: s && s.r === r ? s.k : '', exp: s && s.r === r ? s.exp : 0, g: 0, ws: null, st: 'conn', host: true, v: null, tries: 0, was: false };
+  closeAllOverlays();
+  showScreen('guest');
+  guestConnect();
+}
+function guestConnect() {
+  if (!guest || guest.ws) return;
+  let ws;
+  try { ws = new WebSocket(ROOM_WS + '?r=' + guest.r + (guest.k ? '&t=' + encodeURIComponent(guest.k) : '')); } catch (_) { guest.st = 'no'; renderGuest(); return; }
+  guest.ws = ws;
+  ws.onmessage = e => { let o; try { o = JSON.parse(e.data); } catch (_) { return; } if (guest && guest.ws === ws && o && typeof o === 'object') guestMsg(o); };
+  ws.onclose = () => {
+    if (!guest || guest.ws !== ws) return;
+    guest.ws = null;
+    if (guest.st === 'end') return;
+    if (!guest.was) {
+      /* never got in: a key from an earlier visit may be stale (kicked, room over); try once more without it */
+      if (guest.k && guest.tries < 1) { guest.tries++; guest.k = ''; guestSave(); guestConnect(); return; }
+      guest.st = 'no'; renderGuest(); return;
+    }
+    guest.st = 'conn'; renderGuest();
+    guest.tries++;
+    setTimeout(() => { if (guest && !guest.ws && guest.st !== 'end') guestConnect(); }, Math.min(15000, 800 * 2 ** Math.min(guest.tries, 5)));
+  };
+}
+function guestMsg(o) {
+  if (o.t === 'hi') {
+    guest.was = true; guest.tries = 0; guest.st = 'on'; guest.host = !!o.host;
+    if (okInt(o.g, 1, 99)) guest.g = o.g;
+    if (typeof o.k === 'string' && o.k.length < 64) guest.k = o.k;
+    if (Number.isFinite(o.exp)) guest.exp = Math.min(o.exp, Date.now() + 6 * 3600e3);
+    guestSave(); renderGuest();
+    return;
+  }
+  if (o.t === 'host') { guest.host = !!o.on; renderGuest(); return; }
+  if (o.t === 'bye') {
+    guest.st = 'end'; guest.msg = o.why === 'kicked' ? '親のスマホで部屋から外されました' : o.why === 'closed' ? '親が部屋を終わりにしました' : '部屋の時間が終わりました';
+    guest.k = ''; guestSave(); renderGuest();
+    return;
+  }
+  if (o.t === 'm' && o.m && typeof o.m === 'object') {
+    const old = guest.v;
+    guest.v = o.m;
+    guestNotice(old, o.m);
+    renderGuest();
+  }
+}
+function guestSend(m) { if (guest && guest.ws && guest.ws.readyState === 1) { try { guest.ws.send(JSON.stringify({ t: 'm', m })); return true; } catch (_) { /* ignore */ } } return false; }
+function guestLeave() {
+  if (guest && guest.ws) { const ws = guest.ws; guest.ws = null; try { ws.close(); } catch (_) { /* ignore */ } }
+  guest = null; try { localStorage.removeItem(GUEST_KEY); } catch (_) { /* ignore */ }
+  showScreen('title');
+}
+/* a buzz when something new is for this phone (a secret, a turn, a question) */
+function guestNotice(old, v) {
+  const b = v.k === 'view' && v.b && typeof v.b === 'object' ? v.b : null, ob = old && old.k === 'view' && old.b ? old.b : null;
+  if (!b) return;
+  const sig = x => (x ? [x.v, x.ph, x.w, x.f, x.t, x.turn, x.ask && 1, x.st, x.role].join('|') : '');
+  if (sig(b) !== sig(ob)) { vibrate(20); SE.play('pop'); }
+}
+const gStr = (s, max) => (typeof s === 'string' ? s.slice(0, max || 200) : '');
+function renderGuest() {
+  const box = $('gsBox');
+  if (!box || !guest) return;
+  const v = guest.v && typeof guest.v === 'object' ? guest.v : null;
+  const me = v && v.k === 'view' && okInt(v.p, 0, 7) ? v : null;
+  const top = '<div class="gs-top"><span class="gs-room">' + PHONE_SVG + '部屋 <b>' + esc(guest.r) + '</b></span>' +
+    (me ? '<span class="gs-me" style="--p:' + pc(me.p) + '">' + esc(gStr(me.nm, 24)) + '</span>' : '') +
+    '<button type="button" class="pbtn white tiny" data-gs="leave">抜ける</button></div>';
+  let body;
+  if (guest.st === 'no') body = gsMsg('入れませんでした', '合言葉が合っているか、親の画面で「参加」の画面が開いているか確かめてね', '<button type="button" class="pbtn big main" data-gs="again">もう一度ためす</button>');
+  else if (guest.st === 'end') body = gsMsg('おしまい', esc(guest.msg || ''), '<button type="button" class="pbtn big main" data-gs="leave">タイトルへ</button>');
+  else if (guest.st === 'conn' || !v) body = gsMsg('つないでいます…', '親のスマホとつないでいます');
+  else if (!guest.host) body = gsMsg('親のスマホを待っています', '親のスマホの電波がもどると、つづきから遊べます');
+  else if (v.k === 'idle') body = gsMsg(v.done ? '結果発表！' : 'ゲームを待っています', v.done ? '結果は親のスマホで見てね。次のゲームも、このまま参加できます' : '親のスマホで、ニセ画伯・返信選手権・しれっとミッション・ウソかホントかを始めると、ここに出ます');
+  else if (v.k === 'who') {
+    const ps = Array.isArray(v.ps) ? v.ps.slice(0, 8) : [], taken = Array.isArray(v.taken) ? v.taken : [];
+    body = '<div class="gs-body"><p class="pm-lead ol">あなたはだれ？</p><p class="pm-note">自分の名前をタップ</p><div class="pm-chips' + (ps.length > 4 ? ' two' : '') + '">' +
+      ps.map((nm, i) => '<button type="button" class="pm-chip" data-gs="pick" data-p="' + i + '" style="--p:' + pc(i) + '"' + (taken.includes(i) ? ' disabled' : '') + '>' + esc(gStr(nm, 24)) + '</button>').join('') + '</div>' +
+      '<p class="pm-note sm">スマホを持っていない人は、親のスマホで遊べます</p></div>';
+  } else if (me) body = '<div class="gs-head"><span>' + esc(gStr(me.title, 20)) + '</span><small>' + (okInt(me.r, 1, 999) ? me.r + '回目' : '') + '</small></div>' + gsView(me.b && typeof me.b === 'object' ? me.b : {}, me.p);
+  else body = gsMsg('つないでいます…', '');
+  box.innerHTML = top + body;
+  guestMount();
+  fitScreen();   /* the last resort for an odd screen: zoomed out a little, never scrolled */
+}
+const gsMsg = (h, note, btn) => '<div class="gs-body"><p class="pm-lead ol">' + h + '</p>' + (note ? '<p class="pm-note">' + note + '</p>' : '') + (btn || '') + '</div>';
+const gsBtn = (a, label, cls, extra) => '<button type="button" class="pbtn ' + (cls || 'big main') + '" data-gs="' + a + '"' + (extra || '') + '>' + label + '</button>';
+/* the strokes the host sends: points 0-1000, a player's colour */
+function gsStrokes(s) {
+  if (!Array.isArray(s)) return [];
+  return s.slice(0, 40).filter(x => x && okInt(x.p, 0, 7) && Array.isArray(x.d) && x.d.length >= 2 && x.d.length <= 2000 && x.d.length % 2 === 0 && x.d.every(n => okInt(n, 0, 1000))).map(x => ({ p: x.p, d: x.d }));
+}
+function gsView(b, p) {
+  const watch = (h, note) => gsMsg(h, note);
+  if (b.v === 'gk') {
+    const top = b.f ? '<p class="gk-fake ol">あなたは <b>ニセ画伯</b>！</p><p class="gk-genre">ジャンル：<b>' + esc(gStr(b.g, 20)) + '</b>（お題はヒミツ）</p>'
+      : '<p class="gk-genre">ジャンル：<b>' + esc(gStr(b.g, 20)) + '</b></p><p class="gk-word sm">' + esc(gStr(b.w, 20)) + '</p>';
+    const end = b.ph === 'end' ? '<p class="gk-genre">お題は <b>' + esc(gStr(b.w, 20)) + '</b></p>' : '';
+    const say = b.ph === 'draw' ? (b.turn ? '<b>あなたの番！</b> 1筆描いてね（指を離したら交代）' : esc(gStr(b.who, 24)) + ' が描く番') : b.ph === 'vote' ? 'せーので、ニセ画伯だと思う人を指さし！' : b.ph === 'guess' ? 'ニセ画伯の逆転チャンス！' : b.ph === 'end' ? '結果は親のスマホで！' : 'みんながお題を見ています';
+    return '<div class="gs-body gk-gs">' + (b.ph === 'end' ? end : top) + '<div class="gk-wrap gs-cv" id="gsWrap"><canvas class="gk-cv' + (b.turn ? ' live' : '') + '" id="gsCv" aria-label="みんなの絵"></canvas></div><p class="gs-say">' + say + '</p></div>';
+  }
+  if (b.v === 'rp') {
+    const msg = '<div class="gs-msg"><span class="rp-av sm" style="--c:#ffc94d">' + esc([...gStr(b.s, 20)][0] || '?') + '</span><span><b>' + esc(gStr(b.s, 20)) + '</b><span class="rp-bub">' + esc(gStr(b.m, 80)) + '</span></span></div>';
+    if (b.st === 'write') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-note">あなたなら、なんて返す？ <b>だれの返信かは最後までヒミツ</b></p>' +
+      '<div class="rp-input"><textarea id="gsIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea></div>' +
+      '<div class="dock-row">' + gsBtn('rpskip', '既読<span class="sub">スルーする</span>', 'white small') + gsBtn('rpsend', '送信', 'big main grow') + '</div></div>';
+    if (b.st === 'sent') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-lead ol">送信しました</p><p class="gs-mine">' + (b.mine == null ? '（既読スルー）' : esc(gStr(b.mine, 80))) + '</p><p class="pm-note">みんなの返信を待っています</p></div>';
+    if (b.st === 'local') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-note">親のスマホが回ってきたら、そこで書いてね</p></div>';
+    if (b.st === 'show') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-lead ol">発表中！</p><p class="pm-note">親のスマホを見てね。いちばんの返信を、せーので指さし</p>' + (b.mine !== undefined ? '<p class="gs-mine">あなたの返信：' + (b.mine == null ? '（既読スルー）' : esc(gStr(b.mine, 80))) + '</p>' : '') + '</div>';
+    return '<div class="gs-body rp-gs">' + (b.m ? msg : '') + '<p class="pm-note">' + (b.m ? 'メッセージが届いたよ。親のスマホの「返信を書く」を待ってね' : 'メッセージが届くのを待っています') + '</p></div>';
+  }
+  if (b.v === 'ms') {
+    if (b.ask) return '<div class="gs-body"><p class="px-for">' + esc(gStr(b.ask, 24)) + ' があなたのミッションを予想したよ</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p>' +
+      '<div class="dock-row">' + gsBtn('msng', 'ハズレ', 'white big') + gsBtn('msok', '当たってた', 'big main pink grow') + '</div></div>';
+    return '<div class="gs-body"><p class="px-for">あなたのミッション</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p>' +
+      '<p class="pm-note">' + (b.ph === 'claim' ? 'みんなが判定中…' : 'ふつうに飲んで話しながら、<b>しれっと</b>達成しよう。<br>達成したら、親のスマホで「達成した！」') + '</p>' +
+      (okInt(b.re, 1, 120) ? gsBtn('msre', 'ほかのミッションにする', 'white small', ' id="gsRe"') : '') + '</div>';
+  }
+  if (b.v === 'us') {
+    const topic = '<p class="us-topic">' + esc(gStr(b.t, 60)) + '</p>';
+    if (b.role === 'talk') {
+      if (b.ph === 'secret') return '<div class="gs-body"><p class="px-for">あなたの番！ お題は</p>' + topic + '<p class="us-order ' + (b.tr ? 'true' : 'lie') + ' ol">' + (b.tr ? 'ホントの話をして！' : 'ウソの話をして！') + '</p>' +
+        '<p class="pm-note">' + (b.tr ? '本当にあったことを、そのまま話そう' : '本当っぽい作り話で、みんなをだまそう') + '</p><div class="dock-row">' + (b.tr ? gsBtn('usre', '別の<span class="sub">お題</span>', 'white small') : '') + gsBtn('ustalk', '話す！', 'big main grow') + '</div></div>';
+      if (b.ph === 'talk') return '<div class="gs-body"><p class="px-for">話して！（' + (b.tr ? 'ホント' : 'ウソ') + 'の話）</p>' + topic + '<p class="us-clock" id="gsClock">' + (okInt(b.left, 0, 99) ? b.left : '') + '</p><p class="pm-note">話し終わったら、親のスマホで「話し終わった！」</p></div>';
+      return '<div class="gs-body">' + topic + '<p class="pm-lead ol">' + (b.ph === 'ans' ? '答え合わせ！' : 'みんなが投票中…') + '</p></div>';
+    }
+    const voted = b.vote === true ? 'up' : b.vote === false ? 'down' : '';
+    if (b.ph === 'ans') return '<div class="gs-body">' + topic + '<p class="us-ans ' + (b.tr ? 'true' : 'lie') + ' ol">' + (b.tr ? 'ホント！' : 'ウソ！') + '</p><p class="pm-lead ol">' + (voted ? (b.hit ? '当たり！' : 'ハズレ… 1DON') : '投票しなかった') + '</p></div>';
+    return '<div class="gs-body">' + (b.who ? '<p class="px-for">' + esc(gStr(b.who, 24)) + ' のお話</p>' : '') + topic + (b.ph === 'talk' && okInt(b.left, 0, 99) ? '<p class="us-clock sm" id="gsClock">' + b.left + '</p>' : '') +
+      '<p class="pm-lead ol">' + (b.ph === 'secret' ? 'お題を見ています…' : 'その話、ホント？ ウソ？') + '</p>' +
+      (b.ph === 'secret' ? '' : '<div class="us-thumbs big gs-vote"><button type="button" class="' + (voted === 'up' ? 'sel' : '') + '" data-gs="usup" aria-pressed="' + (voted === 'up') + '">' + THUMB(true) + '<b>ホント</b></button><button type="button" class="' + (voted === 'down' ? 'sel' : '') + '" data-gs="usdown" aria-pressed="' + (voted === 'down') + '">' + THUMB(false) + '<b>ウソ</b></button></div>' +
+        '<p class="pm-note">' + (voted ? '投票しました。答え合わせまで変えられます' : '話を聞いたら、こっそり投票') + '</p>') + '</div>';
+  }
+  if (b.v === 'local') return watch('親のスマホで', '今は親のスマホが回ってくるのを待ってね');
+  return watch('親のスマホを見てね', b.say ? esc(gStr(b.say, 60)) : '');
+}
+let gsTimer = 0;
+function guestMount() {
+  clearInterval(gsTimer);
+  const v = guest && guest.v && guest.v.k === 'view' ? guest.v : null, b = v && v.b ? v.b : {};
+  if (b.v === 'gk') gsCanvas(b);
+  if (b.v === 'us' && b.ph === 'talk' && okInt(b.left, 0, 99)) {
+    const end = Date.now() + b.left * 1000;
+    gsTimer = setInterval(() => { const el = $('gsClock'); if (!el) { clearInterval(gsTimer); return; } const l = Math.max(0, Math.ceil((end - Date.now()) / 1000)); el.textContent = l || '時間！'; if (!l) clearInterval(gsTimer); }, 250);
+  }
+  if (b.v === 'ms' && okInt(b.re, 1, 120)) setTimeout(() => { const r = $('gsRe'); if (r && guest && guest.v && guest.v.b === b) r.remove(); }, b.re * 1000);
+  const inp = $('gsIn');
+  if (inp) {
+    const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; };
+    inp.addEventListener('input', grow);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); guestAct('rpsend'); } });
+  }
+}
+function gsCanvas(b) {
+  const wrap = $('gsWrap'), cv = $('gsCv');
+  if (!wrap || !cv) return;
+  const strokes = gsStrokes(b.s);
+  requestAnimationFrame(() => {
+    const size = Math.max(120, Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight)));
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.style.width = cv.style.height = size + 'px';
+    cv.width = cv.height = Math.round(size * dpr);
+    gkPaint(cv, strokes);
+    if (!b.turn) return;
+    let live = null;
+    const at = e => { const r = cv.getBoundingClientRect(); return [Math.round(Math.max(0, Math.min(1000, (e.clientX - r.left) / r.width * 1000))), Math.round(Math.max(0, Math.min(1000, (e.clientY - r.top) / r.height * 1000)))]; };
+    cv.addEventListener('pointerdown', e => {
+      if (live || cv.dataset.sent) return;
+      e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+      live = { p: guest.v.p, d: at(e), id: e.pointerId };
+      gkPaint(cv, strokes, live);
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!live || e.pointerId !== live.id) return;
+      e.preventDefault();
+      const [px, py] = at(e), d = live.d;
+      if (Math.hypot(px - d[d.length - 2], py - d[d.length - 1]) < 5 || d.length >= 1000) return;
+      d.push(px, py); gkPaint(cv, strokes, live);
+    });
+    const end = e => {
+      if (!live || e.pointerId !== live.id) return;
+      const d = live.d; let len = 0;
+      for (let i = 2; i < d.length; i += 2) len += Math.hypot(d[i] - d[i - 2], d[i + 1] - d[i - 1]);
+      const st = live; live = null;
+      if (len < 14) { gkPaint(cv, strokes); telop('もう少し長く描いてね', 'white sm', 900); return; }
+      if (guestSend({ k: 'act', a: 'stroke', d: d.slice() })) { cv.dataset.sent = '1'; gkPaint(cv, strokes, st); SE.play('pop'); vibrate(12); }
+    };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+  });
+}
+function guestAct(a, el) {
+  if (!guest) return;
+  if (a === 'leave') { SE.play('tap'); guestLeave(); return; }
+  if (a === 'again') { guest.st = 'conn'; guest.tries = 0; renderGuest(); guestConnect(); return; }
+  if (a === 'pick') { const p = Number(el && el.dataset.p); if (okInt(p, 0, 7)) { guestSend({ k: 'pick', p }); SE.play('select'); } return; }
+  const act = (x, extra) => { if (guestSend(Object.assign({ k: 'act', a: x }, extra || {}))) SE.play('tap'); else telop('つながっていません', 'white sm', 1000); };
+  if (a === 'rpsend' || a === 'rpskip') {
+    const inp = $('gsIn'), txt = inp ? inp.value.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
+    if (a === 'rpsend' && !txt) { if (inp) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); } SE.play('boing'); return; }
+    act('reply', { txt: a === 'rpskip' ? null : txt });
+    return;
+  }
+  if (a === 'msre') { act('reroll'); return; }
+  if (a === 'msok' || a === 'msng') { act('ans', { ok: a === 'msok' }); return; }
+  if (a === 'usre') { act('re'); return; }
+  if (a === 'ustalk') { act('talk'); return; }
+  if (a === 'usup' || a === 'usdown') act('vote', { up: a === 'usup' });
+}
+
+/* 合言葉で参加（タイトル画面の「参加」） */
+function openJoin() {
+  if (!ROOM_ON) return;
+  const box = $('joinBox');
+  box.innerHTML = '<h2 id="joinTitle">' + PHONE_SVG + '友だちの部屋に参加</h2><p>親のスマホに出ている<b>4文字の合言葉</b>を入れてね。参加は無料です</p>' +
+    '<input id="joinIn" class="rm-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" enterkeyhint="go" aria-label="合言葉" placeholder="K7QP">' +
+    '<p class="rm-err" id="joinErr"></p><div class="dialog-acts"><button type="button" class="pbtn white" data-jn="close">やめる</button><button type="button" class="pbtn grow" data-jn="go">参加する</button></div>';
+  openOv('joinOv'); SE.play('pop');
+  const i = $('joinIn');
+  i.addEventListener('input', () => { i.value = i.value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 4); });
+  i.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) joinAct('go'); });
+  i.focus();
+}
+function joinAct(a) {
+  if (a === 'close') { closeOv('joinOv'); SE.play('tap'); return; }
+  const v = ($('joinIn') || {}).value || '';
+  if (!ROOM_RE.test(v)) { $('joinErr').textContent = '4文字の合言葉を入れてね（O と I は使っていません）'; SE.play('boing'); return; }
+  closeOv('joinOv'); SE.play('tap');
+  guestStart(v);
+}
+
+/* the host's pages: a stroke list a little lighter to send (every second point past 250) */
+const roomStrokes = ss => ss.map(s => ({ p: s.p, d: s.d.length > 500 ? s.d.filter((_, i) => (i >> 1) % 2 === 0 || i >= s.d.length - 2) : s.d }));
+
+function roomBoot() {
+  if (!ROOM_ON) return;
+  $('roomBox').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) roomAct(b.dataset.rm, b); });
+  $('joinBox').addEventListener('click', e => { const b = e.target.closest('[data-jn]'); if (b) joinAct(b.dataset.jn); });
+  $('gsBox').addEventListener('click', e => { const b = e.target.closest('[data-gs]'); if (b && !b.disabled) guestAct(b.dataset.gs, b); });
+  $('roomBtn').addEventListener('click', () => openRoom());
+  $('joinBtn').hidden = !PLUS_OPEN;   /* before premium is on sale nobody can make a room; a link from a QR code still works */
+  $('joinBtn').addEventListener('click', () => openJoin());
+  window.addEventListener('online', () => { if (room && !room.ws) { room.fails = 0; roomConnect(); } if (guest && !guest.ws && guest.st !== 'end' && guest.st !== 'no') guestConnect(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) return; if (room && !room.ws) roomConnect(); if (guest && !guest.ws && guest.st === 'conn') guestConnect(); });
+  roomLoad();
+  if (roomLive()) roomConnect(); else if (room) { room = null; roomSave(); }
+  /* a link from the host's QR code: ?r=K7QP */
+  let r = null;
+  try { r = (new URLSearchParams(location.search).get('r') || '').toUpperCase(); } catch (_) { r = null; }
+  if (r) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) { /* ignore */ } }
+  if (r && ROOM_RE.test(r)) { guestStart(r); return true; }
+  const s = guestSaved();
+  if (s) { guestStart(s.r); return true; }
+  return false;
+}
+
+/* ---------- QR code (model 2, byte mode, error correction M, versions 1-6: up to 106 bytes). For the join link ---------- */
+const QR_M = [null, [10, 1, 16], [16, 1, 28], [26, 1, 44], [18, 2, 32], [24, 2, 43], [16, 4, 27]];   // [ec per block, blocks, data per block]
+const QR_ALIGN = [null, [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34]];
+function qrEncode(text) {
+  const bytes = Array.from(new TextEncoder().encode(text));
+  let v = 1;
+  while (v <= 6 && QR_M[v][1] * QR_M[v][2] < bytes.length + 2) v++;
+  if (v > 6) return null;
+  const [ecn, nb, nd] = QR_M[v], cap = nb * nd;
+  /* data: mode 0100, 8-bit count, the bytes, up to 4 zero bits, then pad bytes */
+  const bits = [];
+  const put = (x, n) => { for (let i = n - 1; i >= 0; i--) bits.push((x >>> i) & 1); };
+  put(4, 4); put(bytes.length, 8); bytes.forEach(b => put(b, 8));
+  for (let i = 0; i < 4 && bits.length < cap * 8; i++) bits.push(0);
+  while (bits.length % 8) bits.push(0);
+  const data = [];
+  for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((a, b) => a * 2 + b, 0));
+  for (let k = 0; data.length < cap; k++) data.push(k % 2 ? 0x11 : 0xec);
+  /* Reed-Solomon over GF(256), polynomial 0x11d */
+  const EXP = new Array(512), LOG = new Array(256);
+  for (let i = 0, x = 1; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 256) x ^= 0x11d; }
+  for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  const mul = (a, b) => (a && b ? EXP[LOG[a] + LOG[b]] : 0);
+  let gen = [1];
+  for (let i = 0; i < ecn; i++) { const g = new Array(gen.length + 1).fill(0); gen.forEach((c, j) => { g[j] ^= c; g[j + 1] ^= mul(c, EXP[i]); }); gen = g; }
+  const blocks = [], ecs = [];
+  for (let b = 0; b < nb; b++) {
+    const d = data.slice(b * nd, (b + 1) * nd), r = d.concat(new Array(ecn).fill(0));
+    for (let i = 0; i < nd; i++) { const c = r[i]; if (c) for (let j = 1; j < gen.length; j++) r[i + j] ^= mul(gen[j], c); }
+    blocks.push(d); ecs.push(r.slice(nd));
+  }
+  const words = [];
+  for (let i = 0; i < nd; i++) blocks.forEach(d => words.push(d[i]));
+  for (let i = 0; i < ecn; i++) ecs.forEach(e => words.push(e[i]));
+  /* the matrix */
+  const n = 17 + 4 * v, M = Array.from({ length: n }, () => new Array(n).fill(0)), F = Array.from({ length: n }, () => new Array(n).fill(false));
+  const set = (r, c, on) => { M[r][c] = on ? 1 : 0; F[r][c] = true; };
+  const finder = (r0, c0) => {
+    for (let r = -1; r <= 7; r++) for (let c = -1; c <= 7; c++) {
+      const rr = r0 + r, cc = c0 + c;
+      if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
+      const on = r >= 0 && r <= 6 && c >= 0 && c <= 6 && (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
+      set(rr, cc, on);
+    }
+  };
+  finder(0, 0); finder(0, n - 7); finder(n - 7, 0);
+  for (let i = 8; i < n - 8; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+  const al = QR_ALIGN[v];
+  al.forEach(r => al.forEach(c => {
+    if (F[r][c]) return;
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) set(r + dr, c + dc, Math.max(Math.abs(dr), Math.abs(dc)) !== 1);
+  }));
+  set(4 * v + 9, 8, true);   // the dark module
+  for (let i = 0; i < 9; i++) { if (!F[8][i]) F[8][i] = true; if (!F[i][8]) F[i][8] = true; }
+  for (let i = 0; i < 8; i++) { F[8][n - 1 - i] = true; F[n - 1 - i][8] = true; }
+  /* data bits, two columns at a time from the bottom right, zigzag */
+  const dbits = [];
+  words.forEach(w => { for (let i = 7; i >= 0; i--) dbits.push((w >>> i) & 1); });
+  let k = 0;
+  for (let c = n - 1; c > 0; c -= 2) {
+    if (c === 6) c--;
+    const up = ((n - 1 - c) >> 1) % 2 === 0;
+    for (let i = 0; i < n; i++) {
+      const r = up ? n - 1 - i : i;
+      for (const cc of [c, c - 1]) if (!F[r][cc]) M[r][cc] = k < dbits.length ? dbits[k++] : 0;
+    }
+  }
+  const MASK = [(r, c) => (r + c) % 2 === 0, r => r % 2 === 0, (r, c) => c % 3 === 0, (r, c) => (r + c) % 3 === 0,
+    (r, c) => (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0, (r, c) => ((r * c) % 2) + ((r * c) % 3) === 0,
+    (r, c) => (((r * c) % 2) + ((r * c) % 3)) % 2 === 0, (r, c) => (((r + c) % 2) + ((r * c) % 3)) % 2 === 0];
+  const format = mask => {   // error correction M = 00
+    const d = mask; let b = d << 10;
+    for (let i = 14; i >= 10; i--) if (b & (1 << i)) b ^= 0x537 << (i - 10);
+    return ((d << 10) | b) ^ 0x5412;
+  };
+  const build = mask => {
+    const G = M.map((row, r) => row.map((x, c) => (F[r][c] ? x : x ^ (MASK[mask](r, c) ? 1 : 0))));
+    const f = format(mask), bit = i => (f >> i) & 1;
+    for (let i = 0; i <= 5; i++) G[i][8] = bit(i);
+    G[7][8] = bit(6); G[8][8] = bit(7); G[8][7] = bit(8);
+    for (let i = 9; i < 15; i++) G[8][14 - i] = bit(i);
+    for (let i = 0; i < 8; i++) G[8][n - 1 - i] = bit(i);
+    for (let i = 8; i < 15; i++) G[n - 15 + i][8] = bit(i);
+    G[4 * v + 9][8] = 1;
+    return G;
+  };
+  const penalty = G => {
+    let p = 0;
+    for (let pass = 0; pass < 2; pass++) for (let i = 0; i < n; i++) {
+      let run = 1;
+      for (let j = 1; j < n; j++) {
+        const a = pass ? G[j][i] : G[i][j], b = pass ? G[j - 1][i] : G[i][j - 1];
+        if (a === b) { run++; if (j === n - 1 && run >= 5) p += run - 2; } else { if (run >= 5) p += run - 2; run = 1; }
+      }
+    }
+    for (let r = 0; r < n - 1; r++) for (let c = 0; c < n - 1; c++) { const x = G[r][c]; if (x === G[r + 1][c] && x === G[r][c + 1] && x === G[r + 1][c + 1]) p += 3; }
+    const pat = [1, 0, 1, 1, 1, 0, 1];
+    for (let r = 0; r < n; r++) for (let c = 0; c + 6 < n; c++) {
+      if (pat.every((x, i) => G[r][c + i] === x)) { const before = c >= 4 && [1, 2, 3, 4].every(i => !G[r][c - i]), after = c + 10 < n && [7, 8, 9, 10].every(i => !G[r][c + i]); if (before || after) p += 40; }
+      if (pat.every((x, i) => G[c + i][r] === x)) { const before = c >= 4 && [1, 2, 3, 4].every(i => !G[c - i][r]), after = c + 10 < n && [7, 8, 9, 10].every(i => !G[c + i][r]); if (before || after) p += 40; }
+    }
+    const dark = G.reduce((a, row) => a + row.reduce((x, y) => x + y, 0), 0);
+    p += Math.floor(Math.abs(dark * 100 / (n * n) - 50) / 5) * 10;
+    return p;
+  };
+  let best = null, bp = Infinity;
+  for (let m = 0; m < 8; m++) { const G = build(m), p = penalty(G); if (p < bp) { bp = p; best = G; } }
+  return best;
+}
+/* an SVG of the code, with the quiet zone around it */
+function qrSVG(text) {
+  const G = qrEncode(text);
+  if (!G) return '';
+  const n = G.length, q = 4, size = n + q * 2;
+  let d = '';
+  G.forEach((row, r) => row.forEach((x, c) => { if (x) d += 'M' + (c + q) + ' ' + (r + q) + 'h1v1h-1z'; }));
+  return '<svg class="qr" viewBox="0 0 ' + size + ' ' + size + '" shape-rendering="crispEdges" aria-hidden="true"><rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + d + '" fill="#150733"/></svg>';
+}
 
 /* =====================================================================
    プレミアムのミニゲーム: 酒スロ・DON!!チャンス・黄金比チャレンジ
@@ -14804,7 +15666,8 @@ function boot(data) {
   let ret = null;
   try { ret = sessionStorage.getItem(RETURN_KEY); sessionStorage.removeItem(RETURN_KEY); } catch (_) { /* ignore */ }
   const want = data.screen || ret || 'title';
-  if (want === 'game' && G && !G.done) showScreen('game');
+  if (roomBoot()) { /* joined a friend's room (a link from the QR code, or back to it) */ }
+  else if (want === 'game' && G && !G.done) showScreen('game');
   else if (want === 'result' && G && G.done) showScreen('result');
   else if (want === 'editor' || want === 'setup') showScreen(want);
   else showScreen('title');
