@@ -2789,6 +2789,12 @@ button.rp-pick{cursor:pointer}
 .t-join b{font-weight:800; font-size:min(13px, 2.2cqh, 3.5cqw)}
 .t-join:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink)}
 .rm-btn{display:inline-flex; align-items:center; gap:3px}
+.g-top-r .rm-btn{background:var(--lime)}
+.dock-row .rm-dock{flex:0 0 auto; min-width:0; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1.15}
+.dock-row .rm-dock .rm-ph{position:absolute; left:10px; top:50%; transform:translateY(-50%); width:18px; height:26px}
+.dock-row .pbtn.big.rm-dock{position:relative; padding:min(10px, 1.6cqh) 8px min(10px, 1.6cqh) 30px; font-size:min(19px, 4cqh, 4.6vw)}
+.dock-row:has(.rm-dock) > .pbtn:not(.rm-dock){flex:1 1 0; min-width:0; font-size:min(19px, 4cqh, 4.6vw); padding-inline:6px}
+.dock-row .rm-dock .sub{white-space:nowrap}
 .rm-btn b{font-family:var(--f-display); font-weight:400; font-size:14px; line-height:1}
 .rm-box h2{display:flex; align-items:center; gap:6px; font-size:min(20px, 5.4vw)}
 .rm-box .rm-lead{font-size:13px; color:var(--ink-muted)}
@@ -12018,7 +12024,7 @@ function renderPM(anim) {
   st.className = 'mg-stage pm-stage pm-' + G.mode;
   const X = PMX[G.mode];
   st.innerHTML = X.stage(anim);
-  $('dock').innerHTML = X.dock();
+  $('dock').innerHTML = roomDock(X.dock());
   const box = $('gLog');
   box.innerHTML = pmLog();
   fitLog(box);
@@ -12054,6 +12060,7 @@ function pmAct(g, el) {
   switch (g) {
     case 'plus': openPlus(pmLocked() ? 'limit' : 'mode'); return true;
     case 'pmend': finishGame(); return true;
+    case 'roomopen': openRoom(); return true;
   }
   return false;
 }
@@ -13907,6 +13914,14 @@ function roomAct(a, el) {
   if (!room || !room.gs[g]) return;
   if (a === 'unseat') { room.gs[g].p = null; room.gs[g].nm = ''; delete room.sent[g]; roomSave(); roomPanel(); roomSync(); SE.play('tap'); return; }
   if (a === 'kick') { roomSend({ t: 'kick', g }); delete room.gs[g]; roomSave(); roomPanel(); SE.play('tap'); }
+}
+/* before each round starts, the dock offers the room as big as the round's own button: playing on everyone's phone is the better game */
+function roomDock(html) {
+  if (!ROOM_ON || !roomMode() || !(plusOn() || roomLive()) || !G.cur || G.cur.phase !== 'before' || pmLocked()) return html;
+  const n = roomLive() ? Object.values(room.gs).filter(x => x.on && x.p != null).length : 0;
+  const btn = '<button type="button" class="pbtn big ' + (n ? 'white' : 'cyan') + ' rm-dock" data-g="roomopen">' + PHONE_SVG +
+    (n ? n + '人参加中<span class="sub">参加をふやす</span>' : 'スマホで参加<span class="sub">QRを読むだけ</span>') + '</button>';
+  return html.replace('<div class="dock-row">', '<div class="dock-row">' + btn);
 }
 /* the button in the game's top bar: only in the four modes, for a phone with premium (or a room already made) */
 function roomBadge() {

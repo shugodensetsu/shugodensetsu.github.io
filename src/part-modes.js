@@ -326,7 +326,7 @@ function renderPM(anim) {
   st.className = 'mg-stage pm-stage pm-' + G.mode;
   const X = PMX[G.mode];
   st.innerHTML = X.stage(anim);
-  $('dock').innerHTML = X.dock();
+  $('dock').innerHTML = roomDock(X.dock());
   const box = $('gLog');
   box.innerHTML = pmLog();
   fitLog(box);
@@ -362,6 +362,7 @@ function pmAct(g, el) {
   switch (g) {
     case 'plus': openPlus(pmLocked() ? 'limit' : 'mode'); return true;
     case 'pmend': finishGame(); return true;
+    case 'roomopen': openRoom(); return true;
   }
   return false;
 }

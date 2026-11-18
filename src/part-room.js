@@ -232,6 +232,14 @@ function roomAct(a, el) {
   if (a === 'unseat') { room.gs[g].p = null; room.gs[g].nm = ''; delete room.sent[g]; roomSave(); roomPanel(); roomSync(); SE.play('tap'); return; }
   if (a === 'kick') { roomSend({ t: 'kick', g }); delete room.gs[g]; roomSave(); roomPanel(); SE.play('tap'); }
 }
+/* before each round starts, the dock offers the room as big as the round's own button: playing on everyone's phone is the better game */
+function roomDock(html) {
+  if (!ROOM_ON || !roomMode() || !(plusOn() || roomLive()) || !G.cur || G.cur.phase !== 'before' || pmLocked()) return html;
+  const n = roomLive() ? Object.values(room.gs).filter(x => x.on && x.p != null).length : 0;
+  const btn = '<button type="button" class="pbtn big ' + (n ? 'white' : 'cyan') + ' rm-dock" data-g="roomopen">' + PHONE_SVG +
+    (n ? n + '人参加中<span class="sub">参加をふやす</span>' : 'スマホで参加<span class="sub">QRを読むだけ</span>') + '</button>';
+  return html.replace('<div class="dock-row">', '<div class="dock-row">' + btn);
+}
 /* the button in the game's top bar: only in the four modes, for a phone with premium (or a room already made) */
 function roomBadge() {
   const b = $('roomBtn');
