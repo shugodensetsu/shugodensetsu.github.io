@@ -161,6 +161,15 @@ async function findRow(env, code) {
 }
 /* this device holds the key? */
 const holds = async (row, dev) => !!(row.devh && typeof dev === 'string' && DEV.test(dev) && await devKey(dev) === row.devh);
+/* for the rooms (room.js): is premium on for this code on this very device, now? Asks Stripe when the saved answer is old */
+export async function premiumHere(env, code, dev) {
+  code = typeof code === 'string' ? code.trim().toUpperCase() : '';
+  if (!env.STRIPE_SECRET_KEY || !CODE.test(code)) return false;
+  let row = await findRow(env, code);
+  if (!row || !(await holds(row, dev))) return false;
+  try { row = await refresh(env, row); } catch (_) { /* Stripe did not answer: the saved answer decides */ }
+  return !!row.until && row.until > Date.now();
+}
 
 export default {
   async fetch(request, env) {
