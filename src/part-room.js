@@ -360,21 +360,29 @@ function gsView(b, p) {
     return '<div class="gs-body gk-gs">' + (b.ph === 'end' ? end : top) + '<div class="gk-wrap gs-cv" id="gsWrap"><canvas class="gk-cv' + (b.turn ? ' live' : '') + '" id="gsCv" aria-label="みんなの絵"></canvas></div><p class="gs-say">' + say + '</p></div>';
   }
   if (b.v === 'rp') {
-    const msg = '<div class="gs-msg"><span class="rp-av sm" style="--c:#ffc94d">' + esc([...gStr(b.s, 20)][0] || '?') + '</span><span><b>' + esc(gStr(b.s, 20)) + '</b><span class="rp-bub">' + esc(gStr(b.m, 80)) + '</span></span></div>';
-    if (b.st === 'write') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-note">あなたなら、なんて返す？ <b>だれの返信かは最後までヒミツ</b></p>' +
-      '<div class="rp-input"><textarea id="gsIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea></div>' +
+    /* the same chat as on the host's phone */
+    const id = okInt(b.id, 1, 999) ? b.id : 1, tm = okInt(b.tm, 0, 1440 * 2) ? b.tm : 1290, sender = gStr(b.s, 20);
+    const time = m => { const t = tm + m; return Math.floor(t / 60) % 24 + ':' + String(t % 60).padStart(2, '0'); };
+    const mine = b.mine === undefined ? '' : '<div class="rp-out"><div class="rp-pick"><span class="rp-meta"><span>既読<br>' + time(2) + '</span></span>' +
+      (b.mine == null ? '<span class="rp-bub skip">（既読スルー）</span>' : '<span class="rp-bub">' + esc(gStr(b.mine, 80)) + '</span>') + '</div></div>';
+    const chat = (body, foot, cls) => '<div class="rp-chat grow' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(sender) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
+      '<div class="rp-list"><p class="rp-day"><span>今日</span></p><div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[id % RP_ICON.length] + '">' + esc([...sender][0] || '?') + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(sender) + '</span>' +
+      '<span class="rp-row"><span class="rp-bub">' + esc(gStr(b.m, 80)) + '</span><span class="rp-meta">' + time(0) + '</span></span></div></div>' + (body || '') + '</div>' + (foot || '') + '</div>';
+    if (!b.m) return gsMsg('返信選手権', 'メッセージが届くのを待っています');
+    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの返信（だれの返信かは最後までヒミツ）</p>' +
+      chat('', '<div class="rp-input"><textarea id="gsIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-gs="rpsend" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'write') +
       '<div class="dock-row">' + gsBtn('rpskip', '既読<span class="sub">スルーする</span>', 'white small') + gsBtn('rpsend', '送信', 'big main grow') + '</div></div>';
-    if (b.st === 'sent') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-lead ol">送信しました</p><p class="gs-mine">' + (b.mine == null ? '（既読スルー）' : esc(gStr(b.mine, 80))) + '</p><p class="pm-note">みんなの返信を待っています</p></div>';
-    if (b.st === 'local') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-note">親のスマホが回ってきたら、そこで書いてね</p></div>';
-    if (b.st === 'show') return '<div class="gs-body rp-gs">' + msg + '<p class="pm-lead ol">発表中！</p><p class="pm-note">親のスマホを見てね。いちばんの返信を、せーので指さし</p>' + (b.mine !== undefined ? '<p class="gs-mine">あなたの返信：' + (b.mine == null ? '（既読スルー）' : esc(gStr(b.mine, 80))) + '</p>' : '') + '</div>';
-    return '<div class="gs-body rp-gs">' + (b.m ? msg : '') + '<p class="pm-note">' + (b.m ? 'メッセージが届いたよ。親のスマホの「返信を書く」を待ってね' : 'メッセージが届くのを待っています') + '</p></div>';
+    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">送信しました。みんなの返信を待っています</p>' + chat(mine) + '</div>';
+    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + chat('') + '</div>';
+    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + chat(mine) + '</div>';
+    return '<div class="gs-body rp-gs"><p class="px-for">メッセージが届いたよ。親のスマホの「返信を書く」を待ってね</p>' + chat('') + '</div>';
   }
   if (b.v === 'ms') {
     if (b.ask) return '<div class="gs-body"><p class="px-for">' + esc(gStr(b.ask, 24)) + ' があなたのミッションを予想したよ</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p>' +
       '<div class="dock-row">' + gsBtn('msng', 'ハズレ', 'white big') + gsBtn('msok', '当たってた', 'big main pink grow') + '</div></div>';
     return '<div class="gs-body"><p class="px-for">あなたのミッション</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p>' +
       '<p class="pm-note">' + (b.ph === 'claim' ? 'みんなが判定中…' : 'ふつうに飲んで話しながら、<b>しれっと</b>達成しよう。<br>達成したら、親のスマホで「達成した！」') + '</p>' +
-      (okInt(b.re, 1, 120) ? gsBtn('msre', 'ほかのミッションにする', 'white small', ' id="gsRe"') : '') + '</div>';
+      '</div>';
   }
   if (b.v === 'us') {
     const topic = '<p class="us-topic">' + esc(gStr(b.t, 60)) + '</p>';
@@ -403,7 +411,6 @@ function guestMount() {
     const end = Date.now() + b.left * 1000;
     gsTimer = setInterval(() => { const el = $('gsClock'); if (!el) { clearInterval(gsTimer); return; } const l = Math.max(0, Math.ceil((end - Date.now()) / 1000)); el.textContent = l || '時間！'; if (!l) clearInterval(gsTimer); }, 250);
   }
-  if (b.v === 'ms' && okInt(b.re, 1, 120)) setTimeout(() => { const r = $('gsRe'); if (r && guest && guest.v && guest.v.b === b) r.remove(); }, b.re * 1000);
   const inp = $('gsIn');
   if (inp) {
     const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; };
@@ -462,7 +469,6 @@ function guestAct(a, el) {
     act('reply', { txt: a === 'rpskip' ? null : txt });
     return;
   }
-  if (a === 'msre') { act('reroll'); return; }
   if (a === 'msok' || a === 'msng') { act('ans', { ok: a === 'msok' }); return; }
   if (a === 'usre') { act('re'); return; }
   if (a === 'ustalk') { act('talk'); return; }

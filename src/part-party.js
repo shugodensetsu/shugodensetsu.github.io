@@ -431,7 +431,7 @@ PMX.reply = {
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
   },
   remote(p) {
-    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m } : { v: 'rp' };
+    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m, id: q.id, tm: cur.tm || 1290 } : { v: 'rp' };
     if (cur.phase === 'before' || cur.phase === 'msg') return Object.assign(base, { st: 'read' });
     if (cur.phase === 'write') {
       if (p in cur.rep) return Object.assign(base, { st: 'sent', mine: cur.rep[p] });
@@ -562,26 +562,19 @@ function msGive(ps) {
     const pool = msPool(G.lvl).filter(m => !have.includes(m.id) && m.id !== ms[p]);
     const m = pmDraw(pool.length ? pool : msPool(G.lvl), 1)[0];
     pmUse(m.id); ms[p] = m.id; have.push(m.id);
-    (G.pm.fr || (G.pm.fr = {}))[p] = Date.now();   /* on a player's own phone, a fresh mission can be swapped for 2 minutes */
   });
 }
 const msBack = () => pxBtn('back', 'もどる', 'white small');
-const MS_SWAP = 120e3;
 PMX.mission = {
   remote(p) {
     const cur = G.cur, m = G.pm.ms ? msOf(p) : null;
     if (!m) return { v: 'watch', say: 'ミッションが配られるのを待っています' };
     if (cur.phase === 'peek' && cur.peek && cur.peek.ps.slice(cur.peek.at).includes(p)) return { v: 'local' };
     const ask = cur.phase === 'accCheck' && cur.w === p && !cur.open ? pname(cur.by) : '';
-    const left = Math.ceil((MS_SWAP - (Date.now() - ((G.pm.fr || {})[p] || 0))) / 1000);
-    return { v: 'ms', t: m.t, ask, ph: cur.phase === 'claimShow' && cur.w === p ? 'claim' : '', re: !ask && ['peek', 'live'].includes(cur.phase) && left > 0 ? left : 0 };
+    return { v: 'ms', t: m.t, ask, ph: cur.phase === 'claimShow' && cur.w === p ? 'claim' : '' };
   },
   ract(p, m) {
     const cur = G.cur;
-    if (m.a === 'reroll' && G.pm.ms && msOf(p) && ['peek', 'live'].includes(cur.phase) && Date.now() - ((G.pm.fr || {})[p] || 0) < MS_SWAP) {
-      const t = G.pm.fr[p]; msGive([p]); G.pm.fr[p] = t;   /* swapping does not restart the 2 minutes */
-      SE.play('cdShuffle'); pxSave('keep'); return;
-    }
     if (m.a === 'ans' && typeof m.ok === 'boolean' && cur.phase === 'accCheck' && cur.w === p && !cur.open) { cur.open = true; this.act(m.ok ? 'aok' : 'ang'); }
   },
   tag: '', hint: 'ミッションを<b>しれっと</b>達成しよう。見破られたら <b>1DON</b>', intro: '<span class="tl-ic">' + EYE_SVG + '</span>しれっとミッション！<small>バレずに達成できる？</small>',
@@ -614,10 +607,10 @@ PMX.mission = {
     const cur = G.cur, head = pxHead();
     if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big">' + EYE_SVG + '<p class="pm-lead ol">ミッションを配ろう！</p><p class="pm-note">全員に<b>秘密のミッション</b>が1つずつ。<br>あとはふつうに飲んで話すだけ。<br>バレないように、しれっと達成しよう<br><b>自分のスマホのメモ</b>を準備しておくと安心</p>' + pmTryNote() + '</div>');
     if (cur.phase === 'peek') {
-      if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を渡すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
+      if (!cur.peek.open) return head + pxPeekCover(cur.peek.newm ? '<b>新しいミッション</b>を配り直すよ。ほかの人は見ないでね' : 'ほかの人は画面を見ないでね');
       const p = pxPeekWho(), m = msOf(p);
       return head + '<div class="pm-big px-secret"><p class="px-for">' + pmName(p) + ' のミッション</p><p class="ms-card">' + esc(m.t) + '</p><p class="ms-memo">' + MEMO_ICON + '<span>忘れないように、<b>自分のスマホのメモ</b>に<br>こっそり書いておこう</span></p><p class="pm-note">バレないように、しれっと達成しよう。<br>できたら「達成した！」で名乗り出てね</p>' +
-        (cur.peek.check ? '' : '<button type="button" class="pm-link" data-g="x-reroll">ほかのミッションにする</button>') + '</div>';
+        '</div>';
     }
     const board = '<div class="ms-list">' + G.players.map((pl, i) => '<span class="ms-p" style="--p:' + pc(i) + '"><b>' + esc(pl.name) + '</b><small>達成 ' + pl.done + ' ・ 見破られ ' + pl.caught + '</small></span>').join('') + '</div>';
     if (cur.phase === 'live') return head + '<div class="pm-body"><p class="pm-lead ol">ミッション進行中！</p><p class="pm-note">ふつうに飲んで話そう。<br>あやしい人がいたら「見破った！」<br>達成したら「達成した！」で名乗り出る</p><p class="ms-memo sm">' + MEMO_ICON + '<span>ミッションは自分のスマホのメモに。忘れたら「自分のミッション確認」</span></p>' + board + '</div>';
@@ -635,7 +628,7 @@ PMX.mission = {
     if (cur.phase === 'accRes') {
       const hit = cur.ev === 'caught';
       return head + '<div class="pm-body"><p class="gk-res ' + (hit ? 'ok' : 'ng') + ' ol">' + (hit ? '見破った！' : 'ハズレ！') + '</p>' +
-        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1DON。新しいミッションを渡すよ</p>'
+        (hit ? '<p class="px-for">' + pmName(cur.w) + ' のミッションは</p><p class="ms-card open">' + esc(msOf(cur.w).t) + '</p><p class="pm-ask">' + esc(pname(cur.w)) + ' が1DON。全員のミッションを配り直すよ</p>'
           : '<p class="pm-note">' + pmName(cur.w) + ' のミッションはまだヒミツ</p><p class="pm-ask">まちがえた ' + esc(pname(cur.by)) + ' が1DON</p>') + '</div>';
     }
     return head;
@@ -659,7 +652,6 @@ PMX.mission = {
     if (a === 'end') { finishGame(); return; }
     if (a === 'back' && cur.phase !== 'live') { cur.phase = 'live'; cur.w = null; cur.by = null; SE.play('tap'); pxSave(); return; }
     if (cur.phase === 'peek') {
-      if (a === 'reroll' && cur.peek.open && !cur.peek.check) { msGive([pxPeekWho()]); SE.play('cdShuffle'); pxSave(); return; }
       pxPeekAct(a, () => {
         const start = !G.pm.started; G.pm.started = true;
         cur.phase = 'live'; pxSave();
@@ -668,7 +660,7 @@ PMX.mission = {
       return;
     }
     if (a === 'deal' && cur.phase === 'before' && !pmLocked()) {
-      G.pm.ms = {}; G.pm.fr = {}; msGive(pxAll()); tryUse('mission');
+      G.pm.ms = {}; msGive(pxAll()); tryUse('mission');
       const local = roomLocal(pxAll());
       if (!local.length) { G.pm.started = true; cur.phase = 'live'; SE.play('go'); pxSave(); telop('ミッション開始！<small>自分のスマホでミッションを見てね</small>', '', 1600); return; }
       pxPeekStart(local); cur.phase = 'peek';
@@ -682,8 +674,8 @@ PMX.mission = {
     if (a === 'claim' && cur.phase === 'claimWho' && p != null) { cur.w = p; cur.phase = 'claimShow'; SE.play('swShow'); pxSave(); return; }
     if ((a === 'cyes' || a === 'cno') && cur.phase === 'claimShow') {
       const w = cur.w;
-      G.pm.need = [w];
-      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1DON</small>', '', 1600); pmNext(pxCups(pxOthers(w)), true); }
+      G.pm.need = a === 'cyes' ? pxAll() : [w];   /* a mission done: everyone gets a new one */
+      if (a === 'cyes') { cur.ev = 'done'; G.players[w].done++; G.players[w].medal++; SE.play('fanfare'); telop('ミッション達成！<small>' + esc(pname(w)) + ' 以外の全員が1DON ・ 全員のミッションを配り直し</small>', '', 1800); pmNext(pxCups(pxOthers(w)), true); }
       else { cur.ev = 'no'; SE.play('bubuu'); telop('認められず…<small>' + esc(pname(w)) + ' が1DON</small>', 'red', 1500); pmNext(pxCups([w]), false); }
       return;
     }
@@ -705,7 +697,7 @@ PMX.mission = {
     }
     if (a === 'next' && cur.phase === 'accRes') {
       const hit = cur.ev === 'caught';
-      if (hit) G.pm.need = [cur.w];
+      if (hit) G.pm.need = pxAll();   /* seen through: everyone gets a new one */
       const who = hit ? cur.w : cur.by;
       cur.w = who;
       pmNext(pxCups([who]), false);
@@ -864,7 +856,7 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
   gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
     '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
   gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
-    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
+    '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。達成か見破りが出たら、<b>全員のミッションを配り直し</b>ます。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
