@@ -2316,6 +2316,19 @@ button.rp-pick{cursor:pointer}
 .rp-input textarea.shake{animation:tremble .08s linear 4}
 .rp-send{flex:none; width:40px; height:40px; border:0; border-radius:50%; background:#06c755; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer}
 .rp-send svg{width:20px; height:20px}
+/* a short stage (small phone, 7–8 players): the chat drops the date and name rows, so the message stays whole without paging */
+@container (max-height: 300px){
+  .pm-stage .rp-day, .pm-stage .rp-nm{display:none}
+  .pm-stage .rp-bar{padding:4px 12px}
+  .pm-stage .rp-list{gap:6px; padding:6px 10px 8px}
+  .pm-stage .rp-bub{font-size:14px; line-height:1.35; padding:5px 10px}
+  .pm-stage .rp-input{padding:4px 8px}
+  .pm-stage .rp-input textarea{padding:6px 12px}
+  .pm-stage .rp-send{width:36px; height:36px}
+  /* while writing, the header row goes and the sender's name sits on the message instead */
+  .pm-stage .rp-chat.write .rp-bar{display:none}
+  .pm-stage .rp-chat.write .rp-nm{display:block}
+}
 .rp-notice{display:flex; align-items:center; gap:10px; width:min(100%, 320px); box-sizing:border-box; background:rgba(255,255,255,.95); color:#111; border:3px solid var(--ink); border-radius:16px; box-shadow:0 4px 0 var(--ink); padding:10px 12px; text-align:left; animation:rpNotice 2.4s ease-in-out infinite}
 .rp-notice > span:nth-child(2){flex:1; display:flex; flex-direction:column; font-size:14px}
 .rp-notice small{font-size:11.5px; color:#555}
@@ -2798,6 +2811,9 @@ button.rp-pick{cursor:pointer}
   .gs-body .us-clock{font-size:30px}
   .gs-body .us-thumbs.big .us-th{width:44px; height:44px}
   .gs-vote button{flex-direction:row; padding:3px 12px; gap:8px}
+  .rp-gs{max-width:560px}
+  .rp-gs .rp-day, .rp-gs .rp-nm{display:none}
+  .rp-gs .rp-list{padding-top:6px; gap:6px}
   .gs-body .ms-card{padding:8px 12px}
   .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
   .gs-body .gk-fake{font-size:18px}
