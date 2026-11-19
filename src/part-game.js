@@ -927,7 +927,7 @@ function eligibleCards(n) { return deck.cards.filter(c => { const cat = catOf(c.
    killing the tab doesn't lose the night's game — 「続きから再開」 brings it back. Forgotten after 12 hours */
 const GAME_AT_KEY = 'nomige-game-at', GAME_TTL = 12 * 3600 * 1000;
 function saveGame() {
-  if (G && G.practice) return;   /* おためし: nothing is kept */
+  if (G && (G.practice || G.demo)) return;   /* おためし・試験版: nothing is kept */
   try {
     if (G && !G.done) { localStorage.setItem(GAME_KEY, JSON.stringify(G)); localStorage.setItem(GAME_AT_KEY, String(Date.now())); }
     else { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); }
@@ -1034,15 +1034,19 @@ function closeAllOverlays() {
   syncCover();
 }
 function showScreen(name) {
-  screen = SCREENS.includes(name) ? name : 'title';
+  name = SCREENS.includes(name) ? name : 'title';
+  if (ogd && name !== 'game') ogdOff();
+  if (G && G.demo && name !== 'game' && name !== 'result') G = normalizeGame(loadGame());   /* the 試験版 is over: back to the real game (if any) */
+  screen = name;
   for (const s of SCREENS) $('scr-' + s).hidden = s !== screen;
+  if (ogd && screen === 'game') ogdShow();
   if (screen === 'title') renderTitle();
   else if (screen === 'setup') renderSetup(true);
   else if (screen === 'game') { renderGame(); resumeDraw(); }
   else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
   else if (screen === 'guest') renderGuest();
-  if (screen !== 'guest' && guest) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
+  if (screen !== 'guest' && guest && !guest.demo) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
   roomBadge(); roomSync();
   if (coach.on) coachQueue();
   sceneBGM();
@@ -1058,8 +1062,9 @@ function fitScreen() {
   if (fitQueued) return;
   fitQueued = requestAnimationFrame(() => {
     fitQueued = 0;
-    if (!FIT_SCREENS.includes(screen)) return;
-    const el = $('scr-' + screen), a = document.activeElement;
+    const nm = ogd && screen === 'game' && ogd.view === 'guest' ? 'guest' : screen;   /* the 試験版 shows the guest's phone inside the game */
+    if (!FIT_SCREENS.includes(nm)) return;
+    const el = $('scr-' + nm), a = document.activeElement;
     if (!el || el.hidden || (a && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return;
     const prev = el.style.zoom;
     const over = z => { el.style.zoom = z === 1 ? '' : String(z); return el.scrollHeight > el.clientHeight + 1; };
@@ -1070,7 +1075,7 @@ function fitScreen() {
       z = Math.floor(lo * 1000) / 1000;
     }
     el.style.zoom = z === 1 ? '' : String(z);
-    if (el.style.zoom !== prev && screen === 'setup') fitInfo();
+    if (el.style.zoom !== prev && nm === 'setup') fitInfo();
   });
 }
 if (window.ResizeObserver) {
@@ -5324,6 +5329,7 @@ function useSave() {
 const bump = (o, k, n) => { o[k] = (o[k] || 0) + (n == null ? 1 : n); };
 /* time only: called as turns go by, so the time spent in a long mini game still counts if the game is left unfinished */
 function useTick() {
+  if (G && G.demo) return;
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
   if (!gid) return;
   if (U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
@@ -5550,6 +5556,7 @@ async function shareApp(from) {
   catch (_) { telop(SHARE_URL, 'white sm', 3000); }
 }
 function useTrack(ev, p) {
+  if (G && G.demo) return;
   p = p || {};
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
   if (gid && U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
@@ -7163,7 +7170,7 @@ function wireGame() {
     if (!validGame(G)) return;
     setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.unit = unitOf(G); setup.loaded = true; setup.mode = G.mode === 'mini' || PM_MODES.includes(G.mode) ? G.mode : 'card'; if (PM_MODES.includes(G.mode)) setup[G.mode] = G.lvl;
   };
-  $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
+  $('againBtn').addEventListener('click', () => { if (G && G.demo) { ogdStart(); return; } sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
   $('titleBtn').addEventListener('click', () => showScreen('title'));
   $('resBack').addEventListener('click', openBack);

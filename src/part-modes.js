@@ -51,8 +51,8 @@ function tryLoad() {
   return o;
 }
 const trySave = s => lsSet(TRY_KEY, JSON.stringify(s));
-const tryLeft = mode => (plusFree() ? Infinity : Math.max(0, PLUS_TRY - tryLoad()[mode]));
-function tryUse(mode) { if (plusFree()) return; const s = tryLoad(); s[mode]++; trySave(s); }
+const tryLeft = mode => (plusFree() || (G && G.demo) ? Infinity : Math.max(0, PLUS_TRY - tryLoad()[mode]));
+function tryUse(mode) { if (plusFree() || (G && G.demo)) return; const s = tryLoad(); s[mode]++; trySave(s); }
 /* a new mini game, for someone without premium once sales start: once a day each */
 const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.includes(k);
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }

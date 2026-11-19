@@ -2896,6 +2896,9 @@ button.rp-pick{cursor:pointer}
 .gs-room b{color:var(--white); letter-spacing:.08em}
 .gs-me{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; background:var(--p); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; padding:2px 10px; font-weight:800; font-size:14px}
 .gs-top .pbtn{margin-left:auto}
+/* 試験版: your name stays whole, the two buttons sit together on the right */
+.gs-top.ogd .gs-me{flex:1 0 auto}
+.gs-top.ogd .pbtn + .pbtn{margin-left:0}
 .gs-head{flex:none; display:flex; align-items:baseline; justify-content:center; gap:8px; font-family:var(--f-display); font-size:min(20px, 5vw); color:var(--white)}
 .gs-head small{font-family:var(--f-body); font-weight:800; font-size:12px; color:var(--muted)}
 .gs-body{flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:safe center; gap:10px; text-align:center}
@@ -5383,7 +5386,7 @@ function eligibleCards(n) { return deck.cards.filter(c => { const cat = catOf(c.
    killing the tab doesn't lose the night's game — 「続きから再開」 brings it back. Forgotten after 12 hours */
 const GAME_AT_KEY = 'nomige-game-at', GAME_TTL = 12 * 3600 * 1000;
 function saveGame() {
-  if (G && G.practice) return;   /* おためし: nothing is kept */
+  if (G && (G.practice || G.demo)) return;   /* おためし・試験版: nothing is kept */
   try {
     if (G && !G.done) { localStorage.setItem(GAME_KEY, JSON.stringify(G)); localStorage.setItem(GAME_AT_KEY, String(Date.now())); }
     else { localStorage.removeItem(GAME_KEY); localStorage.removeItem(GAME_AT_KEY); }
@@ -5490,15 +5493,19 @@ function closeAllOverlays() {
   syncCover();
 }
 function showScreen(name) {
-  screen = SCREENS.includes(name) ? name : 'title';
+  name = SCREENS.includes(name) ? name : 'title';
+  if (ogd && name !== 'game') ogdOff();
+  if (G && G.demo && name !== 'game' && name !== 'result') G = normalizeGame(loadGame());   /* the 試験版 is over: back to the real game (if any) */
+  screen = name;
   for (const s of SCREENS) $('scr-' + s).hidden = s !== screen;
+  if (ogd && screen === 'game') ogdShow();
   if (screen === 'title') renderTitle();
   else if (screen === 'setup') renderSetup(true);
   else if (screen === 'game') { renderGame(); resumeDraw(); }
   else if (screen === 'result') { renderResult(); fitResults(); }
   else if (screen === 'editor') renderAll(true);
   else if (screen === 'guest') renderGuest();
-  if (screen !== 'guest' && guest) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
+  if (screen !== 'guest' && guest && !guest.demo) { const ws = guest.ws; guest = null; if (ws) try { ws.close(); } catch (_) { /* ignore */ } }
   roomBadge(); roomSync();
   if (coach.on) coachQueue();
   sceneBGM();
@@ -5514,8 +5521,9 @@ function fitScreen() {
   if (fitQueued) return;
   fitQueued = requestAnimationFrame(() => {
     fitQueued = 0;
-    if (!FIT_SCREENS.includes(screen)) return;
-    const el = $('scr-' + screen), a = document.activeElement;
+    const nm = ogd && screen === 'game' && ogd.view === 'guest' ? 'guest' : screen;   /* the 試験版 shows the guest's phone inside the game */
+    if (!FIT_SCREENS.includes(nm)) return;
+    const el = $('scr-' + nm), a = document.activeElement;
     if (!el || el.hidden || (a && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))) return;
     const prev = el.style.zoom;
     const over = z => { el.style.zoom = z === 1 ? '' : String(z); return el.scrollHeight > el.clientHeight + 1; };
@@ -5526,7 +5534,7 @@ function fitScreen() {
       z = Math.floor(lo * 1000) / 1000;
     }
     el.style.zoom = z === 1 ? '' : String(z);
-    if (el.style.zoom !== prev && screen === 'setup') fitInfo();
+    if (el.style.zoom !== prev && nm === 'setup') fitInfo();
   });
 }
 if (window.ResizeObserver) {
@@ -9780,6 +9788,7 @@ function useSave() {
 const bump = (o, k, n) => { o[k] = (o[k] || 0) + (n == null ? 1 : n); };
 /* time only: called as turns go by, so the time spent in a long mini game still counts if the game is left unfinished */
 function useTick() {
+  if (G && G.demo) return;
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
   if (!gid) return;
   if (U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
@@ -10006,6 +10015,7 @@ async function shareApp(from) {
   catch (_) { telop(SHARE_URL, 'white sm', 3000); }
 }
 function useTrack(ev, p) {
+  if (G && G.demo) return;
   p = p || {};
   const U = useLoad(), now = Date.now(), gid = G && G.gid;
   if (gid && U.cur === gid && U.last) U.ms += Math.min(Math.max(0, now - U.last), USE_GAP);
@@ -11619,7 +11629,7 @@ function wireGame() {
     if (!validGame(G)) return;
     setup.count = G.players.length; setup.names = G.players.map(p => p.name); setup.rounds = G.rounds; if (G.mode !== 'mini') setup.mix = G.mix === 'lively' ? 'lively' : 'even'; setup.unit = unitOf(G); setup.loaded = true; setup.mode = G.mode === 'mini' || PM_MODES.includes(G.mode) ? G.mode : 'card'; if (PM_MODES.includes(G.mode)) setup[G.mode] = G.lvl;
   };
-  $('againBtn').addEventListener('click', () => { sameMembers(); beginGame(); });
+  $('againBtn').addEventListener('click', () => { if (G && G.demo) { ogdStart(); return; } sameMembers(); beginGame(); });
   $('changeBtn').addEventListener('click', () => { sameMembers(); showScreen('setup'); });
   $('titleBtn').addEventListener('click', () => showScreen('title'));
   $('resBack').addEventListener('click', openBack);
@@ -11840,8 +11850,8 @@ function tryLoad() {
   return o;
 }
 const trySave = s => lsSet(TRY_KEY, JSON.stringify(s));
-const tryLeft = mode => (plusFree() ? Infinity : Math.max(0, PLUS_TRY - tryLoad()[mode]));
-function tryUse(mode) { if (plusFree()) return; const s = tryLoad(); s[mode]++; trySave(s); }
+const tryLeft = mode => (plusFree() || (G && G.demo) ? Infinity : Math.max(0, PLUS_TRY - tryLoad()[mode]));
+function tryUse(mode) { if (plusFree() || (G && G.demo)) return; const s = tryLoad(); s[mode]++; trySave(s); }
 /* a new mini game, for someone without premium once sales start: once a day each */
 const mgLocked = k => PLUS_MG.includes(k) && !plusFree() && tryLoad().mg.includes(k);
 function mgTry(k) { if (!PLUS_MG.includes(k) || plusFree()) return; const s = tryLoad(); if (!s.mg.includes(k)) { s.mg.push(k); trySave(s); } }
@@ -13316,7 +13326,7 @@ PMX.reply = {
     if (a === 'end') { finishGame(); return; }
     if (a === 'open' && c.phase === 'before' && !pmLocked()) {
       if (!ogReady()) { SE.play('boing'); return; }
-      const q = pmDraw(rpPool(G.lvl), 1)[0];
+      const q = (G.demo && ogdOdai()) || pmDraw(rpPool(G.lvl), 1)[0];
       pmUse(q.id);
       c.q = q.id; c.ans = []; c.at = null; c.phase = 'live'; ogDraft = '';
       tryUse('reply');
@@ -13907,6 +13917,7 @@ function roomLoad() {
   } catch (_) { room = null; }
 }
 function roomSave() {
+  if (room && room.demo) return;
   if (!room) { try { localStorage.removeItem(ROOM_KEY); } catch (_) { /* ignore */ } return; }
   const gs = {};
   Object.keys(room.gs).forEach(g => { gs[g] = { p: room.gs[g].p, nm: room.gs[g].nm }; });
@@ -13934,7 +13945,7 @@ const roomLocal = ps => ps.filter(p => !roomHas(p));
 
 function roomSend(o) { if (room && room.ws && room.ws.readyState === 1) { try { room.ws.send(JSON.stringify(o)); return true; } catch (_) { /* ignore */ } } return false; }
 function roomConnect() {
-  if (!roomLive() || room.ws) return;
+  if (!roomLive() || room.ws || room.demo) return;
   let ws;
   try { ws = new WebSocket(ROOM_WS + '?r=' + room.code + '&t=' + encodeURIComponent(room.t)); } catch (_) { return; }
   room.ws = ws; room.err = '';
@@ -14023,6 +14034,7 @@ function roomViewFor(g) {
   return { k: 'view', p: x.p, nm: pname(x.p), mode: G.mode, title: PM[G.mode].title, r: G.turn + 1, b: X && X.remote ? X.remote(x.p) : { v: 'watch' } };
 }
 function roomSync() {
+  if (room && room.demo) { ogdSync(); return; }
   if (!roomLive() || !room.ws || room.ws.readyState !== 1) return;
   Object.keys(room.gs).forEach(g => {
     if (!room.gs[g].on) return;
@@ -14061,6 +14073,7 @@ let roomMsg = '', roomWait = false;
 function roomPanelErr(msg, wait) { roomMsg = msg; roomWait = !!wait; roomPanel(); }
 function openRoom() {
   if (!ROOM_ON) return;
+  if (room && room.demo) { SE.play('tap'); ogdView('guest', true); return; }
   roomMsg = ''; roomWait = false;
   openOv('roomOv'); SE.play('pop');
   if (!roomLive()) roomMake(); else { roomConnect(); roomSend({ t: 'open', v: true }); }
@@ -14123,14 +14136,15 @@ function roomBadge() {
   b.hidden = !show;
   if (!show) return;
   const on = roomLive() ? Object.values(room.gs).filter(x => x.on && x.p != null).length : 0;
-  b.innerHTML = PHONE_SVG + (on ? '<b>' + on + '</b>' : '参加');
-  b.setAttribute('aria-label', 'みんなのスマホで参加' + (on ? '（' + on + '人）' : ''));
+  b.innerHTML = PHONE_SVG + (room && room.demo ? '子機' : on ? '<b>' + on + '</b>' : '参加');
+  b.setAttribute('aria-label', room && room.demo ? 'あなたのスマホの画面にもどる' : 'みんなのスマホで参加' + (on ? '（' + on + '人）' : ''));
 }
 
 /* ---------- 参加した人のスマホ ---------- */
 /* guest = { r, k, g, ws, st: 'conn'|'on'|'end'|'no', host, msg, v (the last thing the host sent), tries, was } */
 let guest = null;
 function guestSave() {
+  if (guest && guest.demo) return;
   if (!guest || !guest.k) { try { localStorage.removeItem(GUEST_KEY); } catch (_) { /* ignore */ } return; }
   lsSet(GUEST_KEY, JSON.stringify({ r: guest.r, k: guest.k, exp: guest.exp || Date.now() + 6 * 3600e3 }));
 }
@@ -14146,7 +14160,7 @@ function guestStart(r) {
   guestConnect();
 }
 function guestConnect() {
-  if (!guest || guest.ws) return;
+  if (!guest || guest.ws || guest.demo) return;
   let ws;
   try { ws = new WebSocket(ROOM_WS + '?r=' + guest.r + (guest.k ? '&t=' + encodeURIComponent(guest.k) : '')); } catch (_) { guest.st = 'no'; renderGuest(); return; }
   guest.ws = ws;
@@ -14188,8 +14202,11 @@ function guestMsg(o) {
     renderGuest();
   }
 }
-function guestSend(m) { if (guest && guest.ws && guest.ws.readyState === 1) { try { guest.ws.send(JSON.stringify({ t: 'm', m })); return true; } catch (_) { /* ignore */ } } return false; }
+function guestSend(m) {
+  if (guest && guest.demo) { const c = JSON.parse(JSON.stringify(m)); setTimeout(() => { if (room && room.demo) roomFromGuest(1, c); }, 60); return true; }
+  if (guest && guest.ws && guest.ws.readyState === 1) { try { guest.ws.send(JSON.stringify({ t: 'm', m })); return true; } catch (_) { /* ignore */ } } return false; }
 function guestLeave() {
+  if (guest && guest.demo) { showScreen('title'); return; }
   if (guest && guest.ws) { const ws = guest.ws; guest.ws = null; try { ws.close(); } catch (_) { /* ignore */ } }
   guest = null; try { localStorage.removeItem(GUEST_KEY); } catch (_) { /* ignore */ }
   showScreen('title');
@@ -14197,7 +14214,7 @@ function guestLeave() {
 /* a buzz when something new is for this phone (a secret, a turn, a question) */
 function guestNotice(old, v) {
   const b = v.k === 'view' && v.b && typeof v.b === 'object' ? v.b : null, ob = old && old.k === 'view' && old.b ? old.b : null;
-  if (!b) return;
+  if (!b || guest.demo) return;
   const sig = x => (x ? [x.v, x.ph, x.w, x.f, x.t, x.turn, x.ask && 1, x.st, x.role, x.a && typeof x.a === 'object' ? x.a.id : ''].join('|') : '');
   if (sig(b) !== sig(ob)) { vibrate(20); SE.play('pop'); }
 }
@@ -14207,9 +14224,10 @@ function renderGuest() {
   if (!box || !guest) return;
   const v = guest.v && typeof guest.v === 'object' ? guest.v : null;
   const me = v && v.k === 'view' && okInt(v.p, 0, 7) ? v : null;
-  const top = '<div class="gs-top"><span class="gs-room">' + PHONE_SVG + '部屋 <b>' + esc(guest.r) + '</b></span>' +
+  const top = '<div class="gs-top' + (guest.demo ? ' ogd' : '') + '"><span class="gs-room">' + PHONE_SVG + (guest.demo ? '<b>試験版</b>' : '部屋 <b>' + esc(guest.r) + '</b>') + '</span>' +
     (me ? '<span class="gs-me" style="--p:' + pc(me.p) + '">' + esc(gStr(me.nm, 24)) + '</span>' : '') +
-    '<button type="button" class="pbtn white tiny" data-gs="leave">抜ける</button></div>';
+    (guest.demo ? '<button type="button" class="pbtn cyan tiny" data-gs="ogdhost">親の画面</button>' : '') +
+    '<button type="button" class="pbtn white tiny" data-gs="leave">' + (guest.demo ? 'やめる' : '抜ける') + '</button></div>';
   let body;
   if (guest.st === 'no') body = gsMsg('入れませんでした', '合言葉が合っているか、親の画面で「参加」の画面が開いているか確かめてね', '<button type="button" class="pbtn big main" data-gs="again">もう一度ためす</button>');
   else if (guest.st === 'end') body = gsMsg('おしまい', esc(guest.msg || ''), '<button type="button" class="pbtn big main" data-gs="leave">タイトルへ</button>');
@@ -14262,7 +14280,7 @@ function gsOgFx(ob, b) {
   const a = b.a && typeof b.a === 'object' ? b.a : null, oa = ob && ob.v === 'og' && ob.a && typeof ob.a === 'object' ? ob.a : null;
   if (a && (a.me || b.wait)) gsDraft = '';
   if (b.wait || b.busy) gsDraft = '';
-  if (!a) return;
+  if (!a || guest.demo) return;   /* 試験版: the host's own sounds and cut-in already played on this phone */
   const same = oa && oa.id === a.id && ob.m === b.m;
   if (a.r === 'ippon' && !(same && oa.r === 'ippon')) { SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(gStr(a.nm, 24)); return; }
   if (same && okInt(a.lv, 0, 10) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt');
@@ -14361,6 +14379,7 @@ function gsCanvas(b) {
 function guestAct(a, el) {
   if (!guest) return;
   if (a === 'leave') { SE.play('tap'); guestLeave(); return; }
+  if (a === 'ogdhost') { SE.play('tap'); ogdView('host', true); return; }
   if (a === 'again') { guest.st = 'conn'; guest.tries = 0; renderGuest(); guestConnect(); return; }
   if (a === 'pick') { const p = Number(el && el.dataset.p); if (okInt(p, 0, 7)) { guestSend({ k: 'pick', p }); SE.play('select'); } return; }
   const act = (x, extra) => { if (guestSend(Object.assign({ k: 'act', a: x }, extra || {}))) SE.play('tap'); else telop('つながっていません', 'white sm', 1000); };
@@ -14414,14 +14433,133 @@ function roomBoot() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) return; if (room && !room.ws) roomConnect(); if (guest && !guest.ws && guest.st === 'conn') guestConnect(); });
   roomLoad();
   if (roomLive()) roomConnect(); else if (room) { room = null; roomSave(); }
-  /* a link from the host's QR code: ?r=K7QP */
-  let r = null;
-  try { r = (new URLSearchParams(location.search).get('r') || '').toUpperCase(); } catch (_) { r = null; }
-  if (r) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) { /* ignore */ } }
+  /* a link from the host's QR code: ?r=K7QP ・ the 試験版: ?demo=ogiri */
+  let r = null, demo = '';
+  try { const q = new URLSearchParams(location.search); r = (q.get('r') || '').toUpperCase(); demo = q.get('demo') || ''; } catch (_) { r = null; }
+  if (r || demo) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) { /* ignore */ } }
+  if (demo === 'ogiri' && ogdStart()) return true;
   if (r && ROOM_RE.test(r)) { guestStart(r); return true; }
   const s = guestSaved();
   if (s) { guestStart(s.r); return true; }
   return false;
+}
+
+/* ---------- 試験版：大喜利グランプリを1台で（?demo=ogiri） ----------
+   あなた＋CPU 3人。4人とも自分のスマホで参加している体で、親の画面と「あなたのスマホ」の画面をこのスマホの中だけでつなぐ。
+   サーバーにはつながず、何も残さない（遊びかけのゲーム・部屋・お試し回数・利用の集計のどれにも入らない） */
+const OGD_Q = [
+  ['こんなコンビニはイヤだ', [['「温めますか？」と聞かれ、店員さんに抱きしめられる', 2], ['24時間営業。ただし開いているのは1分だけ', 1], ['コンビニなのに遠い', 0], ['レシートが長い。ほぼ巻物', 1]]],
+  ['300年ぶりに目覚めたロボットの第一声', [['「アップデートが12万件あります」', 2], ['「充電80%。あと300年いけます」', 1], ['「おはようございます」', 0], ['「起動音は自分で言うタイプです。ウィーン」', 1]]],
+];
+const OGD_NM = ['あなた', 'CPUたろう', 'CPUはなこ', 'CPUけんじ'];
+/* ogd = { view: 'guest'|'host', tick, real (a room made before, put aside), plan: [{ p, t, k (面白さ 0-2), at, sent }], votes: { 回答: [{ v, n, at, fin }] }, auto, idle, liveT, endT } */
+let ogd = null;
+const ogdR = (a, b) => a + Math.random() * (b - a);
+const ogdOdai = () => RP_MSGS.find(q => q.m === OGD_Q[G.turn % OGD_Q.length][0]) || null;
+function ogdStart() {
+  if (!ROOM_ON) return false;
+  if (ogd) ogdOff();
+  closeAllOverlays();
+  const real = room && !room.demo ? room : null;
+  if (real && real.ws) { const ws = real.ws; real.ws = null; try { ws.close(); } catch (_) { /* ignore */ } }
+  if (guest && !guest.demo && guest.ws) { const ws = guest.ws; guest.ws = null; try { ws.close(); } catch (_) { /* ignore */ } }
+  G = {
+    v: 2, demo: true, mode: 'reply', gid: Date.now(), rounds: OGD_Q.length, unit: 'cup', lvl: 'all', turn: 0, pile: [], cur: null, pending: freshPending(), last: null, done: false, uid: 1, hist: [],
+    stats: { cards: 0, devil: 0, angel: 0, hh: 0 },
+    players: OGD_NM.map(name => Object.assign({ name, total: 0, times: 0, dbl: 0, hh: 0, cospa: 0, hand: [], ans: 0, pass: 0, medal: 0 }, PMX.reply.stats())),
+    pm: { log: [], used: [] },
+  };
+  startTurn(); G.cur.sel = [];
+  room = { code: 'TEST', t: '', exp: Date.now() + 6 * 3600e3, gid: G.gid, open: false, ws: null, sent: {}, fails: 0, demo: true, gs: {} };
+  OGD_NM.forEach((nm, p) => { room.gs[p + 1] = { on: true, p, nm }; });
+  guest = { r: 'TEST', k: '', exp: 0, g: 1, ws: null, st: 'on', host: true, v: null, tries: 0, was: true, demo: true };
+  gsDraft = ''; gsSeen = { k: '', lv: 0 }; ogDraft = '';
+  ogd = { view: 'host', real, plan: [], votes: {}, auto: 0, idle: 0, liveT: -1, endT: -1, tick: setInterval(ogdTick, 250) };
+  coachEnd(false);
+  startIntro('mgStart', '<span class="tl-ic rp-tl"></span>大喜利グランプリ 試験版<small>あなた以外の3人はCPU</small>');
+  return true;
+}
+/* leaving the game screen ends it: the room made before (if any) comes back */
+function ogdOff() {
+  if (!ogd) return;
+  clearInterval(ogd.tick);
+  const real = ogd.real;
+  ogd = null;
+  if (guest && guest.demo) guest = null;
+  if (room && room.demo) { room = real; if (room) roomConnect(); }
+  $('scr-guest').hidden = screen !== 'guest';
+  roomBadge();
+}
+/* which phone is on screen: the host's (the game) or yours (the guest screen, over the game) */
+function ogdShow() {
+  const gs = ogd.view === 'guest';
+  $('scr-guest').hidden = !gs; $('scr-game').hidden = gs;
+  if (gs) renderGuest();
+}
+function ogdView(v, say) {
+  if (!ogd || ogd.view === v || screen !== 'game') return;
+  ogd.view = v;
+  ogdShow();
+  if (v === 'host' && isPM()) renderPM('keep');
+  fitScreen();
+  if (say) telop(v === 'guest' ? 'あなたのスマホ' : '親のスマホ', 'white sm', 900);
+}
+function ogdSync() {
+  if (!guest || !guest.demo) return;
+  const v = roomViewFor(1), j = JSON.stringify(v);
+  if (room.sent[1] === j) return;
+  room.sent[1] = j;
+  guestMsg({ t: 'm', m: JSON.parse(j) });
+}
+const ogdSay = (p, m) => roomFromGuest(p + 1, m);
+/* the CPUs' answers for this お題: three at first, one of them answers again later */
+function ogdPlan(now) {
+  const set = OGD_Q[G.turn % OGD_Q.length][1].slice().sort(() => Math.random() - .5), bots = [1, 2, 3].sort(() => Math.random() - .5);
+  const at = [ogdR(9000, 13000), ogdR(16000, 21000), ogdR(24000, 29000), ogdR(34000, 40000)];
+  ogd.plan = set.map((x, i) => ({ p: bots[i % 3], t: x[0], k: x[1], at: now + at[i], sent: false }));
+  ogd.votes = {}; ogd.idle = 0;
+}
+/* how many points a CPU gives: your answers do well, theirs by how funny they are */
+function ogdPts(a) {
+  const x = ogd.plan.find(y => y.p === a.p && y.t === a.t), k = a.p === 0 ? 3 : x ? x.k : 1, per = ogPer(G.players.length);
+  return Math.min(per, k === 3 ? Math.round(ogdR(3, 5)) : k === 2 ? Math.round(ogdR(4, 5)) : k === 1 ? Math.round(ogdR(1, 3)) : 0);
+}
+function ogdTick() {
+  if (!ogd || !G || !G.demo || G.done || screen !== 'game' || G.mode !== 'reply' || introGate || pxBusy) return;
+  const c = G.cur, now = Date.now();
+  if (c.phase === 'before') {
+    if (!ogd.auto) ogd.auto = now + 2600;
+    else if (now >= ogd.auto) { ogd.auto = 0; PMX.reply.act('open'); }
+    return;
+  }
+  if (c.phase === 'end') { if (ogd.endT !== G.turn) { ogd.endT = G.turn; ogdView('host', true); } return; }
+  if (ogd.liveT !== G.turn) { ogd.liveT = G.turn; ogdPlan(now); ogdView('guest', true); }
+  ogd.plan.forEach(x => {
+    if (x.sent || now < x.at) return;
+    if (ogBusy(x.p)) { x.at = now + 1500; return; }
+    x.sent = true; ogdSay(x.p, { k: 'act', a: 'ans', txt: x.t });
+  });
+  if (c.phase === 'judge') {
+    ogd.idle = 0;
+    const a = ogCur(), key = c.at;
+    if (!a) return;
+    const vs = ogd.votes[key] = ogd.votes[key] || pxOthers(a.p).filter(v => v !== 0).map(v => ({ v, n: ogdPts(a), at: now + ogdR(1400, 3200), fin: false }));
+    vs.forEach(x => {
+      if (x.fin || now < x.at || G.cur.phase !== 'judge' || ogDone(a, x.v)) return;
+      if ((a.pt[x.v] || 0) < x.n) { ogdSay(x.v, { k: 'act', a: 'pt' }); x.at = now + ogdR(320, 620); } else { x.fin = true; ogdSay(x.v, { k: 'act', a: 'ok' }); }
+    });
+    /* only you are left to judge, but the host's screen is up: say where the button is */
+    if (G.cur.phase === 'judge' && ogd.view === 'host' && a.p !== 0 && !ogDone(a, 0) && vs.every(x => x.fin || ogDone(a, x.v)) && ogd.hint !== key + '|' + G.turn) {
+      ogd.hint = key + '|' + G.turn; telop('あなたの判定待ち！ 右上の「子機」で点を入れてね', 'white sm', 2200);
+    }
+    return;
+  }
+  if (c.phase !== 'live') { ogd.idle = 0; return; }
+  /* everyone has answered and nobody is waiting: the お題 closes (it waits longer for you, and while you are still writing) */
+  if (!ogd.plan.every(x => x.sent) || ogQueue().length) { ogd.idle = 0; return; }
+  if (!ogd.idle) ogd.idle = now;
+  const wait = c.ans.some(a => a.p === 0) ? (gsDraft.trim() ? 20000 : 5000) : 60000;
+  if (now - ogd.idle >= wait) { ogd.idle = 0; PMX.reply.act('close'); }
 }
 
 /* ---------- QR code (model 2, byte mode, error correction M, versions 1-6: up to 106 bytes). For the join link ---------- */

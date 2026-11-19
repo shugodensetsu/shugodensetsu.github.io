@@ -607,7 +607,7 @@ PMX.reply = {
     if (a === 'end') { finishGame(); return; }
     if (a === 'open' && c.phase === 'before' && !pmLocked()) {
       if (!ogReady()) { SE.play('boing'); return; }
-      const q = pmDraw(rpPool(G.lvl), 1)[0];
+      const q = (G.demo && ogdOdai()) || pmDraw(rpPool(G.lvl), 1)[0];
       pmUse(q.id);
       c.q = q.id; c.ans = []; c.at = null; c.phase = 'live'; ogDraft = '';
       tryUse('reply');
