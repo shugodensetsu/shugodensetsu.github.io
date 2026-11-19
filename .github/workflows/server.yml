@@ -88,6 +88,17 @@ jobs:
         continue-on-error: true
         run: printf '%s' "$STRIPE_SECRET_KEY" | npx wrangler secret put STRIPE_SECRET_KEY 2>&1 | "$RUNNER_TEMP/mask.sh" | tee "$RUNNER_TEMP/logs/4b-stripe.txt"
 
+      - name: Stripe のキーの種類だけを書く（キー本体は書かない）
+        if: env.STRIPE_SECRET_KEY != ''
+        run: |
+          case "$STRIPE_SECRET_KEY" in
+            rk_live_*) m='本番の制限付きキー' ;;
+            rk_test_*) m='テストの制限付きキー' ;;
+            sk_live_*|sk_test_*) m='制限なしの秘密キー（制限付きキーに替えてください）' ;;
+            *) m='形式が違います' ;;
+          esac
+          echo "Stripe のキー: $m" | tee "$RUNNER_TEMP/logs/4c-stripe-kind.txt"
+
       - name: Worker をデプロイ
         id: deploy
         if: steps.chk.outputs.ok == 'true'
