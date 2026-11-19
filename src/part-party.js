@@ -368,7 +368,7 @@ function rpChat(body, foot, cls, text) {
     (body != null ? '<div class="rp-list" id="rpList">' + body + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の回答">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の回答">次 ▼</button></div>' : '') +
     (foot || '') + '</div>';
 }
-const OG_GOAL = 10, OG_MAXLEN = 40, OG_MAXANS = 40;
+const OG_GOAL = 10, OG_MAXLEN = 40, OG_MAXANS = 40, OG_JUDGE = 6000;   /* 6秒で判定が締め切られる */
 const ogInput = id => '<div class="og-in"><textarea id="' + id + '" maxlength="' + OG_MAXLEN + '" rows="3" enterkeyhint="send" placeholder="ここに回答を書く" aria-label="回答を入力"></textarea></div>';
 /* the answers never scroll: they are cut into pages (▲ ▼ under them); a new one shows on the last page */
 function rpPages(anim) {
@@ -398,7 +398,8 @@ function rpPages(anim) {
 /* ---------- IPPON 方式 ----------
    全員が自分のスマホで参加する（親のスマホで遊べるのは1人まで）。書けた人から「回答する」→ 1つずつ発表 →
    回答した人以外が持ち点（4人5点・5人4点・6〜8人3点・それ以上2点）を「面白い！」で入れる → 合計10点で IPPON。
-   cur = { q, phase: before|live|judge|res|end, ans: [{ p, t, pt: { voter: 点 }, ok: [決定した人], r: null|'ippon'|合計 }], at: 発表中の回答 } */
+   判定は1つの回答につき6秒：その間に「面白い！」を押した分がそのまま点になる（10点に届けばその場で IPPON）。
+   cur = { q, phase: before|live|judge|res|end, ans: [{ p, t, pt: { voter: 点 }, ok: [], r: null|'ippon'|合計 }], at: 発表中の回答, until: 判定の締め切り（このスマホの時計） } */
 const ogPer = n => (n <= 4 ? 5 : n === 5 ? 4 : n <= 8 ? 3 : 2);
 const ogLocal = () => roomLocal(pxAll());
 const ogCanRoom = () => ROOM_ON && (plusOn() || roomLive());
@@ -411,7 +412,7 @@ const ogLive = v => !roomHas(v) || roomOnline(v);
 const ogDone = (a, v) => a.ok.includes(v) || (a.pt[v] || 0) >= ogPer(G.players.length);
 const ogBusy = p => G.cur.ans.some(a => a.p === p && a.r == null);
 const ogQueue = () => G.cur.ans.map((_, i) => i).filter(i => G.cur.ans[i].r == null && i !== G.cur.at);
-let ogTimer = 0, ogSeen = { k: '', lv: 0 }, ogDraft = '';
+let ogTimer = 0, ogJT = 0, ogSeen = { k: '', lv: 0 }, ogDraft = '';
 /* the IPPON meter: 10 rings, lit from the outside in; the last one is the whole centre (no hole once it is full) */
 function ogMeter(lv, from) {
   let s = '<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="99" fill="#0b0918" stroke="#e3bf55" stroke-width="2.5"/>';
@@ -424,8 +425,22 @@ function ogMeter(lv, from) {
 /* one answer on the stage, the same on every phone: plain strings only */
 const ogCard = (p, nm, t, r, fresh) => '<div class="og-ans' + (fresh ? ' fresh' : '') + (r === 'ippon' ? ' ippon' : r === 0 ? ' zero' : '') + '"><span class="og-who" style="--p:' + pc(p) + '">' + esc(nm) + '</span><p class="og-t">' + esc(t) + '</p>' +
   (r === 'ippon' ? '<span class="og-ippon">IPPON</span>' : '') + '</div>';
+/* o.left: ms left to judge (the bar under the status runs out), null once the result is in. The status line and the bar keep their
+   height in both, so the meter never moves when the result comes */
 const ogStage = o => '<div class="rp-chat og grow judge' + (o.lv >= OG_GOAL ? ' full' : '') + '">' + ogOdai(o.m, 'og-small') + '<div class="og-row">' + ogCard(o.p, o.nm, o.t, o.r, o.fresh) +
-  '<div class="og-mtr" role="img" aria-label="' + o.lv + '点（10点で IPPON）">' + ogMeter(o.lv, o.from) + '</div></div><p class="og-st">' + o.st + '</p></div>';
+  '<div class="og-mtr" role="img" aria-label="' + o.lv + '点（10点で IPPON）">' + ogMeter(o.lv, o.from) + '</div></div><p class="og-st">' + o.st + '</p>' +
+  '<div class="og-time">' + (o.left != null ? '<i style="animation-duration:' + OG_JUDGE + 'ms;animation-delay:-' + Math.max(0, OG_JUDGE - o.left) + 'ms"></i>' : '') + '</div></div>';
+/* the seconds left, counted down on screen (each phone by its own clock) */
+let ogTick = 0;
+function ogClock() {
+  if (ogTick) return;
+  ogTick = setInterval(() => {
+    const els = document.querySelectorAll('[data-ogend]');
+    if (!els.length) { clearInterval(ogTick); ogTick = 0; return; }
+    els.forEach(el => { el.textContent = String(Math.max(0, Math.ceil((Number(el.dataset.ogend) - Date.now()) / 1000))); });
+  }, 200);
+}
+const ogLeftHTML = end => { ogClock(); return 'あと<b data-ogend="' + end + '">' + Math.max(0, Math.ceil((end - Date.now()) / 1000)) + '</b>秒'; };
 /* what the meter showed last time on this phone: only the new rings light up, and a new answer flips in once */
 function ogFrom(key, lv) {
   const same = ogSeen.k === key, from = same ? Math.min(ogSeen.lv, lv) : 0;
@@ -433,12 +448,19 @@ function ogFrom(key, lv) {
   return { from, fresh: !same };
 }
 const ogCut = nm => telop('<b class="og-ip">IPPON!</b><small>' + esc(nm) + '</small>', 'ippon', 2600);
-function ogStatus(a, done, of) {
+function ogStatus(a, end) {
   if (a.r === 'ippon') return '<b>IPPON！</b>';
   if (a.r != null) return '<b>' + a.r + '</b>点' + (a.r === 0 ? ' ・ スベった… <b>1DON</b>' : '');
-  return '<b>' + ogSum(a) + '</b> / 10点 ・ 判定 ' + done + '/' + of + '人';
+  return '<b>' + Math.min(OG_GOAL, ogSum(a)) + '</b> / 10点 ・ ' + ogLeftHTML(end);
 }
-function ogStart(i) { G.cur.at = i; G.cur.phase = 'judge'; SE.play('flip'); vibrate(15); pxSave('top'); }
+function ogStart(i) { G.cur.at = i; G.cur.phase = 'judge'; G.cur.until = Date.now() + OG_JUDGE; SE.play('flip'); vibrate(15); pxSave('top'); ogArm(); }
+/* the 6 seconds: when they are up, the answer gets the points it has */
+function ogArm() {
+  clearTimeout(ogJT);
+  const c = G.cur, g = G, at = c.at;
+  if (c.phase !== 'judge') return;
+  ogJT = setTimeout(() => { if (G === g && G.cur === c && c.phase === 'judge' && c.at === at && screen === 'game') ogEnd(); }, Math.max(0, c.until - Date.now()) + 60);
+}
 function ogAdd(p, txt) {
   const c = G.cur;
   if (!['live', 'judge', 'res'].includes(c.phase) || ogBusy(p) || c.ans.length >= OG_MAXANS) return false;
@@ -460,7 +482,7 @@ function ogEnd() {
   if (!a || c.phase !== 'judge') return;
   const tot = Math.min(OG_GOAL, ogSum(a)), pl = G.players[a.p];
   a.r = tot >= OG_GOAL ? 'ippon' : tot;
-  c.phase = 'res';
+  c.phase = 'res'; clearTimeout(ogJT);
   if (a.r === 'ippon') { pl.best++; pl.medal++; SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(pname(a.p)); }
   else if (tot === 0) { pl.worst++; SE.play('bubuu'); }
   else SE.play('ding');
@@ -477,8 +499,8 @@ function ogPt(v) {
   const c = G.cur, a = ogCur();
   if (c.phase !== 'judge' || !a || v === a.p || !okInt(v, 0, G.players.length - 1) || ogDone(a, v)) return;
   a.pt[v] = (a.pt[v] || 0) + 1;
-  SE.play('ogPt'); vibrate(8);
   if (ogSum(a) >= OG_GOAL) { ogEnd(); return; }
+  SE.play('ogPt' + Math.min(9, ogSum(a))); vibrate(8);
   if (!ogCheck()) pxSave('keep');
 }
 function ogOk(v) {
@@ -529,6 +551,7 @@ PMX.reply = {
       if (q.length) { c.at = q[0]; c.phase = 'judge'; } else { c.at = null; c.phase = 'live'; }
     }
     if (c.phase === 'end') c.at = null;
+    if (c.phase === 'judge') c.until = Date.now() + OG_JUDGE;   /* back after a reload: the answer gets its 6 seconds again */
   },
   stage() {
     const c = G.cur, head = pxHead();
@@ -545,10 +568,9 @@ PMX.reply = {
       return top + '<p class="px-for">' + pmName(hp) + ' の回答（このスマホ）</p>' + rpChat(null, ogInput('rpIn'), 'grow write');
     }
     if (c.phase === 'judge' || c.phase === 'res') {
-      const a = ogCur(), vs = pxOthers(a.p).filter(ogLive), lv = a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a));
-      const f = ogFrom(c.q + '|' + c.at, lv), hp = ogHostP();
-      const cut = c.phase === 'judge' && hp != null && hp !== a.p && !ogDone(a, hp) ? '' : c.phase === 'judge' ? ' <button type="button" class="og-x" data-g="x-cut">締め切る</button>' : '';
-      return ogStage({ m: rpMsg().m, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv, from: f.from, fresh: f.fresh, st: ogStatus(a, vs.filter(v => ogDone(a, v)).length, vs.length) + cut });
+      const a = ogCur(), lv = a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a));
+      const f = ogFrom(c.q + '|' + c.at, lv);
+      return ogStage({ m: rpMsg().m, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv, from: f.from, fresh: f.fresh, st: ogStatus(a, c.until), left: c.phase === 'judge' ? Math.max(0, c.until - Date.now()) : null });
     }
     return head + '<p class="gk-top og-ask">このお題の回答</p>' + rpChat(ogEndList(), '', 'grow show');
   },
@@ -563,9 +585,9 @@ PMX.reply = {
       const a = ogCur(), hp = ogHostP(), per = ogPer(G.players.length);
       if (hp != null && hp !== a.p && !ogDone(a, hp)) {
         const left = per - (a.pt[hp] || 0);
-        return pxRow(pxBtn('ok', '決定', 'white small') + pxBtn('pt', '面白い！ +1<span class="sub">' + esc(pname(hp)) + ' のこり' + left + '点</span>', 'big main pink grow'));
+        return pxRow(pxBtn('pt', '面白い！ +1<span class="sub">' + esc(pname(hp)) + ' のこり' + left + '点</span>', 'big main pink grow'));
       }
-      return pxRow('<div class="dock-note">' + (hp === a.p ? 'みんなが判定中…' : '判定中…') + '</div>');
+      return pxRow('<div class="dock-note">' + (hp === a.p ? 'みんなが判定中…' : '6秒以内に、みんなのスマホで「面白い！」') + '</div>');
     }
     if (c.phase === 'res') return pxRow('<div class="dock-note">' + (ogQueue().length ? '次の回答へ…' : 'お題にもどります…') + '</div>');
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のお題へ ▶', 'big main'));
@@ -577,8 +599,9 @@ PMX.reply = {
     const mine = ogQueue().findIndex(i => c.ans[i].p === p);
     if (mine >= 0) b.wait = mine + 1;
     if (c.phase === 'judge' || c.phase === 'res') {
-      const a = ogCur(), vs = pxOthers(a.p).filter(ogLive);
-      b.a = { id: c.at, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv: a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a)), me: a.p === p, my: a.pt[p] || 0, done: a.p !== p && ogDone(a, p), k: vs.filter(v => ogDone(a, v)).length, of: vs.length };
+      const a = ogCur();
+      b.a = { id: c.at, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv: a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a)), me: a.p === p, my: a.pt[p] || 0, done: a.p !== p && ogDone(a, p) };
+      if (c.phase === 'judge') b.a.left = Math.round(Math.max(0, Math.min(OG_JUDGE, c.until - Date.now())) / 100) * 100;
     }
     if (c.phase === 'live') b.busy = ogBusy(p);
     if (c.phase === 'end') { b.cnt = c.ans.filter(a => a.p === p).length; b.ip = c.ans.filter(a => a.p === p && a.r === 'ippon').length; }
@@ -591,8 +614,8 @@ PMX.reply = {
   },
   mounted(anim) {
     rpPages(anim);
-    /* a judge whose phone dropped out no longer holds the answer up */
-    if (G.cur.phase === 'judge') { const g = G; setTimeout(() => { if (G === g && G.mode === 'reply' && screen === 'game') ogCheck(); }, 0); }
+    /* the 6 seconds run on (after a reload too); everyone who could still press has used all their points: done early */
+    if (G.cur.phase === 'judge') { ogArm(); const g = G; setTimeout(() => { if (G === g && G.mode === 'reply' && screen === 'game') ogCheck(); }, 0); }
     const inp = $('rpIn');
     if (inp) {
       inp.value = ogDraft;

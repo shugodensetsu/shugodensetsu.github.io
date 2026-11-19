@@ -2400,23 +2400,28 @@ button.rp-pick{cursor:pointer}
 .og-seg.core.on{fill:#ffd83d}
 .og-seg.new{animation:ogSeg .45s ease-out both}
 @keyframes ogSeg{0%{stroke:#ffffff; fill:#ffffff; opacity:.25}}
-.og-st{flex:none; margin:0; text-align:center; color:#fff; font-weight:800; font-size:14px; line-height:1.3}
-.og-st b{color:#ffd83d; font-size:1.35em}
+.og-st{flex:none; margin:0; height:1.65em; line-height:1.65em; white-space:nowrap; text-align:center; color:#fff; font-weight:800; font-size:14px}
+.og-st b{color:#ffd83d; font-size:1.35em; line-height:0}
+/* the 6 seconds to judge: a bar running out along the bottom edge of the stage (in its padding: it takes no room, moves nothing) */
+.rp-chat.og{position:relative}
+.og-time{position:absolute; left:14px; right:14px; bottom:2px; height:3px; border-radius:2px; background:rgba(255,255,255,.12); overflow:hidden}
+.og-time i{display:block; height:100%; background:#ffd83d; transform-origin:left center; animation:ogTime linear forwards}
+@keyframes ogTime{from{transform:scaleX(1)} to{transform:scaleX(0)}}
 .og-x{margin-left:6px; border:2px solid var(--ink); border-radius:999px; background:#fff; color:#223; font:800 11px/1.5 inherit; font-family:inherit; padding:0 8px; vertical-align:2px; cursor:pointer}
 .og-cnt{display:block; font-size:.8em; opacity:.85}
 .og-pts{flex:none; min-width:30px; text-align:center; font-family:var(--f-display); font-size:17px; line-height:1; color:#150733}
 .og-pts small{font-size:10px; font-family:inherit; font-weight:800}
 .rp-out.best .og-pts{color:#b3261e}
 .og-none{margin:auto; color:#fff; font-weight:800; text-align:center}
-.og-wait, .og-say{margin:0; text-align:center; font-weight:800; font-size:13px; line-height:1.4; color:var(--white)}
+.og-wait, .og-say{flex:none; margin:0; text-align:center; font-weight:800; font-size:13px; line-height:1.4; white-space:nowrap; color:var(--white)}
 .og-wait b{color:var(--yellow)}
 .og-gs{gap:6px}
 .og-gs .rp-chat{flex:1 1 auto; min-height:0}
 /* IPPON のカットイン */
 .telop.ippon{top:46%; color:#ffd83d; animation:ogCut var(--t, 2.6s) cubic-bezier(.2,1,.3,1) forwards}
 .telop.ippon::before{content:''; position:absolute; left:50%; top:50%; width:300vw; height:118%; transform:translate(-50%,-50%) rotate(-6deg); background:#e5262f; border-top:6px solid #ffd83d; border-bottom:6px solid #ffd83d; box-shadow:0 0 40px rgba(0,0,0,.5); z-index:-1}
-.telop.ippon .og-ip{display:block; font-family:var(--f-display); font-weight:400; font-size:min(104px, 24vw); line-height:1.05; letter-spacing:.02em; color:#ffd83d; text-shadow:4px 0 0 var(--ink),-4px 0 0 var(--ink),0 4px 0 var(--ink),0 -4px 0 var(--ink),3px 3px 0 var(--ink),-3px 3px 0 var(--ink),3px -3px 0 var(--ink),-3px -3px 0 var(--ink),0 9px 0 var(--ink)}
-.telop.ippon small{font-size:min(26px, 6.4vw); color:#fff; text-shadow:0 2px 0 var(--ink)}
+.telop.ippon .og-ip{display:block; font-family:var(--f-display); font-weight:400; font-size:min(96px, 17vw); line-height:1.05; letter-spacing:.02em; color:#ffd83d; text-shadow:4px 0 0 var(--ink),-4px 0 0 var(--ink),0 4px 0 var(--ink),0 -4px 0 var(--ink),3px 3px 0 var(--ink),-3px 3px 0 var(--ink),3px -3px 0 var(--ink),-3px -3px 0 var(--ink),0 9px 0 var(--ink)}
+.telop.ippon small{font-size:min(26px, 6.4vw); color:#fff; text-shadow:0 2px 0 var(--ink); white-space:normal; overflow-wrap:anywhere; max-width:88vw; margin-inline:auto}
 @keyframes ogCut{0%{transform:translate(-50%,-50%) scale(2.8); opacity:0} 10%{transform:translate(-50%,-50%) scale(.9); opacity:1} 16%{transform:translate(-50%,-50%) scale(1.05)} 22%{transform:translate(-50%,-50%) scale(1)} 86%{transform:translate(-50%,-50%) scale(1); opacity:1} 100%{transform:translate(-50%,-50%) scale(1.08); opacity:0}}
 /* a short stage (small phone, 7–8 players): everything a little tighter, so an answer stays whole without paging */
 @container (max-height: 300px){
@@ -2897,7 +2902,11 @@ button.rp-pick{cursor:pointer}
 .gs-me{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:center; background:var(--p); color:var(--ink); border:2.5px solid var(--ink); border-radius:999px; padding:2px 10px; font-weight:800; font-size:14px}
 .gs-top .pbtn{margin-left:auto}
 /* 試験版: your name stays whole, the two buttons sit together on the right */
-.gs-top.ogd .gs-me{flex:1 0 auto}
+.gs-top.ogd{gap:6px}
+.gs-top.ogd > *{white-space:nowrap; flex-shrink:0}
+.gs-top.ogd .rm-ph{display:none}
+.gs-top.ogd .gs-me{flex:1 1 auto; min-width:max-content; padding:2px 8px}
+.gs-top.ogd .pbtn{padding-inline:9px}
 .gs-top.ogd .pbtn + .pbtn{margin-left:0}
 .gs-head{flex:none; display:flex; align-items:baseline; justify-content:center; gap:8px; font-family:var(--f-display); font-size:min(20px, 5vw); color:var(--white)}
 .gs-head small{font-family:var(--f-body); font-weight:800; font-size:12px; color:var(--muted)}
@@ -2946,6 +2955,12 @@ button.rp-pick{cursor:pointer}
   .og-gs .og-t{font-size:15px; line-height:1.3}
   .og-gs .og-who{font-size:11px}
   .og-gs .og-mtr{flex:0 1 auto; max-width:38%; min-height:0}
+  /* on its side: the stage takes the whole height, the line and the 面白い！ button stand beside it */
+  .rp-gs.og-gs{max-width:760px; display:grid; grid-template-columns:minmax(0, 1fr) minmax(140px, 28%); grid-template-rows:minmax(0, 1fr) auto; column-gap:10px; row-gap:8px; align-items:stretch}
+  .og-gs > .rp-chat{grid-column:1; grid-row:1 / 3; max-width:none}
+  .og-gs > .og-say, .og-gs > .og-wait{grid-column:2; grid-row:1; align-self:end; white-space:normal}
+  .og-gs > .dock-row{grid-column:2; grid-row:2}
+  .og-gs > .dock-row .pbtn{width:100%}
   .gs-body .ms-card{padding:8px 12px}
   .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
   .gs-body .gk-fake{font-size:18px}
@@ -4796,6 +4811,11 @@ const SOUNDS = {
   bubuu: (A, t) => [0, 0.2].forEach((dt, i) => [196, 207.65].forEach(f => tone(A, t + dt, { type: 'square', f, d: i ? 0.6 : 0.16, g: 0.14, lp: 2400, sus: 1, rel: 0.05 }))),
   /* 大喜利グランプリ: one point into the IPPON meter, and the IPPON itself */
   ogPt: (A, t) => { bellHit(A, t, 1568, 0.28, 0.1); tone(A, t, { type: 'square', f: 988, f2: 1480, bend: 0.05, d: 0.09, g: 0.05, lp: 3200 }); },
+  /* ogPt1 … ogPt9: the IPPON meter filling, one step up the scale per point (ド → レ(上のオクターブ)); the 10th is the IPPON itself */
+  ...Object.fromEntries([0, 2, 4, 5, 7, 9, 11, 12, 14].map((s, i) => {
+    const f = 1046.5 * 2 ** (s / 12);
+    return ['ogPt' + (i + 1), (A, t) => { bellHit(A, t, f, 0.3, 0.1); tone(A, t, { type: 'square', f: f / 2, f2: f * 0.75, bend: 0.04, d: 0.08, g: 0.045, lp: 3600 }); }];
+  })),
   ippon: (A, t) => {
     kick(A, t, 1.4); crash(A, t, 0.5); timpani(A, t, 65.41, 0.9);
     brass(A, t, [261.63, 329.63, 392, 523.25], 0.16, 0.08, { lp: 1800, lp2: 4500 });
@@ -13087,7 +13107,7 @@ function rpChat(body, foot, cls, text) {
     (body != null ? '<div class="rp-list" id="rpList">' + body + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の回答">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の回答">次 ▼</button></div>' : '') +
     (foot || '') + '</div>';
 }
-const OG_GOAL = 10, OG_MAXLEN = 40, OG_MAXANS = 40;
+const OG_GOAL = 10, OG_MAXLEN = 40, OG_MAXANS = 40, OG_JUDGE = 6000;   /* 6秒で判定が締め切られる */
 const ogInput = id => '<div class="og-in"><textarea id="' + id + '" maxlength="' + OG_MAXLEN + '" rows="3" enterkeyhint="send" placeholder="ここに回答を書く" aria-label="回答を入力"></textarea></div>';
 /* the answers never scroll: they are cut into pages (▲ ▼ under them); a new one shows on the last page */
 function rpPages(anim) {
@@ -13117,7 +13137,8 @@ function rpPages(anim) {
 /* ---------- IPPON 方式 ----------
    全員が自分のスマホで参加する（親のスマホで遊べるのは1人まで）。書けた人から「回答する」→ 1つずつ発表 →
    回答した人以外が持ち点（4人5点・5人4点・6〜8人3点・それ以上2点）を「面白い！」で入れる → 合計10点で IPPON。
-   cur = { q, phase: before|live|judge|res|end, ans: [{ p, t, pt: { voter: 点 }, ok: [決定した人], r: null|'ippon'|合計 }], at: 発表中の回答 } */
+   判定は1つの回答につき6秒：その間に「面白い！」を押した分がそのまま点になる（10点に届けばその場で IPPON）。
+   cur = { q, phase: before|live|judge|res|end, ans: [{ p, t, pt: { voter: 点 }, ok: [], r: null|'ippon'|合計 }], at: 発表中の回答, until: 判定の締め切り（このスマホの時計） } */
 const ogPer = n => (n <= 4 ? 5 : n === 5 ? 4 : n <= 8 ? 3 : 2);
 const ogLocal = () => roomLocal(pxAll());
 const ogCanRoom = () => ROOM_ON && (plusOn() || roomLive());
@@ -13130,7 +13151,7 @@ const ogLive = v => !roomHas(v) || roomOnline(v);
 const ogDone = (a, v) => a.ok.includes(v) || (a.pt[v] || 0) >= ogPer(G.players.length);
 const ogBusy = p => G.cur.ans.some(a => a.p === p && a.r == null);
 const ogQueue = () => G.cur.ans.map((_, i) => i).filter(i => G.cur.ans[i].r == null && i !== G.cur.at);
-let ogTimer = 0, ogSeen = { k: '', lv: 0 }, ogDraft = '';
+let ogTimer = 0, ogJT = 0, ogSeen = { k: '', lv: 0 }, ogDraft = '';
 /* the IPPON meter: 10 rings, lit from the outside in; the last one is the whole centre (no hole once it is full) */
 function ogMeter(lv, from) {
   let s = '<svg viewBox="-100 -100 200 200" aria-hidden="true"><circle r="99" fill="#0b0918" stroke="#e3bf55" stroke-width="2.5"/>';
@@ -13143,8 +13164,22 @@ function ogMeter(lv, from) {
 /* one answer on the stage, the same on every phone: plain strings only */
 const ogCard = (p, nm, t, r, fresh) => '<div class="og-ans' + (fresh ? ' fresh' : '') + (r === 'ippon' ? ' ippon' : r === 0 ? ' zero' : '') + '"><span class="og-who" style="--p:' + pc(p) + '">' + esc(nm) + '</span><p class="og-t">' + esc(t) + '</p>' +
   (r === 'ippon' ? '<span class="og-ippon">IPPON</span>' : '') + '</div>';
+/* o.left: ms left to judge (the bar under the status runs out), null once the result is in. The status line and the bar keep their
+   height in both, so the meter never moves when the result comes */
 const ogStage = o => '<div class="rp-chat og grow judge' + (o.lv >= OG_GOAL ? ' full' : '') + '">' + ogOdai(o.m, 'og-small') + '<div class="og-row">' + ogCard(o.p, o.nm, o.t, o.r, o.fresh) +
-  '<div class="og-mtr" role="img" aria-label="' + o.lv + '点（10点で IPPON）">' + ogMeter(o.lv, o.from) + '</div></div><p class="og-st">' + o.st + '</p></div>';
+  '<div class="og-mtr" role="img" aria-label="' + o.lv + '点（10点で IPPON）">' + ogMeter(o.lv, o.from) + '</div></div><p class="og-st">' + o.st + '</p>' +
+  '<div class="og-time">' + (o.left != null ? '<i style="animation-duration:' + OG_JUDGE + 'ms;animation-delay:-' + Math.max(0, OG_JUDGE - o.left) + 'ms"></i>' : '') + '</div></div>';
+/* the seconds left, counted down on screen (each phone by its own clock) */
+let ogTick = 0;
+function ogClock() {
+  if (ogTick) return;
+  ogTick = setInterval(() => {
+    const els = document.querySelectorAll('[data-ogend]');
+    if (!els.length) { clearInterval(ogTick); ogTick = 0; return; }
+    els.forEach(el => { el.textContent = String(Math.max(0, Math.ceil((Number(el.dataset.ogend) - Date.now()) / 1000))); });
+  }, 200);
+}
+const ogLeftHTML = end => { ogClock(); return 'あと<b data-ogend="' + end + '">' + Math.max(0, Math.ceil((end - Date.now()) / 1000)) + '</b>秒'; };
 /* what the meter showed last time on this phone: only the new rings light up, and a new answer flips in once */
 function ogFrom(key, lv) {
   const same = ogSeen.k === key, from = same ? Math.min(ogSeen.lv, lv) : 0;
@@ -13152,12 +13187,19 @@ function ogFrom(key, lv) {
   return { from, fresh: !same };
 }
 const ogCut = nm => telop('<b class="og-ip">IPPON!</b><small>' + esc(nm) + '</small>', 'ippon', 2600);
-function ogStatus(a, done, of) {
+function ogStatus(a, end) {
   if (a.r === 'ippon') return '<b>IPPON！</b>';
   if (a.r != null) return '<b>' + a.r + '</b>点' + (a.r === 0 ? ' ・ スベった… <b>1DON</b>' : '');
-  return '<b>' + ogSum(a) + '</b> / 10点 ・ 判定 ' + done + '/' + of + '人';
+  return '<b>' + Math.min(OG_GOAL, ogSum(a)) + '</b> / 10点 ・ ' + ogLeftHTML(end);
 }
-function ogStart(i) { G.cur.at = i; G.cur.phase = 'judge'; SE.play('flip'); vibrate(15); pxSave('top'); }
+function ogStart(i) { G.cur.at = i; G.cur.phase = 'judge'; G.cur.until = Date.now() + OG_JUDGE; SE.play('flip'); vibrate(15); pxSave('top'); ogArm(); }
+/* the 6 seconds: when they are up, the answer gets the points it has */
+function ogArm() {
+  clearTimeout(ogJT);
+  const c = G.cur, g = G, at = c.at;
+  if (c.phase !== 'judge') return;
+  ogJT = setTimeout(() => { if (G === g && G.cur === c && c.phase === 'judge' && c.at === at && screen === 'game') ogEnd(); }, Math.max(0, c.until - Date.now()) + 60);
+}
 function ogAdd(p, txt) {
   const c = G.cur;
   if (!['live', 'judge', 'res'].includes(c.phase) || ogBusy(p) || c.ans.length >= OG_MAXANS) return false;
@@ -13179,7 +13221,7 @@ function ogEnd() {
   if (!a || c.phase !== 'judge') return;
   const tot = Math.min(OG_GOAL, ogSum(a)), pl = G.players[a.p];
   a.r = tot >= OG_GOAL ? 'ippon' : tot;
-  c.phase = 'res';
+  c.phase = 'res'; clearTimeout(ogJT);
   if (a.r === 'ippon') { pl.best++; pl.medal++; SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(pname(a.p)); }
   else if (tot === 0) { pl.worst++; SE.play('bubuu'); }
   else SE.play('ding');
@@ -13196,8 +13238,8 @@ function ogPt(v) {
   const c = G.cur, a = ogCur();
   if (c.phase !== 'judge' || !a || v === a.p || !okInt(v, 0, G.players.length - 1) || ogDone(a, v)) return;
   a.pt[v] = (a.pt[v] || 0) + 1;
-  SE.play('ogPt'); vibrate(8);
   if (ogSum(a) >= OG_GOAL) { ogEnd(); return; }
+  SE.play('ogPt' + Math.min(9, ogSum(a))); vibrate(8);
   if (!ogCheck()) pxSave('keep');
 }
 function ogOk(v) {
@@ -13248,6 +13290,7 @@ PMX.reply = {
       if (q.length) { c.at = q[0]; c.phase = 'judge'; } else { c.at = null; c.phase = 'live'; }
     }
     if (c.phase === 'end') c.at = null;
+    if (c.phase === 'judge') c.until = Date.now() + OG_JUDGE;   /* back after a reload: the answer gets its 6 seconds again */
   },
   stage() {
     const c = G.cur, head = pxHead();
@@ -13264,10 +13307,9 @@ PMX.reply = {
       return top + '<p class="px-for">' + pmName(hp) + ' の回答（このスマホ）</p>' + rpChat(null, ogInput('rpIn'), 'grow write');
     }
     if (c.phase === 'judge' || c.phase === 'res') {
-      const a = ogCur(), vs = pxOthers(a.p).filter(ogLive), lv = a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a));
-      const f = ogFrom(c.q + '|' + c.at, lv), hp = ogHostP();
-      const cut = c.phase === 'judge' && hp != null && hp !== a.p && !ogDone(a, hp) ? '' : c.phase === 'judge' ? ' <button type="button" class="og-x" data-g="x-cut">締め切る</button>' : '';
-      return ogStage({ m: rpMsg().m, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv, from: f.from, fresh: f.fresh, st: ogStatus(a, vs.filter(v => ogDone(a, v)).length, vs.length) + cut });
+      const a = ogCur(), lv = a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a));
+      const f = ogFrom(c.q + '|' + c.at, lv);
+      return ogStage({ m: rpMsg().m, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv, from: f.from, fresh: f.fresh, st: ogStatus(a, c.until), left: c.phase === 'judge' ? Math.max(0, c.until - Date.now()) : null });
     }
     return head + '<p class="gk-top og-ask">このお題の回答</p>' + rpChat(ogEndList(), '', 'grow show');
   },
@@ -13282,9 +13324,9 @@ PMX.reply = {
       const a = ogCur(), hp = ogHostP(), per = ogPer(G.players.length);
       if (hp != null && hp !== a.p && !ogDone(a, hp)) {
         const left = per - (a.pt[hp] || 0);
-        return pxRow(pxBtn('ok', '決定', 'white small') + pxBtn('pt', '面白い！ +1<span class="sub">' + esc(pname(hp)) + ' のこり' + left + '点</span>', 'big main pink grow'));
+        return pxRow(pxBtn('pt', '面白い！ +1<span class="sub">' + esc(pname(hp)) + ' のこり' + left + '点</span>', 'big main pink grow'));
       }
-      return pxRow('<div class="dock-note">' + (hp === a.p ? 'みんなが判定中…' : '判定中…') + '</div>');
+      return pxRow('<div class="dock-note">' + (hp === a.p ? 'みんなが判定中…' : '6秒以内に、みんなのスマホで「面白い！」') + '</div>');
     }
     if (c.phase === 'res') return pxRow('<div class="dock-note">' + (ogQueue().length ? '次の回答へ…' : 'お題にもどります…') + '</div>');
     return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のお題へ ▶', 'big main'));
@@ -13296,8 +13338,9 @@ PMX.reply = {
     const mine = ogQueue().findIndex(i => c.ans[i].p === p);
     if (mine >= 0) b.wait = mine + 1;
     if (c.phase === 'judge' || c.phase === 'res') {
-      const a = ogCur(), vs = pxOthers(a.p).filter(ogLive);
-      b.a = { id: c.at, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv: a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a)), me: a.p === p, my: a.pt[p] || 0, done: a.p !== p && ogDone(a, p), k: vs.filter(v => ogDone(a, v)).length, of: vs.length };
+      const a = ogCur();
+      b.a = { id: c.at, p: a.p, nm: pname(a.p), t: a.t, r: a.r, lv: a.r === 'ippon' ? OG_GOAL : Math.min(OG_GOAL, ogSum(a)), me: a.p === p, my: a.pt[p] || 0, done: a.p !== p && ogDone(a, p) };
+      if (c.phase === 'judge') b.a.left = Math.round(Math.max(0, Math.min(OG_JUDGE, c.until - Date.now())) / 100) * 100;
     }
     if (c.phase === 'live') b.busy = ogBusy(p);
     if (c.phase === 'end') { b.cnt = c.ans.filter(a => a.p === p).length; b.ip = c.ans.filter(a => a.p === p && a.r === 'ippon').length; }
@@ -13310,8 +13353,8 @@ PMX.reply = {
   },
   mounted(anim) {
     rpPages(anim);
-    /* a judge whose phone dropped out no longer holds the answer up */
-    if (G.cur.phase === 'judge') { const g = G; setTimeout(() => { if (G === g && G.mode === 'reply' && screen === 'game') ogCheck(); }, 0); }
+    /* the 6 seconds run on (after a reload too); everyone who could still press has used all their points: done early */
+    if (G.cur.phase === 'judge') { ogArm(); const g = G; setTimeout(() => { if (G === g && G.mode === 'reply' && screen === 'game') ogCheck(); }, 0); }
     const inp = $('rpIn');
     if (inp) {
       inp.value = ogDraft;
@@ -14253,22 +14296,23 @@ function gsStrokes(s) {
   return s.slice(0, 40).filter(x => x && okInt(x.p, 0, 7) && Array.isArray(x.d) && x.d.length >= 2 && x.d.length <= 2000 && x.d.length % 2 === 0 && x.d.every(n => okInt(n, 0, 1000))).map(x => ({ p: x.p, d: x.d }));
 }
 /* 大喜利グランプリ on this phone: the お題 and a box to answer in, or the answer on stage with the IPPON meter and the 面白い！ button */
-let gsDraft = '', gsSeen = { k: '', lv: 0 };
+let gsDraft = '', gsSeen = { k: '', lv: 0 }, gsEnd = 0;   /* gsEnd: when the answer on stage stops taking points, by this phone's clock */
 function gsOg(b) {
   const odai = gStr(b.m, 80), a = b.a && typeof b.a === 'object' && okInt(b.a.p, 0, 7) ? b.a : null;
   if (b.ph === 'before' || !odai) return gsMsg('大喜利グランプリ', b.ready === false ? 'みんなが自分のスマホで参加すると、お題が出せます' : 'お題が出るのを待っています');
   if (b.ph === 'end') return gsMsg('このお題はおしまい！', '結果は親のスマホで見てね' + (okInt(b.cnt, 1, 99) ? '<br>あなたの回答 ' + b.cnt + ' ・ IPPON ' + (okInt(b.ip, 0, 99) ? b.ip : 0) : ''));
-  const wait = okInt(b.wait, 1, 99) ? '<p class="og-wait">あなたの回答は <b>' + b.wait + '番目</b> に発表</p>' : '';
+  const wait = okInt(b.wait, 1, 99) ? '<p class="og-wait">あなたの回答は <b>' + b.wait + '番目</b> に発表</p>' : '';   /* one line, the same height as og-say */
   if ((b.ph === 'judge' || b.ph === 'res') && a) {
     const lv = okInt(a.lv, 0, 10) ? a.lv : 0, r = a.r === 'ippon' || okInt(a.r, 0, 9) ? a.r : null, key = guest.r + '|' + b.m + '|' + a.id;
     const same = gsSeen.k === key, from = same ? Math.min(gsSeen.lv, lv) : 0;
     gsSeen = { k: key, lv };
-    const per = okInt(b.per, 1, 5) ? b.per : 3, my = okInt(a.my, 0, 5) ? a.my : 0, vote = b.ph === 'judge' && !a.me && !a.done;
+    const per = okInt(b.per, 1, 5) ? b.per : 3, my = okInt(a.my, 0, 5) ? a.my : 0, judge = b.ph === 'judge' && r == null, vote = judge && !a.me && !a.done;
     const st = r === 'ippon' ? '<b>IPPON！</b>' : r != null ? '<b>' + r + '</b>点' + (r === 0 ? ' ・ スベった… <b>1DON</b>' : '')
-      : '<b>' + lv + '</b> / 10点' + (okInt(a.of, 0, 8) ? ' ・ 判定 ' + (okInt(a.k, 0, 8) ? a.k : 0) + '/' + a.of + '人' : '');
-    const say = r != null ? '' : a.me ? '<p class="og-say">あなたの回答を判定中…</p>' : a.done ? '<p class="og-say">判定しました' + (my ? '（' + my + '点）' : '') + '。みんなを待っています</p>' : '';
-    return '<div class="gs-body rp-gs og-gs">' + ogStage({ m: odai, p: a.p, nm: gStr(a.nm, 24), t: gStr(a.t, 60), r, lv, from, fresh: !same, st }) + say + wait +
-      (vote ? '<div class="dock-row">' + gsBtn('ogok', '決定', 'white small') + gsBtn('ogpt', '面白い！ +1<span class="sub">のこり' + (per - my) + '点</span>', 'big main pink grow') + '</div>' : '') + '</div>';
+      : '<b>' + lv + '</b> / 10点 ・ ' + ogLeftHTML(gsEnd);
+    /* one line under the stage and the button row stay put from judging to the result, so the meter does not move */
+    const say = wait ? wait : '<p class="og-say">' + (a.me ? (judge ? 'あなたの回答を判定中…' : 'あなたの回答の結果！') : judge ? (a.done ? '持ち点を使い切りました' : '6秒以内に「面白い！」で点を入れよう') : my ? 'あなたは ' + my + '点 入れました' : '結果発表！') + '</p>';
+    return '<div class="gs-body rp-gs og-gs">' + ogStage({ m: odai, p: a.p, nm: gStr(a.nm, 24), t: gStr(a.t, 60), r, lv, from, fresh: !same, st, left: judge ? Math.max(0, gsEnd - Date.now()) : null }) + say +
+      (a.me ? '' : '<div class="dock-row">' + gsBtn('ogpt', '面白い！ +1<span class="sub">のこり' + Math.max(0, per - my) + '点</span>', 'big main pink grow', vote ? '' : ' disabled') + '</div>') + '</div>';
   }
   if (b.busy || wait) return '<div class="gs-body rp-gs"><p class="px-for">回答しました！ 発表を待っています</p>' + rpChat(null, '', 'grow big', odai) + wait + '</div>';
   return '<div class="gs-body rp-gs"><p class="px-for">書けたら「回答する」。押した順に発表！</p>' + rpChat(null, ogInput('gsIn'), 'grow write', odai) +
@@ -14280,10 +14324,11 @@ function gsOgFx(ob, b) {
   const a = b.a && typeof b.a === 'object' ? b.a : null, oa = ob && ob.v === 'og' && ob.a && typeof ob.a === 'object' ? ob.a : null;
   if (a && (a.me || b.wait)) gsDraft = '';
   if (b.wait || b.busy) gsDraft = '';
+  if (a && Number.isFinite(a.left)) gsEnd = Date.now() + Math.max(0, Math.min(6000, a.left));
   if (!a || guest.demo) return;   /* 試験版: the host's own sounds and cut-in already played on this phone */
   const same = oa && oa.id === a.id && ob.m === b.m;
   if (a.r === 'ippon' && !(same && oa.r === 'ippon')) { SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(gStr(a.nm, 24)); return; }
-  if (same && okInt(a.lv, 0, 10) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt');
+  if (same && okInt(a.lv, 1, 9) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt' + a.lv);
   if (same && a.r === 0 && oa.r !== 0) SE.play('bubuu');
 }
 function gsView(b, p) {
@@ -14390,7 +14435,6 @@ function guestAct(a, el) {
     return;
   }
   if (a === 'ogpt') { if (guestSend({ k: 'act', a: 'pt' })) vibrate(8); else telop('つながっていません', 'white sm', 1000); return; }
-  if (a === 'ogok') { act('ok'); return; }
   if (a === 'msok' || a === 'msng') { act('ans', { ok: a === 'msok' }); return; }
   if (a === 'usre') { act('re'); return; }
   if (a === 'ustalk') { act('talk'); return; }
@@ -14505,7 +14549,7 @@ function ogdView(v, say) {
   if (say) telop(v === 'guest' ? 'あなたのスマホ' : '親のスマホ', 'white sm', 900);
 }
 function ogdSync() {
-  if (!guest || !guest.demo) return;
+  if (!guest || !guest.demo || !room.gs[1]) return;
   const v = roomViewFor(1), j = JSON.stringify(v);
   if (room.sent[1] === j) return;
   room.sent[1] = j;
@@ -14543,15 +14587,12 @@ function ogdTick() {
     ogd.idle = 0;
     const a = ogCur(), key = c.at;
     if (!a) return;
-    const vs = ogd.votes[key] = ogd.votes[key] || pxOthers(a.p).filter(v => v !== 0).map(v => ({ v, n: ogdPts(a), at: now + ogdR(1400, 3200), fin: false }));
+    /* each CPU taps its points in within the 6 seconds */
+    const vs = ogd.votes[key] = ogd.votes[key] || pxOthers(a.p).filter(v => v !== 0).map(v => ({ v, n: ogdPts(a), at: now + ogdR(500, 1800) }));
     vs.forEach(x => {
-      if (x.fin || now < x.at || G.cur.phase !== 'judge' || ogDone(a, x.v)) return;
-      if ((a.pt[x.v] || 0) < x.n) { ogdSay(x.v, { k: 'act', a: 'pt' }); x.at = now + ogdR(320, 620); } else { x.fin = true; ogdSay(x.v, { k: 'act', a: 'ok' }); }
+      if (now < x.at || G.cur.phase !== 'judge' || ogDone(a, x.v) || (a.pt[x.v] || 0) >= x.n) return;
+      ogdSay(x.v, { k: 'act', a: 'pt' }); x.at = now + ogdR(300, 650);
     });
-    /* only you are left to judge, but the host's screen is up: say where the button is */
-    if (G.cur.phase === 'judge' && ogd.view === 'host' && a.p !== 0 && !ogDone(a, 0) && vs.every(x => x.fin || ogDone(a, x.v)) && ogd.hint !== key + '|' + G.turn) {
-      ogd.hint = key + '|' + G.turn; telop('あなたの判定待ち！ 右上の「子機」で点を入れてね', 'white sm', 2200);
-    }
     return;
   }
   if (c.phase !== 'live') { ogd.idle = 0; return; }

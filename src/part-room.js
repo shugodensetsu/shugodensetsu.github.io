@@ -368,22 +368,23 @@ function gsStrokes(s) {
   return s.slice(0, 40).filter(x => x && okInt(x.p, 0, 7) && Array.isArray(x.d) && x.d.length >= 2 && x.d.length <= 2000 && x.d.length % 2 === 0 && x.d.every(n => okInt(n, 0, 1000))).map(x => ({ p: x.p, d: x.d }));
 }
 /* 大喜利グランプリ on this phone: the お題 and a box to answer in, or the answer on stage with the IPPON meter and the 面白い！ button */
-let gsDraft = '', gsSeen = { k: '', lv: 0 };
+let gsDraft = '', gsSeen = { k: '', lv: 0 }, gsEnd = 0;   /* gsEnd: when the answer on stage stops taking points, by this phone's clock */
 function gsOg(b) {
   const odai = gStr(b.m, 80), a = b.a && typeof b.a === 'object' && okInt(b.a.p, 0, 7) ? b.a : null;
   if (b.ph === 'before' || !odai) return gsMsg('大喜利グランプリ', b.ready === false ? 'みんなが自分のスマホで参加すると、お題が出せます' : 'お題が出るのを待っています');
   if (b.ph === 'end') return gsMsg('このお題はおしまい！', '結果は親のスマホで見てね' + (okInt(b.cnt, 1, 99) ? '<br>あなたの回答 ' + b.cnt + ' ・ IPPON ' + (okInt(b.ip, 0, 99) ? b.ip : 0) : ''));
-  const wait = okInt(b.wait, 1, 99) ? '<p class="og-wait">あなたの回答は <b>' + b.wait + '番目</b> に発表</p>' : '';
+  const wait = okInt(b.wait, 1, 99) ? '<p class="og-wait">あなたの回答は <b>' + b.wait + '番目</b> に発表</p>' : '';   /* one line, the same height as og-say */
   if ((b.ph === 'judge' || b.ph === 'res') && a) {
     const lv = okInt(a.lv, 0, 10) ? a.lv : 0, r = a.r === 'ippon' || okInt(a.r, 0, 9) ? a.r : null, key = guest.r + '|' + b.m + '|' + a.id;
     const same = gsSeen.k === key, from = same ? Math.min(gsSeen.lv, lv) : 0;
     gsSeen = { k: key, lv };
-    const per = okInt(b.per, 1, 5) ? b.per : 3, my = okInt(a.my, 0, 5) ? a.my : 0, vote = b.ph === 'judge' && !a.me && !a.done;
+    const per = okInt(b.per, 1, 5) ? b.per : 3, my = okInt(a.my, 0, 5) ? a.my : 0, judge = b.ph === 'judge' && r == null, vote = judge && !a.me && !a.done;
     const st = r === 'ippon' ? '<b>IPPON！</b>' : r != null ? '<b>' + r + '</b>点' + (r === 0 ? ' ・ スベった… <b>1DON</b>' : '')
-      : '<b>' + lv + '</b> / 10点' + (okInt(a.of, 0, 8) ? ' ・ 判定 ' + (okInt(a.k, 0, 8) ? a.k : 0) + '/' + a.of + '人' : '');
-    const say = r != null ? '' : a.me ? '<p class="og-say">あなたの回答を判定中…</p>' : a.done ? '<p class="og-say">判定しました' + (my ? '（' + my + '点）' : '') + '。みんなを待っています</p>' : '';
-    return '<div class="gs-body rp-gs og-gs">' + ogStage({ m: odai, p: a.p, nm: gStr(a.nm, 24), t: gStr(a.t, 60), r, lv, from, fresh: !same, st }) + say + wait +
-      (vote ? '<div class="dock-row">' + gsBtn('ogok', '決定', 'white small') + gsBtn('ogpt', '面白い！ +1<span class="sub">のこり' + (per - my) + '点</span>', 'big main pink grow') + '</div>' : '') + '</div>';
+      : '<b>' + lv + '</b> / 10点 ・ ' + ogLeftHTML(gsEnd);
+    /* one line under the stage and the button row stay put from judging to the result, so the meter does not move */
+    const say = wait ? wait : '<p class="og-say">' + (a.me ? (judge ? 'あなたの回答を判定中…' : 'あなたの回答の結果！') : judge ? (a.done ? '持ち点を使い切りました' : '6秒以内に「面白い！」で点を入れよう') : my ? 'あなたは ' + my + '点 入れました' : '結果発表！') + '</p>';
+    return '<div class="gs-body rp-gs og-gs">' + ogStage({ m: odai, p: a.p, nm: gStr(a.nm, 24), t: gStr(a.t, 60), r, lv, from, fresh: !same, st, left: judge ? Math.max(0, gsEnd - Date.now()) : null }) + say +
+      (a.me ? '' : '<div class="dock-row">' + gsBtn('ogpt', '面白い！ +1<span class="sub">のこり' + Math.max(0, per - my) + '点</span>', 'big main pink grow', vote ? '' : ' disabled') + '</div>') + '</div>';
   }
   if (b.busy || wait) return '<div class="gs-body rp-gs"><p class="px-for">回答しました！ 発表を待っています</p>' + rpChat(null, '', 'grow big', odai) + wait + '</div>';
   return '<div class="gs-body rp-gs"><p class="px-for">書けたら「回答する」。押した順に発表！</p>' + rpChat(null, ogInput('gsIn'), 'grow write', odai) +
@@ -395,10 +396,11 @@ function gsOgFx(ob, b) {
   const a = b.a && typeof b.a === 'object' ? b.a : null, oa = ob && ob.v === 'og' && ob.a && typeof ob.a === 'object' ? ob.a : null;
   if (a && (a.me || b.wait)) gsDraft = '';
   if (b.wait || b.busy) gsDraft = '';
+  if (a && Number.isFinite(a.left)) gsEnd = Date.now() + Math.max(0, Math.min(6000, a.left));
   if (!a || guest.demo) return;   /* 試験版: the host's own sounds and cut-in already played on this phone */
   const same = oa && oa.id === a.id && ob.m === b.m;
   if (a.r === 'ippon' && !(same && oa.r === 'ippon')) { SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(gStr(a.nm, 24)); return; }
-  if (same && okInt(a.lv, 0, 10) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt');
+  if (same && okInt(a.lv, 1, 9) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt' + a.lv);
   if (same && a.r === 0 && oa.r !== 0) SE.play('bubuu');
 }
 function gsView(b, p) {
@@ -505,7 +507,6 @@ function guestAct(a, el) {
     return;
   }
   if (a === 'ogpt') { if (guestSend({ k: 'act', a: 'pt' })) vibrate(8); else telop('つながっていません', 'white sm', 1000); return; }
-  if (a === 'ogok') { act('ok'); return; }
   if (a === 'msok' || a === 'msng') { act('ans', { ok: a === 'msok' }); return; }
   if (a === 'usre') { act('re'); return; }
   if (a === 'ustalk') { act('talk'); return; }
@@ -620,7 +621,7 @@ function ogdView(v, say) {
   if (say) telop(v === 'guest' ? 'あなたのスマホ' : '親のスマホ', 'white sm', 900);
 }
 function ogdSync() {
-  if (!guest || !guest.demo) return;
+  if (!guest || !guest.demo || !room.gs[1]) return;
   const v = roomViewFor(1), j = JSON.stringify(v);
   if (room.sent[1] === j) return;
   room.sent[1] = j;
@@ -658,15 +659,12 @@ function ogdTick() {
     ogd.idle = 0;
     const a = ogCur(), key = c.at;
     if (!a) return;
-    const vs = ogd.votes[key] = ogd.votes[key] || pxOthers(a.p).filter(v => v !== 0).map(v => ({ v, n: ogdPts(a), at: now + ogdR(1400, 3200), fin: false }));
+    /* each CPU taps its points in within the 6 seconds */
+    const vs = ogd.votes[key] = ogd.votes[key] || pxOthers(a.p).filter(v => v !== 0).map(v => ({ v, n: ogdPts(a), at: now + ogdR(500, 1800) }));
     vs.forEach(x => {
-      if (x.fin || now < x.at || G.cur.phase !== 'judge' || ogDone(a, x.v)) return;
-      if ((a.pt[x.v] || 0) < x.n) { ogdSay(x.v, { k: 'act', a: 'pt' }); x.at = now + ogdR(320, 620); } else { x.fin = true; ogdSay(x.v, { k: 'act', a: 'ok' }); }
+      if (now < x.at || G.cur.phase !== 'judge' || ogDone(a, x.v) || (a.pt[x.v] || 0) >= x.n) return;
+      ogdSay(x.v, { k: 'act', a: 'pt' }); x.at = now + ogdR(300, 650);
     });
-    /* only you are left to judge, but the host's screen is up: say where the button is */
-    if (G.cur.phase === 'judge' && ogd.view === 'host' && a.p !== 0 && !ogDone(a, 0) && vs.every(x => x.fin || ogDone(a, x.v)) && ogd.hint !== key + '|' + G.turn) {
-      ogd.hint = key + '|' + G.turn; telop('あなたの判定待ち！ 右上の「子機」で点を入れてね', 'white sm', 2200);
-    }
     return;
   }
   if (c.phase !== 'live') { ogd.idle = 0; return; }

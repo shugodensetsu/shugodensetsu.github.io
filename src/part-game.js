@@ -337,6 +337,11 @@ const SOUNDS = {
   bubuu: (A, t) => [0, 0.2].forEach((dt, i) => [196, 207.65].forEach(f => tone(A, t + dt, { type: 'square', f, d: i ? 0.6 : 0.16, g: 0.14, lp: 2400, sus: 1, rel: 0.05 }))),
   /* 大喜利グランプリ: one point into the IPPON meter, and the IPPON itself */
   ogPt: (A, t) => { bellHit(A, t, 1568, 0.28, 0.1); tone(A, t, { type: 'square', f: 988, f2: 1480, bend: 0.05, d: 0.09, g: 0.05, lp: 3200 }); },
+  /* ogPt1 … ogPt9: the IPPON meter filling, one step up the scale per point (ド → レ(上のオクターブ)); the 10th is the IPPON itself */
+  ...Object.fromEntries([0, 2, 4, 5, 7, 9, 11, 12, 14].map((s, i) => {
+    const f = 1046.5 * 2 ** (s / 12);
+    return ['ogPt' + (i + 1), (A, t) => { bellHit(A, t, f, 0.3, 0.1); tone(A, t, { type: 'square', f: f / 2, f2: f * 0.75, bend: 0.04, d: 0.08, g: 0.045, lp: 3600 }); }];
+  })),
   ippon: (A, t) => {
     kick(A, t, 1.4); crash(A, t, 0.5); timpani(A, t, 65.41, 0.9);
     brass(A, t, [261.63, 329.63, 392, 523.25], 0.16, 0.08, { lp: 1800, lp2: 4500 });
