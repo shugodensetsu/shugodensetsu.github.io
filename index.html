@@ -2292,7 +2292,7 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .mg-medal b{font-family:var(--f-display); font-weight:400; font-size:11px; color:var(--yellow); margin-left:1px}
 .tl-ic{display:inline-block; vertical-align:-.15em; margin-right:.12em}
 .tl-ic svg{width:1.2em; height:1.1em}
-.tl-ic.rp-tl{width:1em; height:.9em; background:#06c755; border:3px solid var(--ink); border-radius:45%; vertical-align:-.05em}
+.tl-ic.rp-tl{width:1.15em; height:.8em; background:#05040c; border:3px solid #e3bf55; border-radius:5px; vertical-align:-.02em}
 .pm-ask.gold{color:var(--yellow); font-family:var(--f-display); font-weight:400; font-size:15px}
 .pm-note.sm{font-size:11.5px}
 .ms-memo{margin:0; display:flex; align-items:center; gap:8px; background:rgba(255,243,184,.12); border:2px dashed var(--yellow); border-radius:12px; padding:6px 12px; font-weight:800; font-size:12.5px; line-height:1.45; color:var(--white); text-align:left}
@@ -2332,72 +2332,75 @@ textarea.field{min-height:90px; resize:vertical; line-height:1.6}
 .gk-end{display:flex; flex-direction:column; align-items:center; gap:3px}
 .gk-ans{margin:0; font-weight:800; font-size:13px; color:var(--white)}
 .gk-ans b{color:var(--yellow); font-size:16px}
-/* 返信選手権: トーク画面ふう */
-.rp-chat{width:100%; max-width:460px; display:flex; flex-direction:column; min-height:0; background:#8eaad4; border:3px solid var(--ink); border-radius:18px; box-shadow:0 4px 0 var(--ink); overflow:hidden; text-align:left; font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+/* 大喜利グランプリ: IPPON ふう（光る金ぶちの黒いお題ボード＋白い回答ボード） */
+.rp-chat{width:100%; max-width:460px; display:flex; flex-direction:column; gap:8px; min-height:0; box-sizing:border-box; padding:8px; background:radial-gradient(130% 90% at 50% 0%, #2c2457 0%, #0e0b1f 72%); border:3px solid var(--ink); border-radius:18px; box-shadow:0 4px 0 var(--ink), inset 0 0 0 2px #c9a243; overflow:hidden; text-align:left}
 .rp-chat.grow{flex:1 1 0; min-height:120px}
-.rp-bar{flex:none; display:flex; align-items:center; gap:8px; padding:7px 12px; background:#7f9cc8; color:#14213d; font-size:15px; font-weight:700; border-bottom:1px solid rgba(0,0,0,.08)}
-.rp-bar b{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.rp-back{font-size:26px; line-height:.8; font-weight:400}
-.rp-ic{display:flex; gap:4px}
-.rp-ic i{width:4px; height:4px; border-radius:50%; background:#14213d}
-.rp-list{flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:10px; padding:8px 10px 12px}
-.rp-pg{flex:none; display:flex; align-items:center; justify-content:center; gap:10px; padding:3px 8px; background:#e9edf3; border-top:1px solid #d5d9e0}
+.og-odai{flex:none; position:relative; margin-top:9px; box-sizing:border-box; background:#05040c; border:2px solid #e3bf55; border-radius:12px; box-shadow:0 0 0 3px rgba(227,191,85,.16), 0 0 16px rgba(227,191,85,.28); color:#fff; padding:14px 12px 10px; text-align:center}
+.og-lbl{position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#e3bf55; color:#150733; font-weight:800; font-size:11px; line-height:1; letter-spacing:.25em; padding:4px 8px 4px 11px; border-radius:999px; white-space:nowrap}
+.og-odai b{display:block; font-family:var(--f-display); font-weight:400; font-size:min(19px, 5vw); line-height:1.45; word-break:break-word}
+.rp-chat.big .og-odai{flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 14px 14px}
+.rp-chat.big .og-odai b{font-size:min(26px, 6.6vw)}
+.og-odai.closed{width:min(100%, 300px); padding:18px 12px 12px; animation:ogGlow 2.2s ease-in-out infinite}
+.og-odai.closed b{font-size:44px; line-height:1; color:#e3bf55}
+@keyframes ogGlow{0%,100%{box-shadow:0 0 0 3px rgba(227,191,85,.16), 0 0 10px rgba(227,191,85,.2)} 50%{box-shadow:0 0 0 3px rgba(227,191,85,.3), 0 0 26px rgba(227,191,85,.55)}}
+.rp-list{flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:2px 2px 4px}
+.rp-pg{flex:none; display:flex; align-items:center; justify-content:center; gap:10px; padding:0}
 .rp-pg[hidden]{display:none}
-.rp-pg button{border:1.5px solid #9aa4b4; border-radius:999px; background:#fff; color:#223; font:800 12px/1.4 inherit; padding:2px 12px; font-family:inherit}
+.rp-pg button{border:2px solid var(--ink); border-radius:999px; background:#fff; color:#223; font:800 12px/1.4 inherit; padding:2px 12px; font-family:inherit}
 .rp-pg button:disabled{opacity:.35}
-.rp-pg span{font-size:12px; font-weight:800; color:#556}
-.rp-day{margin:0 auto; font-size:11px; color:#fff}
-.rp-day span{background:rgba(20,33,61,.28); border-radius:999px; padding:2px 10px}
-.rp-in{display:flex; gap:7px; align-items:flex-start; max-width:92%}
-.rp-av{flex:none; width:34px; height:34px; border-radius:50%; background:var(--c); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; text-shadow:0 1px 2px rgba(0,0,0,.25)}
-.rp-av.sm{width:30px; height:30px}
-.rp-in-b{display:flex; flex-direction:column; gap:3px; min-width:0}
-.rp-nm{font-size:11px; color:#14213d}
-.rp-row{display:flex; align-items:flex-end; gap:5px}
-.rp-bub{position:relative; display:block; background:#fff; color:#111; border-radius:18px; padding:8px 12px; font-size:15px; line-height:1.45; word-break:break-word; white-space:pre-wrap}
-.rp-in .rp-bub{border-top-left-radius:5px}
-.rp-meta{flex:none; font-size:10px; line-height:1.25; color:#24324f; text-align:right}
-.rp-in .rp-meta{text-align:left}
-.rp-out{align-self:flex-end; display:flex; flex-direction:column; align-items:flex-end; gap:3px; max-width:88%; animation:rpIn .35s cubic-bezier(.2,1.4,.4,1) both}
-.rp-pick{display:flex; align-items:flex-end; gap:5px; background:none; border:0; padding:0; font:inherit; color:inherit; text-align:left}
+.rp-pg span{font-size:12px; font-weight:800; color:#e3bf55}
+.rp-out{display:flex; flex-direction:column; align-items:stretch; gap:3px; animation:ogFlip .4s ease-out both; transform-origin:50% 50%}
+.rp-pick{position:relative; display:flex; align-items:center; gap:8px; width:100%; box-sizing:border-box; background:#fffdf5; color:#111; border:2px solid var(--ink); border-radius:10px; box-shadow:0 3px 0 rgba(0,0,0,.55); padding:7px 10px; font:inherit; text-align:left}
 button.rp-pick{cursor:pointer}
-.rp-out .rp-bub{background:#86e05a; border-top-right-radius:5px}
-.rp-out .rp-bub.skip{background:rgba(255,255,255,.35); color:#24324f; font-size:13px; font-style:italic}
-.rp-tag{display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-bottom:2px; border-radius:50%; background:#14213d; color:#fff; font-size:11px; font-weight:800}
-.rp-meta > span{display:block}
-.rp-out.sel .rp-bub{box-shadow:0 0 0 3px #150733, 0 0 0 6px var(--yellow)}
-.rp-out.best .rp-bub{box-shadow:0 0 0 3px #150733, 0 0 0 6px var(--yellow)}
-.rp-out.worst .rp-bub{background:#c9d3e3; color:#4a556b}
-.rp-who{font-size:11px; font-weight:800; color:var(--ink); background:var(--p); border:2px solid var(--ink); border-radius:999px; padding:0 8px; animation:rpIn .35s cubic-bezier(.2,1.4,.4,1) both}
-.rp-out.typing .rp-bub{display:flex; gap:4px; padding:12px 14px}
-.rp-out.typing i{width:7px; height:7px; border-radius:50%; background:#2d5e1a; opacity:.35; animation:rpDot 1s infinite}
+.og-tag{flex:none; width:22px; height:22px; border-radius:6px; background:#150733; color:#fff; font-weight:800; font-size:12px; line-height:22px; text-align:center}
+.og-tag:empty{display:none}
+.rp-bub{flex:1; min-width:0; font-weight:800; font-size:15px; line-height:1.4; word-break:break-word; white-space:pre-wrap; color:#111}
+.rp-bub.skip{color:#8a8a96; font-style:italic; font-weight:700; font-size:13px}
+.rp-out.sel .rp-pick{box-shadow:0 0 0 3px var(--yellow), 0 3px 0 rgba(0,0,0,.55)}
+.rp-out.best .rp-pick{background:#fff3bf; box-shadow:0 0 0 3px #e3bf55, 0 0 16px rgba(255,216,61,.6)}
+.rp-out.worst .rp-pick{background:#c9cfda}
+.rp-out.worst .rp-bub{color:#4a556b}
+.og-ippon{flex:none; font-family:var(--f-display); font-size:13px; line-height:1.2; color:#fff; background:#e5262f; border:2px solid var(--ink); border-radius:6px; padding:1px 6px; letter-spacing:.04em; transform:rotate(-8deg); animation:ogStamp .45s ease-out both}
+.rp-who{flex:none; max-width:34%; display:flex; flex-direction:column; align-items:center; font-size:11px; line-height:1.3; font-weight:800; color:var(--ink); background:var(--p); border:2px solid var(--ink); border-radius:10px; padding:1px 7px; overflow-wrap:anywhere; text-align:center; animation:ogFade .35s ease-out both}
+@keyframes ogFade{from{opacity:0}}
+.rp-who small{font-size:9.5px}
+.rp-out.typing .rp-pick{background:#2b2550; border-color:#e3bf55}
+.rp-out.typing .og-tag{background:#e3bf55; color:#150733}
+.rp-out.typing .rp-bub{display:flex; gap:5px; padding:7px 0}
+.rp-out.typing i{width:8px; height:8px; border-radius:50%; background:#e3bf55; opacity:.35; animation:rpDot 1s infinite}
 .rp-out.typing i:nth-child(2){animation-delay:.15s} .rp-out.typing i:nth-child(3){animation-delay:.3s}
 @keyframes rpDot{0%,60%,100%{opacity:.35; transform:none} 30%{opacity:1; transform:translateY(-3px)}}
 @keyframes rpIn{from{opacity:0; transform:translateY(10px) scale(.92)} to{opacity:1; transform:none}}
-.rp-input{flex:none; display:flex; align-items:flex-end; gap:6px; padding:7px 8px; background:#f4f5f7; border-top:1px solid #d5d9e0}
-.rp-input textarea{flex:1; min-width:0; resize:none; border:1px solid #cfd5de; border-radius:18px; background:#fff; color:#111; padding:8px 12px; font:16px/1.4 "Hiragino Sans","Noto Sans JP",system-ui,sans-serif; outline:none}
-.rp-input textarea:focus{border-color:#06c755}
-.rp-input textarea.shake{animation:tremble .08s linear 4}
-.rp-send{flex:none; width:40px; height:40px; border:0; border-radius:50%; background:#06c755; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer}
-.rp-send svg{width:20px; height:20px}
-/* a short stage (small phone, 7–8 players): the chat drops the date and name rows, so the message stays whole without paging */
+/* the boards only ever shrink while they animate: anything bigger would count as overflow when the answers are cut into pages */
+@keyframes ogFlip{from{opacity:0; transform:scaleY(.12)} 70%{opacity:1} to{opacity:1; transform:none}}
+@keyframes ogStamp{from{opacity:0; transform:scale(.3) rotate(-30deg)} to{opacity:1; transform:rotate(-8deg)}}
+.og-in{flex:1 1 auto; min-height:64px; display:flex}
+.og-in textarea{flex:1; min-width:0; resize:none; box-sizing:border-box; border:2px solid var(--ink); border-radius:10px; background:#fffdf5; color:#111; padding:10px 12px; font:800 17px/1.45 "Hiragino Sans","Noto Sans JP",system-ui,sans-serif; outline:none; box-shadow:0 3px 0 rgba(0,0,0,.55)}
+.og-in textarea::placeholder{color:#a3a3b0; font-weight:700}
+.og-in textarea:focus{box-shadow:0 0 0 3px #e3bf55}
+.og-in textarea.shake{animation:tremble .08s linear 4}
+.og-tl{display:inline-block; font-size:1.5em; letter-spacing:.06em}
+/* a short stage (small phone, 7–8 players): everything a little tighter, so an answer stays whole without paging */
 @container (max-height: 300px){
-  .pm-stage .rp-day, .pm-stage .rp-nm{display:none}
-  .pm-stage .rp-bar{padding:4px 12px}
-  .pm-stage .rp-list{gap:6px; padding:6px 10px 8px}
-  .pm-stage .rp-bub{font-size:14px; line-height:1.35; padding:5px 10px}
-  .pm-stage .rp-input{padding:4px 8px}
-  .pm-stage .rp-input textarea{padding:6px 12px}
-  .pm-stage .rp-send{width:36px; height:36px}
-  /* while writing, the header row goes and the sender's name sits on the message instead */
-  .pm-stage .rp-chat.write .rp-bar{display:none}
-  .pm-stage .rp-chat.write .rp-nm{display:block}
+  .pm-stage .rp-chat{padding:4px; gap:5px; border-width:2px}
+  .pm-stage .og-odai{margin-top:7px; padding:9px 8px 5px; border-radius:9px}
+  .pm-stage .og-lbl{top:-8px; font-size:9.5px; padding:3px 6px 3px 8px}
+  .pm-stage .og-odai b{font-size:15px; line-height:1.35}
+  /* while the answers are out, the お題 shrinks to a small line above them, and the line over the stage goes (the button under it says the same) */
+  .pm-stage .og-ask{display:none}
+  .pm-stage .rp-chat.show .og-odai{padding:8px 8px 4px}
+  .pm-stage .rp-chat.show .og-odai b{font-family:inherit; font-weight:800; font-size:12.5px; line-height:1.3}
+  .pm-stage .rp-list{gap:5px; padding:1px 1px 3px}
+  .pm-stage .rp-pick{padding:4px 7px; gap:6px}
+  .pm-stage .og-tag{width:18px; height:18px; line-height:18px; font-size:11px}
+  .pm-stage .rp-bub{font-size:13.5px; line-height:1.28}
+  /* once the names are out, the name takes the letter's place */
+  .pm-stage .rp-pick:has(.rp-who) .og-tag{display:none}
+  .pm-stage .rp-who{font-size:10px; padding:1px 5px}
+  .pm-stage .rp-pg button{padding:0 10px}
+  .pm-stage .og-in{min-height:44px}
+  .pm-stage .og-in textarea{font-size:16px; padding:6px 10px}
 }
-.rp-notice{display:flex; align-items:center; gap:10px; width:min(100%, 320px); box-sizing:border-box; background:rgba(255,255,255,.95); color:#111; border:3px solid var(--ink); border-radius:16px; box-shadow:0 4px 0 var(--ink); padding:10px 12px; text-align:left; animation:rpNotice 2.4s ease-in-out infinite}
-.rp-notice > span:nth-child(2){flex:1; display:flex; flex-direction:column; font-size:14px}
-.rp-notice small{font-size:11.5px; color:#555}
-.rp-notice i{font-style:normal; min-width:22px; height:22px; border-radius:999px; background:#ff3d4f; color:#fff; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center}
-@keyframes rpNotice{0%,70%,100%{transform:none} 76%{transform:translateY(-6px)} 84%{transform:none} 90%{transform:translateY(-3px)}}
 /* しれっとミッション */
 .ms-art{width:min(120px, 24cqh); height:auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
 .ms-card{margin:0; width:min(100%, 380px); box-sizing:border-box; background:var(--paper); color:var(--ink); border:3px solid var(--ink); border-radius:18px; box-shadow:0 5px 0 var(--ink), 0 0 0 4px var(--cyan); padding:14px 16px; font-weight:800; font-size:min(20px, 5.4vw); line-height:1.5}
@@ -2876,8 +2879,11 @@ button.rp-pick{cursor:pointer}
   .gs-body .us-thumbs.big .us-th{width:44px; height:44px}
   .gs-vote button{flex-direction:row; padding:3px 12px; gap:8px}
   .rp-gs{max-width:560px}
-  .rp-gs .rp-day, .rp-gs .rp-nm{display:none}
-  .rp-gs .rp-list{padding-top:6px; gap:6px}
+  .rp-gs .rp-chat{padding:6px; gap:6px}
+  .rp-gs .og-odai{padding:10px 10px 6px}
+  .rp-gs .og-odai b, .rp-gs .rp-chat.big .og-odai b{font-size:16px}
+  .rp-gs .og-in{min-height:44px}
+  .rp-gs .og-in textarea{padding:6px 10px}
   .gs-body .ms-card{padding:8px 12px}
   .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
   .gs-body .gk-fake{font-size:18px}
@@ -2944,7 +2950,7 @@ button.rp-pick{cursor:pointer}
           <button type="button" class="pbtn pink t-mode" id="goMini"><svg viewBox="0 0 30 30" aria-hidden="true"><rect x="2.5" y="2.5" width="25" height="25" rx="6" fill="#fff" stroke="#150733" stroke-width="2.4"/><circle cx="9.5" cy="9.5" r="2.4" fill="#150733"/><circle cx="15" cy="15" r="2.4" fill="#e8233f"/><circle cx="20.5" cy="20.5" r="2.4" fill="#150733"/></svg><span>ミニゲーム</span></button>
           <button type="button" class="pbtn purple t-mode" id="goKoi" data-pm="koi"><i class="t-new" id="koiTag">NEW</i><svg viewBox="0 0 32 28" aria-hidden="true"><path d="M16 26 C 6 19, 1.5 13.5, 1.5 8.5 C 1.5 4.5, 4.6 1.6, 8.5 1.6 C 11.6 1.6, 14.2 3.4, 16 6.2 C 17.8 3.4, 20.4 1.6, 23.5 1.6 C 27.4 1.6, 30.5 4.5, 30.5 8.5 C 30.5 13.5, 26 19, 16 26 Z" fill="#ff4fa3" stroke="#150733" stroke-width="2.4" stroke-linejoin="round"/></svg><span>暴露トーク</span></button>
           <button type="button" class="pbtn cyan t-mode" id="goGaka" data-pm="gaka"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 3C8 3 3 8 3 14.5S7.5 26 12 26c2 0 2.5-1.6 2-3.2-.6-1.8.6-3.3 2.6-3.3H20c4 0 7-2.7 7-6.5C27 7.7 21.6 3 15 3Z" fill="#fff3d6" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9" cy="13" r="2.2" fill="#ff4fa3"/><circle cx="14" cy="8.5" r="2.2" fill="#35e0ff"/><circle cx="20.5" cy="10" r="2.2" fill="#ffd83d" stroke="#150733" stroke-width=".8"/></svg><span>ニセ画伯</span></button>
-          <button type="button" class="pbtn lime t-mode" id="goReply" data-pm="reply"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 4C7.8 4 2.5 8.6 2.5 14.2c0 3.4 2 6.4 5.2 8.2L6.5 27l5.6-3c1 .2 1.9.3 2.9.3 7.2 0 12.5-4.6 12.5-10.1S22.2 4 15 4Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="9.5" cy="14.2" r="1.8" fill="#150733"/><circle cx="15" cy="14.2" r="1.8" fill="#150733"/><circle cx="20.5" cy="14.2" r="1.8" fill="#150733"/></svg><span>返信選手権</span></button>
+          <button type="button" class="pbtn lime t-mode" id="goReply" data-pm="reply"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M11.5 22 9 27.5M18.5 22l2.5 5.5" stroke="#150733" stroke-width="2.2" stroke-linecap="round"/><rect x="3" y="4" width="24" height="18" rx="3" fill="#fff" stroke="#150733" stroke-width="2.2"/><path d="M8 10.5h14M8 15.5h9" stroke="#150733" stroke-width="2.2" stroke-linecap="round"/></svg><span>大喜利GP</span></button>
           <button type="button" class="pbtn mint t-mode" id="goMission" data-pm="mission"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M3 15c3.5-6 7.5-9 12-9s8.5 3 12 9c-3.5 6-7.5 9-12 9S6.5 21 3 15Z" fill="#fff" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/><circle cx="15" cy="15" r="5" fill="#35e0ff" stroke="#150733" stroke-width="2"/><circle cx="15" cy="15" r="2" fill="#150733"/></svg><span>ミッション</span></button>
           <button type="button" class="pbtn t-mode" id="goUso" data-pm="uso"><i class="t-new">NEW</i><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 17h5V6.5a2.5 2.5 0 0 1 5 0V14h7.5a2.5 2.5 0 0 1 2.4 3.1l-1.9 7A3 3 0 0 1 20 26.5H10a5 5 0 0 1-5-5Z" fill="#ffd83d" stroke="#150733" stroke-width="2.2" stroke-linejoin="round"/></svg><span>ウソホント</span></button>
         </div>
@@ -10830,7 +10836,8 @@ function pageSplit(box) {
   all.className = 'pg-page';
   all.append(...box.childNodes);
   /* an element is split by its child elements only when it has no text of its own (a paragraph stays whole) */
-  const splittable = n => n.children.length > 0 && [...n.childNodes].every(c => c.nodeType === 1 || (c.nodeType === 3 && !c.textContent.trim()));
+  /* .pg-keep: a piece that is never cut (an answer board) */
+  const splittable = n => !n.classList.contains('pg-keep') && n.children.length > 0 && [...n.childNodes].every(c => c.nodeType === 1 || (c.nodeType === 3 && !c.textContent.trim()));
   /* put as much of n as fits into host (after what host holds already); returns a copy of n holding the rest, or null */
   const fill = (host, n) => {
     const shell = n.cloneNode(false); host.appendChild(shell);
@@ -12271,7 +12278,7 @@ function renderPlus(msg) {
   } else {
     const mgs = MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title);
     body = '<div class="pl-col">' + warn + '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか') +
-        (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権ほか') : '') +
+        (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・大喜利ほか') : '') +
         feat(DICE_SVG, '新作ミニゲーム' + mgs.length + '種', mgs.slice(0, 2).join('・') + 'ほか') + '</ul>' +
         '<p class="pl-free">カード104枚・ミニゲーム14種は、ずっと無料</p></div>' +
       '<div class="pl-col">' + (PLUS_LIVE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + tryLeft('koi') + '</b>問</p>' : '') +
@@ -12634,7 +12641,7 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'games') + 
 });
 
 /* =====================================================================
-   新しいパーティーモード（プレミアム）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
+   新しいパーティーモード（プレミアム）: ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントか
    どれもスマホ1台。PM_MODES の仲間として、暴露トークと同じ画面（mgBoard + mgStage + dock）で動く。
    ボタンは data-g="x-…" → PMX[mode].act('…')
    ===================================================================== */
@@ -12642,8 +12649,8 @@ PM_MODES.push('gaka', 'reply', 'mission', 'uso');
 Object.assign(PM, {
   gaka: { title: 'ニセ画伯', word: '回', opt: 'gaka', optHead: 'お題のむずかしさ', min: 3, flat: true,
     opts: [['easy', 'かんたん', '描きやすいお題'], ['all', 'ミックス', 'ひねったお題も']] },
-  reply: { title: '返信選手権', word: '回', opt: 'reply', optHead: 'メッセージの相手', min: 3, flat: true,
-    opts: [['all', 'ミックス', 'いろんな人から'], ['safe', 'おだやか', '恋愛ネタなし'], ['koi', '恋愛多め', 'ドキッとする相手']] },
+  reply: { title: '大喜利グランプリ', word: '問', opt: 'reply', optHead: 'お題のジャンル', min: 3, flat: true,
+    opts: [['all', 'ミックス', 'いろんなお題'], ['safe', 'ふつう', '恋愛ネタなし'], ['koi', '恋愛', '恋のお題だけ']] },
   mission: { title: 'しれっとミッション', word: '回', opt: 'mission', optHead: 'ミッションのむずかしさ', min: 3,
     opts: [['easy', 'かんたん', 'はじめての人むけ'], ['all', 'ミックス', 'むずかしいのも']] },
   uso: { title: 'ウソかホントか', word: '話', opt: 'uso', optHead: 'お題のジャンル', min: 2,
@@ -12951,90 +12958,110 @@ PMX.gaka = {
 };
 
 /* =====================================================================
-   返信選手権: メッセージが届く → 1人ずつこっそり返信を入力 → トーク画面のように1件ずつ発表 → いちばん／スベった
+   大喜利グランプリ（内部の名前は reply）: お題が出る → 1人ずつこっそり回答を書く → 1枚ずつめくって発表 → IPPON／スベった
    ===================================================================== */
 const RP_MSGS = [
-  // 0 = だれでも, 1 = 恋愛
-  ['上司', '明日から会社に来なくていいよ。そのかわり…', 0], ['上司', '新人歓迎会の出し物、何かいい案ある？', 0],
-  ['社長', '会社の新しい社訓、ひと言で考えて', 0], ['母', '冷蔵庫に入ってたアレ、なに？', 0],
-  ['母', 'お父さんが急に変な趣味を始めたんだけど、何だと思う？', 0], ['父', '父さん、今日からYouTuberになる。チャンネル名を考えてくれ', 0],
-  ['おばあちゃん', 'スマホで「すてきな待ち受け」にしたいの。何がいい？', 0], ['実家の犬', 'ついにしゃべれるようになった。最初に何て言えばいい？', 0],
-  ['飼い猫', 'ご主人、そろそろ言わせてもらうけど', 0], ['10年後の自分', '今すぐやめろ。あれだけは絶対に', 0],
-  ['宇宙人', '地球に着きました。まず何をすればいい？', 0], ['神様', '願いを1つだけ叶えます。ただし、ちょっと残念な形で', 0],
-  ['魔法使い', '1日だけ使える魔法、何がほしい？', 0], ['サンタクロース', '今年はちょっと予算がなくて…プレゼント、これでいい？', 0],
-  ['幽霊', '最近だれも怖がってくれない。どうしたらいい？', 0], ['総理大臣', '明日を祝日にします。名前を考えて', 0],
-  ['タクシーの運転手', 'お客さん、どちらまで？', 0], ['美容師さん', '今日はどんな感じにしますか？', 0],
-  ['ラーメン屋の店主', '新メニューを出すんだけど、名前どうしよう？', 0], ['コンビニの店員', '温めますか？', 0],
-  ['警察', '落とし物が届いています。ちょっと変わった物ですが…', 0], ['引っ越し業者', 'お荷物、1つだけ運べない物があるのですが…', 0],
-  ['不動産屋', '訳ありですが、家賃0円の部屋があります', 0], ['占い師', 'あなたの来年を、ひと言で言うと…何だと思う？', 0],
-  ['校長先生', '全校集会で話すネタがない。助けて', 0], ['担任の先生', '卒業文集のタイトル、何にする？', 0],
-  ['運動会の係', '新しい競技を1つ考えて！', 0], ['推し', 'ファンのみんなに一言お願いって言われた。何て言えばいい？', 0],
-  ['友達', '今から10秒で、俺を笑わせて', 0], ['友達', '結婚式のスピーチ、最初のひと言だけ考えて', 0],
-  ['ロボット掃除機', 'ご主人、部屋で変な物を見つけました', 0], ['自分の胃袋', '今夜はもう限界。最後に1つだけ食べさせて', 0],
-  ['天気予報士', '明日の天気、晴れのち…何にしましょう？', 0], ['知らない番号', 'おめでとうございます！ 当選しました', 0],
-  ['恋人', '私と仕事、どっちが大事？', 1], ['恋人', '私のどこが好き？ 3文字で', 1],
-  ['恋人', '今日の私、何か変わったと思わない？', 1], ['恋人', '記念日のプレゼント、手作りでお願い', 1],
-  ['恋人', '浮気してないって、証明して', 1], ['恋人', '来世でも一緒にいてくれる？ 何に生まれ変わる？', 1],
-  ['恋人', '私の手料理、正直何点？', 1], ['恋人', 'お揃いのもの、何か買おうよ', 1],
-  ['好きな人', '好きなタイプ？ うーん…動物にたとえると何？', 1], ['好きな人', '今夜は、月がきれいですね', 1],
-  ['片思いの相手', '付き合ったら、最初に何したい？', 1], ['元恋人', '私のこと、ひと言でたとえると？', 1],
-  ['元恋人', '結婚式に呼んでもいい？', 1], ['マッチングした人', 'プロフィールの「特技：秘密」って、なに？', 1],
-  ['マッチングした人', '写真と、だいぶ雰囲気がちがいますね', 1], ['デートした人', '最後に、私を口説いてみて', 1],
-  ['デートした人', '次のデート、ちょっと変わったところに行きたい', 1], ['合コンで会った人', '本当の職業、当ててみて', 1],
-  ['恋人の親', 'うちの子の、どこが好きなのかね？', 1], ['婚活の相手', '年収以外で、自慢できることは？', 1],
-].map(([s, m, k], i) => ({ id: i + 1, s, m, k }));
+  // 0 = ふつう, 1 = 恋愛
+  ['絶対に売れない新しいお菓子の名前とは？', 0], ['校長先生の話が長すぎて起きたこととは？', 0],
+  ['「この人、ドラえもんの道具を持ってるな」と思った瞬間とは？', 0], ['最近の桃太郎、どこが変わった？', 0],
+  ['まったく役に立たない新しい家電とは？', 0], ['閻魔大王が最近始めた新サービスとは？', 0],
+  ['天才ハッカーの意外な弱点とは？', 0], ['「このパン屋、もうダメだな」と思った瞬間とは？', 0],
+  ['十二支に13番目が追加。何の動物？', 0], ['こんな結婚式はイヤだ', 0],
+  ['こんな救急車はイヤだ', 0], ['こんなヒーローはイヤだ', 0],
+  ['こんな回転寿司はイヤだ', 0], ['こんなAIアシスタントはイヤだ', 0],
+  ['こんな美容院はイヤだ', 0], ['こんなコンビニはイヤだ', 0],
+  ['こんなお化け屋敷はイヤだ', 0], ['宝くじで1等を当てた忍者の第一声', 0],
+  ['300年ぶりに目覚めたロボットの第一声', 0], ['優勝インタビューで絶対に言ってはいけない一言', 0],
+  ['初めて人間に捕まった宇宙人のひと言', 0], ['卒業式で先生に言われたくない一言', 0],
+  ['「この人、異世界から来たな」と気づいたきっかけとは？', 0], ['「この会議、今日中に終わらないな」と思った瞬間とは？', 0],
+  ['サンタクロースが今年の仕事をサボった理由とは？', 0], ['新しくできた学校の、ちょっとおかしな校則とは？', 0],
+  ['犬が人間についていちばん不思議に思っていることとは？', 0], ['新しいことわざを作って。意味も教えて', 0],
+  ['ニュース速報。いったい何が発表された？', 0], ['新しく追加されたオリンピック競技とは？', 0],
+  ['「このお医者さん、ヤブだな」と思った一言とは？', 0], ['RPGの勇者がこっそり悩んでいることとは？', 0],
+  ['引退したスーパーヒーローの今の仕事とは？', 0], ['カップラーメンを待つ3分間に人生が変わった。何があった？', 0],
+  ['タイムマシンで未来に行って、いちばんがっかりしたこととは？', 0], ['「この旅館、何かおかしい」と思った瞬間とは？', 0],
+  ['新発売の、ちょっと残念な目覚まし時計とは？', 0], ['忍者の正体がバレた意外な理由とは？', 0],
+  ['名探偵が事件の解決をあきらめた理由とは？', 0], ['100歳のおばあちゃんが始めた新しい趣味とは？', 0],
+  ['ヒーローショーで子どもが泣き出した理由とは？', 0], ['絶対に当たらない占いの結果とは？', 0],
+  ['カラオケで入れると場が凍る曲名とは？', 0], ['新しい祝日「○○の日」。何をする日？', 0],
+  ['魔王が勇者に送った、ちょっと優しいメールとは？', 0], ['ペットの猫が書いた日記、最初の一行とは？', 0],
+  ['こんなキャンプ場はイヤだ', 0], ['こんな初デートはイヤだ', 1],
+  ['こんなプロポーズはイヤだ', 1], ['こんな婚活パーティーはイヤだ', 1],
+  ['恋人を「重いな」と思った瞬間とは？', 1], ['一瞬で冷める告白のセリフとは？', 1],
+  ['「この人、モテないな」と思った自己紹介とは？', 1], ['絶対に会いたくないマッチングアプリのプロフィールとは？', 1],
+  ['元恋人から届いた、意味がわからないLINEとは？', 1], ['デート中に「この人とは無理」と思った瞬間とは？', 1],
+  ['キューピッドが最近スランプな理由とは？', 1], ['バレンタインにもらって、いちばん困ったものとは？', 1],
+  ['合コンで絶対に言ってはいけない自己紹介とは？', 1], ['こんな誓いの言葉はイヤだ', 1],
+  ['恋人の親へのあいさつ。言ってはいけない第一声とは？', 1], ['片思いの相手に送ってしまった、最悪の誤送信とは？', 1],
+  ['倦怠期のカップルが始めた、ちょっと変な習慣とは？', 1], ['運命の赤い糸の先にいた、意外なものとは？', 1],
+  ['「この人、私のこと好きだな」と勘違いした瞬間とは？', 1], ['こんな胸キュンはイヤだ', 1],
+  ['浮気がバレたときの、最悪の言い訳とは？', 1],
+].map(([m, k], i) => ({ id: i + 1, m, k }));
 const RP_BY_ID = new Map(RP_MSGS.map(q => [q.id, q]));
 const rpPool = o => RP_MSGS.filter(q => o === 'all' || (o === 'koi' ? q.k : !q.k));
-const RP_ICON = ['#ff8b6b', '#6bb8ff', '#ffc94d', '#7ed97e', '#c79bff', '#ff7fb4'];
 const RP_LETTERS = 'ABCDEFGH';
-let rpTyping = false, rpKeep = null;
+let rpTyping = false, rpKeep = null, rpRO = null, rpCutH = 0;
 const rpHold = () => { const l = $('rpList'); rpKeep = l ? l.scrollTop : null; };
 const rpMsg = () => RP_BY_ID.get(G.cur.q) || RP_MSGS[0];
-const rpTime = m => { const t = (G.cur.tm || 1290) + m; return Math.floor(t / 60) % 24 + ':' + String(t % 60).padStart(2, '0'); };
-function rpChat(body, foot, cls) {
-  const q = rpMsg();
-  return '<div class="rp-chat' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(q.s) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
-    '<div class="rp-list" id="rpList"><p class="rp-day"><span>今日</span></p>' +
-    '<div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[q.id % RP_ICON.length] + '">' + esc([...q.s][0]) + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(q.s) + '</span><span class="rp-row"><span class="rp-bub">' + esc(q.m) + '</span><span class="rp-meta">' + rpTime(0) + '</span></span></div></div>' +
-    (body || '') + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の返信">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の返信">次 ▼</button></div>' + (foot || '') + '</div>';
+/* the お題 board (IPPON style): shared with the guests' phones, so it only takes plain text */
+const ogOdai = (t, cls) => '<div class="og-odai' + (cls ? ' ' + cls : '') + '"><span class="og-lbl">お題</span><b>' + esc(t) + '</b></div>';
+/* one answer board: k = its letter, txt null = パス */
+const ogFlip = (txt, tag) => '<span class="og-tag">' + (tag || '') + '</span>' + (txt == null ? '<span class="rp-bub skip">（パス）</span>' : '<span class="rp-bub">' + esc(txt) + '</span>');
+/* the stage: お題 on top, the answer boards under it (paged, never scrolled), the input at the bottom */
+function rpChat(body, foot, cls, text) {
+  return '<div class="rp-chat og' + (cls ? ' ' + cls : '') + '">' + ogOdai(text != null ? text : rpMsg().m) +
+    (body != null ? '<div class="rp-list" id="rpList">' + body + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の回答">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の回答">次 ▼</button></div>' : '') +
+    (foot || '') + '</div>';
 }
+const ogInput = id => '<div class="og-in"><textarea id="' + id + '" maxlength="60" rows="3" enterkeyhint="done" placeholder="ここに回答を書く" aria-label="回答を入力"></textarea></div>';
 function rpOut(k, pick, named) {
   const cur = G.cur, p = cur.ord[k], txt = cur.rep[p], cls = (cur.best === k ? ' best' : '') + (cur.worst === k ? ' worst' : '') + (pick === k ? ' sel' : '');
-  const tagged = (named || cur.best === k || cur.worst === k) ? '<span class="rp-who" style="--p:' + pc(p) + '">' + esc(pname(p)) + (cur.best === k ? ' ・ いちばん！' : cur.worst === k ? ' ・ スベった…' : '') + '</span>' : '';
-  const inner = '<span class="rp-meta"><b class="rp-tag">' + RP_LETTERS[k] + '</b><span>既読<br>' + rpTime(2 + k) + '</span></span>' +
-    (txt == null ? '<span class="rp-bub skip">（既読スルー）</span>' : '<span class="rp-bub">' + esc(txt) + '</span>');
+  const tagged = (named || cur.best === k || cur.worst === k) ? '<span class="rp-who" style="--p:' + pc(p) + '">' + esc(pname(p)) + (cur.worst === k ? '<small>スベった</small>' : '') + '</span>' : '';
+  const inner = ogFlip(txt, RP_LETTERS[k]) + (cur.best === k ? '<span class="og-ippon" aria-label="IPPON">IPPON</span>' : '') + tagged;
   const pickable = pick !== undefined && cur.best !== k;
-  return '<div class="rp-out' + cls + '">' + (pickable ? '<button type="button" class="rp-pick" data-g="x-pick" data-i="' + k + '" aria-pressed="' + (pick === k) + '" aria-label="返信' + RP_LETTERS[k] + '">' + inner + '</button>' : '<div class="rp-pick">' + inner + '</div>') + tagged + '</div>';
+  return '<div class="rp-out' + cls + '">' + (pickable ? '<button type="button" class="rp-pick pg-keep" data-g="x-pick" data-i="' + k + '" aria-pressed="' + (pick === k) + '" aria-label="回答' + RP_LETTERS[k] + '">' + inner + '</button>' : '<div class="rp-pick pg-keep">' + inner + '</div>') + '</div>';
 }
-const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick"><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
-/* the chat never scrolls: it is cut into pages (▲ ▼ under it); new replies show on the last page */
+const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick pg-keep"><span class="og-tag">?</span><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
+/* the answers never scroll: they are cut into pages (▲ ▼ under them); a new one shows on the last page */
 function rpPages(anim) {
   const list = $('rpList');
   if (!list) return;
-  pagerSet('rpList', list.innerHTML, { keep: anim === 'keep', last: anim !== 'top' && anim !== 'keep', onNav: (i, n) => {
-    const nav = $('rpPg'); if (!nav) return;
-    nav.hidden = n < 2; $('rpPgN').textContent = (i + 1) + ' / ' + n; $('rpPrev').disabled = i === 0; $('rpNext').disabled = i === n - 1;
+  const prev = PAGERS.get('rpList'), html = anim === 'again' && prev ? prev.html : list.innerHTML, nav = $('rpPg');
+  const run = () => pagerSet('rpList', html, { keep: anim === 'keep' || anim === 'again', last: anim !== 'top' && anim !== 'keep' && anim !== 'again', onNav: (i, n) => {
+    if (!$('rpPg')) return;
+    $('rpPg').hidden = n < 2; $('rpPgN').textContent = (i + 1) + ' / ' + n; $('rpPrev').disabled = i === 0; $('rpNext').disabled = i === n - 1;
   } });
+  /* cut with the ▲ ▼ row showing (it takes room); only if it all fits on one page, cut again without it */
+  if (nav) nav.hidden = false;
+  run();
+  const st = PAGERS.get('rpList');
+  if (nav && st && st.pages && st.pages.length < 2) { nav.hidden = true; run(); }
+  /* the stage can still change size after this (the buttons under it are drawn next): cut again whenever it does */
+  rpCutH = list.clientHeight;
+  if (window.ResizeObserver) {
+    rpRO = rpRO || new ResizeObserver(() => { const l = $('rpList'); if (l && PAGERS.get('rpList') && Math.abs(l.clientHeight - rpCutH) > 2) rpPages('again'); });
+    rpRO.disconnect(); rpRO.observe(list);
+  }
   const pv = $('rpPrev'), nx = $('rpNext');
   if (pv) pv.onclick = () => { if (pagerGo('rpList', -1)) SE.play('tap'); };
   if (nx) nx.onclick = () => { if (pagerGo('rpList', 1)) SE.play('tap'); };
 }
-/* everyone's reply is in (this phone's and the phones'): the show starts */
+/* everyone's answer is in (this phone's and the phones'): the show starts */
 function rpAllIn() {
   const cur = G.cur;
   if (cur.phase !== 'write' || cur.peek || !pxAll().every(p => p in cur.rep)) return false;
   cur.wait = false;
   cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
-  pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
+  pxSave('top'); SE.play('fanfare'); telop('回答がそろった！<small>1枚ずつ発表</small>', '', 1300);
   return true;
 }
 const rpWaitList = () => '<div class="pm-chips' + (G.players.length > 4 ? ' two' : '') + '">' + pxAll().map(p => {
   const done = p in G.cur.rep, off = !done && roomHas(p) && !roomOnline(p);
-  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 送信ずみ' : off ? '電波なし' : '入力中…') + '</small></span>';
+  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 回答ずみ' : off ? '電波なし' : '考え中…') + '</small></span>';
 }).join('') + '</div>';
 PMX.reply = {
-  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
-  poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
+  tag: '回答', hint: '<b>IPPON</b>の回答に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>大喜利グランプリ！<small>お題に答えて IPPON をねらえ</small>',
+  poolWord: 'お題', poolUnit: '問', resCount: 'お題',
   pool: o => rpPool(o).length,
   stats: () => ({ best: 0, worst: 0 }),
   mark: () => (G.cur.phase === 'write' && G.cur.peek ? pxPeekWho() : null),
@@ -13049,33 +13076,33 @@ PMX.reply = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="rp-notice"><span class="rp-av sm" style="--c:#ffc94d">?</span><span><b>新着メッセージ</b><small>タップして開いてね</small></span><i>1</i></div><p class="pm-lead ol">メッセージが届いた！</p><p class="pm-note">全員が1人ずつこっそり返信を書いて、<br>最後にトーク画面で発表。いちばんの返信はどれ？</p>' + pmTryNote() + '</div>');
-    if (cur.phase === 'msg') return head + '<p class="gk-top">このメッセージに、<b>あなたならなんて返す？</b></p>' + rpChat('', '', 'grow');
-    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの返信を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="og-odai closed"><span class="og-lbl">お題</span><b>？</b></div><p class="pm-lead ol">お題が出るよ！</p><p class="pm-note">全員が1人ずつこっそり回答を書いて、<br>最後に1枚ずつ発表。IPPONの回答はどれ？</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'msg') return head + '<p class="gk-top">このお題に、<b>こっそり回答しよう</b></p>' + rpChat(null, '', 'grow big');
+    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの回答を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
     if (cur.phase === 'write') {
-      if (!cur.peek.open) return head + pxPeekCover('返信はこっそり書く。だれの返信かは最後までヒミツ');
-      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
+      if (!cur.peek.open) return head + pxPeekCover('回答はこっそり書く。だれの回答かは最後までヒミツ');
+      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の回答</p>' + rpChat(null, ogInput('rpIn'), 'grow write');
     }
     const shown = cur.phase === 'show' ? cur.shown : cur.ord.length;
     let body = '';
     for (let k = 0; k < shown; k++) body += rpOut(k, cur.phase === 'best' || cur.phase === 'worst' ? cur.pick : undefined, cur.phase === 'names');
     if (cur.phase === 'show' && rpTyping) body += rpTypingBub();
-    const ask = cur.phase === 'best' ? '<b>いちばんの返信</b>は？ せーので指さし → タップ' : cur.phase === 'worst' ? '<b>いちばんスベった返信</b>は？ → タップ' : cur.phase === 'names' ? 'だれの返信だった？' : '返信は全部で ' + cur.ord.length + '件';
-    return head + '<p class="gk-top">' + ask + '</p>' + rpChat(body, '', 'grow show');
+    const ask = cur.phase === 'best' ? '<b>IPPON</b>の回答は？ せーので指さし → タップ' : cur.phase === 'worst' ? '<b>いちばんスベった回答</b>は？ → タップ' : cur.phase === 'names' ? 'だれの回答だった？' : '回答は全部で ' + cur.ord.length + '枚';
+    return head + '<p class="gk-top og-ask">' + ask + '</p>' + rpChat(body, '', 'grow show');
   },
   dock() {
     const cur = G.cur;
-    if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'メッセージを開く', 'big main pulse'));
-    if (cur.phase === 'msg') return pxRow(pxBtn('write', '返信を書く ▶', 'big main'));
-    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人は既読スルー</span>', 'white big grow'));
-    if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', '既読<span class="sub">スルーする</span>', 'white small') + pxBtn('send', '送信', 'big main grow') : pxPeekOpenBtn());
-    if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">入力中…</div>' : pxBtn('more', cur.shown ? '次の返信を見る<span class="sub">あと ' + (cur.ord.length - cur.shown) + '件</span>' : '返信を見る！', 'big main pulse'));
-    if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'いちばんの返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定！', 'big main', cur.pick == null ? ' disabled' : ''));
-    if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">返信なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
-    return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
+    if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'お題を出す！', 'big main pulse'));
+    if (cur.phase === 'msg') return pxRow(pxBtn('write', '回答を書く ▶', 'big main'));
+    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人はパス</span>', 'white big grow'));
+    if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', 'パス', 'white small') + pxBtn('send', '回答する', 'big main grow') : pxPeekOpenBtn());
+    if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">めくっています…</div>' : pxBtn('more', cur.shown ? '次の回答をめくる<span class="sub">あと ' + (cur.ord.length - cur.shown) + '枚</span>' : '回答をめくる！', 'big main pulse'));
+    if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'IPPONの回答をタップ' : '回答' + RP_LETTERS[cur.pick] + ' で IPPON！', 'big main', cur.pick == null ? ' disabled' : ''));
+    if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">回答なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった回答をタップ' : '回答' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
+    return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のお題へ ▶', 'big main'));
   },
   remote(p) {
-    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m, id: q.id, tm: cur.tm || 1290 } : { v: 'rp' };
+    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', m: q.m, id: q.id } : { v: 'rp' };
     if (cur.phase === 'before' || cur.phase === 'msg') return Object.assign(base, { st: 'read' });
     if (cur.phase === 'write') {
       if (p in cur.rep) return Object.assign(base, { st: 'sent', mine: cur.rep[p] });
@@ -13099,9 +13126,6 @@ PMX.reply = {
     rpPages(anim);
     const inp = $('rpIn');
     if (inp) {
-      /* the box grows with the text (up to 60 characters it never needs scrolling); the chat above gives way */
-      const grow = () => { const h0 = inp.offsetHeight; inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; if (inp.offsetHeight !== h0) rpPages('last'); };
-      inp.addEventListener('input', grow);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); PMX.reply.act('send'); } });
       if (cur.phase === 'write' && !matchMedia('(pointer:coarse)').matches) inp.focus({ preventScroll: true });
     }
@@ -13113,7 +13137,7 @@ PMX.reply = {
     if (a === 'open' && cur.phase === 'before' && !pmLocked()) {
       const q = pmDraw(rpPool(G.lvl), 1)[0];
       pmUse(q.id);
-      cur.q = q.id; cur.rep = {}; cur.tm = rint(19, 23) * 60 + rint(0, 59) - 6; cur.ord = null; cur.best = null; cur.worst = null; cur.pick = null; cur.shown = 0;
+      cur.q = q.id; cur.rep = {}; cur.ord = null; cur.best = null; cur.worst = null; cur.pick = null; cur.shown = 0;
       cur.phase = 'msg';
       tryUse('reply');
       SE.play('ticket'); vibrate([30, 40, 30]);
@@ -13143,7 +13167,7 @@ PMX.reply = {
         rpTyping = false; cur.shown++;
         if (cur.shown >= cur.ord.length) { cur.phase = 'best'; cur.pick = null; }
         pxSave(); SE.play('pop'); vibrate(15);
-        if (cur.phase === 'best') setTimeout(() => { if (G && G.cur === cur) telop('いちばんの返信は？<small>せーので指さし！</small>', '', 1400); }, 700);
+        if (cur.phase === 'best') setTimeout(() => { if (G && G.cur === cur) telop('IPPONの回答は？<small>せーので指さし！</small>', '', 1400); }, 700);
       }, 900);
       return;
     }
@@ -13159,11 +13183,11 @@ PMX.reply = {
       G.players[p].best++; G.players[p].medal++;
       cur.phase = n >= 3 ? 'worst' : 'names';
       rpHold(); pxSave('keep'); SE.play('fanfare'); vibrate([40, 30, 80]);
-      telop(esc(pname(p)) + '<small>の返信が いちばん！</small>', '', 1600);
+      telop('<span class="og-tl">IPPON！</span><small>' + esc(pname(p)) + ' の回答</small>', '', 1700);
       return;
     }
     if ((a === 'worst' || a === 'noworst') && cur.phase === 'worst') {
-      if (a === 'worst') { if (cur.pick == null) return; cur.worst = cur.pick; G.players[cur.ord[cur.worst]].worst++; SE.play('bubuu'); telop(esc(pname(cur.ord[cur.worst])) + '<small>の返信が スベった…</small>', 'red', 1500); }
+      if (a === 'worst') { if (cur.pick == null) return; cur.worst = cur.pick; G.players[cur.ord[cur.worst]].worst++; SE.play('bubuu'); telop(esc(pname(cur.ord[cur.worst])) + '<small>の回答が スベった…</small>', 'red', 1500); }
       else SE.play('tap');
       cur.pick = null; cur.phase = 'names';
       rpHold(); pxSave('keep');
@@ -13488,7 +13512,7 @@ PMX.uso = {
 /* ---------- 結果発表 ---------- */
 const pxStat = (label, v) => '<div class="stat wide"><b>' + esc(v) + '</b><span>' + label + '</span></div>';
 Object.assign(PMX.gaka, { resLine: p => 'ニセ画伯 ' + p.fake + '回 ・ 逃げ切り ' + p.esc + '回', resStats: most => pxStat('いちばん逃げ切った', most('esc')) + pxStat('いちばんニセ画伯', most('fake')) });
-Object.assign(PMX.reply, { resLine: p => 'いちばん ' + p.best + '回 ・ スベり ' + p.worst + '回', resStats: most => pxStat('返信の達人', most('best')) + pxStat('スベり王', most('worst')) });
+Object.assign(PMX.reply, { resLine: p => 'IPPON ' + p.best + '回 ・ スベり ' + p.worst + '回', resStats: most => pxStat('IPPON王', most('best')) + pxStat('スベり王', most('worst')) });
 Object.assign(PMX.mission, { resLine: p => '達成 ' + p.done + ' ・ 見破り ' + p.spot + ' ・ 見破られ ' + p.caught, resStats: most => pxStat('ミッション王', most('done')) + pxStat('名探偵', most('spot')) });
 Object.assign(PMX.uso, { resLine: p => '全員だました ' + p.fool + '回 ・ 外した ' + p.miss + '回', resStats: most => pxStat('ホラ吹き王', most('fool')) + pxStat('いちばんだまされた', most('miss')) });
 
@@ -13498,16 +13522,16 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
     '<p>1人1筆ずつ、2周で1枚の絵を描きます。<b>指を離したら次の人</b>。描き終わったら、せーので<b>ニセ画伯だと思う人を指さし</b>。</p>' +
     '<p>見破られたらニセ画伯が1DON。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1DON</b>。描いた絵は保存できます。</p>', 1) +
-  gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
-    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
+  gCard('大喜利グランプリ（3人から）', '<p>大喜利の<b>お題</b>が出ます。スマホを回して、1人ずつ<b>こっそり回答を書く</b>（パスもOK）。</p>' +
+    '<p>全員書いたら、<b>回答を1枚ずつめくって発表</b>。だれの回答かはヒミツのまま、せーので<b>IPPONの回答</b>を指さし → 勲章。<b>いちばんスベった回答</b>の人が1DON。最後に名前がわかります。</p>', 2) +
   gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
     '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。達成か見破りが出たら、<b>全員のミッションを配り直し</b>ます。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
-  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
+  gTip('勲章は、IPPON・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
   (ROOM_ON ? gCard('みんなのスマホで参加（プレミアム）', '<p>この4つのモードは、<b>友だちが自分のスマホで参加</b>できます。ゲーム画面の右上の「参加」を押すと、QRコードと4文字の合言葉が出ます。友だちはカメラで読むか、タイトル画面の「参加」で合言葉を入れて、自分の名前を選ぶだけ。<b>参加は無料</b>です。</p>' +
-    '<p>お題・ミッション・返信の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
+    '<p>お題・ミッション・回答の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
 });
 
 /* =====================================================================
@@ -13709,8 +13733,8 @@ PMX.koi = {
 };
 
 /* =====================================================================
-   みんなのスマホで参加（部屋）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
-   - 親（プレミアムの人）のスマホがゲームを進める。参加した人のスマホには、その人だけの画面（お題・ミッション・返信の入力・投票）が出る
+   みんなのスマホで参加（部屋）: ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントか
+   - 親（プレミアムの人）のスマホがゲームを進める。参加した人のスマホには、その人だけの画面（お題・ミッション・回答の入力・投票）が出る
    - 部屋はサーバー（server/src/room.js）が中継するだけ。作れるのはプレミアムが有効な端末だけ（サーバーで確認）。参加は無料
    - 親が送るのは決まった形のデータだけ。参加した側はそれを自分の画面の部品で描く（文字は全部 esc）。届いたものは全部たしかめてから使う
    - スマホを持っていない人は、今までどおり親のスマホを回して遊ぶ（roomLocal に残る）
@@ -14048,7 +14072,7 @@ function renderGuest() {
   else if (guest.st === 'end') body = gsMsg('おしまい', esc(guest.msg || ''), '<button type="button" class="pbtn big main" data-gs="leave">タイトルへ</button>');
   else if (guest.st === 'conn' || !v) body = gsMsg('つないでいます…', '親のスマホとつないでいます');
   else if (!guest.host) body = gsMsg('親のスマホを待っています', '親のスマホの電波がもどると、つづきから遊べます');
-  else if (v.k === 'idle') body = gsMsg(v.done ? '結果発表！' : 'ゲームを待っています', v.done ? '結果は親のスマホで見てね。次のゲームも、このまま参加できます' : '親のスマホで、ニセ画伯・返信選手権・しれっとミッション・ウソかホントかを始めると、ここに出ます');
+  else if (v.k === 'idle') body = gsMsg(v.done ? '結果発表！' : 'ゲームを待っています', v.done ? '結果は親のスマホで見てね。次のゲームも、このまま参加できます' : '親のスマホで、ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントかを始めると、ここに出ます');
   else if (v.k === 'who') {
     const ps = Array.isArray(v.ps) ? v.ps.slice(0, 8) : [], taken = Array.isArray(v.taken) ? v.taken : [];
     body = '<div class="gs-body"><p class="pm-lead ol">あなたはだれ？</p><p class="pm-note">自分の名前をタップ</p><div class="pm-chips' + (ps.length > 4 ? ' two' : '') + '">' +
@@ -14077,22 +14101,18 @@ function gsView(b, p) {
     return '<div class="gs-body gk-gs">' + (b.ph === 'end' ? end : top) + '<div class="gk-wrap gs-cv" id="gsWrap"><canvas class="gk-cv' + (b.turn ? ' live' : '') + '" id="gsCv" aria-label="みんなの絵"></canvas></div><p class="gs-say">' + say + '</p></div>';
   }
   if (b.v === 'rp') {
-    /* the same chat as on the host's phone */
-    const id = okInt(b.id, 1, 999) ? b.id : 1, tm = okInt(b.tm, 0, 1440 * 2) ? b.tm : 1290, sender = gStr(b.s, 20);
-    const time = m => { const t = tm + m; return Math.floor(t / 60) % 24 + ':' + String(t % 60).padStart(2, '0'); };
-    const mine = b.mine === undefined ? '' : '<div class="rp-out"><div class="rp-pick"><span class="rp-meta"><span>既読<br>' + time(2) + '</span></span>' +
-      (b.mine == null ? '<span class="rp-bub skip">（既読スルー）</span>' : '<span class="rp-bub">' + esc(gStr(b.mine, 80)) + '</span>') + '</div></div>';
-    const chat = (body, foot, cls) => '<div class="rp-chat grow' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(sender) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
-      '<div class="rp-list"><p class="rp-day"><span>今日</span></p><div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[id % RP_ICON.length] + '">' + esc([...sender][0] || '?') + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(sender) + '</span>' +
-      '<span class="rp-row"><span class="rp-bub">' + esc(gStr(b.m, 80)) + '</span><span class="rp-meta">' + time(0) + '</span></span></div></div>' + (body || '') + '</div>' + (foot || '') + '</div>';
-    if (!b.m) return gsMsg('返信選手権', 'メッセージが届くのを待っています');
-    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの返信（だれの返信かは最後までヒミツ）</p>' +
-      chat('', '<div class="rp-input"><textarea id="gsIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-gs="rpsend" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'write') +
-      '<div class="dock-row">' + gsBtn('rpskip', '既読<span class="sub">スルーする</span>', 'white small') + gsBtn('rpsend', '送信', 'big main grow') + '</div></div>';
-    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">送信しました。みんなの返信を待っています</p>' + chat(mine) + '</div>';
-    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + chat('') + '</div>';
-    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + chat(mine) + '</div>';
-    return '<div class="gs-body rp-gs"><p class="px-for">メッセージが届いたよ。親のスマホの「返信を書く」を待ってね</p>' + chat('') + '</div>';
+    /* the same お題 board and answer board as on the host's phone */
+    const odai = gStr(b.m, 80);
+    const mine = b.mine === undefined ? '' : '<div class="rp-list"><div class="rp-out"><div class="rp-pick">' + ogFlip(b.mine == null ? null : gStr(b.mine, 80), '') + '</div></div></div>';
+    const stage = (body, foot, cls) => '<div class="rp-chat og grow' + (cls ? ' ' + cls : '') + '">' + ogOdai(odai) + (body || '') + (foot || '') + '</div>';
+    if (!odai) return gsMsg('大喜利グランプリ', 'お題が出るのを待っています');
+    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの回答（だれの回答かは最後までヒミツ）</p>' +
+      stage('', ogInput('gsIn'), 'write') +
+      '<div class="dock-row">' + gsBtn('rpskip', 'パス', 'white small') + gsBtn('rpsend', '回答する', 'big main grow') + '</div></div>';
+    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">回答しました。みんなを待っています</p>' + stage(mine) + '</div>';
+    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + stage('', '', 'big') + '</div>';
+    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + stage(mine) + '</div>';
+    return '<div class="gs-body rp-gs"><p class="px-for">お題が出たよ。親のスマホの「回答を書く」を待ってね</p>' + stage('', '', 'big') + '</div>';
   }
   if (b.v === 'ms') {
     if (b.ask) return '<div class="gs-body"><p class="px-for">' + esc(gStr(b.ask, 24)) + ' があなたのミッションを予想したよ</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p>' +
@@ -14130,8 +14150,6 @@ function guestMount() {
   }
   const inp = $('gsIn');
   if (inp) {
-    const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; };
-    inp.addEventListener('input', grow);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); guestAct('rpsend'); } });
   }
 }

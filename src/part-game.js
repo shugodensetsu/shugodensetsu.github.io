@@ -6439,7 +6439,8 @@ function pageSplit(box) {
   all.className = 'pg-page';
   all.append(...box.childNodes);
   /* an element is split by its child elements only when it has no text of its own (a paragraph stays whole) */
-  const splittable = n => n.children.length > 0 && [...n.childNodes].every(c => c.nodeType === 1 || (c.nodeType === 3 && !c.textContent.trim()));
+  /* .pg-keep: a piece that is never cut (an answer board) */
+  const splittable = n => !n.classList.contains('pg-keep') && n.children.length > 0 && [...n.childNodes].every(c => c.nodeType === 1 || (c.nodeType === 3 && !c.textContent.trim()));
   /* put as much of n as fits into host (after what host holds already); returns a copy of n holding the rest, or null */
   const fill = (host, n) => {
     const shell = n.cloneNode(false); host.appendChild(shell);

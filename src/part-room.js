@@ -1,7 +1,7 @@
 
 /* =====================================================================
-   みんなのスマホで参加（部屋）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
-   - 親（プレミアムの人）のスマホがゲームを進める。参加した人のスマホには、その人だけの画面（お題・ミッション・返信の入力・投票）が出る
+   みんなのスマホで参加（部屋）: ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントか
+   - 親（プレミアムの人）のスマホがゲームを進める。参加した人のスマホには、その人だけの画面（お題・ミッション・回答の入力・投票）が出る
    - 部屋はサーバー（server/src/room.js）が中継するだけ。作れるのはプレミアムが有効な端末だけ（サーバーで確認）。参加は無料
    - 親が送るのは決まった形のデータだけ。参加した側はそれを自分の画面の部品で描く（文字は全部 esc）。届いたものは全部たしかめてから使う
    - スマホを持っていない人は、今までどおり親のスマホを回して遊ぶ（roomLocal に残る）
@@ -339,7 +339,7 @@ function renderGuest() {
   else if (guest.st === 'end') body = gsMsg('おしまい', esc(guest.msg || ''), '<button type="button" class="pbtn big main" data-gs="leave">タイトルへ</button>');
   else if (guest.st === 'conn' || !v) body = gsMsg('つないでいます…', '親のスマホとつないでいます');
   else if (!guest.host) body = gsMsg('親のスマホを待っています', '親のスマホの電波がもどると、つづきから遊べます');
-  else if (v.k === 'idle') body = gsMsg(v.done ? '結果発表！' : 'ゲームを待っています', v.done ? '結果は親のスマホで見てね。次のゲームも、このまま参加できます' : '親のスマホで、ニセ画伯・返信選手権・しれっとミッション・ウソかホントかを始めると、ここに出ます');
+  else if (v.k === 'idle') body = gsMsg(v.done ? '結果発表！' : 'ゲームを待っています', v.done ? '結果は親のスマホで見てね。次のゲームも、このまま参加できます' : '親のスマホで、ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントかを始めると、ここに出ます');
   else if (v.k === 'who') {
     const ps = Array.isArray(v.ps) ? v.ps.slice(0, 8) : [], taken = Array.isArray(v.taken) ? v.taken : [];
     body = '<div class="gs-body"><p class="pm-lead ol">あなたはだれ？</p><p class="pm-note">自分の名前をタップ</p><div class="pm-chips' + (ps.length > 4 ? ' two' : '') + '">' +
@@ -368,22 +368,18 @@ function gsView(b, p) {
     return '<div class="gs-body gk-gs">' + (b.ph === 'end' ? end : top) + '<div class="gk-wrap gs-cv" id="gsWrap"><canvas class="gk-cv' + (b.turn ? ' live' : '') + '" id="gsCv" aria-label="みんなの絵"></canvas></div><p class="gs-say">' + say + '</p></div>';
   }
   if (b.v === 'rp') {
-    /* the same chat as on the host's phone */
-    const id = okInt(b.id, 1, 999) ? b.id : 1, tm = okInt(b.tm, 0, 1440 * 2) ? b.tm : 1290, sender = gStr(b.s, 20);
-    const time = m => { const t = tm + m; return Math.floor(t / 60) % 24 + ':' + String(t % 60).padStart(2, '0'); };
-    const mine = b.mine === undefined ? '' : '<div class="rp-out"><div class="rp-pick"><span class="rp-meta"><span>既読<br>' + time(2) + '</span></span>' +
-      (b.mine == null ? '<span class="rp-bub skip">（既読スルー）</span>' : '<span class="rp-bub">' + esc(gStr(b.mine, 80)) + '</span>') + '</div></div>';
-    const chat = (body, foot, cls) => '<div class="rp-chat grow' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(sender) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
-      '<div class="rp-list"><p class="rp-day"><span>今日</span></p><div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[id % RP_ICON.length] + '">' + esc([...sender][0] || '?') + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(sender) + '</span>' +
-      '<span class="rp-row"><span class="rp-bub">' + esc(gStr(b.m, 80)) + '</span><span class="rp-meta">' + time(0) + '</span></span></div></div>' + (body || '') + '</div>' + (foot || '') + '</div>';
-    if (!b.m) return gsMsg('返信選手権', 'メッセージが届くのを待っています');
-    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの返信（だれの返信かは最後までヒミツ）</p>' +
-      chat('', '<div class="rp-input"><textarea id="gsIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-gs="rpsend" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'write') +
-      '<div class="dock-row">' + gsBtn('rpskip', '既読<span class="sub">スルーする</span>', 'white small') + gsBtn('rpsend', '送信', 'big main grow') + '</div></div>';
-    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">送信しました。みんなの返信を待っています</p>' + chat(mine) + '</div>';
-    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + chat('') + '</div>';
-    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + chat(mine) + '</div>';
-    return '<div class="gs-body rp-gs"><p class="px-for">メッセージが届いたよ。親のスマホの「返信を書く」を待ってね</p>' + chat('') + '</div>';
+    /* the same お題 board and answer board as on the host's phone */
+    const odai = gStr(b.m, 80);
+    const mine = b.mine === undefined ? '' : '<div class="rp-list"><div class="rp-out"><div class="rp-pick">' + ogFlip(b.mine == null ? null : gStr(b.mine, 80), '') + '</div></div></div>';
+    const stage = (body, foot, cls) => '<div class="rp-chat og grow' + (cls ? ' ' + cls : '') + '">' + ogOdai(odai) + (body || '') + (foot || '') + '</div>';
+    if (!odai) return gsMsg('大喜利グランプリ', 'お題が出るのを待っています');
+    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの回答（だれの回答かは最後までヒミツ）</p>' +
+      stage('', ogInput('gsIn'), 'write') +
+      '<div class="dock-row">' + gsBtn('rpskip', 'パス', 'white small') + gsBtn('rpsend', '回答する', 'big main grow') + '</div></div>';
+    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">回答しました。みんなを待っています</p>' + stage(mine) + '</div>';
+    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + stage('', '', 'big') + '</div>';
+    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + stage(mine) + '</div>';
+    return '<div class="gs-body rp-gs"><p class="px-for">お題が出たよ。親のスマホの「回答を書く」を待ってね</p>' + stage('', '', 'big') + '</div>';
   }
   if (b.v === 'ms') {
     if (b.ask) return '<div class="gs-body"><p class="px-for">' + esc(gStr(b.ask, 24)) + ' があなたのミッションを予想したよ</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p>' +
@@ -421,8 +417,6 @@ function guestMount() {
   }
   const inp = $('gsIn');
   if (inp) {
-    const grow = () => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; };
-    inp.addEventListener('input', grow);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); guestAct('rpsend'); } });
   }
 }

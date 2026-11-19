@@ -1,6 +1,6 @@
 
 /* =====================================================================
-   新しいパーティーモード（プレミアム）: ニセ画伯・返信選手権・しれっとミッション・ウソかホントか
+   新しいパーティーモード（プレミアム）: ニセ画伯・大喜利グランプリ・しれっとミッション・ウソかホントか
    どれもスマホ1台。PM_MODES の仲間として、暴露トークと同じ画面（mgBoard + mgStage + dock）で動く。
    ボタンは data-g="x-…" → PMX[mode].act('…')
    ===================================================================== */
@@ -8,8 +8,8 @@ PM_MODES.push('gaka', 'reply', 'mission', 'uso');
 Object.assign(PM, {
   gaka: { title: 'ニセ画伯', word: '回', opt: 'gaka', optHead: 'お題のむずかしさ', min: 3, flat: true,
     opts: [['easy', 'かんたん', '描きやすいお題'], ['all', 'ミックス', 'ひねったお題も']] },
-  reply: { title: '返信選手権', word: '回', opt: 'reply', optHead: 'メッセージの相手', min: 3, flat: true,
-    opts: [['all', 'ミックス', 'いろんな人から'], ['safe', 'おだやか', '恋愛ネタなし'], ['koi', '恋愛多め', 'ドキッとする相手']] },
+  reply: { title: '大喜利グランプリ', word: '問', opt: 'reply', optHead: 'お題のジャンル', min: 3, flat: true,
+    opts: [['all', 'ミックス', 'いろんなお題'], ['safe', 'ふつう', '恋愛ネタなし'], ['koi', '恋愛', '恋のお題だけ']] },
   mission: { title: 'しれっとミッション', word: '回', opt: 'mission', optHead: 'ミッションのむずかしさ', min: 3,
     opts: [['easy', 'かんたん', 'はじめての人むけ'], ['all', 'ミックス', 'むずかしいのも']] },
   uso: { title: 'ウソかホントか', word: '話', opt: 'uso', optHead: 'お題のジャンル', min: 2,
@@ -317,90 +317,110 @@ PMX.gaka = {
 };
 
 /* =====================================================================
-   返信選手権: メッセージが届く → 1人ずつこっそり返信を入力 → トーク画面のように1件ずつ発表 → いちばん／スベった
+   大喜利グランプリ（内部の名前は reply）: お題が出る → 1人ずつこっそり回答を書く → 1枚ずつめくって発表 → IPPON／スベった
    ===================================================================== */
 const RP_MSGS = [
-  // 0 = だれでも, 1 = 恋愛
-  ['上司', '明日から会社に来なくていいよ。そのかわり…', 0], ['上司', '新人歓迎会の出し物、何かいい案ある？', 0],
-  ['社長', '会社の新しい社訓、ひと言で考えて', 0], ['母', '冷蔵庫に入ってたアレ、なに？', 0],
-  ['母', 'お父さんが急に変な趣味を始めたんだけど、何だと思う？', 0], ['父', '父さん、今日からYouTuberになる。チャンネル名を考えてくれ', 0],
-  ['おばあちゃん', 'スマホで「すてきな待ち受け」にしたいの。何がいい？', 0], ['実家の犬', 'ついにしゃべれるようになった。最初に何て言えばいい？', 0],
-  ['飼い猫', 'ご主人、そろそろ言わせてもらうけど', 0], ['10年後の自分', '今すぐやめろ。あれだけは絶対に', 0],
-  ['宇宙人', '地球に着きました。まず何をすればいい？', 0], ['神様', '願いを1つだけ叶えます。ただし、ちょっと残念な形で', 0],
-  ['魔法使い', '1日だけ使える魔法、何がほしい？', 0], ['サンタクロース', '今年はちょっと予算がなくて…プレゼント、これでいい？', 0],
-  ['幽霊', '最近だれも怖がってくれない。どうしたらいい？', 0], ['総理大臣', '明日を祝日にします。名前を考えて', 0],
-  ['タクシーの運転手', 'お客さん、どちらまで？', 0], ['美容師さん', '今日はどんな感じにしますか？', 0],
-  ['ラーメン屋の店主', '新メニューを出すんだけど、名前どうしよう？', 0], ['コンビニの店員', '温めますか？', 0],
-  ['警察', '落とし物が届いています。ちょっと変わった物ですが…', 0], ['引っ越し業者', 'お荷物、1つだけ運べない物があるのですが…', 0],
-  ['不動産屋', '訳ありですが、家賃0円の部屋があります', 0], ['占い師', 'あなたの来年を、ひと言で言うと…何だと思う？', 0],
-  ['校長先生', '全校集会で話すネタがない。助けて', 0], ['担任の先生', '卒業文集のタイトル、何にする？', 0],
-  ['運動会の係', '新しい競技を1つ考えて！', 0], ['推し', 'ファンのみんなに一言お願いって言われた。何て言えばいい？', 0],
-  ['友達', '今から10秒で、俺を笑わせて', 0], ['友達', '結婚式のスピーチ、最初のひと言だけ考えて', 0],
-  ['ロボット掃除機', 'ご主人、部屋で変な物を見つけました', 0], ['自分の胃袋', '今夜はもう限界。最後に1つだけ食べさせて', 0],
-  ['天気予報士', '明日の天気、晴れのち…何にしましょう？', 0], ['知らない番号', 'おめでとうございます！ 当選しました', 0],
-  ['恋人', '私と仕事、どっちが大事？', 1], ['恋人', '私のどこが好き？ 3文字で', 1],
-  ['恋人', '今日の私、何か変わったと思わない？', 1], ['恋人', '記念日のプレゼント、手作りでお願い', 1],
-  ['恋人', '浮気してないって、証明して', 1], ['恋人', '来世でも一緒にいてくれる？ 何に生まれ変わる？', 1],
-  ['恋人', '私の手料理、正直何点？', 1], ['恋人', 'お揃いのもの、何か買おうよ', 1],
-  ['好きな人', '好きなタイプ？ うーん…動物にたとえると何？', 1], ['好きな人', '今夜は、月がきれいですね', 1],
-  ['片思いの相手', '付き合ったら、最初に何したい？', 1], ['元恋人', '私のこと、ひと言でたとえると？', 1],
-  ['元恋人', '結婚式に呼んでもいい？', 1], ['マッチングした人', 'プロフィールの「特技：秘密」って、なに？', 1],
-  ['マッチングした人', '写真と、だいぶ雰囲気がちがいますね', 1], ['デートした人', '最後に、私を口説いてみて', 1],
-  ['デートした人', '次のデート、ちょっと変わったところに行きたい', 1], ['合コンで会った人', '本当の職業、当ててみて', 1],
-  ['恋人の親', 'うちの子の、どこが好きなのかね？', 1], ['婚活の相手', '年収以外で、自慢できることは？', 1],
-].map(([s, m, k], i) => ({ id: i + 1, s, m, k }));
+  // 0 = ふつう, 1 = 恋愛
+  ['絶対に売れない新しいお菓子の名前とは？', 0], ['校長先生の話が長すぎて起きたこととは？', 0],
+  ['「この人、ドラえもんの道具を持ってるな」と思った瞬間とは？', 0], ['最近の桃太郎、どこが変わった？', 0],
+  ['まったく役に立たない新しい家電とは？', 0], ['閻魔大王が最近始めた新サービスとは？', 0],
+  ['天才ハッカーの意外な弱点とは？', 0], ['「このパン屋、もうダメだな」と思った瞬間とは？', 0],
+  ['十二支に13番目が追加。何の動物？', 0], ['こんな結婚式はイヤだ', 0],
+  ['こんな救急車はイヤだ', 0], ['こんなヒーローはイヤだ', 0],
+  ['こんな回転寿司はイヤだ', 0], ['こんなAIアシスタントはイヤだ', 0],
+  ['こんな美容院はイヤだ', 0], ['こんなコンビニはイヤだ', 0],
+  ['こんなお化け屋敷はイヤだ', 0], ['宝くじで1等を当てた忍者の第一声', 0],
+  ['300年ぶりに目覚めたロボットの第一声', 0], ['優勝インタビューで絶対に言ってはいけない一言', 0],
+  ['初めて人間に捕まった宇宙人のひと言', 0], ['卒業式で先生に言われたくない一言', 0],
+  ['「この人、異世界から来たな」と気づいたきっかけとは？', 0], ['「この会議、今日中に終わらないな」と思った瞬間とは？', 0],
+  ['サンタクロースが今年の仕事をサボった理由とは？', 0], ['新しくできた学校の、ちょっとおかしな校則とは？', 0],
+  ['犬が人間についていちばん不思議に思っていることとは？', 0], ['新しいことわざを作って。意味も教えて', 0],
+  ['ニュース速報。いったい何が発表された？', 0], ['新しく追加されたオリンピック競技とは？', 0],
+  ['「このお医者さん、ヤブだな」と思った一言とは？', 0], ['RPGの勇者がこっそり悩んでいることとは？', 0],
+  ['引退したスーパーヒーローの今の仕事とは？', 0], ['カップラーメンを待つ3分間に人生が変わった。何があった？', 0],
+  ['タイムマシンで未来に行って、いちばんがっかりしたこととは？', 0], ['「この旅館、何かおかしい」と思った瞬間とは？', 0],
+  ['新発売の、ちょっと残念な目覚まし時計とは？', 0], ['忍者の正体がバレた意外な理由とは？', 0],
+  ['名探偵が事件の解決をあきらめた理由とは？', 0], ['100歳のおばあちゃんが始めた新しい趣味とは？', 0],
+  ['ヒーローショーで子どもが泣き出した理由とは？', 0], ['絶対に当たらない占いの結果とは？', 0],
+  ['カラオケで入れると場が凍る曲名とは？', 0], ['新しい祝日「○○の日」。何をする日？', 0],
+  ['魔王が勇者に送った、ちょっと優しいメールとは？', 0], ['ペットの猫が書いた日記、最初の一行とは？', 0],
+  ['こんなキャンプ場はイヤだ', 0], ['こんな初デートはイヤだ', 1],
+  ['こんなプロポーズはイヤだ', 1], ['こんな婚活パーティーはイヤだ', 1],
+  ['恋人を「重いな」と思った瞬間とは？', 1], ['一瞬で冷める告白のセリフとは？', 1],
+  ['「この人、モテないな」と思った自己紹介とは？', 1], ['絶対に会いたくないマッチングアプリのプロフィールとは？', 1],
+  ['元恋人から届いた、意味がわからないLINEとは？', 1], ['デート中に「この人とは無理」と思った瞬間とは？', 1],
+  ['キューピッドが最近スランプな理由とは？', 1], ['バレンタインにもらって、いちばん困ったものとは？', 1],
+  ['合コンで絶対に言ってはいけない自己紹介とは？', 1], ['こんな誓いの言葉はイヤだ', 1],
+  ['恋人の親へのあいさつ。言ってはいけない第一声とは？', 1], ['片思いの相手に送ってしまった、最悪の誤送信とは？', 1],
+  ['倦怠期のカップルが始めた、ちょっと変な習慣とは？', 1], ['運命の赤い糸の先にいた、意外なものとは？', 1],
+  ['「この人、私のこと好きだな」と勘違いした瞬間とは？', 1], ['こんな胸キュンはイヤだ', 1],
+  ['浮気がバレたときの、最悪の言い訳とは？', 1],
+].map(([m, k], i) => ({ id: i + 1, m, k }));
 const RP_BY_ID = new Map(RP_MSGS.map(q => [q.id, q]));
 const rpPool = o => RP_MSGS.filter(q => o === 'all' || (o === 'koi' ? q.k : !q.k));
-const RP_ICON = ['#ff8b6b', '#6bb8ff', '#ffc94d', '#7ed97e', '#c79bff', '#ff7fb4'];
 const RP_LETTERS = 'ABCDEFGH';
-let rpTyping = false, rpKeep = null;
+let rpTyping = false, rpKeep = null, rpRO = null, rpCutH = 0;
 const rpHold = () => { const l = $('rpList'); rpKeep = l ? l.scrollTop : null; };
 const rpMsg = () => RP_BY_ID.get(G.cur.q) || RP_MSGS[0];
-const rpTime = m => { const t = (G.cur.tm || 1290) + m; return Math.floor(t / 60) % 24 + ':' + String(t % 60).padStart(2, '0'); };
-function rpChat(body, foot, cls) {
-  const q = rpMsg();
-  return '<div class="rp-chat' + (cls ? ' ' + cls : '') + '"><div class="rp-bar"><span class="rp-back" aria-hidden="true">‹</span><b>' + esc(q.s) + '</b><span class="rp-ic" aria-hidden="true"><i></i><i></i><i></i></span></div>' +
-    '<div class="rp-list" id="rpList"><p class="rp-day"><span>今日</span></p>' +
-    '<div class="rp-in"><span class="rp-av" style="--c:' + RP_ICON[q.id % RP_ICON.length] + '">' + esc([...q.s][0]) + '</span><div class="rp-in-b"><span class="rp-nm">' + esc(q.s) + '</span><span class="rp-row"><span class="rp-bub">' + esc(q.m) + '</span><span class="rp-meta">' + rpTime(0) + '</span></span></div></div>' +
-    (body || '') + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の返信">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の返信">次 ▼</button></div>' + (foot || '') + '</div>';
+/* the お題 board (IPPON style): shared with the guests' phones, so it only takes plain text */
+const ogOdai = (t, cls) => '<div class="og-odai' + (cls ? ' ' + cls : '') + '"><span class="og-lbl">お題</span><b>' + esc(t) + '</b></div>';
+/* one answer board: k = its letter, txt null = パス */
+const ogFlip = (txt, tag) => '<span class="og-tag">' + (tag || '') + '</span>' + (txt == null ? '<span class="rp-bub skip">（パス）</span>' : '<span class="rp-bub">' + esc(txt) + '</span>');
+/* the stage: お題 on top, the answer boards under it (paged, never scrolled), the input at the bottom */
+function rpChat(body, foot, cls, text) {
+  return '<div class="rp-chat og' + (cls ? ' ' + cls : '') + '">' + ogOdai(text != null ? text : rpMsg().m) +
+    (body != null ? '<div class="rp-list" id="rpList">' + body + '</div><div class="rp-pg" id="rpPg" hidden><button type="button" id="rpPrev" aria-label="前の回答">▲ 前</button><span id="rpPgN"></span><button type="button" id="rpNext" aria-label="次の回答">次 ▼</button></div>' : '') +
+    (foot || '') + '</div>';
 }
+const ogInput = id => '<div class="og-in"><textarea id="' + id + '" maxlength="60" rows="3" enterkeyhint="done" placeholder="ここに回答を書く" aria-label="回答を入力"></textarea></div>';
 function rpOut(k, pick, named) {
   const cur = G.cur, p = cur.ord[k], txt = cur.rep[p], cls = (cur.best === k ? ' best' : '') + (cur.worst === k ? ' worst' : '') + (pick === k ? ' sel' : '');
-  const tagged = (named || cur.best === k || cur.worst === k) ? '<span class="rp-who" style="--p:' + pc(p) + '">' + esc(pname(p)) + (cur.best === k ? ' ・ いちばん！' : cur.worst === k ? ' ・ スベった…' : '') + '</span>' : '';
-  const inner = '<span class="rp-meta"><b class="rp-tag">' + RP_LETTERS[k] + '</b><span>既読<br>' + rpTime(2 + k) + '</span></span>' +
-    (txt == null ? '<span class="rp-bub skip">（既読スルー）</span>' : '<span class="rp-bub">' + esc(txt) + '</span>');
+  const tagged = (named || cur.best === k || cur.worst === k) ? '<span class="rp-who" style="--p:' + pc(p) + '">' + esc(pname(p)) + (cur.worst === k ? '<small>スベった</small>' : '') + '</span>' : '';
+  const inner = ogFlip(txt, RP_LETTERS[k]) + (cur.best === k ? '<span class="og-ippon" aria-label="IPPON">IPPON</span>' : '') + tagged;
   const pickable = pick !== undefined && cur.best !== k;
-  return '<div class="rp-out' + cls + '">' + (pickable ? '<button type="button" class="rp-pick" data-g="x-pick" data-i="' + k + '" aria-pressed="' + (pick === k) + '" aria-label="返信' + RP_LETTERS[k] + '">' + inner + '</button>' : '<div class="rp-pick">' + inner + '</div>') + tagged + '</div>';
+  return '<div class="rp-out' + cls + '">' + (pickable ? '<button type="button" class="rp-pick pg-keep" data-g="x-pick" data-i="' + k + '" aria-pressed="' + (pick === k) + '" aria-label="回答' + RP_LETTERS[k] + '">' + inner + '</button>' : '<div class="rp-pick pg-keep">' + inner + '</div>') + '</div>';
 }
-const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick"><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
-/* the chat never scrolls: it is cut into pages (▲ ▼ under it); new replies show on the last page */
+const rpTypingBub = () => '<div class="rp-out typing"><div class="rp-pick pg-keep"><span class="og-tag">?</span><span class="rp-bub"><i></i><i></i><i></i></span></div></div>';
+/* the answers never scroll: they are cut into pages (▲ ▼ under them); a new one shows on the last page */
 function rpPages(anim) {
   const list = $('rpList');
   if (!list) return;
-  pagerSet('rpList', list.innerHTML, { keep: anim === 'keep', last: anim !== 'top' && anim !== 'keep', onNav: (i, n) => {
-    const nav = $('rpPg'); if (!nav) return;
-    nav.hidden = n < 2; $('rpPgN').textContent = (i + 1) + ' / ' + n; $('rpPrev').disabled = i === 0; $('rpNext').disabled = i === n - 1;
+  const prev = PAGERS.get('rpList'), html = anim === 'again' && prev ? prev.html : list.innerHTML, nav = $('rpPg');
+  const run = () => pagerSet('rpList', html, { keep: anim === 'keep' || anim === 'again', last: anim !== 'top' && anim !== 'keep' && anim !== 'again', onNav: (i, n) => {
+    if (!$('rpPg')) return;
+    $('rpPg').hidden = n < 2; $('rpPgN').textContent = (i + 1) + ' / ' + n; $('rpPrev').disabled = i === 0; $('rpNext').disabled = i === n - 1;
   } });
+  /* cut with the ▲ ▼ row showing (it takes room); only if it all fits on one page, cut again without it */
+  if (nav) nav.hidden = false;
+  run();
+  const st = PAGERS.get('rpList');
+  if (nav && st && st.pages && st.pages.length < 2) { nav.hidden = true; run(); }
+  /* the stage can still change size after this (the buttons under it are drawn next): cut again whenever it does */
+  rpCutH = list.clientHeight;
+  if (window.ResizeObserver) {
+    rpRO = rpRO || new ResizeObserver(() => { const l = $('rpList'); if (l && PAGERS.get('rpList') && Math.abs(l.clientHeight - rpCutH) > 2) rpPages('again'); });
+    rpRO.disconnect(); rpRO.observe(list);
+  }
   const pv = $('rpPrev'), nx = $('rpNext');
   if (pv) pv.onclick = () => { if (pagerGo('rpList', -1)) SE.play('tap'); };
   if (nx) nx.onclick = () => { if (pagerGo('rpList', 1)) SE.play('tap'); };
 }
-/* everyone's reply is in (this phone's and the phones'): the show starts */
+/* everyone's answer is in (this phone's and the phones'): the show starts */
 function rpAllIn() {
   const cur = G.cur;
   if (cur.phase !== 'write' || cur.peek || !pxAll().every(p => p in cur.rep)) return false;
   cur.wait = false;
   cur.ord = shuffle(pxAll()); cur.shown = 0; cur.phase = 'show';
-  pxSave('top'); SE.play('fanfare'); telop('返信がそろった！<small>トーク画面で発表</small>', '', 1300);
+  pxSave('top'); SE.play('fanfare'); telop('回答がそろった！<small>1枚ずつ発表</small>', '', 1300);
   return true;
 }
 const rpWaitList = () => '<div class="pm-chips' + (G.players.length > 4 ? ' two' : '') + '">' + pxAll().map(p => {
   const done = p in G.cur.rep, off = !done && roomHas(p) && !roomOnline(p);
-  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 送信ずみ' : off ? '電波なし' : '入力中…') + '</small></span>';
+  return '<span class="pm-chip rm-w' + (done ? ' done' : '') + '" style="--p:' + pc(p) + '">' + esc(pname(p)) + '<small>' + (done ? '✓ 回答ずみ' : off ? '電波なし' : '考え中…') + '</small></span>';
 }).join('') + '</div>';
 PMX.reply = {
-  tag: '返信', hint: 'いちばんの返信に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>返信選手権！<small>あなたなら、なんて返す？</small>',
-  poolWord: 'メッセージ', poolUnit: '通', resCount: 'メッセージ',
+  tag: '回答', hint: '<b>IPPON</b>の回答に勲章。スベった人は <b>1DON</b>', intro: '<span class="tl-ic rp-tl"></span>大喜利グランプリ！<small>お題に答えて IPPON をねらえ</small>',
+  poolWord: 'お題', poolUnit: '問', resCount: 'お題',
   pool: o => rpPool(o).length,
   stats: () => ({ best: 0, worst: 0 }),
   mark: () => (G.cur.phase === 'write' && G.cur.peek ? pxPeekWho() : null),
@@ -415,33 +435,33 @@ PMX.reply = {
   },
   stage() {
     const cur = G.cur, head = pxHead();
-    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="rp-notice"><span class="rp-av sm" style="--c:#ffc94d">?</span><span><b>新着メッセージ</b><small>タップして開いてね</small></span><i>1</i></div><p class="pm-lead ol">メッセージが届いた！</p><p class="pm-note">全員が1人ずつこっそり返信を書いて、<br>最後にトーク画面で発表。いちばんの返信はどれ？</p>' + pmTryNote() + '</div>');
-    if (cur.phase === 'msg') return head + '<p class="gk-top">このメッセージに、<b>あなたならなんて返す？</b></p>' + rpChat('', '', 'grow');
-    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの返信を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
+    if (cur.phase === 'before') return head + (pxLock() || '<div class="pm-big"><div class="og-odai closed"><span class="og-lbl">お題</span><b>？</b></div><p class="pm-lead ol">お題が出るよ！</p><p class="pm-note">全員が1人ずつこっそり回答を書いて、<br>最後に1枚ずつ発表。IPPONの回答はどれ？</p>' + pmTryNote() + '</div>');
+    if (cur.phase === 'msg') return head + '<p class="gk-top">このお題に、<b>こっそり回答しよう</b></p>' + rpChat(null, '', 'grow big');
+    if (cur.phase === 'write' && !cur.peek) return head + '<div class="pm-big"><p class="pm-lead ol">みんなの回答を待っています</p>' + rpWaitList() + '<p class="pm-note">それぞれのスマホで書いています</p></div>';
     if (cur.phase === 'write') {
-      if (!cur.peek.open) return head + pxPeekCover('返信はこっそり書く。だれの返信かは最後までヒミツ');
-      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の返信</p>' + rpChat('', '<div class="rp-input"><textarea id="rpIn" maxlength="60" rows="1" enterkeyhint="send" placeholder="メッセージを入力" aria-label="返信を入力"></textarea><button type="button" class="rp-send" data-g="x-send" aria-label="送信"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 20.5 4 14 21l-2.5-7.5Z" fill="currentColor"/></svg></button></div>', 'grow write');
+      if (!cur.peek.open) return head + pxPeekCover('回答はこっそり書く。だれの回答かは最後までヒミツ');
+      return head + '<p class="px-for">' + pmName(pxPeekWho()) + ' の回答</p>' + rpChat(null, ogInput('rpIn'), 'grow write');
     }
     const shown = cur.phase === 'show' ? cur.shown : cur.ord.length;
     let body = '';
     for (let k = 0; k < shown; k++) body += rpOut(k, cur.phase === 'best' || cur.phase === 'worst' ? cur.pick : undefined, cur.phase === 'names');
     if (cur.phase === 'show' && rpTyping) body += rpTypingBub();
-    const ask = cur.phase === 'best' ? '<b>いちばんの返信</b>は？ せーので指さし → タップ' : cur.phase === 'worst' ? '<b>いちばんスベった返信</b>は？ → タップ' : cur.phase === 'names' ? 'だれの返信だった？' : '返信は全部で ' + cur.ord.length + '件';
-    return head + '<p class="gk-top">' + ask + '</p>' + rpChat(body, '', 'grow show');
+    const ask = cur.phase === 'best' ? '<b>IPPON</b>の回答は？ せーので指さし → タップ' : cur.phase === 'worst' ? '<b>いちばんスベった回答</b>は？ → タップ' : cur.phase === 'names' ? 'だれの回答だった？' : '回答は全部で ' + cur.ord.length + '枚';
+    return head + '<p class="gk-top og-ask">' + ask + '</p>' + rpChat(body, '', 'grow show');
   },
   dock() {
     const cur = G.cur;
-    if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'メッセージを開く', 'big main pulse'));
-    if (cur.phase === 'msg') return pxRow(pxBtn('write', '返信を書く ▶', 'big main'));
-    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人は既読スルー</span>', 'white big grow'));
-    if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', '既読<span class="sub">スルーする</span>', 'white small') + pxBtn('send', '送信', 'big main grow') : pxPeekOpenBtn());
-    if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">入力中…</div>' : pxBtn('more', cur.shown ? '次の返信を見る<span class="sub">あと ' + (cur.ord.length - cur.shown) + '件</span>' : '返信を見る！', 'big main pulse'));
-    if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'いちばんの返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定！', 'big main', cur.pick == null ? ' disabled' : ''));
-    if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">返信なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった返信をタップ' : '返信' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
-    return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のメッセージへ ▶', 'big main'));
+    if (cur.phase === 'before') return pmLocked() ? pxRow(pxBtn('end', '結果発表へ')) : pxRow(pxBtn('open', 'お題を出す！', 'big main pulse'));
+    if (cur.phase === 'msg') return pxRow(pxBtn('write', '回答を書く ▶', 'big main'));
+    if (cur.phase === 'write' && !cur.peek) return pxRow(pxBtn('nowait', '待たずに発表<span class="sub">まだの人はパス</span>', 'white big grow'));
+    if (cur.phase === 'write') return pxRow(cur.peek.open ? pxBtn('skip', 'パス', 'white small') + pxBtn('send', '回答する', 'big main grow') : pxPeekOpenBtn());
+    if (cur.phase === 'show') return pxRow(rpTyping ? '<div class="dock-note">めくっています…</div>' : pxBtn('more', cur.shown ? '次の回答をめくる<span class="sub">あと ' + (cur.ord.length - cur.shown) + '枚</span>' : '回答をめくる！', 'big main pulse'));
+    if (cur.phase === 'best') return pxRow(pxBtn('best', cur.pick == null ? 'IPPONの回答をタップ' : '回答' + RP_LETTERS[cur.pick] + ' で IPPON！', 'big main', cur.pick == null ? ' disabled' : ''));
+    if (cur.phase === 'worst') return pxRow(pxBtn('noworst', 'スベった<span class="sub">回答なし</span>', 'white small') + pxBtn('worst', cur.pick == null ? 'スベった回答をタップ' : '回答' + RP_LETTERS[cur.pick] + ' に決定', 'big main pink grow', cur.pick == null ? ' disabled' : ''));
+    return pxRow(pxBtn('next', pmLast() ? '結果発表へ！' : '次のお題へ ▶', 'big main'));
   },
   remote(p) {
-    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', s: q.s, m: q.m, id: q.id, tm: cur.tm || 1290 } : { v: 'rp' };
+    const cur = G.cur, q = cur.q ? rpMsg() : null, base = q ? { v: 'rp', m: q.m, id: q.id } : { v: 'rp' };
     if (cur.phase === 'before' || cur.phase === 'msg') return Object.assign(base, { st: 'read' });
     if (cur.phase === 'write') {
       if (p in cur.rep) return Object.assign(base, { st: 'sent', mine: cur.rep[p] });
@@ -465,9 +485,6 @@ PMX.reply = {
     rpPages(anim);
     const inp = $('rpIn');
     if (inp) {
-      /* the box grows with the text (up to 60 characters it never needs scrolling); the chat above gives way */
-      const grow = () => { const h0 = inp.offsetHeight; inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 2 + 'px'; if (inp.offsetHeight !== h0) rpPages('last'); };
-      inp.addEventListener('input', grow);
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); PMX.reply.act('send'); } });
       if (cur.phase === 'write' && !matchMedia('(pointer:coarse)').matches) inp.focus({ preventScroll: true });
     }
@@ -479,7 +496,7 @@ PMX.reply = {
     if (a === 'open' && cur.phase === 'before' && !pmLocked()) {
       const q = pmDraw(rpPool(G.lvl), 1)[0];
       pmUse(q.id);
-      cur.q = q.id; cur.rep = {}; cur.tm = rint(19, 23) * 60 + rint(0, 59) - 6; cur.ord = null; cur.best = null; cur.worst = null; cur.pick = null; cur.shown = 0;
+      cur.q = q.id; cur.rep = {}; cur.ord = null; cur.best = null; cur.worst = null; cur.pick = null; cur.shown = 0;
       cur.phase = 'msg';
       tryUse('reply');
       SE.play('ticket'); vibrate([30, 40, 30]);
@@ -509,7 +526,7 @@ PMX.reply = {
         rpTyping = false; cur.shown++;
         if (cur.shown >= cur.ord.length) { cur.phase = 'best'; cur.pick = null; }
         pxSave(); SE.play('pop'); vibrate(15);
-        if (cur.phase === 'best') setTimeout(() => { if (G && G.cur === cur) telop('いちばんの返信は？<small>せーので指さし！</small>', '', 1400); }, 700);
+        if (cur.phase === 'best') setTimeout(() => { if (G && G.cur === cur) telop('IPPONの回答は？<small>せーので指さし！</small>', '', 1400); }, 700);
       }, 900);
       return;
     }
@@ -525,11 +542,11 @@ PMX.reply = {
       G.players[p].best++; G.players[p].medal++;
       cur.phase = n >= 3 ? 'worst' : 'names';
       rpHold(); pxSave('keep'); SE.play('fanfare'); vibrate([40, 30, 80]);
-      telop(esc(pname(p)) + '<small>の返信が いちばん！</small>', '', 1600);
+      telop('<span class="og-tl">IPPON！</span><small>' + esc(pname(p)) + ' の回答</small>', '', 1700);
       return;
     }
     if ((a === 'worst' || a === 'noworst') && cur.phase === 'worst') {
-      if (a === 'worst') { if (cur.pick == null) return; cur.worst = cur.pick; G.players[cur.ord[cur.worst]].worst++; SE.play('bubuu'); telop(esc(pname(cur.ord[cur.worst])) + '<small>の返信が スベった…</small>', 'red', 1500); }
+      if (a === 'worst') { if (cur.pick == null) return; cur.worst = cur.pick; G.players[cur.ord[cur.worst]].worst++; SE.play('bubuu'); telop(esc(pname(cur.ord[cur.worst])) + '<small>の回答が スベった…</small>', 'red', 1500); }
       else SE.play('tap');
       cur.pick = null; cur.phase = 'names';
       rpHold(); pxSave('keep');
@@ -854,7 +871,7 @@ PMX.uso = {
 /* ---------- 結果発表 ---------- */
 const pxStat = (label, v) => '<div class="stat wide"><b>' + esc(v) + '</b><span>' + label + '</span></div>';
 Object.assign(PMX.gaka, { resLine: p => 'ニセ画伯 ' + p.fake + '回 ・ 逃げ切り ' + p.esc + '回', resStats: most => pxStat('いちばん逃げ切った', most('esc')) + pxStat('いちばんニセ画伯', most('fake')) });
-Object.assign(PMX.reply, { resLine: p => 'いちばん ' + p.best + '回 ・ スベり ' + p.worst + '回', resStats: most => pxStat('返信の達人', most('best')) + pxStat('スベり王', most('worst')) });
+Object.assign(PMX.reply, { resLine: p => 'IPPON ' + p.best + '回 ・ スベり ' + p.worst + '回', resStats: most => pxStat('IPPON王', most('best')) + pxStat('スベり王', most('worst')) });
 Object.assign(PMX.mission, { resLine: p => '達成 ' + p.done + ' ・ 見破り ' + p.spot + ' ・ 見破られ ' + p.caught, resStats: most => pxStat('ミッション王', most('done')) + pxStat('名探偵', most('spot')) });
 Object.assign(PMX.uso, { resLine: p => '全員だました ' + p.fool + '回 ・ 外した ' + p.miss + '回', resStats: most => pxStat('ホラ吹き王', most('fool')) + pxStat('いちばんだまされた', most('miss')) });
 
@@ -864,16 +881,16 @@ if (PLUS_OPEN) GUIDE.splice(Math.max(0, GUIDE.findIndex(x => x.k === 'plus') + 1
   gCard('ニセ画伯（3人から）', '<p>「お題を配る！」でスマホを回して、1人ずつお題を見ます。<b>1人だけお題を知らない「ニセ画伯」</b>がいます（ジャンルだけ分かる）。</p>' +
     '<p>1人1筆ずつ、2周で1枚の絵を描きます。<b>指を離したら次の人</b>。描き終わったら、せーので<b>ニセ画伯だと思う人を指さし</b>。</p>' +
     '<p>見破られたらニセ画伯が1DON。ただし、ニセ画伯がお題を当てたら逆転。逃げ切ったら<b>ニセ画伯以外の全員が1DON</b>。描いた絵は保存できます。</p>', 1) +
-  gCard('返信選手権（3人から）', '<p>メッセージが届きます。スマホを回して、1人ずつ<b>こっそり返信を入力</b>（既読スルーもOK）。</p>' +
-    '<p>全員書いたら、<b>トーク画面ふうに1件ずつ発表</b>。だれの返信かはヒミツのまま、せーので<b>いちばんの返信</b>を指さし → 勲章。<b>いちばんスベった返信</b>の人が1DON。最後に名前がわかります。</p>', 2) +
+  gCard('大喜利グランプリ（3人から）', '<p>大喜利の<b>お題</b>が出ます。スマホを回して、1人ずつ<b>こっそり回答を書く</b>（パスもOK）。</p>' +
+    '<p>全員書いたら、<b>回答を1枚ずつめくって発表</b>。だれの回答かはヒミツのまま、せーので<b>IPPONの回答</b>を指さし → 勲章。<b>いちばんスベった回答</b>の人が1DON。最後に名前がわかります。</p>', 2) +
   gCard('しれっとミッション（3人から）', '<p>全員が<b>秘密のミッション</b>を1つ持ちます（例：だれかに「それな」と言わせる）。あとはふつうに飲んで話すだけ。</p>' +
     '<p>達成したら<b>「達成した！」</b>で名乗り出て、みんなが認めたら本人以外の全員が1DON。達成か見破りが出たら、<b>全員のミッションを配り直し</b>ます。あやしい人がいたら<b>「見破った！」</b>→ ミッションを予想して言う → 本人だけが答え合わせ。当たりなら本人、ハズレなら見破った人が1DON。</p>' +
     '<p>ミッションを見たら、<b>自分のスマホのメモにこっそり書いておく</b>と忘れません。忘れたら「自分のミッション確認」で、本人だけ見られます。</p>', 3) +
   gCard('ウソかホントか（2人から）', '<p>番の人だけがスマホを見ます。お題と、<b>「ホントの話」か「ウソの話」かの指示</b>が出ます。</p>' +
     '<p>30秒で話したら、全員せーので<b>親指を上（ホント）か下（ウソ）</b>。答え合わせで<b>外した人が1DON</b>。全員だませたら、話した人に勲章。</p>', 4) +
-  gTip('勲章は、いちばんの返信・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
+  gTip('勲章は、IPPON・逃げ切り・ミッション達成などでもらえます。席の右上に出て、結果発表でも数えます。') +
   (ROOM_ON ? gCard('みんなのスマホで参加（プレミアム）', '<p>この4つのモードは、<b>友だちが自分のスマホで参加</b>できます。ゲーム画面の右上の「参加」を押すと、QRコードと4文字の合言葉が出ます。友だちはカメラで読むか、タイトル画面の「参加」で合言葉を入れて、自分の名前を選ぶだけ。<b>参加は無料</b>です。</p>' +
-    '<p>お題・ミッション・返信の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
+    '<p>お題・ミッション・回答の入力・投票が、それぞれのスマホに出ます。スマホを持っていない人は、今までどおり親のスマホを回して遊べます。</p>', 5) : '')
 });
 
 /* =====================================================================

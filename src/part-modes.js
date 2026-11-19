@@ -557,7 +557,7 @@ function renderPlus(msg) {
   } else {
     const mgs = MG_ORDER.filter(k => PLUS_MG.includes(k) && MG[k]).map(k => MG[k].title);
     body = '<div class="pl-col">' + warn + '<ul class="pl-feats">' + feat(HEART_SVG, '暴露トーク', '答えるか、DONか') +
-        (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・返信選手権ほか') : '') +
+        (PMX.gaka ? feat(PALETTE_SVG, 'パーティーモード4つ', 'ニセ画伯・大喜利ほか') : '') +
         feat(DICE_SVG, '新作ミニゲーム' + mgs.length + '種', mgs.slice(0, 2).join('・') + 'ほか') + '</ul>' +
         '<p class="pl-free">カード104枚・ミニゲーム14種は、ずっと無料</p></div>' +
       '<div class="pl-col">' + (PLUS_LIVE && !on ? '<p class="pl-try">今日のお試し：暴露トーク あと<b>' + tryLeft('koi') + '</b>問</p>' : '') +

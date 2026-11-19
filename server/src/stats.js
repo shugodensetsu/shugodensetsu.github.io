@@ -144,7 +144,7 @@ function laps(rows) {
    one phone's games count up 1, 2, 3 … so a run of numbers is one phone */
 function recentList(rows, me, days) {
   if (!rows.length) return '<p class="none">まだありません</p>';
-  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '暴露トーク', gaka: 'ニセ画伯', reply: '返信選手権', mission: 'ミッション', uso: 'ウソホント' };
+  const MODE = { card: 'カード', mini: 'ミニゲーム', king: '王様', koi: '暴露トーク', gaka: 'ニセ画伯', reply: '大喜利', mission: 'ミッション', uso: 'ウソホント' };
   const when = t => { const d = new Date(t + 9 * 3600e3); return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '（' + '日月火水木金土'[d.getUTCDay()] + '）' + d.getUTCHours() + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
   return '<form method="post" action="/move" class="recent"><input type="hidden" name="back" value="/?d=' + days + '&me=' + (me ? 1 : 0) + '">' +
     '<p class="rhint">「通し○回目」は、その端末で何回目のゲームか。1台の端末なら番号が1つずつ増えていきます。' + (me ? 'ふつうの集計に戻すゲームを選んでください。' : '自分の端末で遊んだゲームを選んで、別枠に移せます。') + '</p><ul>' +
@@ -266,7 +266,7 @@ export default {
       q('SELECT sid, started, mode, players, rounds, done, nth, form, installed FROM games WHERE day >= ?' + SC + ' ORDER BY started DESC LIMIT 60', from),
     ]);
     const LV = { 'king:mild': '王様：ふつう', 'king:hot': '王様：盛り上げ', 'koi:mix': '暴露トーク：ミックス', 'koi:koi': '暴露トーク：恋バナ', 'koi:bare': '暴露トーク：暴露', 'koi:light': '暴露トーク：かるめ',
-      'gaka:easy': 'ニセ画伯：かんたん', 'gaka:all': 'ニセ画伯：ミックス', 'reply:all': '返信：ミックス', 'reply:safe': '返信：おだやか', 'reply:koi': '返信：恋愛多め',
+      'gaka:easy': 'ニセ画伯：かんたん', 'gaka:all': 'ニセ画伯：ミックス', 'reply:all': '大喜利：ミックス', 'reply:safe': '大喜利：ふつう', 'reply:koi': '大喜利：恋愛',
       'mission:easy': 'ミッション：かんたん', 'mission:all': 'ミッション：ミックス', 'uso:mix': 'ウソホント：ミックス', 'uso:light': 'ウソホント：かるめ', 'uso:deep': 'ウソホント：ふかめ' };
     const n = tot.n || 0, evN = (k, f) => ev.filter(e => e.k === k && (!f || f(e.d || ''))).reduce((a, e) => a + e.n, 0);
     const ownN = (draws && draws.own) || 0, allDraws = ownN + ((draws && draws.built) || 0);
