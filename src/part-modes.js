@@ -8,7 +8,7 @@
      true にするときは、build-app.js の説明文・shareApp の文の「無料」を「基本無料」に直し、Stripe のキーを本番用（sk_live_）にする
    - false のままでも、「自分の端末」をオンにした端末（PAY_TEST）では、お支払いを試せる（Stripe のテスト用キーなら本物のお金は動かない）
    ===================================================================== */
-const PLUS_SALE = false;
+const PLUS_SALE = true;
 const PAY_TEST = IS_APP && !PLUS_SALE && (() => { try { return localStorage.getItem('sakego-stat-dev') === '1'; } catch (_) { return false; } })();
 const PLUS_LIVE = PLUS_SALE || PAY_TEST;   /* buying is on: free players get the daily trial, the plans can be bought */
 /* アプリ版（ホーム画面・shugodensetsu.github.io）では、まだ遊べない（ボタンはグレーで Coming soon）。claude.ai 版だけで先行体験。

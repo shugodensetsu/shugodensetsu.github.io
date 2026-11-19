@@ -5530,8 +5530,8 @@ const SHARE_URL = 'https://shugodensetsu.github.io/';
 async function shareApp(from) {
   SE.play('tap');
   const text = from === 'result'
-    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（無料・広告なし）'
-    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、無料・広告なし！';
+    ? '「' + APP_NAME + '」で遊んだよ！ スマホ1台で2〜8人、飲み会・宅飲みが盛り上がるパーティーゲーム（基本無料・広告なし）'
+    : '飲み会・宅飲みが盛り上がるパーティーゲーム「' + APP_NAME + '」。スマホ1台で2〜8人、基本無料・広告なし！';
   useTrack('share', { from });
   if (navigator.share) {
     try { await navigator.share({ title: APP_NAME, text, url: SHARE_URL }); } catch (_) { /* closed without sharing */ }
