@@ -309,6 +309,7 @@ function guestMsg(o) {
     const old = guest.v;
     guest.v = o.m;
     guestNotice(old, o.m);
+    gsOgFx(old && old.k === 'view' ? old.b : null, o.m.k === 'view' && o.m.b && typeof o.m.b === 'object' ? o.m.b : null);
     renderGuest();
   }
 }
@@ -322,7 +323,7 @@ function guestLeave() {
 function guestNotice(old, v) {
   const b = v.k === 'view' && v.b && typeof v.b === 'object' ? v.b : null, ob = old && old.k === 'view' && old.b ? old.b : null;
   if (!b) return;
-  const sig = x => (x ? [x.v, x.ph, x.w, x.f, x.t, x.turn, x.ask && 1, x.st, x.role].join('|') : '');
+  const sig = x => (x ? [x.v, x.ph, x.w, x.f, x.t, x.turn, x.ask && 1, x.st, x.role, x.a && typeof x.a === 'object' ? x.a.id : ''].join('|') : '');
   if (sig(b) !== sig(ob)) { vibrate(20); SE.play('pop'); }
 }
 const gStr = (s, max) => (typeof s === 'string' ? s.slice(0, max || 200) : '');
@@ -358,6 +359,40 @@ function gsStrokes(s) {
   if (!Array.isArray(s)) return [];
   return s.slice(0, 40).filter(x => x && okInt(x.p, 0, 7) && Array.isArray(x.d) && x.d.length >= 2 && x.d.length <= 2000 && x.d.length % 2 === 0 && x.d.every(n => okInt(n, 0, 1000))).map(x => ({ p: x.p, d: x.d }));
 }
+/* 大喜利グランプリ on this phone: the お題 and a box to answer in, or the answer on stage with the IPPON meter and the 面白い！ button */
+let gsDraft = '', gsSeen = { k: '', lv: 0 };
+function gsOg(b) {
+  const odai = gStr(b.m, 80), a = b.a && typeof b.a === 'object' && okInt(b.a.p, 0, 7) ? b.a : null;
+  if (b.ph === 'before' || !odai) return gsMsg('大喜利グランプリ', b.ready === false ? 'みんなが自分のスマホで参加すると、お題が出せます' : 'お題が出るのを待っています');
+  if (b.ph === 'end') return gsMsg('このお題はおしまい！', '結果は親のスマホで見てね' + (okInt(b.cnt, 1, 99) ? '<br>あなたの回答 ' + b.cnt + ' ・ IPPON ' + (okInt(b.ip, 0, 99) ? b.ip : 0) : ''));
+  const wait = okInt(b.wait, 1, 99) ? '<p class="og-wait">あなたの回答は <b>' + b.wait + '番目</b> に発表</p>' : '';
+  if ((b.ph === 'judge' || b.ph === 'res') && a) {
+    const lv = okInt(a.lv, 0, 10) ? a.lv : 0, r = a.r === 'ippon' || okInt(a.r, 0, 9) ? a.r : null, key = guest.r + '|' + b.m + '|' + a.id;
+    const same = gsSeen.k === key, from = same ? Math.min(gsSeen.lv, lv) : 0;
+    gsSeen = { k: key, lv };
+    const per = okInt(b.per, 1, 5) ? b.per : 3, my = okInt(a.my, 0, 5) ? a.my : 0, vote = b.ph === 'judge' && !a.me && !a.done;
+    const st = r === 'ippon' ? '<b>IPPON！</b>' : r != null ? '<b>' + r + '</b>点' + (r === 0 ? ' ・ スベった… <b>1DON</b>' : '')
+      : '<b>' + lv + '</b> / 10点' + (okInt(a.of, 0, 8) ? ' ・ 判定 ' + (okInt(a.k, 0, 8) ? a.k : 0) + '/' + a.of + '人' : '');
+    const say = r != null ? '' : a.me ? '<p class="og-say">あなたの回答を判定中…</p>' : a.done ? '<p class="og-say">判定しました' + (my ? '（' + my + '点）' : '') + '。みんなを待っています</p>' : '';
+    return '<div class="gs-body rp-gs og-gs">' + ogStage({ m: odai, p: a.p, nm: gStr(a.nm, 24), t: gStr(a.t, 60), r, lv, from, fresh: !same, st }) + say + wait +
+      (vote ? '<div class="dock-row">' + gsBtn('ogok', '決定', 'white small') + gsBtn('ogpt', '面白い！ +1<span class="sub">のこり' + (per - my) + '点</span>', 'big main pink grow') + '</div>' : '') + '</div>';
+  }
+  if (b.busy || wait) return '<div class="gs-body rp-gs"><p class="px-for">回答しました！ 発表を待っています</p>' + rpChat(null, '', 'grow big', odai) + wait + '</div>';
+  return '<div class="gs-body rp-gs"><p class="px-for">書けたら「回答する」。押した順に発表！</p>' + rpChat(null, ogInput('gsIn'), 'grow write', odai) +
+    '<div class="dock-row">' + gsBtn('ogsend', '回答する', 'big main grow') + '</div></div>';
+}
+/* the meter filling, an IPPON, a new answer on stage: heard on every phone */
+function gsOgFx(ob, b) {
+  if (!b || b.v !== 'og') return;
+  const a = b.a && typeof b.a === 'object' ? b.a : null, oa = ob && ob.v === 'og' && ob.a && typeof ob.a === 'object' ? ob.a : null;
+  if (a && (a.me || b.wait)) gsDraft = '';
+  if (b.wait || b.busy) gsDraft = '';
+  if (!a) return;
+  const same = oa && oa.id === a.id && ob.m === b.m;
+  if (a.r === 'ippon' && !(same && oa.r === 'ippon')) { SE.play('ippon'); vibrate([40, 30, 140]); flash('#ffd83d'); ogCut(gStr(a.nm, 24)); return; }
+  if (same && okInt(a.lv, 0, 10) && okInt(oa.lv, 0, 10) && a.lv > oa.lv) SE.play('ogPt');
+  if (same && a.r === 0 && oa.r !== 0) SE.play('bubuu');
+}
 function gsView(b, p) {
   const watch = (h, note) => gsMsg(h, note);
   if (b.v === 'gk') {
@@ -367,20 +402,7 @@ function gsView(b, p) {
     const say = b.ph === 'draw' ? (b.turn ? '<b>あなたの番！</b> 1筆描いてね（指を離したら交代）' : esc(gStr(b.who, 24)) + ' が描く番') : b.ph === 'vote' ? 'せーので、ニセ画伯だと思う人を指さし！' : b.ph === 'guess' ? 'ニセ画伯の逆転チャンス！' : b.ph === 'end' ? '結果は親のスマホで！' : 'みんながお題を見ています';
     return '<div class="gs-body gk-gs">' + (b.ph === 'end' ? end : top) + '<div class="gk-wrap gs-cv" id="gsWrap"><canvas class="gk-cv' + (b.turn ? ' live' : '') + '" id="gsCv" aria-label="みんなの絵"></canvas></div><p class="gs-say">' + say + '</p></div>';
   }
-  if (b.v === 'rp') {
-    /* the same お題 board and answer board as on the host's phone */
-    const odai = gStr(b.m, 80);
-    const mine = b.mine === undefined ? '' : '<div class="rp-list"><div class="rp-out"><div class="rp-pick">' + ogFlip(b.mine == null ? null : gStr(b.mine, 80), '') + '</div></div></div>';
-    const stage = (body, foot, cls) => '<div class="rp-chat og grow' + (cls ? ' ' + cls : '') + '">' + ogOdai(odai) + (body || '') + (foot || '') + '</div>';
-    if (!odai) return gsMsg('大喜利グランプリ', 'お題が出るのを待っています');
-    if (b.st === 'write') return '<div class="gs-body rp-gs"><p class="px-for">あなたの回答（だれの回答かは最後までヒミツ）</p>' +
-      stage('', ogInput('gsIn'), 'write') +
-      '<div class="dock-row">' + gsBtn('rpskip', 'パス', 'white small') + gsBtn('rpsend', '回答する', 'big main grow') + '</div></div>';
-    if (b.st === 'sent') return '<div class="gs-body rp-gs"><p class="px-for">回答しました。みんなを待っています</p>' + stage(mine) + '</div>';
-    if (b.st === 'local') return '<div class="gs-body rp-gs"><p class="px-for">親のスマホが回ってきたら、そこで書いてね</p>' + stage('', '', 'big') + '</div>';
-    if (b.st === 'show') return '<div class="gs-body rp-gs"><p class="px-for">発表中！ 親のスマホを見てね</p>' + stage(mine) + '</div>';
-    return '<div class="gs-body rp-gs"><p class="px-for">お題が出たよ。親のスマホの「回答を書く」を待ってね</p>' + stage('', '', 'big') + '</div>';
-  }
+  if (b.v === 'og') return gsOg(b);
   if (b.v === 'ms') {
     if (b.ask) return '<div class="gs-body"><p class="px-for">' + esc(gStr(b.ask, 24)) + ' があなたのミッションを予想したよ</p><p class="ms-card">' + esc(gStr(b.t, 80)) + '</p><p class="pm-lead ol">予想は当たってた？</p><p class="pm-note">正直に答えてね</p>' +
       '<div class="dock-row">' + gsBtn('msng', 'ハズレ', 'white big') + gsBtn('msok', '当たってた', 'big main pink grow') + '</div></div>';
@@ -417,7 +439,9 @@ function guestMount() {
   }
   const inp = $('gsIn');
   if (inp) {
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); guestAct('rpsend'); } });
+    inp.value = gsDraft;
+    inp.addEventListener('input', () => { gsDraft = inp.value; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); guestAct('ogsend'); } });
   }
 }
 function gsCanvas(b) {
@@ -465,12 +489,14 @@ function guestAct(a, el) {
   if (a === 'again') { guest.st = 'conn'; guest.tries = 0; renderGuest(); guestConnect(); return; }
   if (a === 'pick') { const p = Number(el && el.dataset.p); if (okInt(p, 0, 7)) { guestSend({ k: 'pick', p }); SE.play('select'); } return; }
   const act = (x, extra) => { if (guestSend(Object.assign({ k: 'act', a: x }, extra || {}))) SE.play('tap'); else telop('つながっていません', 'white sm', 1000); };
-  if (a === 'rpsend' || a === 'rpskip') {
-    const inp = $('gsIn'), txt = inp ? inp.value.replace(/\s+/g, ' ').trim().slice(0, 80) : '';
-    if (a === 'rpsend' && !txt) { if (inp) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); } SE.play('boing'); return; }
-    act('reply', { txt: a === 'rpskip' ? null : txt });
+  if (a === 'ogsend') {
+    const inp = $('gsIn'), txt = ogText(inp ? inp.value : '');
+    if (!txt) { if (inp) { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.focus(); } SE.play('boing'); return; }
+    act('ans', { txt });   /* the box keeps the words until the host says the answer arrived */
     return;
   }
+  if (a === 'ogpt') { if (guestSend({ k: 'act', a: 'pt' })) vibrate(8); else telop('つながっていません', 'white sm', 1000); return; }
+  if (a === 'ogok') { act('ok'); return; }
   if (a === 'msok' || a === 'msng') { act('ans', { ok: a === 'msok' }); return; }
   if (a === 'usre') { act('re'); return; }
   if (a === 'ustalk') { act('talk'); return; }

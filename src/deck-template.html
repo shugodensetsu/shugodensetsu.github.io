@@ -2316,6 +2316,44 @@ button.rp-pick{cursor:pointer}
 .og-in textarea:focus{box-shadow:0 0 0 3px #e3bf55}
 .og-in textarea.shake{animation:tremble .08s linear 4}
 .og-tl{display:inline-block; font-size:1.5em; letter-spacing:.06em}
+/* IPPON 方式: 発表中の回答と IPPON メーター（10本の輪。外から光り、最後は真ん中がまるごと光る） */
+.og-odai.og-small{margin-top:8px; padding:9px 10px 5px}
+.og-odai.og-small b{font-family:inherit; font-weight:800; font-size:13px; line-height:1.35}
+.og-row{flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:8px}
+.og-ans{flex:none; position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:4px; box-sizing:border-box; background:#fffdf5; color:#111; border:2px solid var(--ink); border-radius:10px; box-shadow:0 3px 0 rgba(0,0,0,.55); padding:7px 10px 8px}
+.og-ans.fresh{animation:ogFlip .4s ease-out both; transform-origin:50% 50%}
+.og-ans.ippon{background:#fff3bf; box-shadow:0 0 0 3px #e3bf55, 0 0 18px rgba(255,216,61,.7)}
+.og-ans.zero{background:#c9cfda}
+.og-ans .og-ippon{position:absolute; right:8px; top:6px}
+.og-who{font-size:12px; font-weight:800; line-height:1.4; color:var(--ink); background:var(--p); border:2px solid var(--ink); border-radius:999px; padding:0 8px; max-width:100%; overflow-wrap:anywhere}
+.og-t{margin:0; font-weight:800; font-size:min(20px, 5.4vw); line-height:1.35; color:#111; overflow-wrap:anywhere; white-space:pre-wrap}
+.og-mtr{flex:1 1 0; min-height:72px; display:flex; align-items:center; justify-content:center}
+.og-mtr svg{height:100%; max-height:240px; width:auto; max-width:100%; aspect-ratio:1; display:block}
+.rp-chat.full .og-mtr svg{filter:drop-shadow(0 0 12px rgba(255,216,61,.85))}
+.og-seg{stroke:#2a2350}
+.og-seg.on{stroke:#ffd83d}
+.og-seg.core{fill:#2a2350; stroke:none}
+.og-seg.core.on{fill:#ffd83d}
+.og-seg.new{animation:ogSeg .45s ease-out both}
+@keyframes ogSeg{0%{stroke:#ffffff; fill:#ffffff; opacity:.25}}
+.og-st{flex:none; margin:0; text-align:center; color:#fff; font-weight:800; font-size:14px; line-height:1.3}
+.og-st b{color:#ffd83d; font-size:1.35em}
+.og-x{margin-left:6px; border:2px solid var(--ink); border-radius:999px; background:#fff; color:#223; font:800 11px/1.5 inherit; font-family:inherit; padding:0 8px; vertical-align:2px; cursor:pointer}
+.og-cnt{display:block; font-size:.8em; opacity:.85}
+.og-pts{flex:none; min-width:30px; text-align:center; font-family:var(--f-display); font-size:17px; line-height:1; color:#150733}
+.og-pts small{font-size:10px; font-family:inherit; font-weight:800}
+.rp-out.best .og-pts{color:#b3261e}
+.og-none{margin:auto; color:#fff; font-weight:800; text-align:center}
+.og-wait, .og-say{margin:0; text-align:center; font-weight:800; font-size:13px; line-height:1.4; color:var(--white)}
+.og-wait b{color:var(--yellow)}
+.og-gs{gap:6px}
+.og-gs .rp-chat{flex:1 1 auto; min-height:0}
+/* IPPON のカットイン */
+.telop.ippon{top:46%; color:#ffd83d; animation:ogCut var(--t, 2.6s) cubic-bezier(.2,1,.3,1) forwards}
+.telop.ippon::before{content:''; position:absolute; left:50%; top:50%; width:300vw; height:118%; transform:translate(-50%,-50%) rotate(-6deg); background:#e5262f; border-top:6px solid #ffd83d; border-bottom:6px solid #ffd83d; box-shadow:0 0 40px rgba(0,0,0,.5); z-index:-1}
+.telop.ippon .og-ip{display:block; font-family:var(--f-display); font-weight:400; font-size:min(104px, 24vw); line-height:1.05; letter-spacing:.02em; color:#ffd83d; text-shadow:4px 0 0 var(--ink),-4px 0 0 var(--ink),0 4px 0 var(--ink),0 -4px 0 var(--ink),3px 3px 0 var(--ink),-3px 3px 0 var(--ink),3px -3px 0 var(--ink),-3px -3px 0 var(--ink),0 9px 0 var(--ink)}
+.telop.ippon small{font-size:min(26px, 6.4vw); color:#fff; text-shadow:0 2px 0 var(--ink)}
+@keyframes ogCut{0%{transform:translate(-50%,-50%) scale(2.8); opacity:0} 10%{transform:translate(-50%,-50%) scale(.9); opacity:1} 16%{transform:translate(-50%,-50%) scale(1.05)} 22%{transform:translate(-50%,-50%) scale(1)} 86%{transform:translate(-50%,-50%) scale(1); opacity:1} 100%{transform:translate(-50%,-50%) scale(1.08); opacity:0}}
 /* a short stage (small phone, 7–8 players): everything a little tighter, so an answer stays whole without paging */
 @container (max-height: 300px){
   .pm-stage .rp-chat{padding:4px; gap:5px; border-width:2px}
@@ -2336,6 +2374,22 @@ button.rp-pick{cursor:pointer}
   .pm-stage .rp-pg button{padding:0 10px}
   .pm-stage .og-in{min-height:44px}
   .pm-stage .og-in textarea{font-size:16px; padding:6px 10px}
+  .pm-stage .og-odai.og-small b{font-size:12px; line-height:1.3}
+  .pm-stage .og-row{flex-direction:row; align-items:stretch; gap:6px}
+  .pm-stage .og-ans{flex:1 1 0; min-width:0; padding:5px 8px 6px}
+  .pm-stage .og-t{font-size:14px; line-height:1.3}
+  .pm-stage .og-who{font-size:11px}
+  .pm-stage .og-mtr{flex:0 0 38%; min-height:0}
+  .pm-stage .og-mtr svg{width:100%; height:auto; max-height:100%}
+  .pm-stage .og-st{font-size:13px}
+}
+/* the shortest stages (8 players on a small phone): a 40-character answer still fits beside the meter */
+@container (max-height: 240px){
+  .pm-stage .og-odai.og-small{padding:7px 8px 4px}
+  .pm-stage .og-odai.og-small b{font-size:11.5px; line-height:1.3}
+  .pm-stage .og-t{font-size:13px; line-height:1.25}
+  .pm-stage .og-mtr{flex-basis:34%}
+  .pm-stage .og-st{font-size:12px}
 }
 /* しれっとミッション */
 .ms-art{width:min(120px, 24cqh); height:auto; filter:drop-shadow(0 5px 0 rgba(0,0,0,.35))}
@@ -2820,6 +2874,11 @@ button.rp-pick{cursor:pointer}
   .rp-gs .og-odai b, .rp-gs .rp-chat.big .og-odai b{font-size:16px}
   .rp-gs .og-in{min-height:44px}
   .rp-gs .og-in textarea{padding:6px 10px}
+  .og-gs .og-row{flex-direction:row; align-items:stretch}
+  .og-gs .og-ans{flex:1 1 0; min-width:0; padding:5px 9px 6px}
+  .og-gs .og-t{font-size:15px; line-height:1.3}
+  .og-gs .og-who{font-size:11px}
+  .og-gs .og-mtr{flex:0 1 auto; max-width:38%; min-height:0}
   .gs-body .ms-card{padding:8px 12px}
   .gs-body .gk-word.sm{font-size:22px; padding:3px 14px}
   .gs-body .gk-fake{font-size:18px}

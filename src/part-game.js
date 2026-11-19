@@ -335,6 +335,15 @@ const SOUNDS = {
   start: (A, t) => { SOUNDS.fanfare(A, t); },
   swoosh: (A, t) => noise(A, t, { d: 0.24, g: 0.22, type: 'bandpass', f: 3200, f2: 450, q: 0.9 }),
   bubuu: (A, t) => [0, 0.2].forEach((dt, i) => [196, 207.65].forEach(f => tone(A, t + dt, { type: 'square', f, d: i ? 0.6 : 0.16, g: 0.14, lp: 2400, sus: 1, rel: 0.05 }))),
+  /* 大喜利グランプリ: one point into the IPPON meter, and the IPPON itself */
+  ogPt: (A, t) => { bellHit(A, t, 1568, 0.28, 0.1); tone(A, t, { type: 'square', f: 988, f2: 1480, bend: 0.05, d: 0.09, g: 0.05, lp: 3200 }); },
+  ippon: (A, t) => {
+    kick(A, t, 1.4); crash(A, t, 0.5); timpani(A, t, 65.41, 0.9);
+    brass(A, t, [261.63, 329.63, 392, 523.25], 0.16, 0.08, { lp: 1800, lp2: 4500 });
+    brass(A, t + 0.2, [349.23, 440, 523.25, 698.46], 0.16, 0.08, { lp: 1800, lp2: 4500 });
+    brass(A, t + 0.42, [392, 493.88, 587.33, 783.99, 1046.5], 1.7, 0.08, { lp: 1900, lp2: 5000 });
+    kick(A, t + 0.42, 1.2); crash(A, t + 0.42, 0.5); bellHit(A, t + 0.42, 2093, 1.6, 0.1); sparkle(A, t + 0.48, 18);
+  },
   /* hi-lo */
   flip: (A, t) => { noise(A, t, { d: 0.09, g: 0.35, type: 'bandpass', f: 2200, f2: 6000, q: 0.9 }); noise(A, t + 0.07, { d: 0.04, g: 0.35, type: 'highpass', f: 2500 }); },
   deal: (A, t) => noise(A, t, { d: 0.18, g: 0.25, type: 'bandpass', f: 900, f2: 4200, q: 0.8 }),
